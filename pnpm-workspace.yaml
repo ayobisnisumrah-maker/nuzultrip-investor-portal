@@ -1,0 +1,6 @@
+# pnpm >= 10.16 reads settings from here rather than from package.json.
+# Only these packages may execute install scripts.
+onlyBuiltDependencies:
+  - unrs-resolver
+  - sharp
+  - esbuild

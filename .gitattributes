@@ -1,0 +1,19 @@
+# Normalise line endings so the repository is identical across Windows, macOS
+# and Linux checkouts and CI.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.avif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.glb binary
+*.gltf binary
+*.ktx2 binary
+*.pdf binary
+
+pnpm-lock.yaml linguist-generated=true -diff
+src/types/database.ts linguist-generated=true
