@@ -1,10 +1,19 @@
+import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
-  // Vite resolves the `@/*` alias from tsconfig.json natively.
-  resolve: { tsconfigPaths: true },
+  resolve: {
+    // Vite resolves the `@/*` alias from tsconfig.json natively.
+    tsconfigPaths: true,
+    alias: {
+      // `server-only` throws when resolved through a client condition, which is
+      // correct in a bundle and wrong in a test runner. The real import stays
+      // in the modules; only the test resolution is redirected.
+      'server-only': fileURLToPath(new URL('./src/test/server-only-stub.ts', import.meta.url)),
+    },
+  },
   test: {
     globals: true,
     setupFiles: ['./src/test/setup.ts'],

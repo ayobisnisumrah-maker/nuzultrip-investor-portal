@@ -212,8 +212,10 @@ insert into public.site_settings (key, value, description, is_public) values
    'Pernyataan informasional standar yang menyertai bagian keuangan dan proyeksi.', true),
   ('workflow.require_separate_approver', 'true'::jsonb,
    'Bila aktif, penyetuju sebuah versi harus berbeda dari penyusunnya.', false),
+  -- Public: the portal has to know whether to render the application form at
+  -- all, and the fact that applications are open is not sensitive.
   ('workflow.investor_application_open', 'true'::jsonb,
-   'Bila nonaktif, formulir pengajuan investor pada portal ditutup.', false),
+   'Bila nonaktif, formulir pengajuan investor pada portal ditutup.', true),
   ('notifications.default_email_enabled', 'true'::jsonb,
    'Nilai bawaan preferensi notifikasi surel untuk akun baru.', false)
 on conflict (key) do update

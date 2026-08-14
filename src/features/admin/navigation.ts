@@ -1,0 +1,38 @@
+import type { Permission } from '@/core/rbac/permissions'
+
+/**
+ * The admin navigation.
+ *
+ * Entries are added here as their pages are built, so the sidebar never offers
+ * a link to a route that does not exist. Each entry declares the permission it
+ * requires; the shell filters by the principal's effective set.
+ *
+ * Filtering is presentation only. Hiding a link is a courtesy — the page
+ * itself, its actions, and RLS all check again (docs/RBAC.md §6).
+ */
+export type AdminNavItem = {
+  href: string
+  label: string
+  icon: string
+  permission: Permission
+  exact?: boolean
+}
+
+export type AdminNavSection = {
+  title?: string
+  items: readonly AdminNavItem[]
+}
+
+export const ADMIN_NAVIGATION: readonly AdminNavSection[] = [
+  {
+    items: [
+      {
+        href: '/admin',
+        label: 'Dasbor',
+        icon: 'LayoutDashboard',
+        permission: 'dashboard.view',
+        exact: true,
+      },
+    ],
+  },
+]

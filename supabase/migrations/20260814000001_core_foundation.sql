@@ -39,6 +39,16 @@ alter default privileges in schema public revoke all on tables from anon, authen
 alter default privileges in schema public revoke all on sequences from anon, authenticated;
 alter default privileges in schema public revoke all on functions from anon, authenticated;
 
+-- The service role, by contrast, needs privileges on everything.
+--
+-- `bypassrls` only exempts it from *policies*; table-level GRANTs still apply.
+-- Without this the role can bypass RLS and still be told "permission denied for
+-- table", which is a confusing failure precisely where it is least welcome —
+-- account provisioning and the storage broker.
+alter default privileges in schema public grant all on tables to service_role;
+alter default privileges in schema public grant all on sequences to service_role;
+alter default privileges in schema public grant execute on functions to service_role;
+
 -- -----------------------------------------------------------------------------
 -- Shared trigger functions
 -- -----------------------------------------------------------------------------

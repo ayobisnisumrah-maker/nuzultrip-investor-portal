@@ -38,7 +38,7 @@ written so that a missing application-level check is a _bug_, not a _breach_.
 - **Cookies:** `HttpOnly`, `Secure` (production), `SameSite=Lax`, `Path=/`.
   Session tokens are never placed in `localStorage` or a non-HttpOnly cookie.
 - **Token lifetimes:** access token 1 hour, refresh token rotating with reuse
-  detection. Refresh happens in middleware, transparent to the user.
+  detection. Refresh happens in `src/proxy.ts`, transparent to the user.
 - **Password policy:** minimum 12 characters, checked against a breached-password
   list (k-anonymity range query against HIBP; failure to reach the service is
   fail-open on _availability_ but logged, never fail-open on the length rule).
@@ -199,17 +199,25 @@ adds it to both the policy set and the list.
 
 ## 7. Web Hardening
 
-Security headers (`next.config.ts` + middleware):
+Security headers (`next.config.ts` for the static ones, `src/proxy.ts` for the
+nonce-bearing CSP):
 
-| Header                       | Value                                                                                                                                                                                                                                                           |
-| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Content-Security-Policy`    | `default-src 'self'`; nonce-based `script-src`; `img-src 'self' data: blob: <supabase>`; `connect-src 'self' <supabase> wss://<supabase>`; `worker-src 'self' blob:` (Draco/Meshopt decoders); `frame-ancestors 'none'`; `object-src 'none'`; `base-uri 'self'` |
-| `Strict-Transport-Security`  | `max-age=63072000; includeSubDomains; preload`                                                                                                                                                                                                                  |
-| `X-Content-Type-Options`     | `nosniff`                                                                                                                                                                                                                                                       |
-| `Referrer-Policy`            | `strict-origin-when-cross-origin`                                                                                                                                                                                                                               |
-| `X-Frame-Options`            | `DENY`                                                                                                                                                                                                                                                          |
-| `Permissions-Policy`         | camera, microphone, geolocation, payment all `()`                                                                                                                                                                                                               |
-| `Cross-Origin-Opener-Policy` | `same-origin`                                                                                                                                                                                                                                                   |
+| Header                       | Value                                                                                                                                                                                                                                                                                                                                           |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Content-Security-Policy`    | `default-src 'self'`; `script-src 'self' 'nonce-…' 'strict-dynamic'`; `style-src 'self' 'unsafe-inline'`; `img-src 'self' data: blob: <supabase>`; `connect-src 'self' <supabase> wss://<supabase>`; `worker-src 'self' blob:` (Draco/Meshopt decoders); `frame-ancestors 'none'`; `object-src 'none'`; `base-uri 'self'`; `form-action 'self'` |
+| `Strict-Transport-Security`  | `max-age=63072000; includeSubDomains; preload`                                                                                                                                                                                                                                                                                                  |
+| `X-Content-Type-Options`     | `nosniff`                                                                                                                                                                                                                                                                                                                                       |
+| `Referrer-Policy`            | `strict-origin-when-cross-origin`                                                                                                                                                                                                                                                                                                               |
+| `X-Frame-Options`            | `DENY`                                                                                                                                                                                                                                                                                                                                          |
+| `Permissions-Policy`         | camera, microphone, geolocation, payment all `()`                                                                                                                                                                                                                                                                                               |
+| `Cross-Origin-Opener-Policy` | `same-origin`                                                                                                                                                                                                                                                                                                                                   |
+
+**On `style-src 'unsafe-inline'`.** A nonce cannot cover inline `style`
+_attributes_, and React emits one for any computed style. The alternatives were
+to ban computed styles across the codebase or to weaken this directive; the
+directive lost. With `script-src` locked to a nonce plus `'strict-dynamic'`, and
+no `dangerouslySetInnerHTML` anywhere in the codebase, injected CSS has no path
+to execution. This is recorded here as an accepted trade-off, not an oversight.
 
 - **CSRF:** Server Actions carry Next.js's built-in origin check; `SameSite=Lax`
   cookies cover the rest. State-changing Route Handlers additionally verify

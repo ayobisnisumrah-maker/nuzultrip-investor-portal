@@ -223,7 +223,13 @@ describe('schema hygiene', () => {
   it('leaves no table both policy-free and reachable', async () => {
     // A table with no policies is closed, which is correct — but it must be a
     // deliberate choice, so the exceptions are named here.
-    const INTENTIONALLY_UNREACHABLE = ['notification_deliveries']
+    const INTENTIONALLY_UNREACHABLE = [
+      // Outbox drained by a worker with no user session.
+      'notification_deliveries',
+      // If a client could reach these counters it could exhaust another
+      // caller's quota by naming their bucket.
+      'rate_limits',
+    ]
 
     const rows = await db()<{ relname: string }[]>`
       select c.relname
@@ -234,6 +240,64 @@ describe('schema hygiene', () => {
       order by c.relname
     `
     expect(rows.map((row) => row['relname'])).toEqual(INTENTIONALLY_UNREACHABLE)
+  })
+
+  it('gives the service role table privileges on everything in public', async () => {
+    // `bypassrls` exempts the service role from *policies*, not from GRANTs.
+    // Without table privileges it is refused outright — which broke account
+    // provisioning and the setup page, and produced a confusing
+    // "permission denied for table" from a role that supposedly bypasses
+    // everything.
+    const rows = await db()<{ relname: string; missing: string }[]>`
+      select c.relname,
+             concat_ws(
+               ',',
+               case when not has_table_privilege('service_role', c.oid, 'SELECT') then 'select' end,
+               case when not has_table_privilege('service_role', c.oid, 'INSERT') then 'insert' end,
+               case when not has_table_privilege('service_role', c.oid, 'UPDATE') then 'update' end,
+               case when not has_table_privilege('service_role', c.oid, 'DELETE') then 'delete' end
+             ) as missing
+      from pg_class c
+      join pg_namespace n on n.oid = c.relnamespace
+      where n.nspname = 'public' and c.relkind = 'r'
+        and not (
+          has_table_privilege('service_role', c.oid, 'SELECT')
+          and has_table_privilege('service_role', c.oid, 'INSERT')
+          and has_table_privilege('service_role', c.oid, 'UPDATE')
+          and has_table_privilege('service_role', c.oid, 'DELETE')
+        )
+      order by c.relname
+    `
+    expect(rows.map((row) => `${row['relname']} (${row['missing']})`)).toEqual([])
+  })
+
+  it('lets an anonymous caller resolve a null principal', async () => {
+    // Every page resolves a principal, including the sign-in page. If `anon`
+    // cannot call this, the whole unauthenticated surface returns 500.
+    const [row] = await db()<{ can_execute: boolean }[]>`
+      select has_function_privilege('anon', 'public.current_principal()', 'EXECUTE') as can_execute
+    `
+    expect(row!['can_execute']).toBe(true)
+  })
+
+  it('keeps the privileged database functions out of client reach', async () => {
+    const clientReachable = await db()<{ proname: string; grantee: string }[]>`
+      select p.proname, r.rolname as grantee
+      from pg_proc p
+      join pg_namespace n on n.oid = p.pronamespace
+      cross join (values ('anon'), ('authenticated')) as r(rolname)
+      where n.nspname = 'public'
+        and p.proname in (
+          'consume_rate_limit',
+          'prune_rate_limits',
+          'provision_investor_account',
+          'provision_admin_account',
+          'custom_access_token_hook'
+        )
+        and has_function_privilege(r.rolname, p.oid, 'EXECUTE')
+      order by 1, 2
+    `
+    expect(clientReachable.map((row) => `${row['proname']}:${row['grantee']}`)).toEqual([])
   })
 
   it('indexes every foreign key a policy filters on', async () => {

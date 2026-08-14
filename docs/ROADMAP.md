@@ -8,70 +8,73 @@ Legend: ☐ not started · ◐ in progress · ☑ done
 
 ---
 
-## Phase 0 — Foundation ☐
+## Phase 0 — Foundation ☑
 
 **Goal:** a repository that compiles, lints, and has a documented architecture.
 
-- ☐ Architecture documents (`docs/*`)
-- ☐ Next.js 15 + React 19 + TypeScript strict scaffold
-- ☐ pnpm, ESLint (flat config), Prettier, EditorConfig
-- ☐ `.gitignore`, `.env.example`, `README.md`
-- ☐ Environment validation (`src/lib/env.ts`)
-- ☐ Path aliases, import boundaries lint rule
-- ☐ Vitest + Playwright configured
+- ☑ Architecture documents (`docs/*`)
+- ☑ Next.js 15 + React 19 + TypeScript strict scaffold
+- ☑ pnpm, ESLint (flat config), Prettier, EditorConfig
+- ☑ `.gitignore`, `.env.example`, `README.md`
+- ☑ Environment validation (`src/lib/env.ts`)
+- ☑ Path aliases, import boundaries lint rule
+- ☑ Vitest + Playwright configured
 
 **Gate:** `pnpm typecheck && pnpm lint && pnpm build` green.
 
 ---
 
-## Phase 1 — Design System ☐
+## Phase 1 — Design System ☑
 
 **Goal:** a token-driven UI kit that all three surfaces consume.
 
-- ☐ Token layer (colour, type, space, radius, shadow, motion, z-index)
-- ☐ Light/dark + runtime-themeable CSS custom properties
-- ☐ Primitives: Button, Input, Textarea, Select, Checkbox, Radio, Switch, Label,
+- ☑ Token layer (colour, type, space, radius, shadow, motion, z-index)
+- ☑ Light/dark + runtime-themeable CSS custom properties
+- ☑ Primitives: Button, Input, Textarea, Select, Checkbox, Radio, Switch, Label,
   Field, Card, Badge, Alert, Avatar, Separator, Skeleton, Spinner
-- ☐ Composites: Table, Modal/Dialog, Drawer, Tabs, Dropdown, Tooltip, Toast,
+- ☑ Composites: Table, Modal/Dialog, Drawer, Tabs, Dropdown, Tooltip, Toast,
   Pagination, Breadcrumb, EmptyState, ErrorState, LoadingState, Stat
-- ☐ Layout: Sidebar, Topbar, PageHeader, Container, Stack, Grid
-- ☐ Accessibility baseline (focus rings, contrast, keyboard nav, reduced motion)
+- ☑ Layout: Sidebar, Topbar, PageHeader, Container, Stack, Grid
+- ☑ Accessibility baseline (focus rings, contrast, keyboard nav, reduced motion)
 
 **Gate:** design-system route renders every component in both themes; axe clean.
 
 ---
 
-## Phase 2 — Database & Security Core ☐
+## Phase 2 — Database & Security Core ☑
 
 **Goal:** the schema and the security model that everything else depends on.
 
-- ☐ Supabase local dev configured
-- ☐ Migrations: identity, RBAC, investors, documents, CMS, financials,
+- ☑ Supabase local dev configured
+- ☑ Migrations: identity, RBAC, investors, documents, CMS, financials,
   messaging, notifications, audit, storage metadata
-- ☐ Enum types, constraints, indexes, `updated_at` triggers
-- ☐ RLS enabled and deny-by-default on **every** table
-- ☐ `SECURITY DEFINER` authorisation helper functions
-- ☐ Seed: permission catalogue, Super Admin + Admin Internal roles
-- ☐ Generated `src/types/database.ts`
-- ☐ RLS suite — cross-investor isolation, privilege escalation, audit immutability
+- ☑ Enum types, constraints, indexes, `updated_at` triggers
+- ☑ RLS enabled and deny-by-default on **every** table
+- ☑ `SECURITY DEFINER` authorisation helper functions
+- ☑ Seed: permission catalogue, Super Admin + Admin Internal roles
+- ☑ Generated `src/types/database.ts`
+- ☑ RLS suite — cross-investor isolation, privilege escalation, audit immutability
 
 **Gate:** `pnpm test:db` green. Cross-tenant reads return zero rows, not errors.
 
 ---
 
-## Phase 3 — Authentication & RBAC Runtime ☐
+## Phase 3 — Authentication & RBAC Runtime ☑
 
 **Goal:** real sessions and real server-side authorisation.
 
-- ☐ Supabase browser/server/admin clients, `server-only` boundaries
-- ☐ Session middleware + refresh
-- ☐ Custom access-token hook (identity claims)
-- ☐ `Principal` resolution, `requirePermission`, `defineAction`, `defineRoute`
-- ☐ Sign-in, sign-out, password recovery, investor application flow
-- ☐ Admin provisioning (no public admin signup)
-- ☐ Audit logging on every privileged mutation
+- ☑ Supabase browser/server/admin clients, `server-only` boundaries
+- ☑ Session proxy + refresh (Next 16 renamed middleware to `proxy`)
+- ☑ Custom access-token hook (identity claims)
+- ☑ `Principal` resolution, `requirePermission`, `defineAction`, `defineRoute`
+- ☑ Sign-in, sign-out, password recovery, investor application flow
+- ☑ Admin provisioning + first-run setup page (no public admin signup)
+- ☑ Audit logging on every privileged mutation
 
-**Gate:** guard tests prove every entry point rejects under-privileged callers.
+**Gate:** the authorisation matrix is asserted for every access rule against
+every principal kind, in both directions (`src/server/auth/guards.test.ts`), and
+the auth surface is verified end-to-end in a real browser
+(`node scripts/smoke-auth.mjs`, 15/15).
 
 ---
 

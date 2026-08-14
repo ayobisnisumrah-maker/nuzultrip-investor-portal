@@ -193,12 +193,12 @@ public.user_accounts        ← account_type: 'admin' | 'investor'
 ```
 
 - Sessions are cookie-based, HTTP-only, `SameSite=Lax`, `Secure` in production,
-  refreshed in Next.js middleware.
+  refreshed in `src/proxy.ts` (what Next.js called middleware before v16).
 - **The `service_role` key exists only in server environment variables.** It is
   never sent to a browser, never in a `NEXT_PUBLIC_*` variable, and is used only
   by a narrow, explicitly-named set of server modules (auth-hook, storage broker,
   admin provisioning). Lint rule blocks the identifier outside `src/server/admin`.
-- Middleware performs **coarse** routing protection (is there a session? is the
+- The proxy performs **coarse** routing protection (is there a session? is the
   account type right for this prefix?). It is a UX affordance and a defence-in-
   depth layer — **never the authorisation decision**. Real checks happen in the
   entry point and in RLS.
@@ -383,7 +383,7 @@ make every route dynamic regardless:
 
 1. A **nonce-based Content-Security-Policy**. Next.js emits inline RSC payload
    scripts, so a CSP without `'unsafe-inline'` needs a per-request nonce, which
-   is generated in middleware. A nonce cannot be baked into a statically cached
+   is generated in the proxy. A nonce cannot be baked into a statically cached
    page.
 2. The **theme cookie**, read in the root layout so an explicit light/dark
    choice is correct in the first byte of HTML rather than flashing after

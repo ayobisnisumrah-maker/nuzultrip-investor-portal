@@ -1781,6 +1781,27 @@ export type Database = {
           },
         ]
       }
+      rate_limits: {
+        Row: {
+          bucket: string
+          hits: number
+          updated_at: string
+          window_started_at: string
+        }
+        Insert: {
+          bucket: string
+          hits?: number
+          updated_at?: string
+          window_started_at?: string
+        }
+        Update: {
+          bucket?: string
+          hits?: number
+          updated_at?: string
+          window_started_at?: string
+        }
+        Relationships: []
+      }
       role_permissions: {
         Row: {
           granted_at: string
@@ -1971,7 +1992,57 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      consume_rate_limit: {
+        Args: { p_bucket: string; p_limit: number; p_window_seconds: number }
+        Returns: {
+          allowed: boolean
+          remaining: number
+          retry_after_seconds: number
+        }[]
+      }
+      current_principal: { Args: never; Returns: Json }
+      custom_access_token_hook: { Args: { event: Json }; Returns: Json }
+      provision_admin_account: {
+        Args: {
+          p_created_by?: string
+          p_email: string
+          p_full_name: string
+          p_role_id: string
+          p_title?: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
+      provision_investor_account: {
+        Args: {
+          p_address?: string
+          p_application_note?: string
+          p_city?: string
+          p_country?: string
+          p_email: string
+          p_full_name: string
+          p_identity_number_hash?: string
+          p_investor_type: Database["public"]["Enums"]["investor_type"]
+          p_legal_name: string
+          p_organization_name?: string
+          p_organization_role?: string
+          p_phone?: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
+      prune_rate_limits: {
+        Args: { p_older_than_seconds?: number }
+        Returns: number
+      }
+      transition_investor: {
+        Args: {
+          p_investor_id: string
+          p_reason?: string
+          p_to_status: Database["public"]["Enums"]["investor_status"]
+        }
+        Returns: Database["public"]["Enums"]["investor_status"]
+      }
     }
     Enums: {
       account_status: "active" | "disabled"
