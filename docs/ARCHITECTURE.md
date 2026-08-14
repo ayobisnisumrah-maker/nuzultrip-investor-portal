@@ -55,7 +55,7 @@ sync problems and a false sense of security.
 
 | Concern                | Choice                                                                                           | Why                                                                                                                                                                                    |
 | ---------------------- | ------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Framework              | **Next.js 15 (App Router) + React 19**                                                           | Server Components let every permission check run server-side by default. One deployable unit for three surfaces. Streaming + partial prerendering suits a content-heavy public portal. |
+| Framework              | **Next.js 16 (App Router) + React 19**                                                           | Server Components let every permission check run server-side by default. One deployable unit for three surfaces. Streaming suits a content-heavy public portal.                        |
 | Language               | **TypeScript, `strict` + `noUncheckedIndexedAccess`**                                            | Non-negotiable for a system with money-adjacent data.                                                                                                                                  |
 | Database               | **PostgreSQL via Supabase**                                                                      | Row Level Security is the single most valuable feature available for "Investor A must never see Investor B". Mature, relational, migration-friendly.                                   |
 | Auth                   | **Supabase Auth (GoTrue)**                                                                       | Real sessions, real password hashing, MFA-capable, integrates with RLS via JWT claims.                                                                                                 |
@@ -372,11 +372,30 @@ model must have a license compatible with commercial use, recorded there.
 
 **Rendering strategy per surface:**
 
-| Surface       | Strategy                                                                                                                                              |
-| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Public portal | RSC + full-route cache, revalidated by **tag** (`portal:published`) when an admin publishes. Fast and cheap by default, instantly correct on publish. |
+| Surface       | Strategy                                                                                                                                             |
+| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Public portal | RSC, dynamically rendered, over a **tag-revalidated data cache** (`portal:published`). Cheap to render, instantly correct on publish.                 |
 | Investor      | Dynamic, always request-scoped. Never cached at the route level.                                                                                      |
 | Admin         | Dynamic, `no-store`.                                                                                                                                  |
+
+**Why the portal is not full-route cached.** Two request-scoped requirements
+make every route dynamic regardless:
+
+1. A **nonce-based Content-Security-Policy**. Next.js emits inline RSC payload
+   scripts, so a CSP without `'unsafe-inline'` needs a per-request nonce, which
+   is generated in middleware. A nonce cannot be baked into a statically cached
+   page.
+2. The **theme cookie**, read in the root layout so an explicit light/dark
+   choice is correct in the first byte of HTML rather than flashing after
+   hydration.
+
+Both were weighed against full-route caching and both won: a weakened CSP is a
+real security regression, and a theme flash is a visible defect on every page
+load. The performance that full-route caching would have bought is recovered at
+the **data layer** instead — CMS reads are cached and revalidated by the
+`portal:published` tag, so a portal render is a template render over
+already-cached data, not a database round-trip. HTML rendering is the cheap part;
+the queries were the expensive part, and those are still cached.
 
 **Mutations use Server Actions** as the default (co-located, typed, no manual
 fetch layer). **Route Handlers (`/api`) are used only where an HTTP endpoint is

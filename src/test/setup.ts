@@ -14,8 +14,9 @@ process.env.NEXT_PUBLIC_SITE_URL ??= 'http://localhost:3000'
 process.env.NEXT_PUBLIC_APP_ENV ??= 'development'
 
 // jsdom does not implement matchMedia; several design-system components read it
-// for theme and reduced-motion preferences.
-if (!window.matchMedia) {
+// for theme and reduced-motion preferences. Files that opt into the `node`
+// environment have no `window` at all, so guard before touching it.
+if (typeof window !== 'undefined' && !window.matchMedia) {
   window.matchMedia = (query: string): MediaQueryList =>
     ({
       matches: false,

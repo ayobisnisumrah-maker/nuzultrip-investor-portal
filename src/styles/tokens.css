@@ -1,0 +1,349 @@
+/**
+ * "Mizan" design tokens — the contract.
+ *
+ * This file is CANONICAL for colour. `src/ui/tokens/palette.ts` mirrors it for
+ * tests and for the CMS theme editor, and `palette.test.ts` fails if the two
+ * drift apart or if any semantic pairing falls below WCAG 2.2 AA.
+ *
+ * Layers:
+ *   1. Primitive ramps      — theme-independent, never used directly by components
+ *   2. Semantic roles       — what components consume; redefined per theme
+ *   3. Scales               — space, radius, elevation, motion, z-index
+ *
+ * See docs/DESIGN-SYSTEM.md.
+ */
+
+/* ========================================================================== */
+/* 1. Primitive ramps (OKLCH — perceptually even, predictable contrast)       */
+/* ========================================================================== */
+
+:root {
+  /* zamrud — emerald. Primary. Growth, life, continuity. */
+  --zamrud-50: oklch(0.972 0.015 168);
+  --zamrud-100: oklch(0.94 0.03 168);
+  --zamrud-200: oklch(0.88 0.055 168);
+  --zamrud-300: oklch(0.8 0.08 168);
+  --zamrud-400: oklch(0.7 0.1 168);
+  --zamrud-500: oklch(0.6 0.11 168);
+  --zamrud-600: oklch(0.51 0.1 168);
+  --zamrud-700: oklch(0.42 0.085 168);
+  --zamrud-800: oklch(0.33 0.065 168);
+  --zamrud-900: oklch(0.25 0.05 168);
+  --zamrud-950: oklch(0.17 0.035 168);
+
+  /* emas — gold. Accent. Value, craft, significance. Used sparingly. */
+  --emas-100: oklch(0.945 0.04 88);
+  --emas-200: oklch(0.895 0.07 88);
+  --emas-300: oklch(0.845 0.1 88);
+  --emas-400: oklch(0.79 0.12 86);
+  --emas-500: oklch(0.74 0.13 84);
+  --emas-600: oklch(0.66 0.12 82);
+  --emas-700: oklch(0.55 0.1 80);
+  --emas-800: oklch(0.44 0.08 78);
+  --emas-850: oklch(0.505 0.095 79);
+
+  /* sakinah — neutral, faintly green-cast so it sits with the primary.
+     The darkest step is a deep green-black, never #000. */
+  --sakinah-0: oklch(1 0 0);
+  --sakinah-25: oklch(0.99 0.003 170);
+  --sakinah-50: oklch(0.975 0.005 170);
+  --sakinah-100: oklch(0.95 0.007 170);
+  --sakinah-200: oklch(0.9 0.009 170);
+  --sakinah-300: oklch(0.83 0.011 170);
+  --sakinah-400: oklch(0.68 0.012 170);
+  --sakinah-450: oklch(0.645 0.013 171);
+  --sakinah-500: oklch(0.525 0.015 172);
+  --sakinah-600: oklch(0.46 0.014 172);
+  --sakinah-700: oklch(0.37 0.016 174);
+  --sakinah-800: oklch(0.325 0.018 176);
+  --sakinah-850: oklch(0.275 0.019 177);
+  --sakinah-900: oklch(0.235 0.02 178);
+  --sakinah-925: oklch(0.19 0.021 179);
+  --sakinah-950: oklch(0.155 0.021 180);
+  --sakinah-975: oklch(0.125 0.02 180);
+
+  /* Semantic ramps */
+  --rose-100: oklch(0.94 0.03 25);
+  --rose-200: oklch(0.89 0.06 25);
+  --rose-300: oklch(0.8 0.11 25);
+  --rose-400: oklch(0.7 0.16 25);
+  --rose-500: oklch(0.6 0.19 25);
+  --rose-600: oklch(0.52 0.19 25);
+  --rose-700: oklch(0.44 0.16 25);
+  --rose-900: oklch(0.26 0.09 25);
+  --rose-950: oklch(0.19 0.06 25);
+
+  --amber-100: oklch(0.95 0.04 75);
+  --amber-200: oklch(0.9 0.08 75);
+  --amber-300: oklch(0.84 0.12 72);
+  --amber-400: oklch(0.78 0.14 70);
+  --amber-500: oklch(0.7 0.15 68);
+  --amber-600: oklch(0.6 0.13 65);
+  --amber-700: oklch(0.5 0.11 62);
+  --amber-900: oklch(0.3 0.06 62);
+  --amber-950: oklch(0.22 0.045 62);
+
+  --azure-100: oklch(0.94 0.03 240);
+  --azure-200: oklch(0.89 0.055 240);
+  --azure-300: oklch(0.8 0.09 244);
+  --azure-400: oklch(0.7 0.12 245);
+  --azure-500: oklch(0.62 0.15 250);
+  --azure-600: oklch(0.5 0.155 252);
+  --azure-700: oklch(0.42 0.135 252);
+  --azure-900: oklch(0.27 0.08 252);
+  --azure-950: oklch(0.2 0.06 252);
+}
+
+/* ========================================================================== */
+/* 2. Semantic roles — LIGHT (the default)                                   */
+/* ========================================================================== */
+
+:root {
+  --c-canvas: var(--sakinah-50);
+  --c-surface: var(--sakinah-0);
+  --c-elevated: var(--sakinah-0);
+  --c-sunken: var(--sakinah-100);
+  --c-inverse: var(--sakinah-925);
+
+  --c-fg: var(--sakinah-950);
+  --c-fg-muted: var(--sakinah-600);
+  --c-fg-subtle: var(--sakinah-500);
+  --c-fg-inverse: var(--sakinah-50);
+
+  /* `border` is a hairline divider (decorative — 3:1 not required).
+     `border-strong` is for UI boundaries such as input outlines, and meets 3:1. */
+  --c-border: var(--sakinah-200);
+  --c-border-strong: var(--sakinah-450);
+  --c-border-subtle: var(--sakinah-100);
+
+  --c-primary: var(--zamrud-600);
+  --c-primary-hover: var(--zamrud-700);
+  --c-primary-active: var(--zamrud-800);
+  --c-primary-subtle: var(--zamrud-50);
+  --c-primary-border: var(--zamrud-200);
+  --c-on-primary: var(--sakinah-0);
+
+  --c-accent: var(--emas-850);
+  --c-accent-solid: var(--emas-500);
+  --c-accent-hover: var(--emas-600);
+  --c-accent-subtle: var(--emas-100);
+  --c-accent-border: var(--emas-200);
+  --c-on-accent: var(--sakinah-975);
+
+  --c-success: var(--zamrud-600);
+  --c-success-fg: var(--zamrud-700);
+  --c-success-subtle: var(--zamrud-50);
+  --c-success-border: var(--zamrud-200);
+
+  --c-warning: var(--amber-500);
+  --c-warning-fg: var(--amber-700);
+  --c-warning-subtle: var(--amber-100);
+  --c-warning-border: var(--amber-200);
+
+  --c-danger: var(--rose-600);
+  --c-danger-fg: var(--rose-600);
+  --c-danger-hover: var(--rose-700);
+  --c-danger-subtle: var(--rose-100);
+  --c-danger-border: var(--rose-200);
+
+  --c-info: var(--azure-600);
+  --c-info-fg: var(--azure-600);
+  --c-info-subtle: var(--azure-100);
+  --c-info-border: var(--azure-200);
+
+  --c-ring: var(--zamrud-600);
+  --c-overlay: oklch(0.155 0.021 180 / 0.5);
+
+  /* Shadows are tinted with the deep neutral, never pure black. */
+  --shadow-tint: 3 15 12;
+  --shadow-alpha-contact: 0.06;
+  --shadow-alpha-ambient: 0.08;
+
+  color-scheme: light;
+}
+
+/* ========================================================================== */
+/* 2b. Semantic roles — DARK                                                 */
+/*     Elevation is expressed by surface lightness; shadows are reduced.      */
+/* ========================================================================== */
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --c-canvas: var(--sakinah-925);
+    --c-surface: var(--sakinah-900);
+    --c-elevated: var(--sakinah-850);
+    --c-sunken: var(--sakinah-950);
+    --c-inverse: var(--sakinah-50);
+
+    --c-fg: var(--sakinah-50);
+    --c-fg-muted: var(--sakinah-300);
+    --c-fg-subtle: var(--sakinah-400);
+    --c-fg-inverse: var(--sakinah-950);
+
+    --c-border: var(--sakinah-800);
+    --c-border-strong: var(--sakinah-500);
+    --c-border-subtle: var(--sakinah-850);
+
+    --c-primary: var(--zamrud-400);
+    --c-primary-hover: var(--zamrud-300);
+    --c-primary-active: var(--zamrud-200);
+    --c-primary-subtle: oklch(0.26 0.045 168);
+    --c-primary-border: oklch(0.38 0.06 168);
+    --c-on-primary: var(--sakinah-975);
+
+    --c-accent: var(--emas-400);
+    --c-accent-solid: var(--emas-500);
+    --c-accent-hover: var(--emas-300);
+    --c-accent-subtle: oklch(0.28 0.05 84);
+    --c-accent-border: oklch(0.4 0.07 84);
+    --c-on-accent: var(--sakinah-975);
+
+    --c-success: var(--zamrud-500);
+    --c-success-fg: var(--zamrud-300);
+    --c-success-subtle: oklch(0.26 0.045 168);
+    --c-success-border: oklch(0.38 0.06 168);
+
+    --c-warning: var(--amber-500);
+    --c-warning-fg: var(--amber-300);
+    --c-warning-subtle: oklch(0.28 0.05 68);
+    --c-warning-border: oklch(0.4 0.07 68);
+
+    --c-danger: var(--rose-500);
+    --c-danger-fg: var(--rose-300);
+    --c-danger-hover: var(--rose-400);
+    --c-danger-subtle: oklch(0.27 0.06 25);
+    --c-danger-border: oklch(0.4 0.09 25);
+
+    --c-info: var(--azure-500);
+    --c-info-fg: var(--azure-300);
+    --c-info-subtle: oklch(0.26 0.055 252);
+    --c-info-border: oklch(0.38 0.08 252);
+
+    --c-ring: var(--zamrud-400);
+    --c-overlay: oklch(0.09 0.015 180 / 0.66);
+
+    --shadow-tint: 0 0 0;
+    --shadow-alpha-contact: 0.3;
+    --shadow-alpha-ambient: 0.35;
+
+    color-scheme: dark;
+  }
+}
+
+/* Explicit user choice wins over the system preference, in both directions. */
+:root[data-theme='dark'] {
+  --c-canvas: var(--sakinah-925);
+  --c-surface: var(--sakinah-900);
+  --c-elevated: var(--sakinah-850);
+  --c-sunken: var(--sakinah-950);
+  --c-inverse: var(--sakinah-50);
+
+  --c-fg: var(--sakinah-50);
+  --c-fg-muted: var(--sakinah-300);
+  --c-fg-subtle: var(--sakinah-400);
+  --c-fg-inverse: var(--sakinah-950);
+
+  --c-border: var(--sakinah-800);
+  --c-border-strong: var(--sakinah-500);
+  --c-border-subtle: var(--sakinah-850);
+
+  --c-primary: var(--zamrud-400);
+  --c-primary-hover: var(--zamrud-300);
+  --c-primary-active: var(--zamrud-200);
+  --c-primary-subtle: oklch(0.26 0.045 168);
+  --c-primary-border: oklch(0.38 0.06 168);
+  --c-on-primary: var(--sakinah-975);
+
+  --c-accent: var(--emas-400);
+  --c-accent-solid: var(--emas-500);
+  --c-accent-hover: var(--emas-300);
+  --c-accent-subtle: oklch(0.28 0.05 84);
+  --c-accent-border: oklch(0.4 0.07 84);
+  --c-on-accent: var(--sakinah-975);
+
+  --c-success: var(--zamrud-500);
+  --c-success-fg: var(--zamrud-300);
+  --c-success-subtle: oklch(0.26 0.045 168);
+  --c-success-border: oklch(0.38 0.06 168);
+
+  --c-warning: var(--amber-500);
+  --c-warning-fg: var(--amber-300);
+  --c-warning-subtle: oklch(0.28 0.05 68);
+  --c-warning-border: oklch(0.4 0.07 68);
+
+  --c-danger: var(--rose-500);
+  --c-danger-fg: var(--rose-300);
+  --c-danger-hover: var(--rose-400);
+  --c-danger-subtle: oklch(0.27 0.06 25);
+  --c-danger-border: oklch(0.4 0.09 25);
+
+  --c-info: var(--azure-500);
+  --c-info-fg: var(--azure-300);
+  --c-info-subtle: oklch(0.26 0.055 252);
+  --c-info-border: oklch(0.38 0.08 252);
+
+  --c-ring: var(--zamrud-400);
+  --c-overlay: oklch(0.09 0.015 180 / 0.66);
+
+  --shadow-tint: 0 0 0;
+  --shadow-alpha-contact: 0.3;
+  --shadow-alpha-ambient: 0.35;
+
+  color-scheme: dark;
+}
+
+/* ========================================================================== */
+/* 3. Scales                                                                 */
+/* ========================================================================== */
+
+:root {
+  /* Radius. `--radius-scale` is the only knob the CMS theme editor may turn:
+     sharp = 0.5, balanced = 1, soft = 1.4. */
+  --radius-scale: 1;
+  --r-xs: calc(4px * var(--radius-scale));
+  --r-sm: calc(6px * var(--radius-scale));
+  --r-md: calc(10px * var(--radius-scale));
+  --r-lg: calc(14px * var(--radius-scale));
+  --r-xl: calc(20px * var(--radius-scale));
+  --r-2xl: calc(28px * var(--radius-scale));
+
+  /* Elevation — layered: a tight contact shadow plus a wide ambient one. */
+  --e-flat: none;
+  --e-raised:
+    0 1px 2px rgb(var(--shadow-tint) / var(--shadow-alpha-contact)),
+    0 2px 8px -2px rgb(var(--shadow-tint) / var(--shadow-alpha-ambient));
+  --e-overlay:
+    0 2px 4px rgb(var(--shadow-tint) / var(--shadow-alpha-contact)),
+    0 8px 24px -4px rgb(var(--shadow-tint) / var(--shadow-alpha-ambient));
+  --e-modal:
+    0 4px 8px rgb(var(--shadow-tint) / var(--shadow-alpha-contact)),
+    0 24px 56px -12px rgb(var(--shadow-tint) / calc(var(--shadow-alpha-ambient) * 1.4));
+  --e-top:
+    0 6px 12px rgb(var(--shadow-tint) / var(--shadow-alpha-contact)),
+    0 32px 72px -16px rgb(var(--shadow-tint) / calc(var(--shadow-alpha-ambient) * 1.6));
+
+  /* Motion. Anything slower than `fast` is suppressed under reduced motion. */
+  --d-instant: 80ms;
+  --d-fast: 140ms;
+  --d-base: 220ms;
+  --d-slow: 340ms;
+  --d-deliberate: 560ms;
+  --ease-out-quart: cubic-bezier(0.2, 0, 0, 1);
+  --ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Z-index — no arbitrary values anywhere in the codebase. */
+  --z-base: 0;
+  --z-raised: 10;
+  --z-sticky: 100;
+  --z-drawer: 200;
+  --z-overlay: 300;
+  --z-modal: 400;
+  --z-popover: 500;
+  --z-toast: 600;
+  --z-tooltip: 700;
+
+  /* Section rhythm for the public portal (fluid mobile → desktop). */
+  --section-sm: clamp(4rem, 8vw, 6rem);
+  --section-md: clamp(6rem, 11vw, 9rem);
+  --section-lg: clamp(8rem, 14vw, 12rem);
+}
