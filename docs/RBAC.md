@@ -55,28 +55,44 @@ A drift test asserts the database catalogue matches the code catalogue exactly.
 | `company_profile`    | `view`, `update`, `publish`                                                                     |
 | `financial_reports`  | `view`, `create`, `update`, `delete`, `review`, `approve`, `publish`                            |
 | `financial_periods`  | `view`, `create`, `update`, `close`                                                             |
-| `investor_reports`   | `view`, `create`, `update`, `publish`                                                           |
 | `portal`             | `view`, `update`, `publish`, `manage_theme`, `manage_navigation`, `manage_hero`, `manage_cta`   |
 | `media`              | `view`, `upload`, `update`, `delete`                                                            |
 | `messages`           | `view`, `send`, `broadcast`, `close_thread`                                                     |
 | `inquiries`          | `view`, `handle`, `convert`                                                                     |
-| `notifications`      | `view`, `send`                                                                                  |
 | `admins`             | `view`, `create`, `update`, `disable`, `reset_password`                                         |
 | `roles`              | `view`, `create`, `update`, `delete`, `assign`                                                  |
 | `permissions`        | `view`                                                                                          |
 | `audit_logs`         | `view`, `export`                                                                                |
 | `settings`           | `view`, `update`                                                                                |
 
-`is_dangerous` permissions (`investors.delete`, `admins.create`, `roles.update`,
-`roles.assign`, `settings.update`, `financial_reports.publish`) are visually
-flagged in the role editor and always audited.
+**Deliberately absent.** Investor reports and business updates are _documents_
+(`document_kind`), governed by `documents.*` rather than a parallel module.
+Notifications are personal and governed by ownership, not by a permission — an
+admin who needs to know what a user was told reads the audit log. Modelling
+either twice would create two answers to the same question.
+
+`is_dangerous` permissions are visually flagged in the role editor and always
+audited: `investors.delete`, `investors.approve`, `investors.export`,
+`documents.publish`, `company_profile.publish`, `financial_periods.close`,
+`financial_reports.publish`, `portal.publish`, `messages.broadcast`,
+`admins.create`, `admins.disable`, `admins.reset_password`, `roles.create`,
+`roles.update`, `roles.delete`, `roles.assign`, `audit_logs.export`,
+`settings.update`.
 
 ### Seeded system roles
 
-| Role             | Permissions                                                                                                                       |
-| ---------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| `super_admin`    | all (implicit)                                                                                                                    |
-| `admin_internal` | everything **except** `admins.*`, `roles.create/update/delete/assign`, `settings.update`, `investors.delete`, `audit_logs.export` |
+| Role             | Permissions                                                                                                                                                                              |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `super_admin`    | all (implicit)                                                                                                                                                                           |
+| `admin_internal` | everything **except** `admins.create/update/disable/reset_password`, `roles.create/update/delete/assign`, `settings.update`, `investors.delete`, `investors.export`, `audit_logs.export` |
+
+`admins.view` is deliberately _not_ withheld from `admin_internal`: seeing who
+your colleagues are is benign, and it is needed in order to assign a relationship
+manager.
+
+The set is expressed as an **exclusion list** rather than an allow-list, so a
+newly added permission reaches the operational role by default. An allow-list
+would silently leave every new feature unusable until someone noticed.
 
 Custom roles are created freely from the catalogue.
 
@@ -94,11 +110,18 @@ Non-negotiable rules, enforced in the service layer **and** by database triggers
 4. **You cannot change your own `role_id`.**
 5. **You cannot disable yourself** (prevents accidental lockout) or the last
    active Super Admin.
-6. `roles.assign` is a separate permission from `roles.update` — being able to
+6. **Only a Super Admin may confer the Super Admin role.** This one needs
+   stating separately, because it is not implied by rule 2. `super_admin` holds
+   every permission _implicitly_ and therefore has no `role_permissions` rows at
+   all — so a "does the target role hold anything I lack?" comparison finds
+   nothing to object to and would happily let a lesser admin grant it. The check
+   is explicit in `app.assert_role_assignable`.
+7. `roles.assign` is a separate permission from `roles.update` — being able to
    _define_ a role and being able to _hand it to someone_ are different powers.
 
-Each rule has a dedicated test in `src/core/rbac/__tests__` and a pgTAP
-counterpart, because these are the failure modes that matter most.
+Each rule has a dedicated test in `tests/integration/rls-guards.test.ts`, run
+against the database itself, because these are the failure modes that matter
+most.
 
 ---
 
@@ -238,5 +261,5 @@ documentation says, in the file, that it is not a security boundary.
 | Catalogue drift     | DB `permissions` ≡ code catalogue                                                                  |
 | Guard matrix        | For each entry point × each seeded role: allowed/denied as specified                               |
 | Escalation suite    | All six guards in §3 reject                                                                        |
-| RLS suite (pgTAP)   | Every table denies an unprivileged principal, with the DB as the only enforcement layer under test |
+| RLS suite           | Every table denies an unprivileged principal, with the DB as the only enforcement layer under test |
 | Super Admin lockout | Last super admin cannot be disabled/demoted                                                        |

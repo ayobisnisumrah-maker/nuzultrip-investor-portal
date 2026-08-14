@@ -67,7 +67,7 @@ export function DropdownMenuCheckboxItem({
     <DropdownMenuPrimitive.CheckboxItem className={cn(menuItem, 'pl-8', className)} {...props}>
       <span className="absolute left-2.5 grid place-items-center">
         <DropdownMenuPrimitive.ItemIndicator>
-          <Check aria-hidden="true" className="size-4 text-primary" />
+          <Check aria-hidden="true" className="text-primary size-4" />
         </DropdownMenuPrimitive.ItemIndicator>
       </span>
       {children}
@@ -81,7 +81,7 @@ export function DropdownMenuLabel({
 }: React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Label>) {
   return (
     <DropdownMenuPrimitive.Label
-      className={cn('px-2.5 py-1.5 text-overline text-fg-subtle uppercase', className)}
+      className={cn('text-overline text-fg-subtle px-2.5 py-1.5 uppercase', className)}
       {...props}
     />
   )
@@ -92,7 +92,10 @@ export function DropdownMenuSeparator({
   ...props
 }: React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Separator>) {
   return (
-    <DropdownMenuPrimitive.Separator className={cn('-mx-1 my-1 h-px bg-border', className)} {...props} />
+    <DropdownMenuPrimitive.Separator
+      className={cn('bg-border -mx-1 my-1 h-px', className)}
+      {...props}
+    />
   )
 }
 
@@ -107,9 +110,9 @@ export function TabsList({
   return (
     <TabsPrimitive.List
       className={cn(
-        'flex w-full gap-1 overflow-x-auto border-b border-border',
+        'border-border flex w-full gap-1 overflow-x-auto border-b',
         // Horizontal scroll on small viewports beats wrapping or truncating.
-        '-mx-1 px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
+        '-mx-1 [scrollbar-width:none] px-1 [&::-webkit-scrollbar]:hidden',
         className,
       )}
       {...props}
@@ -124,9 +127,9 @@ export function TabsTrigger({
   return (
     <TabsPrimitive.Trigger
       className={cn(
-        'relative shrink-0 px-3 py-2.5 text-body-sm font-medium whitespace-nowrap',
+        'text-body-sm relative shrink-0 px-3 py-2.5 font-medium whitespace-nowrap',
         'text-fg-muted transition-colors duration-(--d-fast)',
-        'outline-none focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring',
+        'focus-visible:outline-ring outline-none focus-visible:outline-2 focus-visible:outline-offset-[-2px]',
         'hover:text-fg',
         'data-[state=active]:text-fg',
         // The active indicator is gold: it marks where you are, which is one of
@@ -146,7 +149,10 @@ export function TabsContent({
 }: React.ComponentPropsWithoutRef<typeof TabsPrimitive.Content>) {
   return (
     <TabsPrimitive.Content
-      className={cn('pt-5 outline-none focus-visible:outline-2 focus-visible:outline-ring', className)}
+      className={cn(
+        'focus-visible:outline-ring pt-5 outline-none focus-visible:outline-2',
+        className,
+      )}
       {...props}
     />
   )
@@ -169,7 +175,7 @@ export function TooltipContent({
       <TooltipPrimitive.Content
         sideOffset={sideOffset}
         className={cn(
-          'z-tooltip max-w-64 rounded-sm bg-inverse px-2.5 py-1.5 text-caption text-fg-inverse shadow-overlay',
+          'z-tooltip bg-inverse text-caption text-fg-inverse shadow-overlay max-w-64 rounded-sm px-2.5 py-1.5',
           className,
         )}
         {...props}

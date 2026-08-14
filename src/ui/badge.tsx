@@ -39,13 +39,7 @@ export function Badge({ className, tone, size, ...props }: BadgeProps) {
  * A badge with a leading dot. Status is never communicated by colour alone —
  * the text label always carries the meaning; the dot and tone reinforce it.
  */
-export function StatusBadge({
-  className,
-  tone,
-  size,
-  children,
-  ...props
-}: BadgeProps) {
+export function StatusBadge({ className, tone, size, children, ...props }: BadgeProps) {
   return (
     <span className={cn(badgeVariants({ tone, size }), className)} {...props}>
       <span aria-hidden="true" className="size-1.5 shrink-0 rounded-full bg-current" />

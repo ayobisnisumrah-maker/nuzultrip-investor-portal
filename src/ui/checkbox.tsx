@@ -16,7 +16,7 @@ export function Checkbox({
   return (
     <CheckboxPrimitive.Root
       className={cn(
-        'peer size-5 shrink-0 rounded-xs border border-border-strong bg-surface',
+        'peer border-border-strong bg-surface size-5 shrink-0 rounded-xs border',
         'transition-colors duration-(--d-fast)',
         'data-[state=checked]:border-primary data-[state=checked]:bg-primary data-[state=checked]:text-on-primary',
         'data-[state=indeterminate]:border-primary data-[state=indeterminate]:bg-primary data-[state=indeterminate]:text-on-primary',
@@ -46,7 +46,7 @@ export function Radio({
   return (
     <RadioGroupPrimitive.Item
       className={cn(
-        'size-5 shrink-0 rounded-full border border-border-strong bg-surface',
+        'border-border-strong bg-surface size-5 shrink-0 rounded-full border',
         'transition-colors duration-(--d-fast)',
         'data-[state=checked]:border-primary',
         'disabled:cursor-not-allowed disabled:opacity-50',
@@ -56,7 +56,7 @@ export function Radio({
       {...props}
     >
       <RadioGroupPrimitive.Indicator className="grid size-full place-items-center">
-        <span className="size-2.5 rounded-full bg-primary" />
+        <span className="bg-primary size-2.5 rounded-full" />
       </RadioGroupPrimitive.Indicator>
     </RadioGroupPrimitive.Item>
   )
@@ -80,7 +80,7 @@ export function Switch({
     >
       <SwitchPrimitive.Thumb
         className={cn(
-          'pointer-events-none block size-5 rounded-full bg-surface shadow-raised',
+          'bg-surface shadow-raised pointer-events-none block size-5 rounded-full',
           'translate-x-0.5 transition-transform duration-(--d-fast) ease-(--ease-out-quart)',
           'data-[state=checked]:translate-x-[1.375rem]',
         )}
@@ -107,7 +107,7 @@ export function ChoiceRow({
     <div className={cn('flex items-start gap-3 py-1.5', className)}>
       <div className="mt-0.5">{control}</div>
       <div className="flex flex-col gap-0.5">
-        <label htmlFor={htmlFor} className="cursor-pointer text-body-sm font-medium text-fg">
+        <label htmlFor={htmlFor} className="text-body-sm text-fg cursor-pointer font-medium">
           {label}
         </label>
         {hint ? <span className="text-caption text-fg-subtle">{hint}</span> : null}

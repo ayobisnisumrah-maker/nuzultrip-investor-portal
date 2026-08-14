@@ -38,7 +38,7 @@ export function MoneyValue({
   return (
     <span
       className={cn(
-        'font-mono tabular whitespace-nowrap',
+        'tabular font-mono whitespace-nowrap',
         isNegative && emphasiseNegative && 'text-danger-fg',
         className,
       )}
@@ -64,23 +64,20 @@ export function DeltaValue({
 }) {
   const direction = ratio > 0 ? 'up' : ratio < 0 ? 'down' : 'flat'
   const positive = invertSentiment ? ratio < 0 : ratio > 0
-  const Icon = direction === 'up' ? ArrowUpRight : direction === 'down' ? ArrowDownRight : ArrowRight
+  const Icon =
+    direction === 'up' ? ArrowUpRight : direction === 'down' ? ArrowDownRight : ArrowRight
 
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1 font-mono text-body-sm tabular whitespace-nowrap',
-        direction === 'flat'
-          ? 'text-fg-subtle'
-          : positive
-            ? 'text-success-fg'
-            : 'text-danger-fg',
+        'text-body-sm tabular inline-flex items-center gap-1 font-mono whitespace-nowrap',
+        direction === 'flat' ? 'text-fg-subtle' : positive ? 'text-success-fg' : 'text-danger-fg',
         className,
       )}
     >
       <Icon aria-hidden="true" className="size-3.5 shrink-0" />
       {formatSignedPercent(ratio)}
-      {label ? <span className="font-sans text-caption text-fg-subtle">{label}</span> : null}
+      {label ? <span className="text-caption text-fg-subtle font-sans">{label}</span> : null}
     </span>
   )
 }
@@ -126,8 +123,8 @@ export function StatCard({
   return (
     <Card padding="sm" className={cn('flex flex-col gap-2', className)}>
       <div className="flex items-start justify-between gap-3">
-        <p className="overline text-fg-subtle">{label}</p>
-        {icon ? <span className="shrink-0 text-fg-subtle">{icon}</span> : null}
+        <p className="text-fg-subtle overline">{label}</p>
+        {icon ? <span className="text-fg-subtle shrink-0">{icon}</span> : null}
       </div>
       <p className="text-heading-xl text-fg">{value}</p>
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
@@ -157,5 +154,5 @@ export function DetailRow({
 }
 
 export function DetailList({ className, ...props }: React.ComponentPropsWithoutRef<'dl'>) {
-  return <dl className={cn('divide-y divide-border', className)} {...props} />
+  return <dl className={cn('divide-border divide-y', className)} {...props} />
 }

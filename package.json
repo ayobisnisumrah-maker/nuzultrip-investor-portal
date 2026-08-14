@@ -19,8 +19,8 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "test": "vitest run",
-    "test:watch": "vitest",
+    "test": "vitest run src",
+    "test:watch": "vitest src",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "db:start": "supabase start",
@@ -28,8 +28,9 @@
     "db:reset": "supabase db reset",
     "db:diff": "supabase db diff",
     "db:types": "node scripts/generate-db-types.mjs",
-    "db:test": "supabase test db",
-    "verify": "pnpm typecheck && pnpm lint && pnpm test && pnpm build"
+    "test:db": "supabase db reset && vitest run tests/integration --no-file-parallelism",
+    "test:db:only": "vitest run tests/integration --no-file-parallelism",
+    "verify": "pnpm typecheck && pnpm lint && pnpm test && pnpm test:db && pnpm build"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.14",
@@ -82,6 +83,7 @@
     "eslint-config-prettier": "^10.1.8",
     "globals": "^16.5.0",
     "jsdom": "^30.0.1",
+    "postgres": "^3.4.9",
     "prettier": "^3.9.6",
     "prettier-plugin-tailwindcss": "^0.7.2",
     "tailwindcss": "^4.3.3",

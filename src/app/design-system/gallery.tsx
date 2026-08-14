@@ -43,13 +43,7 @@ import {
 } from '@/ui/menu'
 import { Breadcrumb, Pagination } from '@/ui/navigation'
 import { Avatar, Kbd, Overline, Separator, Skeleton } from '@/ui/primitives'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/ui/select'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import {
   EmptyState,
   ErrorState,
@@ -75,7 +69,7 @@ function Block({
   children: React.ReactNode
 }) {
   return (
-    <section className="flex flex-col gap-4 border-t border-border pt-8">
+    <section className="border-border flex flex-col gap-4 border-t pt-8">
       <div className="flex flex-col gap-1">
         <h2 className="text-heading-lg text-fg">{title}</h2>
         {description ? <p className="text-body-sm text-fg-muted">{description}</p> : null}
@@ -100,9 +94,27 @@ type DemoRow = {
  * component, and never presented as real records anywhere in the product.
  */
 const DEMO_ROWS: readonly DemoRow[] = [
-  { id: '1', name: 'Contoh Investor Satu', reference: 'NTI-2026-0001', status: 'active', amount: '250000000' },
-  { id: '2', name: 'Contoh Investor Dua', reference: 'NTI-2026-0002', status: 'under_review', amount: '0' },
-  { id: '3', name: 'Contoh Institusi Tiga', reference: 'NTI-2026-0003', status: 'approved', amount: '1750000000' },
+  {
+    id: '1',
+    name: 'Contoh Investor Satu',
+    reference: 'NTI-2026-0001',
+    status: 'active',
+    amount: '250000000',
+  },
+  {
+    id: '2',
+    name: 'Contoh Investor Dua',
+    reference: 'NTI-2026-0002',
+    status: 'under_review',
+    amount: '0',
+  },
+  {
+    id: '3',
+    name: 'Contoh Institusi Tiga',
+    reference: 'NTI-2026-0003',
+    status: 'approved',
+    amount: '1750000000',
+  },
 ]
 
 const DEMO_COLUMNS: ReadonlyArray<Column<DemoRow>> = [
@@ -110,9 +122,13 @@ const DEMO_COLUMNS: ReadonlyArray<Column<DemoRow>> = [
   {
     id: 'reference',
     header: 'Kode',
-    cell: (row) => <span className="font-mono text-caption">{row.reference}</span>,
+    cell: (row) => <span className="text-caption font-mono">{row.reference}</span>,
   },
-  { id: 'status', header: 'Status', cell: (row) => <InvestorStatusPill status={row.status} size="sm" /> },
+  {
+    id: 'status',
+    header: 'Status',
+    cell: (row) => <InvestorStatusPill status={row.status} size="sm" />,
+  },
   {
     id: 'amount',
     header: 'Komitmen',
@@ -156,19 +172,25 @@ function GalleryBody() {
         >
           <Grid min="11rem" gap={3}>
             {SEMANTIC_ROLES.filter((role) => role !== 'overlay').map((role) => (
-              <div key={role} className="flex items-center gap-3 rounded-md border border-border p-2">
+              <div
+                key={role}
+                className="border-border flex items-center gap-3 rounded-md border p-2"
+              >
                 <span
-                  className="size-9 shrink-0 rounded-sm border border-border"
+                  className="border-border size-9 shrink-0 rounded-sm border"
                   style={{ background: `var(--c-${role})` }}
                 />
-                <code className="min-w-0 truncate text-caption text-fg-muted">{role}</code>
+                <code className="text-caption text-fg-muted min-w-0 truncate">{role}</code>
               </div>
             ))}
           </Grid>
         </Block>
 
         {/* -------------------------------------------------------- typography */}
-        <Block title="Tipografi" description="Newsreader untuk display, Plus Jakarta Sans untuk antarmuka, JetBrains Mono untuk angka.">
+        <Block
+          title="Tipografi"
+          description="Newsreader untuk display, Plus Jakarta Sans untuk antarmuka, JetBrains Mono untuk angka."
+        >
           <Stack gap={3}>
             <Overline tone="accent">Overline · eyebrow</Overline>
             <p className="font-display text-display-2xl text-fg">Display 2XL</p>
@@ -178,13 +200,13 @@ function GalleryBody() {
             <p className="text-heading-lg text-fg">Heading LG</p>
             <p className="text-heading-md text-fg">Heading MD</p>
             <p className="text-body-lg text-fg">Body LG — teks pengantar yang lebih besar.</p>
-            <p className="max-w-prose text-body text-fg-muted">
+            <p className="text-body text-fg-muted max-w-prose">
               Body — Nuzultrip membangun hubungan jangka panjang dengan investor melalui informasi
               yang transparan dan terukur. Berjalan bersama dan berkembang bersama.
             </p>
             <p className="text-body-sm text-fg-muted">Body SM — teks pendukung.</p>
             <p className="text-caption text-fg-subtle">Caption — metadata dan keterangan.</p>
-            <p className="font-mono tabular text-body-sm text-fg">1.234.567,89 · NTI-2026-0142</p>
+            <p className="tabular text-body-sm text-fg font-mono">1.234.567,89 · NTI-2026-0142</p>
           </Stack>
         </Block>
 
@@ -228,7 +250,10 @@ function GalleryBody() {
         </Block>
 
         {/* ------------------------------------------------------------- forms */}
-        <Block title="Formulir" description="Label, petunjuk, dan pesan galat selalu terhubung ke kontrolnya.">
+        <Block
+          title="Formulir"
+          description="Label, petunjuk, dan pesan galat selalu terhubung ke kontrolnya."
+        >
           <Grid min="18rem" gap={5}>
             <Field label="Nama lengkap" hint="Sesuai dokumen identitas." required>
               <Input placeholder="Nama lengkap" />
@@ -296,7 +321,10 @@ function GalleryBody() {
         </Block>
 
         {/* ------------------------------------------------------------ status */}
-        <Block title="Status domain" description="Warna selalu disertai label — makna tidak pernah bergantung pada warna saja.">
+        <Block
+          title="Status domain"
+          description="Warna selalu disertai label — makna tidak pernah bergantung pada warna saja."
+        >
           <Stack gap={4}>
             <Inline gap={2}>
               {INVESTOR_STATUSES.map((status) => (
@@ -356,14 +384,20 @@ function GalleryBody() {
             <Inline>
               <Button
                 variant="secondary"
-                onClick={() => push({ tone: 'success', title: 'Tersimpan', description: 'Draf diperbarui.' })}
+                onClick={() =>
+                  push({ tone: 'success', title: 'Tersimpan', description: 'Draf diperbarui.' })
+                }
               >
                 Toast sukses
               </Button>
               <Button
                 variant="secondary"
                 onClick={() =>
-                  push({ tone: 'danger', title: 'Gagal memuat', description: 'Kode referensi: 8f3c-21ab.' })
+                  push({
+                    tone: 'danger',
+                    title: 'Gagal memuat',
+                    description: 'Kode referensi: 8f3c-21ab.',
+                  })
                 }
               >
                 Toast galat
@@ -448,7 +482,10 @@ function GalleryBody() {
         </Block>
 
         {/* ------------------------------------------------------------- table */}
-        <Block title="Tabel" description="Di bawah breakpoint md tabel berubah menjadi kartu bertumpuk, bukan tabel yang bergeser ke samping.">
+        <Block
+          title="Tabel"
+          description="Di bawah breakpoint md tabel berubah menjadi kartu bertumpuk, bukan tabel yang bergeser ke samping."
+        >
           <DataTable
             columns={DEMO_COLUMNS}
             rows={DEMO_ROWS}
@@ -456,11 +493,19 @@ function GalleryBody() {
             caption="Contoh daftar investor"
             empty={<EmptyState title="Belum ada investor" />}
           />
-          <Pagination page={3} pageCount={12} totalItems={238} buildHref={(page) => `?page=${page}`} />
+          <Pagination
+            page={3}
+            pageCount={12}
+            totalItems={238}
+            buildHref={(page) => `?page=${page}`}
+          />
         </Block>
 
         {/* ------------------------------------------------------------ states */}
-        <Block title="Keadaan" description="Setiap layar memiliki keadaan kosong, memuat, galat, dan tanpa akses yang dirancang.">
+        <Block
+          title="Keadaan"
+          description="Setiap layar memiliki keadaan kosong, memuat, galat, dan tanpa akses yang dirancang."
+        >
           <Grid min="20rem" gap={4}>
             <EmptyState
               title="Belum ada laporan keuangan"
@@ -588,15 +633,15 @@ function GalleryBody() {
           description="Identitas Islami diungkapkan melalui struktur — proporsi, tesselasi, dan simetri radial — bukan melalui ikonografi tempel."
         >
           <Inline gap={6}>
-            <KhatimStar className="size-10 text-primary" />
-            <KhatimStar variant="filled" className="size-10 text-accent-solid" />
+            <KhatimStar className="text-primary size-10" />
+            <KhatimStar variant="filled" className="text-accent-solid size-10" />
             <KhatimSpinner className="text-primary" />
           </Inline>
           <TessellationBand />
-          <div className="relative overflow-hidden rounded-lg bg-inverse p-10">
+          <div className="bg-inverse relative overflow-hidden rounded-lg p-10">
             <GeometricField className="text-fg-inverse" />
             <div className="relative flex flex-col gap-2">
-              <Overline tone="accent">Permukaan gelap</Overline>
+              <Overline tone="accent">Permukaan kontras</Overline>
               <p className="font-display text-display-lg text-fg-inverse">
                 Berjalan bersama dan berkembang bersama.
               </p>

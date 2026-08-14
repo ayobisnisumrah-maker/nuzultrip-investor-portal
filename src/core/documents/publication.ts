@@ -27,10 +27,7 @@ export const PUBLICATION_TRANSITIONS: Readonly<
   archived: [],
 }
 
-export function canPublicationTransition(
-  from: PublicationStatus,
-  to: PublicationStatus,
-): boolean {
+export function canPublicationTransition(from: PublicationStatus, to: PublicationStatus): boolean {
   return PUBLICATION_TRANSITIONS[from].includes(to)
 }
 

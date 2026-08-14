@@ -95,7 +95,7 @@ export function Field({
           </p>
         ) : null}
         {error ? (
-          <p id={value.errorId} className="flex items-start gap-1.5 text-caption text-danger-fg">
+          <p id={value.errorId} className="text-caption text-danger-fg flex items-start gap-1.5">
             <AlertCircle aria-hidden="true" className="mt-px size-3.5 shrink-0" />
             <span>{error}</span>
           </p>
@@ -119,7 +119,7 @@ export function FieldLabel({
     <LabelPrimitive.Root
       htmlFor={htmlFor ?? field?.controlId}
       className={cn(
-        'text-body-sm font-medium text-fg',
+        'text-body-sm text-fg font-medium',
         field?.disabled && 'text-fg-subtle',
         className,
       )}
@@ -127,7 +127,7 @@ export function FieldLabel({
       {children}
       {field?.required ? (
         <>
-          <span aria-hidden="true" className="ml-0.5 text-danger-fg">
+          <span aria-hidden="true" className="text-danger-fg ml-0.5">
             *
           </span>
           <span className="sr-only"> (wajib diisi)</span>

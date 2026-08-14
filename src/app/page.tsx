@@ -3,10 +3,13 @@ import { TessellationBand } from '@/ui/geometry/khatim'
 
 export default function Home() {
   return (
-    <main id="main" className="mx-auto flex min-h-dvh max-w-narrow flex-col justify-center gap-5 px-6">
+    <main
+      id="main"
+      className="max-w-narrow mx-auto flex min-h-dvh flex-col justify-center gap-5 px-6"
+    >
       <Overline tone="accent">Investor Relations</Overline>
       <h1 className="font-display text-display-lg text-fg">Nuzultrip Investor Portal</h1>
-      <p className="max-w-prose text-body-lg text-fg-muted">
+      <p className="text-body-lg text-fg-muted max-w-prose">
         Berjalan bersama dan berkembang bersama.
       </p>
       <TessellationBand height={32} className="my-2" />

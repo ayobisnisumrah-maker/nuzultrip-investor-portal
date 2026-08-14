@@ -150,9 +150,10 @@ Rules for writing policies here:
 
 `anon` gets `select` on published portal content only, and `insert` on
 `portal_inquiries`. It has no access to any table containing investor,
-financial-detail, message, or audit data. This is asserted directly by a pgTAP
-test that enumerates every table and fails if `anon` can read one that is not on
-the allow-list — so a future table is denied unless someone deliberately adds it.
+financial-detail, message, or audit data. This is asserted directly by a test
+that enumerates every table in `public` and fails if `anon` can read one that is
+not on the allow-list — so a future table is denied unless someone deliberately
+adds it to both the policy set and the list.
 
 ---
 
@@ -266,7 +267,7 @@ Every item must be verifiably true before a production deploy.
 
 - [ ] Every table has RLS enabled **and** forced.
 - [ ] Every table has explicit policies, or is deliberately inaccessible.
-- [ ] pgTAP cross-investor isolation suite passes.
+- [ ] Cross-investor isolation suite passes (`pnpm test:db`).
 - [ ] `anon` table allow-list test passes.
 - [ ] No `service_role` reference outside `src/server/admin/**`.
 - [ ] No `NEXT_PUBLIC_` variable contains a secret.

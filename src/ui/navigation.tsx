@@ -10,7 +10,7 @@ export type Crumb = { label: string; href?: string }
 export function Breadcrumb({ items, className }: { items: readonly Crumb[]; className?: string }) {
   return (
     <nav aria-label="Remah roti" className={cn('min-w-0', className)}>
-      <ol className="flex flex-wrap items-center gap-1 text-caption text-fg-subtle">
+      <ol className="text-caption text-fg-subtle flex flex-wrap items-center gap-1">
         {items.map((item, index) => {
           const isLast = index === items.length - 1
           return (
@@ -18,12 +18,15 @@ export function Breadcrumb({ items, className }: { items: readonly Crumb[]; clas
               {item.href && !isLast ? (
                 <Link
                   href={item.href}
-                  className="rounded-xs transition-colors hover:text-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                  className="hover:text-fg focus-visible:outline-ring rounded-xs transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
                 >
                   {item.label}
                 </Link>
               ) : (
-                <span className={cn(isLast && 'text-fg-muted')} aria-current={isLast ? 'page' : undefined}>
+                <span
+                  className={cn(isLast && 'text-fg-muted')}
+                  aria-current={isLast ? 'page' : undefined}
+                >
                   {item.label}
                 </span>
               )}
@@ -87,7 +90,7 @@ export function Pagination({
 
         {pages.map((entry, index) =>
           entry === 'gap' ? (
-            <li key={`gap-${index}`} aria-hidden="true" className="px-1 text-fg-subtle">
+            <li key={`gap-${index}`} aria-hidden="true" className="text-fg-subtle px-1">
               …
             </li>
           ) : (
@@ -136,7 +139,11 @@ function PageLink({
 
   if (disabled) {
     return (
-      <span aria-disabled="true" className={cn(className, 'pointer-events-none opacity-40')} {...props}>
+      <span
+        aria-disabled="true"
+        className={cn(className, 'pointer-events-none opacity-40')}
+        {...props}
+      >
         {children}
       </span>
     )

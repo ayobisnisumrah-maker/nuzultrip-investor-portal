@@ -23,10 +23,10 @@ export function Input({
       type={type}
       className={cn(
         controlBase,
-        'h-11 px-3 text-body-sm pointer-fine:h-10',
+        'text-body-sm h-11 px-3 pointer-fine:h-10',
         // Financial and reference inputs align on the decimal.
         (type === 'number' || props.inputMode === 'numeric' || props.inputMode === 'decimal') &&
-          'font-mono tabular',
+          'tabular font-mono',
         className,
       )}
       {...fieldProps}
@@ -44,7 +44,7 @@ export function Textarea({
   return (
     <textarea
       rows={rows}
-      className={cn(controlBase, 'min-h-24 resize-y px-3 py-2.5 text-body-sm', className)}
+      className={cn(controlBase, 'text-body-sm min-h-24 resize-y px-3 py-2.5', className)}
       {...fieldProps}
       {...props}
     />
@@ -65,7 +65,7 @@ export function SearchInput({
       type="search"
       role="searchbox"
       aria-label={props['aria-label'] ?? label}
-      className={cn(controlBase, 'h-11 px-3 text-body-sm pointer-fine:h-10', className)}
+      className={cn(controlBase, 'text-body-sm h-11 px-3 pointer-fine:h-10', className)}
       {...props}
     />
   )

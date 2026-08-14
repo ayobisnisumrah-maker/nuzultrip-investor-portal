@@ -1,7 +1,4 @@
-import {
-  INVESTOR_STATUS_LABELS,
-  type InvestorStatus,
-} from '@/core/investors/status'
+import { INVESTOR_STATUS_LABELS, type InvestorStatus } from '@/core/investors/status'
 import {
   PUBLICATION_STATUS_LABELS,
   VISIBILITY_LABELS,

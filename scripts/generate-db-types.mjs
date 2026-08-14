@@ -11,7 +11,7 @@
  *   pnpm db:types --check      # verify the committed file is up to date
  *   SUPABASE_PROJECT_REF=xxx pnpm db:types --remote
  */
-import { execFileSync } from 'node:child_process'
+import { execSync } from 'node:child_process'
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -42,17 +42,24 @@ function run() {
       console.error('SUPABASE_PROJECT_REF must be set when using --remote.')
       process.exit(1)
     }
+    // The command is run through a shell (the Windows CLI ships as a .cmd shim
+    // and cannot be spawned directly), so the one externally-supplied value is
+    // validated rather than trusted.
+    if (!/^[a-z0-9]{16,32}$/.test(ref)) {
+      console.error(`SUPABASE_PROJECT_REF is not a valid project ref: ${ref}`)
+      process.exit(1)
+    }
     cliArgs.push('--project-id', ref)
   } else {
     cliArgs.push('--local')
   }
 
   try {
-    return execFileSync('supabase', cliArgs, {
+    return execSync(`supabase ${cliArgs.join(' ')}`, {
       cwd: root,
       encoding: 'utf8',
       maxBuffer: 32 * 1024 * 1024,
-      shell: process.platform === 'win32',
+      stdio: ['ignore', 'pipe', 'pipe'],
     })
   } catch (error) {
     console.error('\nFailed to generate database types.\n')

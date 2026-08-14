@@ -147,7 +147,10 @@ export function formatRelativeTime(
 
 const FILE_UNITS = ['B', 'KB', 'MB', 'GB', 'TB'] as const
 
-export function formatFileSize(bytes: number, { locale = DEFAULT_LOCALE }: FormatOptions = {}): string {
+export function formatFileSize(
+  bytes: number,
+  { locale = DEFAULT_LOCALE }: FormatOptions = {},
+): string {
   if (!Number.isFinite(bytes) || bytes < 0) return '—'
   if (bytes === 0) return '0 B'
   const exponent = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), FILE_UNITS.length - 1)

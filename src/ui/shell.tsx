@@ -51,11 +51,11 @@ export function AppShell({
   return (
     <div className="min-h-dvh lg:grid lg:grid-cols-[16rem_minmax(0,1fr)]">
       {/* Persistent sidebar — lg and up */}
-      <aside className="sticky top-0 hidden h-dvh flex-col border-r border-border bg-surface lg:flex">
+      <aside className="border-border bg-surface sticky top-0 hidden h-dvh flex-col border-r lg:flex">
         <div className="flex h-16 shrink-0 items-center px-5">
           <Link
             href={homeHref}
-            className="flex items-center gap-2.5 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            className="focus-visible:outline-ring flex items-center gap-2.5 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2"
           >
             {brand}
           </Link>
@@ -64,7 +64,7 @@ export function AppShell({
       </aside>
 
       <div className="flex min-w-0 flex-col">
-        <header className="sticky top-0 z-sticky flex h-16 shrink-0 items-center gap-3 border-b border-border bg-canvas/85 px-4 backdrop-blur-sm sm:px-6">
+        <header className="z-sticky border-border bg-canvas/85 sticky top-0 flex h-16 shrink-0 items-center gap-3 border-b px-4 backdrop-blur-sm sm:px-6">
           <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
             <DrawerTrigger asChild>
               <Button variant="ghost" size="icon" className="lg:hidden" aria-label="Buka navigasi">
@@ -122,7 +122,7 @@ function Navigation({
       {sections.map((section, index) => (
         <div key={section.title ?? `section-${index}`} className="flex flex-col gap-1">
           {section.title ? (
-            <p className="overline px-3 pb-1 text-fg-subtle">{section.title}</p>
+            <p className="text-fg-subtle px-3 pb-1 overline">{section.title}</p>
           ) : null}
           <ul className="flex flex-col gap-0.5">
             {section.items.map((item) => {
@@ -136,12 +136,12 @@ function Navigation({
                     onClick={onNavigate}
                     aria-current={active ? 'page' : undefined}
                     className={cn(
-                      'relative flex items-center gap-3 rounded-md px-3 py-2.5 text-body-sm',
+                      'text-body-sm relative flex items-center gap-3 rounded-md px-3 py-2.5',
                       'transition-colors duration-(--d-fast)',
-                      'outline-none focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring',
-                      "[&_svg:not([class*='size-'])]:size-4 [&_svg]:shrink-0",
+                      'focus-visible:outline-ring outline-none focus-visible:outline-2 focus-visible:outline-offset-[-2px]',
+                      "[&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
                       active
-                        ? 'bg-primary-subtle font-medium text-fg'
+                        ? 'bg-primary-subtle text-fg font-medium'
                         : 'text-fg-muted hover:bg-sunken hover:text-fg',
                     )}
                   >
@@ -149,7 +149,7 @@ function Navigation({
                     {active ? (
                       <span
                         aria-hidden="true"
-                        className="absolute inset-y-1.5 left-0 w-0.5 rounded-full bg-accent-solid"
+                        className="bg-accent-solid absolute inset-y-1.5 left-0 w-0.5 rounded-full"
                       />
                     ) : null}
                     {item.icon}
@@ -176,10 +176,10 @@ export function Brand({
 }) {
   return (
     <>
-      <KhatimStar variant="filled" className="size-6 shrink-0 text-accent-solid" />
+      <KhatimStar variant="filled" className="text-accent-solid size-6 shrink-0" />
       <span className="flex min-w-0 flex-col leading-tight">
         <span className="font-display text-heading-sm text-fg">{label}</span>
-        <span className="text-[0.6875rem] tracking-[0.1em] text-fg-subtle uppercase">
+        <span className="text-fg-subtle text-[0.6875rem] tracking-[0.1em] uppercase">
           {sublabel}
         </span>
       </span>

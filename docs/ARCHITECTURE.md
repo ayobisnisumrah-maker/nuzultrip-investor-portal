@@ -53,22 +53,22 @@ sync problems and a false sense of security.
 
 ## 3. Technology Stack
 
-| Concern                | Choice                                                                                           | Why                                                                                                                                                                                    |
-| ---------------------- | ------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Framework              | **Next.js 16 (App Router) + React 19**                                                           | Server Components let every permission check run server-side by default. One deployable unit for three surfaces. Streaming suits a content-heavy public portal.                        |
-| Language               | **TypeScript, `strict` + `noUncheckedIndexedAccess`**                                            | Non-negotiable for a system with money-adjacent data.                                                                                                                                  |
-| Database               | **PostgreSQL via Supabase**                                                                      | Row Level Security is the single most valuable feature available for "Investor A must never see Investor B". Mature, relational, migration-friendly.                                   |
-| Auth                   | **Supabase Auth (GoTrue)**                                                                       | Real sessions, real password hashing, MFA-capable, integrates with RLS via JWT claims.                                                                                                 |
-| Realtime               | **Supabase Realtime — Broadcast from Database**                                                  | See §8. Scales by topic, authorised by RLS, not by table.                                                                                                                              |
-| Storage                | **Supabase Storage, private buckets + signed URLs**                                              | Objects never publicly addressable; access brokered server-side.                                                                                                                       |
-| Styling                | **Tailwind CSS v4 + CSS custom-property design tokens**                                          | Tokens are the contract; Tailwind is only the ergonomics layer. Admin-configurable theming needs runtime CSS variables, which v4's `@theme` maps cleanly.                              |
-| Primitives             | **Radix UI primitives**, custom-skinned                                                          | Accessibility (focus traps, ARIA, keyboard nav) is genuinely hard. We own the visuals, not the a11y plumbing.                                                                          |
-| Data fetching (client) | **TanStack Query**                                                                               | Realtime events invalidate query keys. Cache invalidation becomes declarative rather than ad-hoc.                                                                                      |
-| Validation             | **Zod**                                                                                          | One schema → TS types, API input validation, JSONB content validation.                                                                                                                 |
-| 3D                     | **React Three Fiber + drei + Three.js**                                                          | See §11.                                                                                                                                                                               |
-| Email                  | **Provider-agnostic `NotificationChannel` interface**, Resend as first adapter                   | Notifications must not be welded to one vendor.                                                                                                                                        |
-| Testing                | **Vitest** (unit/integration), **Playwright** (E2E, cross-browser), **pgTAP** (RLS policy tests) | RLS without tests is a guess. See §13.                                                                                                                                                 |
-| Package manager        | **pnpm**                                                                                         | Strict node_modules, fast, deterministic.                                                                                                                                              |
+| Concern                | Choice                                                                                           | Why                                                                                                                                                             |
+| ---------------------- | ------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Framework              | **Next.js 16 (App Router) + React 19**                                                           | Server Components let every permission check run server-side by default. One deployable unit for three surfaces. Streaming suits a content-heavy public portal. |
+| Language               | **TypeScript, `strict` + `noUncheckedIndexedAccess`**                                            | Non-negotiable for a system with money-adjacent data.                                                                                                           |
+| Database               | **PostgreSQL via Supabase**                                                                      | Row Level Security is the single most valuable feature available for "Investor A must never see Investor B". Mature, relational, migration-friendly.            |
+| Auth                   | **Supabase Auth (GoTrue)**                                                                       | Real sessions, real password hashing, MFA-capable, integrates with RLS via JWT claims.                                                                          |
+| Realtime               | **Supabase Realtime — Broadcast from Database**                                                  | See §8. Scales by topic, authorised by RLS, not by table.                                                                                                       |
+| Storage                | **Supabase Storage, private buckets + signed URLs**                                              | Objects never publicly addressable; access brokered server-side.                                                                                                |
+| Styling                | **Tailwind CSS v4 + CSS custom-property design tokens**                                          | Tokens are the contract; Tailwind is only the ergonomics layer. Admin-configurable theming needs runtime CSS variables, which v4's `@theme` maps cleanly.       |
+| Primitives             | **Radix UI primitives**, custom-skinned                                                          | Accessibility (focus traps, ARIA, keyboard nav) is genuinely hard. We own the visuals, not the a11y plumbing.                                                   |
+| Data fetching (client) | **TanStack Query**                                                                               | Realtime events invalidate query keys. Cache invalidation becomes declarative rather than ad-hoc.                                                               |
+| Validation             | **Zod**                                                                                          | One schema → TS types, API input validation, JSONB content validation.                                                                                          |
+| 3D                     | **React Three Fiber + drei + Three.js**                                                          | See §11.                                                                                                                                                        |
+| Email                  | **Provider-agnostic `NotificationChannel` interface**, Resend as first adapter                   | Notifications must not be welded to one vendor.                                                                                                                 |
+| Testing                | **Vitest** (unit + RLS integration against a real Postgres), **Playwright** (E2E, cross-browser) | RLS without tests is a guess. See §13.                                                                                                                          |
+| Package manager        | **pnpm**                                                                                         | Strict node_modules, fast, deterministic.                                                                                                                       |
 
 ### Rejected alternatives (and why)
 
@@ -97,7 +97,7 @@ nuzultrip-investor-portal/
 ├─ supabase/
 │  ├─ migrations/                 # Canonical, ordered, immutable SQL migrations
 │  ├─ seed/                       # Idempotent reference data (roles, permissions)
-│  └─ tests/                      # pgTAP RLS / policy tests
+│  └─ seed/dev/                   # Development-only fixtures (gated)
 ├─ public/
 │  └─ models/                     # Optimised .glb assets (Draco/Meshopt)
 ├─ scripts/                       # Asset pipeline, type generation, ops scripts
@@ -372,11 +372,11 @@ model must have a license compatible with commercial use, recorded there.
 
 **Rendering strategy per surface:**
 
-| Surface       | Strategy                                                                                                                                             |
-| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Public portal | RSC, dynamically rendered, over a **tag-revalidated data cache** (`portal:published`). Cheap to render, instantly correct on publish.                 |
-| Investor      | Dynamic, always request-scoped. Never cached at the route level.                                                                                      |
-| Admin         | Dynamic, `no-store`.                                                                                                                                  |
+| Surface       | Strategy                                                                                                                              |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Public portal | RSC, dynamically rendered, over a **tag-revalidated data cache** (`portal:published`). Cheap to render, instantly correct on publish. |
+| Investor      | Dynamic, always request-scoped. Never cached at the route level.                                                                      |
+| Admin         | Dynamic, `no-store`.                                                                                                                  |
 
 **Why the portal is not full-route cached.** Two request-scoped requirements
 make every route dynamic regardless:
@@ -413,17 +413,17 @@ correlation id that _is_ returned.
 
 ## 13. Testing Strategy
 
-| Layer             | Tool                                   | What it proves                                                                                                                                   |
-| ----------------- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Domain logic      | Vitest                                 | State machines (investor lifecycle, publication states) behave. Pure, fast, no DB.                                                               |
-| **RLS policies**  | **pgTAP** against a real Postgres      | _Investor A cannot read Investor B._ This is the single highest-value test suite in the project and is treated as such.                          |
-| Permission guards | Vitest + test principals               | Every entry point rejects an under-privileged caller.                                                                                            |
-| Integration       | Vitest + ephemeral Supabase            | Services against a real database with migrations applied.                                                                                        |
-| E2E               | Playwright (Chromium, Firefox, WebKit) | The three surfaces work, and **realtime propagates between two independent browser contexts** — the literal acceptance criterion from the brief. |
-| Accessibility     | `@axe-core/playwright`                 | No critical violations on key routes.                                                                                                            |
-| Performance       | Lighthouse CI budget                   | Hero payload + LCP budgets enforced.                                                                                                             |
+| Layer             | Tool                                   | What it proves                                                                                                                                                                                                 |
+| ----------------- | -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Domain logic      | Vitest                                 | State machines (investor lifecycle, publication states) behave. Pure, fast, no DB.                                                                                                                             |
+| **RLS policies**  | **Vitest** against a real Postgres     | _Investor A cannot read Investor B._ The single highest-value suite in the project. Runs as `anon`/`authenticated` with `request.jwt.claims` set, exactly as PostgREST does — the application layer is absent. |
+| Permission guards | Vitest + test principals               | Every entry point rejects an under-privileged caller.                                                                                                                                                          |
+| Integration       | Vitest + ephemeral Supabase            | Services against a real database with migrations applied.                                                                                                                                                      |
+| E2E               | Playwright (Chromium, Firefox, WebKit) | The three surfaces work, and **realtime propagates between two independent browser contexts** — the literal acceptance criterion from the brief.                                                               |
+| Accessibility     | `@axe-core/playwright`                 | No critical violations on key routes.                                                                                                                                                                          |
+| Performance       | Lighthouse CI budget                   | Hero payload + LCP budgets enforced.                                                                                                                                                                           |
 
-**CI gate:** `typecheck → lint → unit → pgTAP → build → e2e`. A red gate blocks
+**CI gate:** `typecheck → lint → unit → rls → build → e2e`. A red gate blocks
 merge. The repository is never left in a broken state.
 
 ---

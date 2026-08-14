@@ -81,3 +81,6 @@ yarn-error.log*
 assets/source/
 *.blend
 *.blend1
+
+# Local screenshot review output
+.screenshots/

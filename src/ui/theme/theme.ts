@@ -27,3 +27,12 @@ export function isThemePreference(value: unknown): value is ThemePreference {
 export function themeAttribute(preference: ThemePreference): 'light' | 'dark' | undefined {
   return preference === 'system' ? undefined : preference
 }
+
+/**
+ * Narrow a raw cookie value to a preference. Lives in this module — not in the
+ * provider — because the root layout is a Server Component and cannot call into
+ * a `'use client'` module.
+ */
+export function resolveInitialTheme(cookieValue: string | undefined): ThemePreference {
+  return cookieValue === 'light' || cookieValue === 'dark' ? cookieValue : 'system'
+}

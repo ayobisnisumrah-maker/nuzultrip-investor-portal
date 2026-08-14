@@ -85,7 +85,7 @@ export function KhatimSpinner({
         viewBox="0 0 24 24"
         fill="none"
         aria-hidden="true"
-        className="size-5 motion-safe:animate-khatim"
+        className="motion-safe:animate-khatim size-5"
       >
         <path
           d={khatimPath(12, 12, 10, -Math.PI / 2)}
@@ -135,7 +135,7 @@ export function TessellationBand({
   const id = patternId('band', cell, opacity)
   return (
     <div className={cn('pointer-events-none w-full select-none', className)} aria-hidden="true">
-      <svg width="100%" height={height} className="block text-fg" role="presentation">
+      <svg width="100%" height={height} className="text-fg block" role="presentation">
         <defs>
           <pattern id={id} width={cell} height={cell} patternUnits="userSpaceOnUse">
             <path

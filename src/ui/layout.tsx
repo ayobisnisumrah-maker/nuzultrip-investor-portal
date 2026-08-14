@@ -21,7 +21,9 @@ export function Container({
   as: Component = 'div',
   ...props
 }: React.ComponentPropsWithoutRef<'div'> &
-  VariantProps<typeof containerVariants> & { as?: 'div' | 'section' | 'header' | 'footer' | 'main' }) {
+  VariantProps<typeof containerVariants> & {
+    as?: 'div' | 'section' | 'header' | 'footer' | 'main'
+  }) {
   return <Component className={cn(containerVariants({ width }), className)} {...props} />
 }
 
@@ -100,10 +102,10 @@ export function PageHeader({
       {breadcrumb}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex min-w-0 flex-col gap-1.5">
-          {eyebrow ? <p className="overline text-fg-subtle">{eyebrow}</p> : null}
+          {eyebrow ? <p className="text-fg-subtle overline">{eyebrow}</p> : null}
           <h1 className="text-heading-xl text-fg">{title}</h1>
           {description ? (
-            <p className="max-w-prose text-body-sm text-fg-muted">{description}</p>
+            <p className="text-body-sm text-fg-muted max-w-prose">{description}</p>
           ) : null}
         </div>
         {actions ? <div className="flex shrink-0 flex-wrap gap-2">{actions}</div> : null}

@@ -17,6 +17,8 @@ export default tseslint.config(
       'test-results/**',
       'next-env.d.ts',
       'src/types/database.ts', // generated — see docs/DATABASE.md §13
+      'supabase/.temp/**', // Supabase CLI scratch space
+      '.screenshots/**',
     ],
   },
 
@@ -120,9 +122,18 @@ export default tseslint.config(
     },
   },
 
-  // Config files, scripts and the env module legitimately read process.env.
+  // Config files, scripts, tests and the env module legitimately read
+  // process.env. Tests in particular need connection details that never reach
+  // the application bundle.
   {
-    files: ['*.config.ts', '*.config.mjs', 'scripts/**', 'src/lib/env.ts', 'src/test/**'],
+    files: [
+      '*.config.ts',
+      '*.config.mjs',
+      'scripts/**',
+      'src/lib/env.ts',
+      'src/test/**',
+      'tests/**',
+    ],
     rules: {
       'no-restricted-properties': 'off',
     },

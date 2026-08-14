@@ -34,7 +34,7 @@ function StateShell({
     <div
       role={role}
       className={cn(
-        'flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-border',
+        'border-border flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed',
         'px-6 py-12 text-center',
         className,
       )}
@@ -48,9 +48,7 @@ function StateShell({
         {icon ?? <KhatimStar className="size-5" />}
       </span>
       <p className="text-heading-sm text-fg">{title}</p>
-      {description ? (
-        <p className="max-w-prose text-body-sm text-fg-muted">{description}</p>
-      ) : null}
+      {description ? <p className="text-body-sm text-fg-muted max-w-prose">{description}</p> : null}
       {action ? <div className="mt-1 flex flex-wrap justify-center gap-2">{action}</div> : null}
     </div>
   )
@@ -187,7 +185,7 @@ export function OfflineBanner({
     <div
       role="status"
       className={cn(
-        'flex items-center gap-2.5 border-b border-warning-border bg-warning-subtle px-4 py-2',
+        'border-warning-border bg-warning-subtle flex items-center gap-2.5 border-b px-4 py-2',
         'text-body-sm text-warning-fg',
         className,
       )}

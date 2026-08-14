@@ -1,7 +1,7 @@
 # Roadmap
 
 Phases are ordered by dependency, not by visibility. Each phase ends with a
-**green gate**: `typecheck → lint → unit → pgTAP → build`. The repository is
+**green gate**: `typecheck → lint → unit → rls → build`. The repository is
 never left broken between phases.
 
 Legend: ☐ not started · ◐ in progress · ☑ done
@@ -53,9 +53,9 @@ Legend: ☐ not started · ◐ in progress · ☑ done
 - ☐ `SECURITY DEFINER` authorisation helper functions
 - ☐ Seed: permission catalogue, Super Admin + Admin Internal roles
 - ☐ Generated `src/types/database.ts`
-- ☐ pgTAP suite — cross-investor isolation, privilege escalation, audit immutability
+- ☐ RLS suite — cross-investor isolation, privilege escalation, audit immutability
 
-**Gate:** pgTAP green. Cross-tenant read attempts return zero rows, not errors.
+**Gate:** `pnpm test:db` green. Cross-tenant reads return zero rows, not errors.
 
 ---
 

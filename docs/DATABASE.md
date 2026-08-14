@@ -47,7 +47,7 @@ other way round.
                        │ role_id      │       │
                  ┌─────▼──────┐       │       └──► investor_status_history
                  │   roles    │       │
-                 └─────┬──────┘       └──► investor_document_access
+                 └─────┬──────┘       └──► document_access_grants
                        │
               ┌────────▼─────────┐
               │ role_permissions │──► permissions
@@ -172,9 +172,15 @@ version** table.
 
 ### `documents`
 
-`id`, `kind` (`document_kind` enum: `company_profile` \| `investment_proposal` \|
-`pitch_deck` \| `financial_report` \| `investor_report` \| `business_update` \|
-`supporting`), `title`, `slug`, `summary`, `visibility`
+There is deliberately **no** `financial_report` or `company_profile` kind here.
+Financial reporting is its own module, with structured line items and mandatory
+provenance; the company profile is its own versioned entity. Modelling either as
+a document as well would let the same fact exist in two places with two
+different answers.
+
+`id`, `kind` (`document_kind` enum: `investment_proposal` \| `pitch_deck` \|
+`investor_report` \| `business_update` \| `supporting`), `title`, `slug`,
+`summary`, `visibility`
 (`visibility` enum: `public` \| `investors` \| `restricted` \| `internal`),
 `status` (`publication_status` enum), `current_version_id`,
 `published_version_id`, `owner_admin_id`, `archived_at`, timestamps.

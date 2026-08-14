@@ -15,11 +15,14 @@ export const Dialog = DialogPrimitive.Root
 export const DialogTrigger = DialogPrimitive.Trigger
 export const DialogClose = DialogPrimitive.Close
 
-function Overlay({ className, ...props }: React.ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>) {
+function Overlay({
+  className,
+  ...props
+}: React.ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>) {
   return (
     <DialogPrimitive.Overlay
       className={cn(
-        'fixed inset-0 z-overlay bg-overlay backdrop-blur-[2px]',
+        'z-overlay bg-overlay fixed inset-0 backdrop-blur-[2px]',
         'data-[state=open]:animate-fade-in',
         className,
       )}
@@ -44,11 +47,11 @@ export function DialogContent({
       <Overlay />
       <DialogPrimitive.Content
         className={cn(
-          'fixed z-modal flex flex-col gap-4 border border-border bg-elevated shadow-modal',
+          'z-modal border-border bg-elevated shadow-modal fixed flex flex-col gap-4 border',
           // Mobile: a bottom sheet, which is where thumbs are.
           'inset-x-0 bottom-0 max-h-[85dvh] rounded-t-xl p-5',
           // Larger viewports: a centred dialog.
-          'sm:inset-x-auto sm:bottom-auto sm:top-1/2 sm:left-1/2 sm:w-full sm:-translate-x-1/2 sm:-translate-y-1/2',
+          'sm:inset-x-auto sm:top-1/2 sm:bottom-auto sm:left-1/2 sm:w-full sm:-translate-x-1/2 sm:-translate-y-1/2',
           'sm:rounded-lg sm:p-6',
           'motion-safe:data-[state=open]:animate-rise',
           sizes[size],
@@ -130,8 +133,8 @@ export function DrawerContent({
       <Overlay />
       <DialogPrimitive.Content
         className={cn(
-          'fixed inset-y-0 z-drawer flex w-[min(22rem,88vw)] flex-col gap-4',
-          'border-border bg-surface p-5 shadow-modal',
+          'z-drawer fixed inset-y-0 flex w-[min(22rem,88vw)] flex-col gap-4',
+          'border-border bg-surface shadow-modal p-5',
           side === 'right' ? 'right-0 border-l' : 'left-0 border-r',
           className,
         )}

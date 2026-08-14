@@ -73,7 +73,10 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
-  const value = useMemo<ToastContextValue>(() => ({ toasts, push, dismiss }), [toasts, push, dismiss])
+  const value = useMemo<ToastContextValue>(
+    () => ({ toasts, push, dismiss }),
+    [toasts, push, dismiss],
+  )
 
   return (
     <ToastContext value={value}>
@@ -112,7 +115,7 @@ function Toaster({
   return (
     <div
       // Two regions: assertive for failures, polite for everything else.
-      className="pointer-events-none fixed inset-x-0 bottom-0 z-toast flex flex-col items-center gap-2 p-4 sm:inset-x-auto sm:right-0 sm:items-end"
+      className="z-toast pointer-events-none fixed inset-x-0 bottom-0 flex flex-col items-center gap-2 p-4 sm:inset-x-auto sm:right-0 sm:items-end"
     >
       {toasts.map((toast) => {
         const { className, Icon } = toneStyles[toast.tone]
@@ -122,7 +125,7 @@ function Toaster({
             role={toast.tone === 'danger' ? 'alert' : 'status'}
             aria-live={toast.tone === 'danger' ? 'assertive' : 'polite'}
             className={cn(
-              'pointer-events-auto flex w-full max-w-sm gap-3 rounded-md border p-3.5 shadow-overlay',
+              'shadow-overlay pointer-events-auto flex w-full max-w-sm gap-3 rounded-md border p-3.5',
               'motion-safe:animate-rise',
               className,
             )}
@@ -138,7 +141,7 @@ function Toaster({
               type="button"
               onClick={() => onDismiss(toast.id)}
               aria-label="Tutup notifikasi"
-              className="-m-1 grid size-7 shrink-0 place-items-center rounded-sm text-current opacity-70 transition-opacity hover:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+              className="focus-visible:outline-ring -m-1 grid size-7 shrink-0 place-items-center rounded-sm text-current opacity-70 transition-opacity hover:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-2"
             >
               <X aria-hidden="true" className="size-4" />
             </button>

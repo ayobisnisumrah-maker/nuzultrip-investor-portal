@@ -24,7 +24,7 @@ export function ThemeToggle({ className }: { className?: string }) {
       role="radiogroup"
       aria-label="Tema tampilan"
       className={cn(
-        'inline-flex items-center gap-0.5 rounded-md border border-border bg-sunken p-0.5',
+        'border-border bg-sunken inline-flex items-center gap-0.5 rounded-md border p-0.5',
         className,
       )}
     >
@@ -41,10 +41,8 @@ export function ThemeToggle({ className }: { className?: string }) {
             onClick={() => setPreference(option)}
             className={cn(
               'grid size-8 place-items-center rounded-sm transition-colors duration-(--d-fast)',
-              'outline-none focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring',
-              selected
-                ? 'bg-surface text-fg shadow-raised'
-                : 'text-fg-subtle hover:text-fg',
+              'focus-visible:outline-ring outline-none focus-visible:outline-2 focus-visible:outline-offset-1',
+              selected ? 'bg-surface text-fg shadow-raised' : 'text-fg-subtle hover:text-fg',
             )}
           >
             <Icon aria-hidden="true" className="size-4" />

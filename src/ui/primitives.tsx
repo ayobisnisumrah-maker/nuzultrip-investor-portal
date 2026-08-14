@@ -16,7 +16,7 @@ export function Separator({
       orientation={orientation}
       decorative={decorative}
       className={cn(
-        'shrink-0 bg-border',
+        'bg-border shrink-0',
         orientation === 'horizontal' ? 'h-px w-full' : 'h-full w-px',
         className,
       )}
@@ -27,14 +27,11 @@ export function Separator({
 
 /* ------------------------------------------------------------------ Skeleton */
 
-export function Skeleton({
-  className,
-  ...props
-}: React.ComponentPropsWithoutRef<'div'>) {
+export function Skeleton({ className, ...props }: React.ComponentPropsWithoutRef<'div'>) {
   return (
     <div
       aria-hidden="true"
-      className={cn('rounded-sm bg-sunken motion-safe:animate-pulse-subtle', className)}
+      className={cn('bg-sunken motion-safe:animate-pulse-subtle rounded-sm', className)}
       {...props}
     />
   )
@@ -74,7 +71,7 @@ export function Avatar({
     <span
       className={cn(
         'inline-grid shrink-0 place-items-center overflow-hidden rounded-full',
-        'border border-border bg-primary-subtle font-medium text-primary select-none',
+        'border-border bg-primary-subtle text-primary border font-medium select-none',
         sizes[size],
         className,
       )}
@@ -99,8 +96,8 @@ export function Kbd({ children, className }: { children: React.ReactNode; classN
   return (
     <kbd
       className={cn(
-        'inline-flex h-5 min-w-5 items-center justify-center rounded-xs border border-border',
-        'bg-sunken px-1 font-mono text-[0.6875rem] text-fg-muted',
+        'border-border inline-flex h-5 min-w-5 items-center justify-center rounded-xs border',
+        'bg-sunken text-fg-muted px-1 font-mono text-[0.6875rem]',
         className,
       )}
     >
@@ -122,13 +119,7 @@ export function Overline({
   tone?: 'subtle' | 'accent'
 }) {
   return (
-    <p
-      className={cn(
-        'overline',
-        tone === 'accent' ? 'text-accent' : 'text-fg-subtle',
-        className,
-      )}
-    >
+    <p className={cn('overline', tone === 'accent' ? 'text-accent' : 'text-fg-subtle', className)}>
       {children}
     </p>
   )

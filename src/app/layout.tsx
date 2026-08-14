@@ -2,8 +2,8 @@ import type { Metadata, Viewport } from 'next'
 import { cookies } from 'next/headers'
 import '@/styles/globals.css'
 import { fontVariables } from '@/ui/fonts'
-import { ThemeProvider, resolveInitialTheme } from '@/ui/theme/theme-provider'
-import { THEME_COOKIE, themeAttribute } from '@/ui/theme/theme'
+import { ThemeProvider } from '@/ui/theme/theme-provider'
+import { THEME_COOKIE, resolveInitialTheme, themeAttribute } from '@/ui/theme/theme'
 
 export const metadata: Metadata = {
   title: {
@@ -44,7 +44,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body>
         <a
           href="#main"
-          className="sr-only rounded-md bg-primary px-4 py-2 text-on-primary focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-toast"
+          className="bg-primary text-on-primary focus:z-toast sr-only rounded-md px-4 py-2 focus:not-sr-only focus:absolute focus:top-3 focus:left-3"
         >
           Lompat ke konten utama
         </a>

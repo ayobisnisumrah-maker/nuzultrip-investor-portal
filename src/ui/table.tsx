@@ -14,21 +14,21 @@ import { cn } from '@/lib/cn'
 export function Table({ className, ...props }: React.ComponentPropsWithoutRef<'table'>) {
   return (
     <div className="w-full overflow-x-auto">
-      <table className={cn('w-full border-collapse text-body-sm', className)} {...props} />
+      <table className={cn('text-body-sm w-full border-collapse', className)} {...props} />
     </div>
   )
 }
 
 export function THead({ className, ...props }: React.ComponentPropsWithoutRef<'thead'>) {
-  return <thead className={cn('border-b border-border-strong', className)} {...props} />
+  return <thead className={cn('border-border-strong border-b', className)} {...props} />
 }
 
 export function TBody({ className, ...props }: React.ComponentPropsWithoutRef<'tbody'>) {
-  return <tbody className={cn('divide-y divide-border', className)} {...props} />
+  return <tbody className={cn('divide-border divide-y', className)} {...props} />
 }
 
 export function TR({ className, ...props }: React.ComponentPropsWithoutRef<'tr'>) {
-  return <tr className={cn('transition-colors hover:bg-sunken/60', className)} {...props} />
+  return <tr className={cn('hover:bg-sunken/60 transition-colors', className)} {...props} />
 }
 
 export function TH({
@@ -40,7 +40,7 @@ export function TH({
     <th
       scope="col"
       className={cn(
-        'px-3 py-2.5 text-overline whitespace-nowrap text-fg-subtle uppercase',
+        'text-overline text-fg-subtle px-3 py-2.5 whitespace-nowrap uppercase',
         align === 'right' && 'text-right',
         align === 'center' && 'text-center',
         align === 'left' && 'text-left',
@@ -63,8 +63,8 @@ export function TD({
   return (
     <td
       className={cn(
-        'px-3 py-3 align-middle text-fg',
-        numeric && 'font-mono tabular',
+        'text-fg px-3 py-3 align-middle',
+        numeric && 'tabular font-mono',
         align === 'right' && 'text-right',
         align === 'center' && 'text-center',
         className,
@@ -159,10 +159,10 @@ export function DataTable<Row>({
         {rows.map((row) => (
           <li
             key={rowKey(row)}
-            className="rounded-md border border-border bg-surface p-4 text-body-sm"
+            className="border-border bg-surface text-body-sm rounded-md border p-4"
           >
             {primaryColumn ? (
-              <p className="mb-2 text-heading-sm text-fg">{primaryColumn.cell(row)}</p>
+              <p className="text-heading-sm text-fg mb-2">{primaryColumn.cell(row)}</p>
             ) : null}
             <dl className="grid grid-cols-[minmax(0,auto)_minmax(0,1fr)] gap-x-4 gap-y-1.5">
               {columns
@@ -170,7 +170,9 @@ export function DataTable<Row>({
                 .map((column) => (
                   <div key={column.id} className="contents">
                     <dt className="text-caption text-fg-subtle">{column.header}</dt>
-                    <dd className={cn('text-body-sm text-fg', column.numeric && 'font-mono tabular')}>
+                    <dd
+                      className={cn('text-body-sm text-fg', column.numeric && 'tabular font-mono')}
+                    >
                       {column.cell(row)}
                     </dd>
                   </div>

@@ -1,12 +1,7 @@
 'use client'
 
 import { createContext, use, useCallback, useEffect, useMemo, useState } from 'react'
-import {
-  THEME_COOKIE,
-  THEME_COOKIE_MAX_AGE,
-  type ThemePreference,
-  themeAttribute,
-} from './theme'
+import { THEME_COOKIE, THEME_COOKIE_MAX_AGE, type ThemePreference, themeAttribute } from './theme'
 
 type ThemeContextValue = {
   /** What the user chose. `system` means "follow the OS". */
@@ -17,11 +12,6 @@ type ThemeContextValue = {
 }
 
 const ThemeContext = createContext<ThemeContextValue | null>(null)
-
-function systemTheme(): 'light' | 'dark' {
-  if (typeof window === 'undefined') return 'light'
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
-}
 
 export function ThemeProvider({
   children,
@@ -75,10 +65,3 @@ export function useTheme(): ThemeContextValue {
   if (!context) throw new Error('useTheme must be used within <ThemeProvider>.')
   return context
 }
-
-/** Server-safe helper for reading the initial preference during SSR. */
-export function resolveInitialTheme(cookieValue: string | undefined): ThemePreference {
-  return cookieValue === 'light' || cookieValue === 'dark' ? cookieValue : 'system'
-}
-
-export { systemTheme }

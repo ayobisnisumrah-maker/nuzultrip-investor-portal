@@ -12,7 +12,8 @@ import {
 
 describe('publication lifecycle', () => {
   it('labels every status and visibility', () => {
-    for (const status of PUBLICATION_STATUSES) expect(PUBLICATION_STATUS_LABELS[status]).toBeTruthy()
+    for (const status of PUBLICATION_STATUSES)
+      expect(PUBLICATION_STATUS_LABELS[status]).toBeTruthy()
     for (const visibility of VISIBILITIES) {
       expect(VISIBILITY_LABELS[visibility]).toBeTruthy()
       expect(VISIBILITY_DESCRIPTIONS[visibility]).toBeTruthy()

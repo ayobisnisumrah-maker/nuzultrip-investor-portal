@@ -34,7 +34,7 @@ identity, server-side authorisation, and PostgreSQL Row Level Security.
 - **TanStack Query** + Supabase Realtime broadcast for live synchronisation
 - **Zod** for every external input boundary
 - **React Three Fiber / Three.js** for the portal's 3D hero
-- **Vitest** (unit/integration), **Playwright** (E2E, cross-browser), **pgTAP** (RLS)
+- **Vitest** (unit + RLS integration), **Playwright** (E2E, cross-browser)
 
 > **Note on TypeScript version.** TypeScript 7 is current, but
 > `typescript-eslint@8` supports `<6.1.0`. Type-aware lint rules
@@ -96,7 +96,7 @@ pnpm dev                       # http://localhost:3000
 | `pnpm test` / `pnpm test:watch`     | Vitest                                     |
 | `pnpm test:e2e`                     | Playwright, full browser matrix            |
 | `pnpm db:reset`                     | Rebuild the local database from migrations |
-| `pnpm db:test`                      | pgTAP — RLS and policy tests               |
+| `pnpm test:db`                      | RLS and policy tests (resets the local DB) |
 | `pnpm verify`                       | typecheck → lint → test → build            |
 
 `pnpm verify` is the gate. It must pass before any commit that ends a phase.
@@ -107,7 +107,7 @@ pnpm dev                       # http://localhost:3000
 
 ```
 docs/          Architecture and process documentation
-supabase/      Canonical SQL migrations, reference seed, pgTAP tests
+supabase/      Canonical SQL migrations and reference data
 scripts/       Type generation, 3D asset pipeline, ops scripts
 src/
   app/         Routes — (portal), (investor), (admin), (auth), api
