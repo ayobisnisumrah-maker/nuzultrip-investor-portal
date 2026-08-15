@@ -1,4 +1,4 @@
-import type { Permission } from '@/core/rbac/permissions'
+﻿import type { Permission } from '@/core/rbac/permissions'
 
 /**
  * The admin navigation.
@@ -8,7 +8,7 @@ import type { Permission } from '@/core/rbac/permissions'
  * requires; the shell filters by the principal's effective set.
  *
  * Filtering is presentation only. Hiding a link is a courtesy — the page
- * itself, its actions, and RLS all check again (docs/RBAC.md §6).
+ * itself, its actions, and RLS all check again.
  */
 export type AdminNavItem = {
   href: string
@@ -32,6 +32,12 @@ export const ADMIN_NAVIGATION: readonly AdminNavSection[] = [
         icon: 'LayoutDashboard',
         permission: 'dashboard.view',
         exact: true,
+      },
+      {
+        href: '/admin/investors',
+        label: 'Investor',
+        icon: 'Users',
+        permission: 'investors.view',
       },
     ],
   },

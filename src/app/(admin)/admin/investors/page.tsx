@@ -1,0 +1,550 @@
+﻿import type { Metadata } from 'next'
+import Link from 'next/link'
+import {
+  Building2,
+  ChevronLeft,
+  ChevronRight,
+  Search,
+  UserCheck,
+  Users,
+} from 'lucide-react'
+
+import {
+  INVESTOR_STATUS_LABELS,
+  INVESTOR_STATUSES,
+  type InvestorStatus,
+} from '@/core/investors/status'
+import { topics } from '@/core/realtime/events'
+import { RealtimeRefresher } from '@/features/realtime/realtime-refresher'
+import { requireAdminPage } from '@/server/auth/page-guards'
+import { getServerSupabase } from '@/server/supabase/server'
+import { formatNumber } from '@/lib/format'
+import { Alert } from '@/ui/alert'
+import { Card, CardBody, CardHeader, CardTitle } from '@/ui/card'
+import { Grid, PageHeader, Stack } from '@/ui/layout'
+import { StatCard } from '@/ui/data'
+import { InvestorStatusPill } from '@/ui/status'
+import { EmptyState } from '@/ui/states'
+
+export const metadata: Metadata = {
+  title: 'Investor',
+}
+
+const PAGE_SIZE = 20
+
+type InvestorType = 'individual' | 'institution'
+
+type SearchParams = {
+  q?: string
+  status?: string
+  type?: string
+  page?: string
+}
+
+function parseStatus(value: string | undefined): InvestorStatus | undefined {
+  if (!value) return undefined
+
+  return (INVESTOR_STATUSES as readonly string[]).includes(value)
+    ? (value as InvestorStatus)
+    : undefined
+}
+
+function parseInvestorType(
+  value: string | undefined,
+): InvestorType | undefined {
+  if (value === 'individual' || value === 'institution') {
+    return value
+  }
+
+  return undefined
+}
+
+function buildQuery(params: SearchParams) {
+  const query = new URLSearchParams()
+
+  if (params.q) query.set('q', params.q)
+  if (params.status) query.set('status', params.status)
+  if (params.type) query.set('type', params.type)
+  if (params.page && params.page !== '1') {
+    query.set('page', params.page)
+  }
+
+  const value = query.toString()
+
+  return value ? `?${value}` : ''
+}
+
+export default async function AdminInvestorsPage({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParams>
+}) {
+  const principal = await requireAdminPage('/admin/investors')
+
+  if (!principal.permissions.has('investors.view')) {
+    return (
+      <Alert
+        tone="info"
+        title="Akses terbatas"
+      >
+        Peran Anda tidak memiliki izin untuk melihat data investor.
+      </Alert>
+    )
+  }
+
+  const params = await searchParams
+  const supabase = await getServerSupabase()
+
+  const q = params.q?.trim() ?? ''
+  const status = parseStatus(params.status)
+  const investorType = parseInvestorType(params.type)
+
+  const requestedPage = Number.parseInt(params.page ?? '1', 10)
+
+  const page =
+    Number.isFinite(requestedPage) && requestedPage > 0
+      ? requestedPage
+      : 1
+
+  let query = supabase
+    .from('investors')
+    .select(
+      `
+        id,
+        reference_code,
+        status,
+        investor_type,
+        legal_name,
+        organization_name,
+        country,
+        city,
+        applied_at,
+        created_at
+      `,
+      { count: 'exact' },
+    )
+    .order('created_at', { ascending: false })
+
+  if (q) {
+    const escaped = q.replace(/[%_]/g, '\\$&')
+
+    query = query.or(
+      `legal_name.ilike.%${escaped}%,reference_code.ilike.%${escaped}%`,
+    )
+  }
+
+  if (status) {
+    query = query.eq('status', status)
+  }
+
+  if (investorType) {
+    query = query.eq('investor_type', investorType)
+  }
+
+  const from = (page - 1) * PAGE_SIZE
+  const to = from + PAGE_SIZE - 1
+
+  const {
+    data: investors,
+    count,
+    error,
+  } = await query.range(from, to)
+
+  if (error) {
+    return (
+      <Stack gap={6}>
+        <PageHeader
+          eyebrow="Investor Relations"
+          title="Investor"
+          description="Kelola seluruh calon investor dan investor aktif."
+        />
+
+        <Alert
+          tone="danger"
+          title="Data investor tidak dapat dimuat"
+        >
+          Sistem gagal mengambil data investor. Silakan coba lagi.
+        </Alert>
+      </Stack>
+    )
+  }
+
+  const total = count ?? 0
+  const totalPages = Math.max(
+    1,
+    Math.ceil(total / PAGE_SIZE),
+  )
+
+  const { data: statusRows } = await supabase
+    .from('investors')
+    .select('status')
+
+  const statusCounts = new Map<
+    InvestorStatus,
+    number
+  >()
+
+  for (const row of statusRows ?? []) {
+    const value = row.status as InvestorStatus
+
+    statusCounts.set(
+      value,
+      (statusCounts.get(value) ?? 0) + 1,
+    )
+  }
+
+  const activeCount =
+    statusCounts.get('active') ?? 0
+
+  const submittedCount =
+    statusCounts.get('submitted') ?? 0
+
+  const reviewCount =
+    statusCounts.get('under_review') ?? 0
+
+  const approvedCount =
+    statusCounts.get('approved') ?? 0
+
+  const previousQuery =
+    page > 1
+      ? buildQuery({
+          q,
+          status,
+          type: investorType,
+          page: String(page - 1),
+        })
+      : ''
+
+  const nextQuery =
+    page < totalPages
+      ? buildQuery({
+          q,
+          status,
+          type: investorType,
+          page: String(page + 1),
+        })
+      : ''
+
+  return (
+    <Stack gap={8}>
+      <RealtimeRefresher
+        topic={topics.admin()}
+        kinds={[
+          'investor.applied',
+          'investor.status_changed',
+        ]}
+      />
+
+      <PageHeader
+        eyebrow="Investor Relations"
+        title="Investor"
+        description="Kelola pengajuan, proses peninjauan, dan investor aktif dari satu tempat."
+      />
+
+      <Grid min="15rem" gap={4}>
+        <StatCard
+          label="Total investor"
+          value={formatNumber(total)}
+          context="hasil sesuai filter"
+          icon={
+            <Users
+              aria-hidden="true"
+              className="size-4"
+            />
+          }
+        />
+
+        <StatCard
+          label="Pengajuan baru"
+          value={formatNumber(submittedCount)}
+          context="status diajukan"
+          icon={
+            <UserCheck
+              aria-hidden="true"
+              className="size-4"
+            />
+          }
+        />
+
+        <StatCard
+          label="Dalam peninjauan"
+          value={formatNumber(reviewCount)}
+          context="sedang ditinjau"
+          icon={
+            <Search
+              aria-hidden="true"
+              className="size-4"
+            />
+          }
+        />
+
+        <StatCard
+          label="Disetujui"
+          value={formatNumber(approvedCount)}
+          context="belum atau sudah aktif"
+          icon={
+            <UserCheck
+              aria-hidden="true"
+              className="size-4"
+            />
+          }
+        />
+
+        <StatCard
+          label="Aktif"
+          value={formatNumber(activeCount)}
+          context="akses investor aktif"
+          icon={
+            <Building2
+              aria-hidden="true"
+              className="size-4"
+            />
+          }
+        />
+      </Grid>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Daftar investor</CardTitle>
+
+          <p className="text-body-sm text-fg-muted">
+            Data berasal langsung dari database investor
+            dan mengikuti permission akun Anda.
+          </p>
+        </CardHeader>
+
+        <CardBody>
+          <form
+            method="get"
+            className="mb-5 grid gap-3 md:grid-cols-[minmax(0,1fr)_12rem_12rem_auto]"
+          >
+            <label className="relative">
+              <span className="sr-only">
+                Cari investor
+              </span>
+
+              <Search
+                aria-hidden="true"
+                className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-fg-subtle"
+              />
+
+              <input
+                name="q"
+                defaultValue={q}
+                placeholder="Cari nama atau reference code..."
+                className="h-10 w-full rounded-lg border border-border bg-canvas pl-9 pr-3 text-body-sm text-fg outline-none transition focus:border-accent-solid focus:ring-2 focus:ring-accent-solid/20"
+              />
+            </label>
+
+            <select
+              name="status"
+              defaultValue={status ?? ''}
+              className="h-10 rounded-lg border border-border bg-canvas px-3 text-body-sm text-fg outline-none focus:border-accent-solid"
+            >
+              <option value="">
+                Semua status
+              </option>
+
+              {INVESTOR_STATUSES.map((value) => (
+                <option
+                  key={value}
+                  value={value}
+                >
+                  {INVESTOR_STATUS_LABELS[value]}
+                </option>
+              ))}
+            </select>
+
+            <select
+              name="type"
+              defaultValue={investorType ?? ''}
+              className="h-10 rounded-lg border border-border bg-canvas px-3 text-body-sm text-fg outline-none focus:border-accent-solid"
+            >
+              <option value="">
+                Semua tipe
+              </option>
+
+              <option value="individual">
+                Individu
+              </option>
+
+              <option value="institution">
+                Institusi
+              </option>
+            </select>
+
+            <button
+              type="submit"
+              className="h-10 rounded-lg bg-accent-solid px-4 text-body-sm font-medium text-accent-contrast transition hover:opacity-90"
+            >
+              Terapkan
+            </button>
+          </form>
+
+          {investors && investors.length > 0 ? (
+            <>
+              <div className="overflow-x-auto rounded-lg border border-border">
+                <table className="w-full min-w-[900px] text-left">
+                  <thead className="border-b border-border bg-surface-muted">
+                    <tr className="text-caption text-fg-subtle">
+                      <th className="px-4 py-3 font-medium">
+                        Investor
+                      </th>
+
+                      <th className="px-4 py-3 font-medium">
+                        Tipe
+                      </th>
+
+                      <th className="px-4 py-3 font-medium">
+                        Lokasi
+                      </th>
+
+                      <th className="px-4 py-3 font-medium">
+                        Status
+                      </th>
+
+                      <th className="px-4 py-3 font-medium">
+                        Pengajuan
+                      </th>
+
+                      <th className="px-4 py-3 text-right font-medium">
+                        Aksi
+                      </th>
+                    </tr>
+                  </thead>
+
+                  <tbody className="divide-y divide-border">
+                    {investors.map((investor) => {
+                      const label =
+                        investor.investor_type ===
+                        'institution'
+                          ? investor.organization_name ||
+                            'Institusi'
+                          : investor.legal_name
+
+                      return (
+                        <tr
+                          key={investor.id}
+                          className="transition hover:bg-surface-muted/60"
+                        >
+                          <td className="px-4 py-4">
+                            <div className="min-w-0">
+                              <p className="text-body-sm font-medium text-fg">
+                                {label}
+                              </p>
+
+                              <p className="mt-0.5 font-mono text-caption text-fg-subtle">
+                                {investor.reference_code}
+                              </p>
+                            </div>
+                          </td>
+
+                          <td className="px-4 py-4 text-body-sm text-fg-muted">
+                            {investor.investor_type ===
+                            'institution'
+                              ? 'Institusi'
+                              : 'Individu'}
+                          </td>
+
+                          <td className="px-4 py-4 text-body-sm text-fg-muted">
+                            {[
+                              investor.city,
+                              investor.country,
+                            ]
+                              .filter(Boolean)
+                              .join(', ') || '—'}
+                          </td>
+
+                          <td className="px-4 py-4">
+                            <InvestorStatusPill
+                              status={
+                                investor.status as InvestorStatus
+                              }
+                              size="sm"
+                            />
+                          </td>
+
+                          <td className="px-4 py-4 font-mono text-caption text-fg-muted">
+                            {investor.applied_at
+                              ? new Intl.DateTimeFormat(
+                                  'id-ID',
+                                  {
+                                    dateStyle: 'medium',
+                                  },
+                                ).format(
+                                  new Date(
+                                    investor.applied_at,
+                                  ),
+                                )
+                              : '—'}
+                          </td>
+
+                          <td className="px-4 py-4 text-right">
+                            <Link
+                              href={`/admin/investors/${investor.id}`}
+                              className="inline-flex h-9 items-center rounded-lg border border-border px-3 text-body-sm font-medium text-fg transition hover:bg-surface-muted"
+                            >
+                              Detail
+                            </Link>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-caption text-fg-subtle">
+                  Menampilkan {from + 1}–
+                  {Math.min(
+                    from + PAGE_SIZE,
+                    total,
+                  )}{' '}
+                  dari {total} investor
+                </p>
+
+                <div className="flex items-center gap-2">
+                  {page > 1 ? (
+                    <Link
+                      href={`/admin/investors${previousQuery}`}
+                      className="inline-flex h-9 items-center gap-1 rounded-lg border border-border px-3 text-body-sm text-fg transition hover:bg-surface-muted"
+                    >
+                      <ChevronLeft
+                        aria-hidden="true"
+                        className="size-4"
+                      />
+                      Sebelumnya
+                    </Link>
+                  ) : null}
+
+                  {page < totalPages ? (
+                    <Link
+                      href={`/admin/investors${nextQuery}`}
+                      className="inline-flex h-9 items-center gap-1 rounded-lg border border-border px-3 text-body-sm text-fg transition hover:bg-surface-muted"
+                    >
+                      Berikutnya
+                      <ChevronRight
+                        aria-hidden="true"
+                        className="size-4"
+                      />
+                    </Link>
+                  ) : null}
+                </div>
+              </div>
+            </>
+          ) : (
+            <EmptyState
+              title="Tidak ada investor"
+              description={
+                q || status || investorType
+                  ? 'Tidak ada investor yang cocok dengan filter saat ini.'
+                  : 'Belum ada investor yang terdaftar di sistem.'
+              }
+            />
+          )}
+        </CardBody>
+      </Card>
+    </Stack>
+  )
+}
