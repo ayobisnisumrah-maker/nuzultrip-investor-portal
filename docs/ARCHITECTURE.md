@@ -437,6 +437,12 @@ merge. The repository is never left in a broken state.
   request at 3am.
 - Three environments: `local` (Supabase CLI, Docker), `staging`, `production`.
   Migrations flow strictly local → staging → production.
+- Production routing is prepared for `investor.nuzultrip.com` (portal and
+  investor surface) and `admin.nuzultrip.com` (admin surface). Cloudflare is
+  the TLS/DNS edge only; both hostnames route to the same Next.js deployment
+  and the existing Supabase project. Add both origins to the production
+  Server Action allow-list and Supabase Auth redirect URLs during deployment;
+  no browser receives a service-role key or private storage URL.
 
 ---
 

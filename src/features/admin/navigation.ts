@@ -39,6 +39,12 @@ export const ADMIN_NAVIGATION: readonly AdminNavSection[] = [
         icon: 'Users',
         permission: 'investors.view',
       },
+      {
+        href: '/admin/documents',
+        label: 'Dokumen',
+        icon: 'FileText',
+        permission: 'documents.view',
+      },
     ],
   },
 ]

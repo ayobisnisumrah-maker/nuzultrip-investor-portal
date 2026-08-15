@@ -4,6 +4,7 @@ import {
   PUBLICATION_STATUSES,
   PUBLICATION_STATUS_LABELS,
   PUBLICATION_TRANSITIONS,
+  PUBLICATION_TRANSITION_ACTION,
   VISIBILITIES,
   VISIBILITY_DESCRIPTIONS,
   VISIBILITY_LABELS,
@@ -51,5 +52,12 @@ describe('publication lifecycle', () => {
     for (const status of PUBLICATION_STATUSES) {
       expect(canPublicationTransition(status, status), status).toBe(false)
     }
+  })
+
+  it('maps every protected lifecycle target to its authoritative permission action', () => {
+    expect(PUBLICATION_TRANSITION_ACTION.review).toBe('review')
+    expect(PUBLICATION_TRANSITION_ACTION.approved).toBe('approve')
+    expect(PUBLICATION_TRANSITION_ACTION.published).toBe('publish')
+    expect(PUBLICATION_TRANSITION_ACTION.archived).toBe('archive')
   })
 })
