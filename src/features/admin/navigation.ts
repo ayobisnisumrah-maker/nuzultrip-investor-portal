@@ -3,12 +3,11 @@
 /**
  * The admin navigation.
  *
- * Entries are added here as their pages are built, so the sidebar never offers
- * a link to a route that does not exist. Each entry declares the permission it
- * requires; the shell filters by the principal's effective set.
+ * Entries are added here only when their destination route exists.
+ * The shell filters entries by the principal's effective permissions.
  *
- * Filtering is presentation only. Hiding a link is a courtesy — the page
- * itself, its actions, and RLS all check again.
+ * Filtering is presentation only. Every page, server action, and database RLS
+ * policy remains responsible for enforcing authorization independently.
  */
 export type AdminNavItem = {
   href: string
@@ -33,6 +32,11 @@ export const ADMIN_NAVIGATION: readonly AdminNavSection[] = [
         permission: 'dashboard.view',
         exact: true,
       },
+    ],
+  },
+  {
+    title: 'Hubungan Investor',
+    items: [
       {
         href: '/admin/investors',
         label: 'Investor',
