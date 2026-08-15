@@ -1,5 +1,7 @@
 import type { Metadata } from 'next'
 import { INVESTOR_STATUS_DESCRIPTIONS } from '@/core/investors/status'
+import { topics } from '@/core/realtime/events'
+import { RealtimeRefresher } from '@/features/realtime/realtime-refresher'
 import { requireInvestorPage } from '@/server/auth/page-guards'
 import { getServerSupabase } from '@/server/supabase/server'
 import { formatDateTime } from '@/lib/format'
@@ -16,6 +18,11 @@ export default async function InvestorOverviewPage() {
   const principal = await requireInvestorPage()
   const supabase = await getServerSupabase()
 
+  // An approval performed by an admin in another browser must land here without
+  // the investor touching anything. The event says only "look again"; the
+  // refresh re-renders on the server, where authorisation is applied afresh.
+  const liveTopic = topics.investor(principal.investorId)
+
   // An investor can always read their own history, whatever their status —
   // seeing where an application stands is not a data leak, it is the point.
   const { data: history } = await supabase
@@ -26,6 +33,16 @@ export default async function InvestorOverviewPage() {
 
   return (
     <Stack gap={8}>
+      <RealtimeRefresher
+        topic={liveTopic}
+        kinds={[
+          'investor.status_changed',
+          'investor.document_shared',
+          'investor.document_revoked',
+          'message.received',
+        ]}
+      />
+
       <PageHeader
         eyebrow="Investor Relations"
         title={`Halo, ${principal.fullName.split(' ')[0]}`}

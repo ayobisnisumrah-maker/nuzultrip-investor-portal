@@ -111,6 +111,7 @@ export function StatCard({
   delta,
   icon,
   className,
+  testId,
 }: {
   label: React.ReactNode
   value: React.ReactNode
@@ -119,14 +120,28 @@ export function StatCard({
   delta?: React.ReactNode
   icon?: React.ReactNode
   className?: string
+  /**
+   * Stable hook for tests. The value gets `${testId}-value`, so an assertion
+   * can target the number without depending on the card's DOM shape.
+   */
+  testId?: string
 }) {
   return (
-    <Card padding="sm" className={cn('flex flex-col gap-2', className)}>
+    <Card
+      padding="sm"
+      className={cn('flex flex-col gap-2', className)}
+      {...(testId ? { 'data-testid': testId } : {})}
+    >
       <div className="flex items-start justify-between gap-3">
         <p className="text-fg-subtle overline">{label}</p>
         {icon ? <span className="text-fg-subtle shrink-0">{icon}</span> : null}
       </div>
-      <p className="text-heading-xl text-fg">{value}</p>
+      <p
+        className="text-heading-xl text-fg"
+        {...(testId ? { 'data-testid': `${testId}-value` } : {})}
+      >
+        {value}
+      </p>
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
         {delta}
         <span className="text-caption text-fg-subtle">{context}</span>

@@ -1,9 +1,11 @@
 import 'server-only'
 
-import { createHash } from 'node:crypto'
 import { getServerEnv } from '@/lib/env'
+import { RATE_LIMITS, rateLimitBucket, type RateLimitScope } from '@/core/rate-limit/policy'
 import { RateLimitError } from '@/core/errors'
 import { getServiceRoleClient } from './service-client'
+
+export type { RateLimitScope }
 
 /**
  * Rate limiting.
@@ -15,35 +17,13 @@ import { getServiceRoleClient } from './service-client'
  * of the enumerated service-role uses (docs/SECURITY.md §3).
  */
 
-export type RateLimitScope =
-  | 'auth.sign_in'
-  | 'auth.password_reset'
-  | 'investor.application'
-  | 'portal.inquiry'
-  | 'storage.signed_url'
-  | 'storage.upload'
-  | 'message.send'
-
-/** Conservative defaults; each is per identifier, per window. */
-const LIMITS: Record<RateLimitScope, { limit: number; windowSeconds: number }> = {
-  'auth.sign_in': { limit: 8, windowSeconds: 15 * 60 },
-  'auth.password_reset': { limit: 4, windowSeconds: 60 * 60 },
-  'investor.application': { limit: 3, windowSeconds: 60 * 60 },
-  'portal.inquiry': { limit: 5, windowSeconds: 60 * 60 },
-  'storage.signed_url': { limit: 120, windowSeconds: 60 },
-  'storage.upload': { limit: 30, windowSeconds: 60 * 60 },
-  'message.send': { limit: 30, windowSeconds: 60 * 60 },
-}
-
 /**
- * Buckets are salted hashes, so the stored key reveals nothing about the
- * identifier — an email address or IP address never lands in the table in the
- * clear (docs/SECURITY.md §9).
+ * Bucket derivation and the policy table live in `src/core/rate-limit/policy`
+ * so the server and the tests cannot disagree about which key a given caller
+ * maps to.
  */
 function bucketFor(scope: RateLimitScope, identifier: string): string {
-  return createHash('sha256')
-    .update(`${getServerEnv().AUDIT_IP_SALT}:${scope}:${identifier.toLowerCase()}`)
-    .digest('hex')
+  return rateLimitBucket(getServerEnv().AUDIT_IP_SALT, scope, identifier)
 }
 
 export type RateLimitResult = {
@@ -56,7 +36,7 @@ export async function consumeRateLimit(
   scope: RateLimitScope,
   identifier: string,
 ): Promise<RateLimitResult> {
-  const { limit, windowSeconds } = LIMITS[scope]
+  const { limit, windowSeconds } = RATE_LIMITS[scope]
   const client = getServiceRoleClient()
 
   const { data, error } = await client.rpc('consume_rate_limit', {

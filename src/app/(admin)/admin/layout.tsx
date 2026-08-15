@@ -1,7 +1,9 @@
 import type { Metadata } from 'next'
 import { hasPermission } from '@/core/auth/principal'
+import { topics } from '@/core/realtime/events'
 import { ADMIN_NAVIGATION } from '@/features/admin/navigation'
 import { AdminShell, type SerializableNavSection } from '@/features/admin/admin-shell'
+import { RealtimeProvider } from '@/features/realtime/realtime-provider'
 import { requireAdminPage } from '@/server/auth/page-guards'
 import { ToastProvider } from '@/ui/toast'
 import { TooltipProvider } from '@/ui/menu'
@@ -29,12 +31,18 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   })).filter((section) => section.items.length > 0)
 
   return (
-    <ToastProvider>
-      <TooltipProvider delayDuration={200}>
-        <AdminShell sections={sections} fullName={principal.fullName} roleName={principal.roleName}>
-          {children}
-        </AdminShell>
-      </TooltipProvider>
-    </ToastProvider>
+    <RealtimeProvider topics={[topics.admin(), topics.user(principal.userId)]}>
+      <ToastProvider>
+        <TooltipProvider delayDuration={200}>
+          <AdminShell
+            sections={sections}
+            fullName={principal.fullName}
+            roleName={principal.roleName}
+          >
+            {children}
+          </AdminShell>
+        </TooltipProvider>
+      </ToastProvider>
+    </RealtimeProvider>
   )
 }

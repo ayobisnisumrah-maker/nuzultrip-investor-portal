@@ -12,6 +12,7 @@ import {
 import { AppShell, Brand, type NavSection } from '@/ui/shell'
 import { Avatar } from '@/ui/primitives'
 import { SignOutButton } from '@/features/shell/sign-out-button'
+import { RealtimeStatus } from '@/features/realtime/realtime-status'
 
 /**
  * Icons are referenced by name in the navigation data (a plain, serialisable
@@ -68,6 +69,7 @@ export function AdminShell({
             <span className="text-body-sm text-fg font-medium">{fullName}</span>
             <span className="text-caption text-fg-subtle">{roleName}</span>
           </div>
+          <RealtimeStatus />
           <Avatar name={fullName} size="sm" />
           <SignOutButton compact />
         </div>

@@ -78,17 +78,19 @@ the auth surface is verified end-to-end in a real browser
 
 ---
 
-## Phase 4 — Realtime Backbone ☐
+## Phase 4 — Realtime Backbone ☑
 
 **Goal:** cross-browser synchronisation with the database as source of truth.
 
-- ☐ `realtime.messages` RLS authorisation per topic
-- ☐ Postgres triggers emitting curated domain events
-- ☐ Typed client (`useRealtimeTopic`) + TanStack Query invalidation bridge
-- ☐ Connection state UI (connected / reconnecting / degraded)
-- ☐ Playwright two-context test proving propagation
+- ☑ `realtime.messages` RLS authorisation per topic
+- ☑ Postgres triggers emitting curated domain events
+- ☑ Typed client (`useRealtimeTopic`) + TanStack Query invalidation bridge
+- ☑ Connection state UI (connected / reconnecting / degraded)
+- ☑ Playwright two-context test proving propagation
 
-**Gate:** E2E realtime test green on Chromium, Firefox, WebKit.
+**Gate:** 27 E2E assertions green on Chromium, Firefox and WebKit (9 each),
+including two-context propagation and a websocket-frame capture proving a
+bystander investor receives nothing about another investor.
 
 ---
 

@@ -38,6 +38,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html
       lang="id"
       {...(attribute ? { 'data-theme': attribute } : {})}
+      // Tells Next the smooth scrolling in globals.css is intentional, so it
+      // suppresses it during route transitions rather than warning about it.
+      data-scroll-behavior="smooth"
       className={fontVariables}
       suppressHydrationWarning
     >

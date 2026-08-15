@@ -2,6 +2,8 @@ import type { Metadata } from 'next'
 import { FileText, Inbox, UserCheck, Users } from 'lucide-react'
 import { INVESTOR_STATUS_LABELS, type InvestorStatus } from '@/core/investors/status'
 import { hasPermission } from '@/core/auth/principal'
+import { topics } from '@/core/realtime/events'
+import { RealtimeRefresher } from '@/features/realtime/realtime-refresher'
 import { requireAdminPage } from '@/server/auth/page-guards'
 import { getServerSupabase } from '@/server/supabase/server'
 import { formatNumber } from '@/lib/format'
@@ -60,6 +62,18 @@ export default async function AdminDashboardPage() {
 
   return (
     <Stack gap={8}>
+      {/* A new application submitted from the public portal, or a status change
+          made by a colleague, updates these figures without a refresh. */}
+      <RealtimeRefresher
+        topic={topics.admin()}
+        kinds={[
+          'investor.applied',
+          'investor.status_changed',
+          'inquiry.received',
+          'document.state_changed',
+        ]}
+      />
+
       <PageHeader
         eyebrow="Investor Relations"
         title={`Selamat datang, ${principal.fullName.split(' ')[0]}`}
@@ -71,12 +85,14 @@ export default async function AdminDashboardPage() {
           <>
             <StatCard
               label="Investor aktif"
+              testId="stat-active-investors"
               value={formatNumber(byStatus.get('active') ?? 0)}
               context="status aktif saat ini"
               icon={<Users aria-hidden="true" className="size-4" />}
             />
             <StatCard
               label="Menunggu peninjauan"
+              testId="stat-pending-review"
               value={formatNumber(pendingReview)}
               context="diajukan dan sedang ditinjau"
               icon={<UserCheck aria-hidden="true" className="size-4" />}
@@ -87,6 +103,7 @@ export default async function AdminDashboardPage() {
         {canSeeInquiries ? (
           <StatCard
             label="Permintaan baru"
+            testId="stat-new-inquiries"
             value={formatNumber(inquiryCount ?? 0)}
             context="dari portal publik"
             icon={<Inbox aria-hidden="true" className="size-4" />}
@@ -96,6 +113,7 @@ export default async function AdminDashboardPage() {
         {canSeeDocuments ? (
           <StatCard
             label="Dokumen terbit"
+            testId="stat-published-documents"
             value={formatNumber(documentCount ?? 0)}
             context="tersedia untuk investor"
             icon={<FileText aria-hidden="true" className="size-4" />}
