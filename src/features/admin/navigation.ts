@@ -51,4 +51,15 @@ export const ADMIN_NAVIGATION: readonly AdminNavSection[] = [
       },
     ],
   },
+  {
+    title: 'Keamanan',
+    items: [
+      {
+        href: '/admin/audit-logs',
+        label: 'Audit Log',
+        icon: 'ScrollText',
+        permission: 'audit_logs.view',
+      },
+    ],
+  },
 ]

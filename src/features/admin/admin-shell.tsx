@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion'
 import {
+  FileText,
   KeyRound,
   LayoutDashboard,
   ScrollText,
@@ -34,6 +35,7 @@ const ICONS: Record<string, LucideIcon> = {
   Shield,
   KeyRound,
   ScrollText,
+  FileText,
 }
 
 export type SerializableNavSection = {
