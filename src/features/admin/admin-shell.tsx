@@ -1,5 +1,6 @@
-'use client'
+﻿'use client'
 
+import { motion } from 'framer-motion'
 import {
   KeyRound,
   LayoutDashboard,
@@ -9,17 +10,23 @@ import {
   Users,
   type LucideIcon,
 } from 'lucide-react'
+import type { ReactNode } from 'react'
+
 import { AppShell, Brand, type NavSection } from '@/ui/shell'
 import { Avatar } from '@/ui/primitives'
 import { SignOutButton } from '@/features/shell/sign-out-button'
 import { RealtimeStatus } from '@/features/realtime/realtime-status'
 
 /**
- * Icons are referenced by name in the navigation data (a plain, serialisable
- * module) and resolved to components here, on the client. Passing a component
- * across the server/client boundary is not possible, and a barrel import of the
- * whole icon set would ship far more than the handful actually used.
+ * Admin shell.
+ *
+ * Important:
+ * - Navigation remains permission-aware.
+ * - Server authorization remains authoritative.
+ * - This component only controls presentation.
+ * - No privileged action is performed from this client shell.
  */
+
 const ICONS: Record<string, LucideIcon> = {
   LayoutDashboard,
   Users,
@@ -31,7 +38,12 @@ const ICONS: Record<string, LucideIcon> = {
 
 export type SerializableNavSection = {
   title?: string
-  items: ReadonlyArray<{ href: string; label: string; icon: string; exact?: boolean }>
+  items: ReadonlyArray<{
+    href: string
+    label: string
+    icon: string
+    exact?: boolean
+  }>
 }
 
 export function AdminShell({
@@ -43,17 +55,27 @@ export function AdminShell({
   sections: readonly SerializableNavSection[]
   fullName: string
   roleName: string
-  children: React.ReactNode
+  children: ReactNode
 }) {
   const resolved: NavSection[] = sections.map((section) => ({
     ...(section.title ? { title: section.title } : {}),
     items: section.items.map((item) => {
       const Icon = ICONS[item.icon]
+
       return {
         href: item.href,
         label: item.label,
         ...(item.exact ? { exact: true } : {}),
-        ...(Icon ? { icon: <Icon aria-hidden="true" /> } : {}),
+        ...(Icon
+          ? {
+              icon: (
+                <Icon
+                  aria-hidden="true"
+                  className="transition-transform duration-200"
+                />
+              ),
+            }
+          : {}),
       }
     }),
   }))
@@ -62,20 +84,91 @@ export function AdminShell({
     <AppShell
       homeHref="/admin"
       sections={resolved}
-      brand={<Brand sublabel="Admin" />}
+      brand={<Brand sublabel="Admin Console" />}
       topbarActions={
-        <div className="flex items-center gap-3">
-          <div className="hidden flex-col items-end leading-tight sm:flex">
-            <span className="text-body-sm text-fg font-medium">{fullName}</span>
-            <span className="text-caption text-fg-subtle">{roleName}</span>
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="hidden h-8 items-center rounded-full border border-border bg-surface px-3 sm:flex">
+            <span className="mr-2 size-1.5 rounded-full bg-success-solid" />
+            <span className="text-caption font-medium text-fg-muted">
+              Sistem aktif
+            </span>
           </div>
+
           <RealtimeStatus />
-          <Avatar name={fullName} size="sm" />
+
+          <div className="hidden h-8 w-px bg-border sm:block" />
+
+          <div className="hidden flex-col items-end leading-tight md:flex">
+            <span className="text-body-sm font-medium text-fg">
+              {fullName}
+            </span>
+            <span className="text-caption text-fg-subtle">
+              {roleName}
+            </span>
+          </div>
+
+          <Avatar
+            name={fullName}
+            size="sm"
+          />
+
           <SignOutButton compact />
         </div>
       }
     >
-      {children}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{
+          duration: 0.28,
+          ease: 'easeOut',
+        }}
+        className="mx-auto w-full max-w-[1600px]"
+      >
+        <div className="mb-6 overflow-hidden rounded-xl border border-border bg-surface">
+          <div className="relative px-5 py-5 sm:px-6 sm:py-6">
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute right-0 top-0 size-48 translate-x-16 -translate-y-20 rounded-full bg-primary-subtle blur-3xl"
+            />
+
+            <div className="relative flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-caption mb-1 font-medium uppercase tracking-[0.14em] text-fg-subtle">
+                  Nuzultrip Investor Relations
+                </p>
+
+                <h1 className="font-display text-heading-lg text-fg">
+                  Admin Console
+                </h1>
+
+                <p className="mt-1 max-w-2xl text-body-sm text-fg-muted">
+                  Kelola investor, komunikasi, dokumen, laporan, dan portal
+                  hubungan investor dari satu tempat.
+                </p>
+              </div>
+
+              <div className="flex shrink-0 items-center gap-2 rounded-lg border border-border bg-canvas px-3 py-2">
+                <Shield
+                  aria-hidden="true"
+                  className="size-4 text-accent-solid"
+                />
+
+                <div className="leading-tight">
+                  <p className="text-caption font-medium text-fg">
+                    {roleName}
+                  </p>
+                  <p className="text-[0.6875rem] text-fg-subtle">
+                    Akses terotorisasi
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {children}
+      </motion.div>
     </AppShell>
   )
 }
