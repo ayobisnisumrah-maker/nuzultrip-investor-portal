@@ -38,6 +38,14 @@ export default async function MessagesPage({ searchParams }: { searchParams: Pro
     messages = result.data ?? []
   }
 
+  const { data: investors } = principal.permissions.has('messages.send')
+    ? await supabase
+        .from('investors')
+        .select('id, legal_name, organization_name, reference_code')
+        .order('legal_name', { ascending: true })
+        .limit(500)
+    : { data: [] }
+
   return (
     <div className="space-y-6">
       <div>
@@ -45,7 +53,14 @@ export default async function MessagesPage({ searchParams }: { searchParams: Pro
         <h1 className="mt-1 font-display text-heading-lg text-fg">Pesan</h1>
         <p className="mt-2 max-w-3xl text-body-sm text-fg-muted">Kelola percakapan investor secara real-time dari inbox admin.</p>
       </div>
-      <CommunicationWorkbench threads={threads ?? []} selectedThread={selectedThread} messages={messages} />
+      <CommunicationWorkbench
+        threads={threads ?? []}
+        selectedThread={selectedThread}
+        messages={messages}
+        investors={investors ?? []}
+        canSend={principal.permissions.has('messages.send')}
+        canHandle={principal.permissions.has('inquiries.handle')}
+      />
     </div>
   )
 }
