@@ -31,7 +31,14 @@ export default async function InquiriesPage() {
         <h1 className="mt-1 font-display text-heading-lg text-fg">Permintaan Masuk</h1>
         <p className="mt-2 max-w-3xl text-body-sm text-fg-muted">Kelola inquiry dari portal publik, tindak lanjutnya, dan konversinya menjadi percakapan.</p>
       </div>
-      <CommunicationWorkbench threads={[]} selectedThread={null} messages={[]} inquiries={inquiries ?? []} />
+      <CommunicationWorkbench
+        threads={[]}
+        selectedThread={null}
+        messages={[]}
+        inquiries={inquiries ?? []}
+        canSend={false}
+        canHandle={principal.permissions.has('inquiries.handle')}
+      />
     </div>
   )
 }
