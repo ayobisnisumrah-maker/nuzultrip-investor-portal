@@ -3,7 +3,13 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 
-import { createInvestorMessageThread, sendAdminMessage, convertInquiryToThread, updateInquiryStatus } from '@/server/messaging/admin-actions'
+import {
+  createInvestorMessageThread,
+  convertInquiryToThread,
+  sendAdminMessage,
+  updateInquiryStatus,
+} from '@/server/messaging/admin-actions'
+import type { ActionResult } from '@/server/auth/guards'
 import { Button } from '@/ui/button'
 import { Alert } from '@/ui/alert'
 import { useToast } from '@/ui/toast'
@@ -25,6 +31,15 @@ type Message = {
   sent_at: string
 }
 
+type Investor = {
+  id: string
+  legal_name: string
+  organization_name: string | null
+  reference_code: string
+}
+
+type InquiryStatus = 'new' | 'in_progress' | 'converted' | 'closed'
+
 type Inquiry = {
   id: string
   name: string
@@ -32,7 +47,7 @@ type Inquiry = {
   phone: string | null
   organization: string | null
   message: string
-  status: string
+  status: InquiryStatus
   thread_id: string | null
   created_at: string
 }
@@ -42,27 +57,33 @@ export function CommunicationWorkbench({
   selectedThread,
   messages,
   inquiries,
+  investors,
+  canSend,
+  canHandle,
 }: {
   threads: Thread[]
   selectedThread: Thread | null
   messages: Message[]
   inquiries?: Inquiry[]
+  investors?: Investor[]
+  canSend: boolean
+  canHandle: boolean
 }) {
   const router = useRouter()
   const { push } = useToast()
   const [pending, startTransition] = useTransition()
   const [body, setBody] = useState('')
-  const [investorId, setInvestorId] = useState('')
+  const [investorId, setInvestorId] = useState(investors?.[0]?.id ?? '')
   const [subject, setSubject] = useState('')
   const [firstMessage, setFirstMessage] = useState('')
   const [error, setError] = useState<string | null>(null)
 
-  function run(action: () => Promise<{ ok: boolean; data?: any; error?: { message: string } }>, success: string) {
+  function run(action: () => Promise<ActionResult<unknown>>, success: string) {
     setError(null)
     startTransition(async () => {
       const result = await action()
       if (!result.ok) {
-        setError(result.error?.message ?? 'Operasi gagal.')
+        setError(result.error.message)
         return
       }
       push({ tone: 'success', title: 'Berhasil', description: success })
@@ -92,15 +113,26 @@ export function CommunicationWorkbench({
           </div>
         </div>
 
-        <div className="rounded-xl border border-border bg-surface p-4">
-          <h2 className="text-body font-semibold text-fg">Buat percakapan</h2>
-          <div className="mt-3 space-y-3">
-            <input value={investorId} onChange={(e) => setInvestorId(e.target.value)} placeholder="Investor UUID" className="h-10 w-full rounded-lg border border-border bg-canvas px-3 text-body-sm" />
-            <input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Subjek" className="h-10 w-full rounded-lg border border-border bg-canvas px-3 text-body-sm" />
-            <textarea value={firstMessage} onChange={(e) => setFirstMessage(e.target.value)} placeholder="Pesan pertama" rows={4} className="w-full rounded-lg border border-border bg-canvas px-3 py-2 text-body-sm" />
-            <Button disabled={pending} onClick={() => run(() => createInvestorMessageThread({ investorId, subject, body: firstMessage }), 'Percakapan dibuat.')}>Buat & Kirim</Button>
+        {canSend ? (
+          <div className="rounded-xl border border-border bg-surface p-4">
+            <h2 className="text-body font-semibold text-fg">Buat percakapan</h2>
+            <div className="mt-3 space-y-3">
+              {investors?.length ? (
+                <select value={investorId} onChange={(event) => setInvestorId(event.target.value)} className="h-10 w-full rounded-lg border border-border bg-canvas px-3 text-body-sm">
+                  <option value="">Pilih investor</option>
+                  {investors.map((investor) => (
+                    <option key={investor.id} value={investor.id}>
+                      {investor.legal_name} · {investor.reference_code}
+                    </option>
+                  ))}
+                </select>
+              ) : <p className="text-caption text-fg-subtle">Belum ada investor yang dapat dipilih.</p>}
+              <input value={subject} onChange={(event) => setSubject(event.target.value)} placeholder="Subjek" maxLength={200} className="h-10 w-full rounded-lg border border-border bg-canvas px-3 text-body-sm" />
+              <textarea value={firstMessage} onChange={(event) => setFirstMessage(event.target.value)} placeholder="Pesan pertama" rows={4} maxLength={20000} className="w-full rounded-lg border border-border bg-canvas px-3 py-2 text-body-sm" />
+              <Button disabled={pending || !investorId || !subject.trim() || !firstMessage.trim()} onClick={() => run(() => createInvestorMessageThread({ investorId, subject, body: firstMessage }), 'Percakapan dibuat.')}>Buat & Kirim</Button>
+            </div>
           </div>
-        </div>
+        ) : null}
       </div>
 
       <div className="rounded-xl border border-border bg-surface p-5">
@@ -124,12 +156,12 @@ export function CommunicationWorkbench({
             </div>
             {selectedThread.is_closed ? (
               <Alert tone="info" title="Percakapan ditutup">Percakapan ini tidak menerima balasan baru.</Alert>
-            ) : (
+            ) : canSend ? (
               <div className="border-t border-border pt-4">
-                <textarea value={body} onChange={(e) => setBody(e.target.value)} placeholder="Tulis balasan..." rows={5} className="w-full rounded-lg border border-border bg-canvas px-3 py-2 text-body-sm" />
+                <textarea value={body} onChange={(event) => setBody(event.target.value)} placeholder="Tulis balasan..." rows={5} maxLength={20000} className="w-full rounded-lg border border-border bg-canvas px-3 py-2 text-body-sm" />
                 <div className="mt-3 flex justify-end"><Button disabled={pending || !body.trim()} onClick={() => run(() => sendAdminMessage({ threadId: selectedThread.id, body }), 'Pesan terkirim.')}>Kirim</Button></div>
               </div>
-            )}
+            ) : <Alert tone="info" title="Mode baca">Peran Anda dapat membaca percakapan tetapi tidak memiliki izin untuk mengirim pesan.</Alert>}
           </>
         ) : <div className="flex min-h-[32rem] items-center justify-center text-center"><div><h2 className="text-body font-semibold text-fg">Pilih percakapan</h2><p className="mt-1 text-body-sm text-fg-muted">Pilih thread untuk membaca dan membalas pesan.</p></div></div>}
       </div>
@@ -146,7 +178,7 @@ export function CommunicationWorkbench({
                   <td className="max-w-md px-4 py-4 text-body-sm text-fg-muted"><p className="line-clamp-2">{inquiry.message}</p></td>
                   <td className="px-4 py-4"><span className="rounded-full border border-border px-2.5 py-1 text-caption text-fg">{inquiry.status}</span></td>
                   <td className="px-4 py-4 text-caption text-fg-muted">{new Date(inquiry.created_at).toLocaleString('id-ID')}</td>
-                  <td className="px-4 py-4 text-right"><div className="flex justify-end gap-2">{!inquiry.thread_id ? <Button variant="secondary" disabled={pending} onClick={() => run(() => convertInquiryToThread({ inquiryId: inquiry.id }), 'Permintaan dikonversi menjadi percakapan.')}>Buka Percakapan</Button> : null}<select value={inquiry.status} disabled={pending} onChange={(e) => run(() => updateInquiryStatus({ inquiryId: inquiry.id, status: e.target.value as any }), 'Status permintaan diperbarui.')} className="h-9 rounded-lg border border-border bg-canvas px-2 text-caption"><option value="new">Baru</option><option value="in_progress">Diproses</option><option value="converted">Dikonversi</option><option value="closed">Ditutup</option></select></div></td>
+                  <td className="px-4 py-4 text-right">{canHandle ? <div className="flex justify-end gap-2">{!inquiry.thread_id ? <Button variant="secondary" disabled={pending} onClick={() => run(() => convertInquiryToThread({ inquiryId: inquiry.id }), 'Permintaan dikonversi menjadi percakapan.')}>Buka Percakapan</Button> : null}<select value={inquiry.status} disabled={pending} onChange={(event) => run(() => updateInquiryStatus({ inquiryId: inquiry.id, status: event.target.value as InquiryStatus }), 'Status permintaan diperbarui.')} className="h-9 rounded-lg border border-border bg-canvas px-2 text-caption"><option value="new">Baru</option><option value="in_progress">Diproses</option><option value="converted">Dikonversi</option><option value="closed">Ditutup</option></select></div> : <span className="text-caption text-fg-subtle">Baca saja</span>}</td>
                 </tr>)}
               </tbody>
             </table>
