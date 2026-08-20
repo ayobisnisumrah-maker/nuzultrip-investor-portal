@@ -1,22 +1,34 @@
-import { Overline } from '@/ui/primitives'
-import { TessellationBand } from '@/ui/geometry/khatim'
+import { PublicPortal } from '@/features/portal/public-portal'
+import {
+  getPublishedHomePage,
+  getPublishedNavigation,
+} from '@/server/portal/public-queries'
 
-export default function Home() {
+export default async function Home() {
+  const [portal, navigation] = await Promise.all([
+    getPublishedHomePage(),
+    getPublishedNavigation(),
+  ])
+
+  if (!portal) {
+    return (
+      <main id="main" className="mx-auto flex min-h-dvh max-w-3xl flex-col justify-center px-6 py-16">
+        <p className="text-caption font-medium uppercase tracking-[0.16em] text-fg-subtle">
+          Investor Relations
+        </p>
+        <h1 className="mt-3 font-display text-display-lg text-fg">Nuzultrip Investor Portal</h1>
+        <p className="mt-4 max-w-2xl text-body-lg leading-8 text-fg-muted">
+          Portal publik belum dipublikasikan. Silakan kembali setelah konten Investor Relations tersedia.
+        </p>
+      </main>
+    )
+  }
+
   return (
-    <main
-      id="main"
-      className="max-w-narrow mx-auto flex min-h-dvh flex-col justify-center gap-5 px-6"
-    >
-      <Overline tone="accent">Investor Relations</Overline>
-      <h1 className="font-display text-display-lg text-fg">Nuzultrip Investor Portal</h1>
-      <p className="text-body-lg text-fg-muted max-w-prose">
-        Berjalan bersama dan berkembang bersama.
-      </p>
-      <TessellationBand height={32} className="my-2" />
-      <p className="text-body-sm text-fg-subtle">
-        Fase fondasi. Portal publik disusun dari konten CMS pada Fase 9 — lihat{' '}
-        <code className="text-fg-muted">docs/ROADMAP.md</code>.
-      </p>
-    </main>
+    <PublicPortal
+      page={{ title: portal.page.title, seo: portal.page.seo }}
+      sections={portal.sections}
+      navigation={navigation}
+    />
   )
 }
