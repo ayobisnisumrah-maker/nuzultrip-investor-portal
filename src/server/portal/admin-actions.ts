@@ -27,6 +27,10 @@ const saveSectionSchema = z.object({
   changeNote: z.string().trim().max(500).optional().or(z.literal('')),
 })
 
+const pageTransitionSchema = z.object({
+  pageId: z.uuid(),
+})
+
 export const createPortalSection = defineAction({
   access: { permission: 'portal.update' },
   input: createSectionSchema,
@@ -116,3 +120,73 @@ export const setPortalSectionVisibility = defineAction({
     return { ok: true }
   },
 })
+
+async function transitionPortalPage(
+  pageId: string,
+  target: 'review' | 'approved' | 'published' | 'archived' | 'draft',
+  supabase: Parameters<Parameters<typeof defineAction>[0]['handler']>[0]['supabase'],
+) {
+  const { data, error } = await (supabase.schema('app') as typeof supabase).rpc('transition_portal_page' as never, {
+    p_page_id: pageId,
+    p_to_status: target,
+  } as never)
+
+  if (error) {
+    throw new Error(`Gagal mengubah status portal: ${error.message}`)
+  }
+
+  const result = Array.isArray(data) ? data[0] : data
+  if (!result) throw new Error('Perubahan status portal tidak menghasilkan data.')
+  return result as { page_id: string; page_title: string; previous_status: string; status: string }
+}
+
+function definePortalTransitionAction(
+  target: 'review' | 'approved' | 'published' | 'archived' | 'draft',
+  action: string,
+  summary: (title: string, from: string, to: string) => string,
+) {
+  return defineAction({
+    access: { permission: target === 'draft' ? 'portal.update' : 'portal.publish' },
+    input: pageTransitionSchema,
+    audit: { action, entityType: 'portal_page' },
+    handler: async ({ input, supabase, audit }) => {
+      const result = await transitionPortalPage(input.pageId, target, supabase)
+      audit({
+        entityId: result.page_id,
+        summary: summary(result.page_title, result.previous_status, result.status),
+        changes: { status: { before: result.previous_status, after: result.status } },
+      })
+      return result
+    },
+  })
+}
+
+export const submitPortalPageForReview = definePortalTransitionAction(
+  'review',
+  'portal.page.review_started',
+  (title) => `Halaman portal ${title} dikirim untuk peninjauan.`,
+)
+
+export const approvePortalPage = definePortalTransitionAction(
+  'approved',
+  'portal.page.approved',
+  (title) => `Halaman portal ${title} disetujui.`,
+)
+
+export const publishPortalPage = definePortalTransitionAction(
+  'published',
+  'portal.page.published',
+  (title) => `Halaman portal ${title} diterbitkan.`,
+)
+
+export const archivePortalPage = definePortalTransitionAction(
+  'archived',
+  'portal.page.archived',
+  (title) => `Halaman portal ${title} diarsipkan.`,
+)
+
+export const returnPortalPageToDraft = definePortalTransitionAction(
+  'draft',
+  'portal.page.returned_to_draft',
+  (title, from) => `Halaman portal ${title} dikembalikan dari ${from} menjadi draf.`,
+)
