@@ -185,7 +185,7 @@ export default async function AdminInvestorsPage({
   >()
 
   for (const row of statusRows ?? []) {
-    const value = row.status as InvestorStatus
+    const value = row.status
 
     statusCounts.set(
       value,
@@ -458,7 +458,7 @@ export default async function AdminInvestorsPage({
                           <td className="px-4 py-4">
                             <InvestorStatusPill
                               status={
-                                investor.status as InvestorStatus
+                                investor.status
                               }
                               size="sm"
                             />

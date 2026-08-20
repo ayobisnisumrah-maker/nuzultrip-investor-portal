@@ -1,5 +1,21 @@
-'use server'
+﻿'use server'
 
+type RevokeGrantDocument = {
+  title: string
+}
+
+type RevokeGrantInvestor = {
+  reference_code: string
+}
+
+type RevokeGrantRow = {
+  id: string
+  document_id: string
+  investor_id: string
+  revoked_at: string | null
+  documents: RevokeGrantDocument | RevokeGrantDocument[] | null
+  investors: RevokeGrantInvestor | RevokeGrantInvestor[] | null
+}
 import { z } from 'zod'
 
 import { canPublicationTransition, type PublicationStatus } from '@/core/documents/publication'
@@ -27,7 +43,7 @@ async function transitionDocument(
   if (readError) throw new ConflictError(`Failed to read document: ${readError.message}`, 'Dokumen tidak dapat dibaca saat ini.')
   if (!document) throw new NotFoundError('Dokumen')
 
-  const current = document.status as PublicationStatus
+  const current = document.status
   if (!canPublicationTransition(current, target)) {
     throw new ForbiddenError(`Invalid document publication transition: ${current} -> ${target}.`, { from: current, to: target })
   }
@@ -65,9 +81,84 @@ async function transitionDocument(
   const { data: updated, error } = await supabase.from('documents').update(update).eq('id', document.id).select('id, title, status').maybeSingle()
   if (error) throw new ConflictError(`Failed to update document: ${error.message}`, 'Status dokumen tidak dapat diperbarui saat ini.')
   if (!updated) throw new NotFoundError('Dokumen')
-  return { documentId: updated.id, title: updated.title, previousStatus: current, status: updated.status as PublicationStatus }
+  return { documentId: updated.id, title: updated.title, previousStatus: current, status: updated.status }
 }
 
+const createDocumentSchema = z.object({
+  title: z.string().trim().min(1).max(200),
+  slug: z
+    .string()
+    .trim()
+    .min(1)
+    .max(200)
+    .regex(
+      /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
+      'Slug hanya boleh berisi huruf kecil, angka, dan tanda hubung.',
+    ),
+  kind: z.enum([
+    'investment_proposal',
+    'pitch_deck',
+    'investor_report',
+    'business_update',
+    'supporting',
+  ]),
+  summary: z.string().trim().max(1000).optional(),
+  visibility: z.enum(['public', 'investors', 'restricted', 'internal']),
+  fileAssetId: z.string().uuid().optional(),})
+
+export const createDocument = defineAction({
+  access: { permission: 'documents.create' },
+  input: createDocumentSchema,
+  audit: {
+    action: 'document.created',
+    entityType: 'document',
+  },
+  handler: async ({ input, supabase, audit }) => {
+    const { data, error } = await supabase
+      .schema('app')
+      .rpc('create_document_with_draft', {
+        p_title: input.title,
+        p_slug: input.slug,
+        p_kind: input.kind,
+        p_summary: input.summary || undefined,
+        p_visibility: input.visibility,
+        p_file_asset_id: input.fileAssetId || undefined,
+      })
+
+    if (error) {
+      throw new ConflictError(
+        `Failed to create document: ${error.message}`,
+        'Dokumen tidak dapat dibuat saat ini.',
+      )
+    }
+
+    const result = Array.isArray(data) ? data[0] : data
+
+    if (!result) {
+      throw new ConflictError(
+        'Document creation returned no result.',
+        'Dokumen tidak dapat dibuat saat ini.',
+      )
+    }
+
+    audit({
+      entityId: result.document_id,
+      summary: `Dokumen ${result.title} dibuat sebagai draft.`,
+      changes: {
+        document: {
+          before: null,
+          after: {
+            documentId: result.document_id,
+            versionId: result.version_id,
+            status: result.status,
+          },
+        },
+      },
+    })
+
+    return result
+  },
+})
 function defineTransitionAction(target: PublicationStatus, permission: 'documents.review' | 'documents.approve' | 'documents.publish' | 'documents.archive', action: string, summary: (title: string) => string) {
   return defineAction({
     access: { permission }, input: documentIdSchema, audit: { action, entityType: 'document' },
@@ -116,9 +207,22 @@ export const revokeDocumentAccess = defineAction({
     if (grant.revoked_at) throw new ConflictError('Document grant is already revoked.', 'Akses dokumen sudah dicabut.')
     const { error } = await supabase.from('document_access_grants').update({ revoked_at: new Date().toISOString() }).eq('id', grant.id).is('revoked_at', null)
     if (error) throw new ConflictError(`Failed to revoke document access: ${error.message}`, 'Akses dokumen tidak dapat dicabut saat ini.')
-    const document = Array.isArray(grant.documents) ? grant.documents[0] : grant.documents
-    const investor = Array.isArray(grant.investors) ? grant.investors[0] : grant.investors
+    const revokeGrant = grant as unknown as RevokeGrantRow
+    const document = Array.isArray(revokeGrant.documents) ? revokeGrant.documents[0] : revokeGrant.documents
+    const investor = Array.isArray(revokeGrant.investors) ? revokeGrant.investors[0] : revokeGrant.investors
     audit({ entityId: grant.document_id, summary: `Akses dokumen ${document?.title ?? grant.document_id} dicabut dari investor ${investor?.reference_code ?? grant.investor_id}.`, changes: { access: { before: { investorId: grant.investor_id, grantId: grant.id }, after: null } } })
     return { grantId: grant.id, documentId: grant.document_id }
   },
 })
+
+
+
+
+
+
+
+
+
+
+
+

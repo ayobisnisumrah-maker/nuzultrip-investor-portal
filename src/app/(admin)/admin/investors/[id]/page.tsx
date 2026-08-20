@@ -1,10 +1,10 @@
-import type { Metadata } from 'next'
+﻿import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ArrowLeft, FileText, History, MapPin, ShieldCheck } from 'lucide-react'
 import { z } from 'zod'
 
-import { INVESTOR_STATUS_LABELS, type InvestorStatus } from '@/core/investors/status'
+import { INVESTOR_STATUS_LABELS } from '@/core/investors/status'
 import { topics } from '@/core/realtime/events'
 import { InvestorReviewActions } from '@/features/admin/investor-review-actions'
 import { RealtimeRefresher } from '@/features/realtime/realtime-refresher'
@@ -23,8 +23,24 @@ export const metadata: Metadata = { title: 'Detail investor' }
 
 const uuidSchema = z.string().uuid()
 
-function date(value: string | null) { return value ? formatDateTime(value) : '—' }
-function value(value: string | null) { return value?.trim() || '—' }
+type InvestorDocumentResult = {
+  id: string
+  title: string
+  kind: string
+  visibility: string
+  status: string
+}
+
+type InvestorDocumentGrantResult = {
+  id: string
+  granted_at: string
+  note: string | null
+  document_id: string
+  documents: InvestorDocumentResult | InvestorDocumentResult[] | null
+}
+
+function date(value: string | null) { return value ? formatDateTime(value) : 'â€”' }
+function value(value: string | null) { return value?.trim() || 'â€”' }
 
 export default async function AdminInvestorDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -46,11 +62,19 @@ export default async function AdminInvestorDetailPage({ params }: { params: Prom
   const [historyResult, auditResult, grantsResult] = await Promise.all([
     supabase.from('investor_status_history').select('id, from_status, to_status, changed_by_label, reason, created_at').eq('investor_id', id).order('created_at', { ascending: false }),
     principal.permissions.has('audit_logs.view') ? supabase.from('audit_logs').select('id, action, actor_label, summary, created_at').eq('entity_type', 'investor').eq('entity_id', id).order('created_at', { ascending: false }).limit(20) : Promise.resolve({ data: null, error: null }),
-    principal.permissions.has('investor_documents.view') ? supabase.from('document_access_grants').select('id, granted_at, note, documents(id, title, kind, visibility, status)').eq('investor_id', id).is('revoked_at', null).order('granted_at', { ascending: false }) : Promise.resolve({ data: null, error: null }),
+    principal.permissions.has('investor_documents.view')
+      ? supabase
+          .from('document_access_grants')
+          .select('id, granted_at, note, document_id, documents(id, title, kind, visibility, status)')
+          .eq('investor_id', id)
+          .is('revoked_at', null)
+          .order('granted_at', { ascending: false })
+          .overrideTypes<InvestorDocumentGrantResult[]>()
+      : Promise.resolve({ data: null, error: null }),
   ])
 
   const name = investor.investor_type === 'institution' ? investor.organization_name || investor.legal_name : investor.legal_name
-  const location = [investor.city, investor.country].filter(Boolean).join(', ') || '—'
+  const location = [investor.city, investor.country].filter(Boolean).join(', ') || 'â€”'
   const permissions = [...principal.permissions]
 
   return (
@@ -82,16 +106,23 @@ export default async function AdminInvestorDetailPage({ params }: { params: Prom
 
           <Card className="motion-safe:animate-rise">
             <CardHeader><CardTitle className="flex items-center gap-2"><History className="size-5" aria-hidden="true" />Riwayat Status</CardTitle></CardHeader>
-            <CardBody>{historyResult.error ? <Alert tone="warning" title="Riwayat tidak dapat dimuat">Riwayat status sedang tidak tersedia.</Alert> : historyResult.data?.length ? <ol className="divide-y divide-border">{historyResult.data.map((entry) => <li key={entry.id} className="py-3 first:pt-0"><div className="flex flex-wrap items-center gap-2"><InvestorStatusPill status={entry.to_status as InvestorStatus} size="sm" /><span className="text-body-sm text-fg-muted">dari {entry.from_status ? INVESTOR_STATUS_LABELS[entry.from_status as InvestorStatus].toLowerCase() : 'status awal'}</span></div><p className="mt-1 text-caption text-fg-subtle">{date(entry.created_at)}{entry.changed_by_label ? ` · ${entry.changed_by_label}` : ''}</p>{entry.reason ? <p className="mt-1 text-body-sm text-fg-muted">{entry.reason}</p> : null}</li>)}</ol> : <EmptyState title="Belum ada riwayat" description="Perubahan lifecycle investor akan tampil di sini." />}</CardBody>
+            <CardBody>{historyResult.error ? <Alert tone="warning" title="Riwayat tidak dapat dimuat">Riwayat status sedang tidak tersedia.</Alert> : historyResult.data?.length ? <ol className="divide-y divide-border">{historyResult.data.map((entry) => <li key={entry.id} className="py-3 first:pt-0"><div className="flex flex-wrap items-center gap-2"><InvestorStatusPill status={entry.to_status} size="sm" /><span className="text-body-sm text-fg-muted">dari {entry.from_status ? INVESTOR_STATUS_LABELS[entry.from_status].toLowerCase() : 'status awal'}</span></div><p className="mt-1 text-caption text-fg-subtle">{date(entry.created_at)}{entry.changed_by_label ? ` Â· ${entry.changed_by_label}` : ''}</p>{entry.reason ? <p className="mt-1 text-body-sm text-fg-muted">{entry.reason}</p> : null}</li>)}</ol> : <EmptyState title="Belum ada riwayat" description="Perubahan lifecycle investor akan tampil di sini." />}</CardBody>
           </Card>
 
           {principal.permissions.has('investor_documents.view') ? <Card className="motion-safe:animate-rise"><CardHeader><CardTitle className="flex items-center gap-2"><FileText className="size-5" aria-hidden="true" />Dokumen Investor</CardTitle></CardHeader><CardBody>{grantsResult.error ? <Alert tone="warning" title="Dokumen tidak dapat dimuat">Dokumen investor sedang tidak tersedia.</Alert> : grantsResult.data?.length ? <ul className="divide-y divide-border">{grantsResult.data.map((grant) => { const document = Array.isArray(grant.documents) ? grant.documents[0] : grant.documents; return <li key={grant.id} className="flex flex-wrap items-center justify-between gap-3 py-3 first:pt-0"><div><p className="font-medium text-fg">{document?.title ?? 'Dokumen tidak tersedia'}</p><p className="mt-1 text-caption text-fg-subtle">Diberikan {date(grant.granted_at)}</p>{grant.note ? <p className="mt-1 text-body-sm text-fg-muted">{grant.note}</p> : null}</div>{document ? <Link href={`/admin/documents/${document.id}`} className="rounded-lg border border-border px-3 py-2 text-body-sm font-medium text-fg transition hover:bg-surface-muted">Kelola dokumen</Link> : null}</li> })}</ul> : <EmptyState title="Belum ada dokumen" description="Belum ada dokumen yang diberikan secara khusus kepada investor ini." />}</CardBody></Card> : null}
 
-          {principal.permissions.has('audit_logs.view') ? <Card className="motion-safe:animate-rise"><CardHeader><CardTitle className="flex items-center gap-2"><ShieldCheck className="size-5" aria-hidden="true" />Aktivitas</CardTitle></CardHeader><CardBody>{auditResult.error ? <Alert tone="warning" title="Aktivitas tidak dapat dimuat">Aktivitas investor sedang tidak tersedia.</Alert> : auditResult.data?.length ? <ol className="divide-y divide-border">{auditResult.data.map((entry) => <li key={entry.id} className="py-3 first:pt-0"><p className="text-body-sm text-fg">{entry.summary || entry.action}</p><p className="mt-1 text-caption text-fg-subtle">{date(entry.created_at)}{entry.actor_label ? ` · ${entry.actor_label}` : ''}</p></li>)}</ol> : <EmptyState title="Belum ada aktivitas" description="Aktivitas terkait investor ini akan tampil di sini." />}</CardBody></Card> : null}
+          {principal.permissions.has('audit_logs.view') ? <Card className="motion-safe:animate-rise"><CardHeader><CardTitle className="flex items-center gap-2"><ShieldCheck className="size-5" aria-hidden="true" />Aktivitas</CardTitle></CardHeader><CardBody>{auditResult.error ? <Alert tone="warning" title="Aktivitas tidak dapat dimuat">Aktivitas investor sedang tidak tersedia.</Alert> : auditResult.data?.length ? <ol className="divide-y divide-border">{auditResult.data.map((entry) => <li key={entry.id} className="py-3 first:pt-0"><p className="text-body-sm text-fg">{entry.summary || entry.action}</p><p className="mt-1 text-caption text-fg-subtle">{date(entry.created_at)}{entry.actor_label ? ` Â· ${entry.actor_label}` : ''}</p></li>)}</ol> : <EmptyState title="Belum ada aktivitas" description="Aktivitas terkait investor ini akan tampil di sini." />}</CardBody></Card> : null}
         </Stack>
 
-        <aside className="h-fit xl:sticky xl:top-6"><Card variant="raised" className="motion-safe:animate-rise"><CardHeader><CardTitle>Lifecycle investor</CardTitle></CardHeader><CardBody><div className="flex flex-col gap-4"><InvestorStatusPill status={investor.status as InvestorStatus} /><p className="text-body-sm text-fg-muted">{INVESTOR_STATUS_LABELS[investor.status as InvestorStatus]}</p><InvestorReviewActions investorId={id} investorName={name} status={investor.status as InvestorStatus} permissions={permissions} /></div></CardBody></Card></aside>
+        <aside className="h-fit xl:sticky xl:top-6"><Card variant="raised" className="motion-safe:animate-rise"><CardHeader><CardTitle>Lifecycle investor</CardTitle></CardHeader><CardBody><div className="flex flex-col gap-4"><InvestorStatusPill status={investor.status} /><p className="text-body-sm text-fg-muted">{INVESTOR_STATUS_LABELS[investor.status]}</p><InvestorReviewActions investorId={id} investorName={name} status={investor.status} permissions={permissions} /></div></CardBody></Card></aside>
       </div>
     </Stack>
   )
 }
+
+
+
+
+
+
+

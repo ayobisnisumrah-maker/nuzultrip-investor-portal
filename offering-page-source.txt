@@ -1,0 +1,19 @@
+﻿import { adminWithPermission } from '@/server/auth/page-guards'
+import { AdminModulePage } from '@/features/admin/admin-module-page'
+
+export default async function OwnershipOfferingsPage() {
+  const principal = await adminWithPermission(
+    'ownership_offerings.view',
+    '/admin/ownership/offerings',
+  )
+
+  return (
+    <AdminModulePage
+      eyebrow="Kepemilikan"
+      title="Penawaran Kepemilikan"
+      description="Kelola konfigurasi penawaran kepemilikan, unit, persentase, harga, periode lock, dan status penawaran."
+      permission="ownership_offerings.view"
+      allowed={principal !== null}
+    />
+  )
+}

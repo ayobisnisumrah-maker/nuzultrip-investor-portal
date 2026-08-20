@@ -1,0 +1,57 @@
+﻿-- Ownership Offering Lifecycle Permissions
+-- Publish tetap hanya Admin Internal.
+-- Lifecycle transition menggunakan permission terpisah.
+
+insert into public.permissions (key, name, description)
+values
+    (
+        'ownership_offerings.pause',
+        'Pause Ownership Offering',
+        'Menghentikan sementara offering yang sedang open.'
+    ),
+    (
+        'ownership_offerings.resume',
+        'Resume Ownership Offering',
+        'Membuka kembali offering yang sedang paused.'
+    ),
+    (
+        'ownership_offerings.close',
+        'Close Ownership Offering',
+        'Menutup offering sehingga tidak dapat menerima investasi baru.'
+    ),
+    (
+        'ownership_offerings.archive',
+        'Archive Ownership Offering',
+        'Mengarsipkan offering yang sudah closed.'
+    )
+on conflict (key) do nothing;
+
+-- Hanya Admin Internal yang memperoleh lifecycle permissions.
+insert into public.role_permissions (role_id, permission_id)
+select
+    r.id,
+    p.id
+from public.roles r
+cross join public.permissions p
+where r.key = 'admin_internal'
+  and p.key in (
+      'ownership_offerings.pause',
+      'ownership_offerings.resume',
+      'ownership_offerings.close',
+      'ownership_offerings.archive'
+  )
+on conflict do nothing;
+
+-- Explicitly do NOT grant lifecycle permissions to
+-- Admin Investor Relations.
+delete from public.role_permissions rp
+using public.roles r, public.permissions p
+where rp.role_id = r.id
+  and rp.permission_id = p.id
+  and r.key = 'admin_investor_relations'
+  and p.key in (
+      'ownership_offerings.pause',
+      'ownership_offerings.resume',
+      'ownership_offerings.close',
+      'ownership_offerings.archive'
+  );

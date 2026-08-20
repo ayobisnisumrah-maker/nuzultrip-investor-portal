@@ -1,0 +1,488 @@
+﻿import Link from 'next/link'
+import { notFound, redirect } from 'next/navigation'
+
+import { adminWithPermission } from '@/server/auth/page-guards'
+import { getServerSupabase } from '@/server/supabase/server'
+import { publishOwnershipOffering } from '@/server/ownership/offering-actions'
+import { getOwnershipOffering } from '@/server/ownership/offering-service'
+
+type Props = {
+  params: Promise<{
+    id: string
+  }>
+}
+
+const STATUS_LABELS: Record<string, string> = {
+  draft: 'Draft',
+  open: 'Aktif',
+  paused: 'Dijeda',
+  closed: 'Ditutup',
+  archived: 'Diarsipkan',
+}
+
+function formatRupiah(value: number) {
+  return new Intl.NumberFormat('id-ID', {
+    style: 'currency',
+    currency: 'IDR',
+    maximumFractionDigits: 0,
+  }).format(value)
+}
+
+function formatNumber(value: number) {
+  return new Intl.NumberFormat('id-ID').format(value)
+}
+
+function formatPercentageBps(value: number) {
+  return `${(value / 100).toFixed(2)}%`
+}
+
+function formatDate(value: string | null) {
+  if (!value) return '-'
+
+  return new Intl.DateTimeFormat('id-ID', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  }).format(new Date(value))
+}
+
+function formatDateTime(value: string | null) {
+  if (!value) return '-'
+
+  return new Intl.DateTimeFormat('id-ID', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(new Date(value))
+}
+
+function statusClass(status: string) {
+  switch (status) {
+    case 'open':
+      return 'border-emerald-200 bg-emerald-50 text-emerald-700'
+    case 'paused':
+      return 'border-amber-200 bg-amber-50 text-amber-700'
+    case 'closed':
+      return 'border-slate-200 bg-slate-50 text-slate-700'
+    case 'archived':
+      return 'border-red-200 bg-red-50 text-red-700'
+    default:
+      return 'border-border bg-surface text-fg-muted'
+  }
+}
+
+export default async function OwnershipOfferingDetailPage({
+  params,
+}: Props) {
+  const { id } = await params
+  const path = `/admin/ownership/offerings/${id}`
+
+  const viewPrincipal = await adminWithPermission(
+    'ownership_offerings.view',
+    path,
+  )
+
+  if (!viewPrincipal) {
+    return (
+      <div className="rounded-xl border border-border bg-surface p-6">
+        <h1 className="font-display text-heading-lg text-fg">
+          Akses Ditolak
+        </h1>
+
+        <p className="mt-2 text-body-sm text-fg-muted">
+          Anda tidak memiliki izin untuk melihat penawaran kepemilikan ini.
+        </p>
+
+        <p className="mt-3 text-caption text-fg-subtle">
+          Permission: <code>ownership_offerings.view</code>
+        </p>
+
+        <Link
+          href="/admin/ownership/offerings"
+          className="mt-5 inline-flex h-9 items-center rounded-lg border border-border px-3 text-sm font-medium text-fg hover:bg-muted"
+        >
+          Kembali ke Penawaran
+        </Link>
+      </div>
+    )
+  }
+
+  const supabase = await getServerSupabase()
+
+  const offering = await getOwnershipOffering(
+    supabase,
+    id,
+  )
+
+  if (!offering) {
+    notFound()
+  }
+
+  const publishPrincipal =
+    offering.status === 'draft'
+      ? await adminWithPermission(
+          'ownership_offerings.publish',
+          path,
+        )
+      : null
+
+  async function handlePublish() {
+    'use server'
+
+    await publishOwnershipOffering({
+      offeringId: id,
+    })
+
+    redirect(path)
+  }
+
+  const totalOfferingValue =
+    Number(offering.unit_price) *
+    Number(offering.total_units)
+
+  return (
+    <section className="space-y-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p className="text-caption font-medium uppercase tracking-[0.14em] text-fg-subtle">
+            Kepemilikan
+          </p>
+
+          <div className="mt-2 flex flex-wrap items-center gap-3">
+            <h1 className="font-display text-heading-lg text-fg">
+              {offering.name}
+            </h1>
+
+            <span
+              className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${statusClass(
+                offering.status,
+              )}`}
+            >
+              {STATUS_LABELS[offering.status] ??
+                offering.status}
+            </span>
+          </div>
+
+          <p className="mt-2 text-body-sm text-fg-muted">
+            Detail konfigurasi penawaran kepemilikan investor.
+          </p>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href="/admin/ownership/offerings"
+            className="inline-flex h-10 items-center rounded-lg border border-border px-4 text-sm font-medium text-fg hover:bg-muted"
+          >
+            Kembali
+          </Link>
+
+          {publishPrincipal &&
+            offering.status === 'draft' && (
+              <form action={handlePublish}>
+                <button
+                  type="submit"
+                  className="inline-flex h-10 items-center rounded-lg bg-emerald-500 px-4 text-sm font-semibold text-white transition hover:bg-emerald-600"
+                >
+                  Terbitkan Penawaran
+                </button>
+              </form>
+            )}
+        </div>
+      </div>
+
+      {publishPrincipal &&
+        offering.status === 'draft' && (
+          <div className="rounded-xl border border-emerald-200/30 bg-emerald-950/30 p-4">
+            <p className="text-sm font-semibold text-emerald-300">
+              Penawaran siap diterbitkan
+            </p>
+
+            <p className="mt-1 text-xs leading-5 text-fg-muted">
+              Setelah diterbitkan, status penawaran berubah dari
+              <strong className="mx-1 text-fg">Draft</strong>
+              menjadi
+              <strong className="mx-1 text-emerald-300">
+                Aktif
+              </strong>
+              dan dapat masuk ke alur penawaran investor.
+            </p>
+
+            <p className="mt-2 text-xs text-fg-subtle">
+              Permission:
+              <code className="ml-1">
+                ownership_offerings.publish
+              </code>
+            </p>
+          </div>
+        )}
+
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div className="rounded-xl border border-border bg-surface p-5">
+          <p className="text-xs text-fg-muted">
+            Total Unit
+          </p>
+
+          <p className="mt-2 text-2xl font-semibold text-fg">
+            {formatNumber(Number(offering.total_units))}
+          </p>
+        </div>
+
+        <div className="rounded-xl border border-border bg-surface p-5">
+          <p className="text-xs text-fg-muted">
+            Harga per Unit
+          </p>
+
+          <p className="mt-2 text-2xl font-semibold text-fg">
+            {formatRupiah(Number(offering.unit_price))}
+          </p>
+        </div>
+
+        <div className="rounded-xl border border-border bg-surface p-5">
+          <p className="text-xs text-fg-muted">
+            Kepemilikan Ditawarkan
+          </p>
+
+          <p className="mt-2 text-2xl font-semibold text-fg">
+            {formatPercentageBps(
+              Number(offering.total_offered_bps),
+            )}
+          </p>
+        </div>
+
+        <div className="rounded-xl border border-border bg-surface p-5">
+          <p className="text-xs text-fg-muted">
+            Nilai Penawaran
+          </p>
+
+          <p className="mt-2 text-2xl font-semibold text-fg">
+            {formatRupiah(totalOfferingValue)}
+          </p>
+        </div>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <div className="rounded-xl border border-border bg-surface p-6">
+          <div className="mb-5">
+            <p className="text-sm font-semibold text-fg">
+              Konfigurasi Kepemilikan
+            </p>
+
+            <p className="mt-1 text-xs text-fg-muted">
+              Parameter utama unit dan struktur kepemilikan.
+            </p>
+          </div>
+
+          <dl className="divide-y divide-border">
+            <div className="flex items-center justify-between gap-4 py-3">
+              <dt className="text-sm text-fg-muted">
+                Nama Penawaran
+              </dt>
+
+              <dd className="text-right text-sm font-medium text-fg">
+                {offering.name}
+              </dd>
+            </div>
+
+            <div className="flex items-center justify-between gap-4 py-3">
+              <dt className="text-sm text-fg-muted">
+                Kode Penawaran
+              </dt>
+
+              <dd className="text-right font-mono text-sm text-fg">
+                {offering.code}
+              </dd>
+            </div>
+
+            <div className="flex items-center justify-between gap-4 py-3">
+              <dt className="text-sm text-fg-muted">
+                Kepemilikan Total
+              </dt>
+
+              <dd className="text-right text-sm font-medium text-fg">
+                {formatPercentageBps(
+                  Number(offering.total_offered_bps),
+                )}
+              </dd>
+            </div>
+
+            <div className="flex items-center justify-between gap-4 py-3">
+              <dt className="text-sm text-fg-muted">
+                Kepemilikan per Unit
+              </dt>
+
+              <dd className="text-right text-sm font-medium text-fg">
+                {formatPercentageBps(
+                  Number(offering.unit_ownership_bps),
+                )}
+              </dd>
+            </div>
+
+            <div className="flex items-center justify-between gap-4 py-3">
+              <dt className="text-sm text-fg-muted">
+                Total Unit
+              </dt>
+
+              <dd className="text-right text-sm font-medium text-fg">
+                {formatNumber(
+                  Number(offering.total_units),
+                )}
+              </dd>
+            </div>
+
+            <div className="flex items-center justify-between gap-4 py-3">
+              <dt className="text-sm text-fg-muted">
+                Harga per Unit
+              </dt>
+
+              <dd className="text-right text-sm font-medium text-fg">
+                {formatRupiah(
+                  Number(offering.unit_price),
+                )}
+              </dd>
+            </div>
+
+            <div className="flex items-center justify-between gap-4 py-3">
+              <dt className="text-sm text-fg-muted">
+                Nilai Penawaran
+              </dt>
+
+              <dd className="text-right text-sm font-medium text-fg">
+                {formatRupiah(totalOfferingValue)}
+              </dd>
+            </div>
+          </dl>
+        </div>
+
+        <div className="rounded-xl border border-border bg-surface p-6">
+          <div className="mb-5">
+            <p className="text-sm font-semibold text-fg">
+              Periode & Distribusi
+            </p>
+
+            <p className="mt-1 text-xs text-fg-muted">
+              Aturan periode berlaku, distribusi, dan transfer lock.
+            </p>
+          </div>
+
+          <dl className="divide-y divide-border">
+            <div className="flex items-center justify-between gap-4 py-3">
+              <dt className="text-sm text-fg-muted">
+                Periode Distribusi
+              </dt>
+
+              <dd className="text-right text-sm font-medium text-fg">
+                Setiap{' '}
+                {Number(
+                  offering.distribution_cadence_months,
+                )}{' '}
+                bulan
+              </dd>
+            </div>
+
+            <div className="flex items-center justify-between gap-4 py-3">
+              <dt className="text-sm text-fg-muted">
+                Transfer Lock
+              </dt>
+
+              <dd className="text-right text-sm font-medium text-fg">
+                {Number(offering.transfer_lock_months)} bulan
+              </dd>
+            </div>
+
+            <div className="flex items-center justify-between gap-4 py-3">
+              <dt className="text-sm text-fg-muted">
+                Berlaku Mulai
+              </dt>
+
+              <dd className="text-right text-sm font-medium text-fg">
+                {formatDate(offering.effective_from)}
+              </dd>
+            </div>
+
+            <div className="flex items-center justify-between gap-4 py-3">
+              <dt className="text-sm text-fg-muted">
+                Berlaku Sampai
+              </dt>
+
+              <dd className="text-right text-sm font-medium text-fg">
+                {formatDate(offering.effective_until)}
+              </dd>
+            </div>
+          </dl>
+        </div>
+      </div>
+
+      <div className="rounded-xl border border-border bg-surface p-6">
+        <div>
+          <p className="text-sm font-semibold text-fg">
+            Deskripsi
+          </p>
+
+          <p className="mt-1 text-xs text-fg-muted">
+            Informasi internal yang tersimpan pada penawaran.
+          </p>
+        </div>
+
+        <div className="mt-4 rounded-lg border border-border bg-canvas p-4">
+          <p className="whitespace-pre-wrap text-sm leading-6 text-fg-muted">
+            {offering.description ||
+              'Tidak ada deskripsi.'}
+          </p>
+        </div>
+      </div>
+
+      <div className="rounded-xl border border-border bg-surface p-6">
+        <div className="mb-5">
+          <p className="text-sm font-semibold text-fg">
+            Metadata
+          </p>
+
+          <p className="mt-1 text-xs text-fg-muted">
+            Informasi audit dan waktu perubahan data.
+          </p>
+        </div>
+
+        <dl className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <dt className="text-xs text-fg-muted">
+              Dibuat
+            </dt>
+
+            <dd className="mt-1 text-sm text-fg">
+              {formatDateTime(offering.created_at)}
+            </dd>
+          </div>
+
+          <div>
+            <dt className="text-xs text-fg-muted">
+              Diperbarui
+            </dt>
+
+            <dd className="mt-1 text-sm text-fg">
+              {formatDateTime(offering.updated_at)}
+            </dd>
+          </div>
+
+          <div>
+            <dt className="text-xs text-fg-muted">
+              Created By
+            </dt>
+
+            <dd className="mt-1 break-all font-mono text-xs text-fg-muted">
+              {offering.created_by || '-'}
+            </dd>
+          </div>
+
+          <div>
+            <dt className="text-xs text-fg-muted">
+              Updated By
+            </dt>
+
+            <dd className="mt-1 break-all font-mono text-xs text-fg-muted">
+              {offering.updated_by || '-'}
+            </dd>
+          </div>
+        </dl>
+      </div>
+    </section>
+  )
+}

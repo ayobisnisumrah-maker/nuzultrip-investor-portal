@@ -85,7 +85,7 @@ export default async function AdminDashboardPage() {
   const byStatus = new Map<InvestorStatus, number>()
 
   for (const row of investorRows ?? []) {
-    const status = row.status as InvestorStatus
+    const status = row.status
 
     byStatus.set(
       status,

@@ -4,7 +4,6 @@ import { z } from 'zod'
 
 import {
   canTransition,
-  type InvestorStatus,
 } from '@/core/investors/status'
 import {
   ConflictError,
@@ -17,6 +16,15 @@ const investorStatusSchema = z.object({
   investorId: z.string().uuid(),
 })
 
+const rejectInvestorSchema = z.object({
+  investorId: z.string().uuid(),
+  rejectionReason: z
+    .string()
+    .trim()
+    .min(1, 'Alasan penolakan wajib diisi.')
+    .max(2000, 'Alasan penolakan maksimal 2000 karakter.'),
+})
+
 type TargetStatus =
   | 'under_review'
   | 'approved'
@@ -24,32 +32,6 @@ type TargetStatus =
   | 'active'
   | 'inactive'
 
-const statusActions = {
-  startReview: {
-    permission: 'investors.update',
-    status: 'under_review',
-  },
-  approve: {
-    permission: 'investors.approve',
-    status: 'approved',
-  },
-  reject: {
-    permission: 'investors.reject',
-    status: 'rejected',
-  },
-  activate: {
-    permission: 'investors.update',
-    status: 'active',
-  },
-  deactivate: {
-    permission: 'investors.deactivate',
-    status: 'inactive',
-  },
-  reactivate: {
-    permission: 'investors.reactivate',
-    status: 'active',
-  },
-} as const
 
 async function transitionInvestor(
   investorId: string,
@@ -57,6 +39,7 @@ async function transitionInvestor(
   supabase: Parameters<
     Parameters<typeof defineAction>[0]['handler']
   >[0]['supabase'],
+  rejectionReason?: string,
 ) {
   const { data: investor, error: readError } =
     await supabase
@@ -77,7 +60,7 @@ async function transitionInvestor(
   }
 
   const currentStatus =
-    investor.status as InvestorStatus
+    investor.status
 
   if (currentStatus === targetStatus) {
     throw new ConflictError(
@@ -106,6 +89,10 @@ async function transitionInvestor(
       .from('investors')
       .update({
         status: targetStatus,
+        rejection_reason:
+          targetStatus === 'rejected'
+            ? rejectionReason ?? null
+            : null,
       })
       .eq('id', investor.id)
       .select(
@@ -129,7 +116,7 @@ async function transitionInvestor(
     referenceCode:
       updated.reference_code,
     previousStatus: currentStatus,
-    status: updated.status as InvestorStatus,
+    status: updated.status,
   }
 }
 
@@ -212,7 +199,7 @@ export const rejectInvestor =
     access: {
       permission: 'investors.reject',
     },
-    input: investorStatusSchema,
+    input: rejectInvestorSchema,
     audit: {
       action: 'investor.rejected',
       entityType: 'investor',
@@ -227,6 +214,7 @@ export const rejectInvestor =
           input.investorId,
           'rejected',
           supabase,
+          input.rejectionReason,
         )
 
       audit({
@@ -354,3 +342,8 @@ export const reactivateInvestor =
       return result
     },
   })
+
+
+
+
+

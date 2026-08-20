@@ -1,4 +1,4 @@
-'use server'
+﻿'use server'
 
 import { redirect } from 'next/navigation'
 import { getClientEnv } from '@/lib/env'
@@ -8,14 +8,14 @@ import { defineAction } from '@/server/auth/guards'
 import { getServerSupabase } from '@/server/supabase/server'
 import { getRequestMeta, writeAudit } from '@/server/audit'
 import { enforceRateLimit } from '@/server/admin/rate-limit'
-import { ANONYMOUS } from '@/core/auth/principal'
+import { ANONYMOUS, parsePrincipal } from '@/core/auth/principal'
 
 /**
  * Authentication entry points.
  *
  * Sign-in deliberately reports the same failure for a wrong password, an
  * unknown address and a disabled account. Distinguishing them turns the form
- * into an account-existence oracle (docs/SECURITY.md §2).
+ * into an account-existence oracle (docs/SECURITY.md Â§2).
  */
 
 const GENERIC_SIGN_IN_FAILURE = 'Surel atau kata sandi tidak sesuai.'
@@ -59,16 +59,14 @@ export const signIn = defineAction({
       throw new SignInFailed('no active domain account')
     }
 
-    const accountType = (principalRow as { accountType?: string }).accountType
+    const principal = parsePrincipal(principalRow)
+    const accountType = principal.kind === 'admin' ? 'admin' : 'investor'
 
-    // Recorded as an anonymous action on purpose: at this point in the request
-    // the caller's session cookie has not been re-read, so the request-scoped
-    // client would still write as `anon` and be refused by the insert policy.
-    await writeAudit(ANONYMOUS, {
+    await writeAudit(principal, {
       action: 'auth.sign_in',
       entityType: 'session',
       entityId: data.user.id,
-      summary: `Masuk berhasil sebagai ${accountType ?? 'unknown'}.`,
+      summary: `Masuk berhasil sebagai ${accountType}.`,
     })
 
     return {
@@ -81,7 +79,7 @@ export const signIn = defineAction({
  * Where to land after signing in.
  *
  * A caller-supplied destination is honoured only when it is an internal path
- * *and* belongs to the surface this account can actually use — otherwise an
+ * *and* belongs to the surface this account can actually use â€” otherwise an
  * investor following an `/admin/...` link would bounce off the proxy into a
  * confusing loop.
  */
@@ -99,14 +97,18 @@ function safeDestination(requested: string | undefined, accountType: string | un
 export const signOut = defineAction({
   access: 'authenticated',
   handler: async ({ principal, supabase }) => {
-    // `scope: 'global'` revokes the refresh token server-side. Clearing the
-    // cookie alone would leave a valid token in the wild.
-    await supabase.auth.signOut({ scope: 'global' })
+    // Write the audit record BEFORE revoking the session.
+    // The audit_logs INSERT policy requires an authenticated session.
     await writeAudit(principal, {
       action: 'auth.sign_out',
       entityType: 'session',
       summary: 'Keluar dari sesi.',
     })
+
+    // `scope: 'global'` revokes the refresh token server-side.
+    // This must happen after the audit record has been written.
+    await supabase.auth.signOut({ scope: 'global' })
+
     return { ok: true }
   },
 })
@@ -173,3 +175,7 @@ export async function signOutAndRedirect(): Promise<never> {
   await supabase.auth.signOut({ scope: 'global' })
   redirect('/masuk')
 }
+
+
+
+

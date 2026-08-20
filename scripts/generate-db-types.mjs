@@ -1,8 +1,8 @@
-#!/usr/bin/env node
+﻿#!/usr/bin/env node
 /**
  * Regenerates `src/types/database.ts` from the database schema.
  *
- * The database is the canonical schema (docs/DATABASE.md §13). This script is
+ * The database is the canonical schema (docs/DATABASE.md Â§13). This script is
  * also run in CI: if the regenerated output differs from what is committed, the
  * build fails, so schema drift surfaces as a build error rather than a runtime
  * surprise.
@@ -24,18 +24,18 @@ const checkOnly = args.has('--check')
 const remote = args.has('--remote')
 
 const HEADER = `/**
- * GENERATED FILE — DO NOT EDIT.
+ * GENERATED FILE â€” DO NOT EDIT.
  *
  * Regenerate with:  pnpm db:types
  * Source of truth:  supabase/migrations/**
  *
- * See docs/DATABASE.md §13.
+ * See docs/DATABASE.md Â§13.
  */
 
 `
 
 function run() {
-  const cliArgs = ['gen', 'types', 'typescript', '--schema', 'public']
+  const cliArgs = ['gen', 'types', 'typescript', '--schema', 'public', '--schema', 'app']
   if (remote) {
     const ref = process.env.SUPABASE_PROJECT_REF
     if (!ref) {
@@ -92,3 +92,4 @@ if (checkOnly) {
 mkdirSync(dirname(outputPath), { recursive: true })
 writeFileSync(outputPath, generated, 'utf8')
 console.log(`Wrote ${outputPath}`)
+

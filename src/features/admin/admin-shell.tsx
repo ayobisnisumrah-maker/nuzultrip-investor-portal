@@ -2,13 +2,38 @@
 
 import { motion } from 'framer-motion'
 import {
+  ArrowLeftRight,
+  BadgePercent,
+  Building2,
+  CalendarRange,
+  ChartNoAxesColumnIncreasing,
+  ChartNoAxesCombined,
+  CircleHelp,
+  FileBarChart,
+  FileCheck,
+  FileCheck2,
   FileText,
-  KeyRound,
+  Files,
+  FolderLock,
+  GalleryHorizontalEnd,
+  GitBranch,
+  Globe2,
+  Image,
+  Inbox,
+  Landmark,
   LayoutDashboard,
+  Menu,
+  MessagesSquare,
+  MousePointerClick,
+  PanelsTopLeft,
   ScrollText,
+  Settings,
   Shield,
+  ShieldCheck,
   UserCheck,
+  UserCog,
   Users,
+  WalletCards,
   type LucideIcon,
 } from 'lucide-react'
 import type { ReactNode } from 'react'
@@ -29,13 +54,53 @@ import { RealtimeStatus } from '@/features/realtime/realtime-status'
  */
 
 const ICONS: Record<string, LucideIcon> = {
+  // Dashboard
   LayoutDashboard,
+
+  // Investor Relations
   Users,
   UserCheck,
-  Shield,
-  KeyRound,
-  ScrollText,
+  FileCheck,
+  MessagesSquare,
+  Inbox,
+
+  // Ownership
+  BadgePercent,
+  Landmark,
+  ArrowLeftRight,
+  GitBranch,
+  WalletCards,
+
+  // Financials
+  ChartNoAxesCombined,
+  CalendarRange,
+  FileBarChart,
+  ChartNoAxesColumnIncreasing,
+
+  // Documents
+  Files,
+  FileCheck2,
+  FolderLock,
+
+  // Portal
+  Globe2,
+  PanelsTopLeft,
+  GalleryHorizontalEnd,
+  Menu,
+  MousePointerClick,
+  CircleHelp,
+  Image,
   FileText,
+
+  // Company
+  Building2,
+
+  // System / Security
+  UserCog,
+  ShieldCheck,
+  Settings,
+  ScrollText,
+  Shield,
 }
 
 export type SerializableNavSection = {

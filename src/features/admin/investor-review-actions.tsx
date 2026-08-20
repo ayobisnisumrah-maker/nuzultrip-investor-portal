@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
@@ -44,48 +44,106 @@ type WorkflowAction = {
 
 const ACTIONS: Record<ActionName, WorkflowAction> = {
   startReview: {
-    name: 'startReview', label: 'Mulai peninjauan', target: 'under_review',
-    consequence: 'Pengajuan akan masuk ke tahap peninjauan oleh tim Investor Relations.', variant: 'primary',
+    name: 'startReview',
+    label: 'Mulai peninjauan',
+    target: 'under_review',
+    consequence:
+      'Pengajuan akan masuk ke tahap peninjauan oleh tim Investor Relations.',
+    variant: 'primary',
   },
   approve: {
-    name: 'approve', label: 'Setujui', target: 'approved',
-    consequence: 'Pengajuan akan disetujui dan akses materi investor dibuka sesuai kebijakan.', variant: 'primary',
+    name: 'approve',
+    label: 'Setujui',
+    target: 'approved',
+    consequence:
+      'Pengajuan akan disetujui dan akses materi investor dibuka sesuai kebijakan.',
+    variant: 'primary',
   },
   reject: {
-    name: 'reject', label: 'Tolak', target: 'rejected',
-    consequence: 'Pengajuan akan ditolak. Riwayat pengajuan tetap tersimpan.', variant: 'danger',
+    name: 'reject',
+    label: 'Tolak',
+    target: 'rejected',
+    consequence:
+      'Pengajuan akan ditolak. Riwayat pengajuan tetap tersimpan.',
+    variant: 'danger',
   },
   activate: {
-    name: 'activate', label: 'Aktifkan', target: 'active',
-    consequence: 'Investor akan menjadi aktif sesuai akses yang telah diberikan.', variant: 'primary',
+    name: 'activate',
+    label: 'Aktifkan',
+    target: 'active',
+    consequence:
+      'Investor akan menjadi aktif sesuai akses yang telah diberikan.',
+    variant: 'primary',
   },
   deactivate: {
-    name: 'deactivate', label: 'Nonaktifkan', target: 'inactive',
-    consequence: 'Akses investor dihentikan sementara; riwayat dan dokumen tetap tersimpan.', variant: 'danger',
+    name: 'deactivate',
+    label: 'Nonaktifkan',
+    target: 'inactive',
+    consequence:
+      'Akses investor dihentikan sementara; riwayat dan dokumen tetap tersimpan.',
+    variant: 'danger',
   },
   reactivate: {
-    name: 'reactivate', label: 'Aktifkan kembali', target: 'active',
-    consequence: 'Akses investor akan dipulihkan sesuai akses yang telah diberikan.', variant: 'primary',
+    name: 'reactivate',
+    label: 'Aktifkan kembali',
+    target: 'active',
+    consequence:
+      'Akses investor akan dipulihkan sesuai akses yang telah diberikan.',
+    variant: 'primary',
   },
 }
 
-function allowedActions(status: InvestorStatus, permissions: readonly string[]): WorkflowAction[] {
+function allowedActions(
+  status: InvestorStatus,
+  permissions: readonly string[],
+): WorkflowAction[] {
   const can = (permission: string) => permissions.includes(permission)
+
   switch (status) {
-    case 'submitted': return [can('investors.update') ? ACTIONS.startReview : null, can('investors.reject') ? ACTIONS.reject : null].filter(Boolean) as WorkflowAction[]
-    case 'under_review': return [can('investors.approve') ? ACTIONS.approve : null, can('investors.reject') ? ACTIONS.reject : null].filter(Boolean) as WorkflowAction[]
-    case 'approved': return [can('investors.update') ? ACTIONS.activate : null, can('investors.reject') ? ACTIONS.reject : null].filter(Boolean) as WorkflowAction[]
-    case 'active': return can('investors.deactivate') ? [ACTIONS.deactivate] : []
-    case 'inactive': return can('investors.reactivate') ? [ACTIONS.reactivate] : []
-    case 'rejected': return can('investors.update') ? [ACTIONS.startReview] : []
-    default: return []
+    case 'prospective':
+      return []
+
+    case 'submitted':
+      return [
+        can('investors.update') ? ACTIONS.startReview : null,
+        can('investors.reject') ? ACTIONS.reject : null,
+      ].filter(Boolean) as WorkflowAction[]
+
+    case 'under_review':
+      return [
+        can('investors.approve') ? ACTIONS.approve : null,
+        can('investors.reject') ? ACTIONS.reject : null,
+      ].filter(Boolean) as WorkflowAction[]
+
+    case 'approved':
+      return [
+        can('investors.update') ? ACTIONS.activate : null,
+        can('investors.reject') ? ACTIONS.reject : null,
+      ].filter(Boolean) as WorkflowAction[]
+
+    case 'active':
+      return can('investors.deactivate')
+        ? [ACTIONS.deactivate]
+        : []
+
+    case 'inactive':
+      return can('investors.reactivate')
+        ? [ACTIONS.reactivate]
+        : []
+
+    case 'rejected':
+      return can('investors.update')
+        ? [ACTIONS.startReview]
+        : []
+
+    default:
+      return []
   }
 }
 
 const actionHandlers = {
   startReview: startInvestorReview,
   approve: approveInvestor,
-  reject: rejectInvestor,
   activate: activateInvestor,
   deactivate: deactivateInvestor,
   reactivate: reactivateInvestor,
@@ -104,23 +162,85 @@ export function InvestorReviewActions({
 }) {
   const router = useRouter()
   const { push } = useToast()
-  const [selected, setSelected] = useState<WorkflowAction | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  const [pending, startTransition] = useTransition()
+
+  const [selected, setSelected] =
+    useState<WorkflowAction | null>(null)
+
+  const [rejectionReason, setRejectionReason] =
+    useState('')
+
+  const [error, setError] =
+    useState<string | null>(null)
+
+  const [pending, startTransition] =
+    useTransition()
+
   const actions = allowedActions(status, permissions)
+
+  function closeDialog() {
+    if (pending) return
+
+    setSelected(null)
+    setRejectionReason('')
+    setError(null)
+  }
 
   function confirm() {
     if (!selected || pending) return
+
+    if (
+      selected.name === 'reject' &&
+      !rejectionReason.trim()
+    ) {
+      setError('Alasan penolakan wajib diisi.')
+      return
+    }
+
     setError(null)
+
     startTransition(async () => {
-      const result = await actionHandlers[selected.name]({ investorId })
-      if (!result.ok) {
-        setError(result.error.message)
-        return
+      const actionLabel = selected.label
+
+      try {
+        let result
+
+        if (selected.name === 'reject') {
+          result = await rejectInvestor({
+            investorId,
+            rejectionReason: rejectionReason.trim(),
+          })
+        } else {
+          result = await actionHandlers[selected.name]({
+            investorId,
+          })
+        }
+
+        if (!result.ok) {
+          setError(result.error.message)
+          return
+        }
+
+        const targetLabel =
+          INVESTOR_STATUS_LABELS[selected.target]
+
+        setSelected(null)
+        setRejectionReason('')
+
+        push({
+          tone: 'success',
+          title: 'Status investor diperbarui',
+          description:
+            `${investorName} kini ${targetLabel.toLowerCase()}.`,
+        })
+
+        router.refresh()
+      } catch (cause) {
+        setError(
+          cause instanceof Error
+            ? cause.message
+            : `Gagal menjalankan aksi "${actionLabel}".`,
+        )
       }
-      setSelected(null)
-      push({ tone: 'success', title: 'Status investor diperbarui', description: `${investorName} kini ${INVESTOR_STATUS_LABELS[selected.target].toLowerCase()}.` })
-      router.refresh()
     })
   }
 
@@ -129,29 +249,121 @@ export function InvestorReviewActions({
   return (
     <div className="flex flex-wrap gap-2">
       {actions.map((action) => (
-        <Button key={action.name} variant={action.variant} onClick={() => { setError(null); setSelected(action) }}>
+        <Button
+          key={action.name}
+          variant={action.variant}
+          disabled={pending}
+          onClick={() => {
+            setError(null)
+            setRejectionReason('')
+            setSelected(action)
+          }}
+        >
           {action.label}
         </Button>
       ))}
 
-      <Dialog open={selected !== null} onOpenChange={(open) => { if (!open && !pending) { setSelected(null); setError(null) } }}>
-        <DialogContent size="sm" showClose={!pending}>
-          {selected ? <>
-            <DialogHeader>
-              <DialogTitle>{selected.label} investor?</DialogTitle>
-              <DialogDescription>
-                Anda akan mengubah status <strong>{investorName}</strong> dari {INVESTOR_STATUS_LABELS[status].toLowerCase()} menjadi {INVESTOR_STATUS_LABELS[selected.target].toLowerCase()}.
-              </DialogDescription>
-            </DialogHeader>
-            <p className="rounded-md border border-border bg-sunken p-3 text-body-sm text-fg-muted">{selected.consequence}</p>
-            {error ? <Alert tone="danger" title="Aksi tidak dapat diselesaikan">{error}</Alert> : null}
-            <DialogFooter>
-              <DialogClose asChild><Button variant="secondary" disabled={pending}>Batal</Button></DialogClose>
-              <Button variant={selected.variant} loading={pending} onClick={confirm}>{selected.label}</Button>
-            </DialogFooter>
-          </> : null}
+      <Dialog
+        open={selected !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            closeDialog()
+          }
+        }}
+      >
+        <DialogContent
+          size="sm"
+          showClose={!pending}
+        >
+          {selected ? (
+            <>
+              <DialogHeader>
+                <DialogTitle>
+                  {selected.label} investor?
+                </DialogTitle>
+
+                <DialogDescription>
+                  Anda akan mengubah status{' '}
+                  <strong>{investorName}</strong>{' '}
+                  dari{' '}
+                  {INVESTOR_STATUS_LABELS[status].toLowerCase()}{' '}
+                  menjadi{' '}
+                  {INVESTOR_STATUS_LABELS[
+                    selected.target
+                  ].toLowerCase()}.
+                </DialogDescription>
+              </DialogHeader>
+
+              <p className="rounded-md border border-border bg-sunken p-3 text-body-sm text-fg-muted">
+                {selected.consequence}
+              </p>
+
+              {selected.name === 'reject' ? (
+                <div className="space-y-2">
+                  <label
+                    htmlFor="investor-rejection-reason"
+                    className="text-body-sm font-medium text-fg"
+                  >
+                    Alasan penolakan
+                  </label>
+
+                  <textarea
+                    id="investor-rejection-reason"
+                    value={rejectionReason}
+                    onChange={(event) =>
+                      setRejectionReason(
+                        event.target.value,
+                      )
+                    }
+                    maxLength={2000}
+                    rows={5}
+                    disabled={pending}
+                    placeholder="Masukkan alasan penolakan..."
+                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-body-sm text-fg outline-none transition focus:border-primary disabled:opacity-50"
+                  />
+
+                  <div className="text-right text-xs text-fg-muted">
+                    {rejectionReason.length}/2000
+                  </div>
+                </div>
+              ) : null}
+
+              {error ? (
+                <Alert
+                  tone="danger"
+                  title="Aksi tidak dapat diselesaikan"
+                >
+                  {error}
+                </Alert>
+              ) : null}
+
+              <DialogFooter>
+                <DialogClose asChild>
+                  <Button
+                    variant="secondary"
+                    disabled={pending}
+                  >
+                    Batal
+                  </Button>
+                </DialogClose>
+
+                <Button
+                  variant={selected.variant}
+                  loading={pending}
+                  disabled={
+                    selected.name === 'reject' &&
+                    !rejectionReason.trim()
+                  }
+                  onClick={confirm}
+                >
+                  {selected.label}
+                </Button>
+              </DialogFooter>
+            </>
+          ) : null}
         </DialogContent>
       </Dialog>
     </div>
   )
 }
+

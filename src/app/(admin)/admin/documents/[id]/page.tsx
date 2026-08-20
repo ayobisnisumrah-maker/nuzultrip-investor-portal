@@ -1,45 +1,358 @@
-import type { Metadata } from 'next'
-import Link from 'next/link'
+﻿import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { ArrowLeft, FileText, ShieldCheck, Users } from 'lucide-react'
-import { z } from 'zod'
-import { PUBLICATION_STATUS_LABELS, VISIBILITY_DESCRIPTIONS, VISIBILITY_LABELS, type PublicationStatus, type Visibility } from '@/core/documents/publication'
-import { topics } from '@/core/realtime/events'
-import { DocumentAccessManager, type GrantView, type InvestorOption } from '@/features/admin/document-access-manager'
-import { DocumentActions } from '@/features/admin/document-actions'
-import { RealtimeRefresher } from '@/features/realtime/realtime-refresher'
-import { formatDateTime } from '@/lib/format'
+
+import {
+  PUBLICATION_STATUS_LABELS,
+} from '@/core/documents/publication'
+import { hasPermission } from '@/core/auth/principal'
 import { requireAdminPage } from '@/server/auth/page-guards'
 import { getServerSupabase } from '@/server/supabase/server'
+import { formatDateTime } from '@/lib/format'
 import { Alert } from '@/ui/alert'
-import { Button } from '@/ui/button'
 import { Card, CardBody, CardHeader, CardTitle } from '@/ui/card'
-import { DetailList, DetailRow } from '@/ui/data'
-import { PageHeader, Stack } from '@/ui/layout'
-import { EmptyState } from '@/ui/states'
+import { Stack } from '@/ui/layout'
 import { PublicationBadge, VisibilityBadge } from '@/ui/status'
+import { DocumentActions } from '@/features/admin/document-actions'
 
-export const metadata: Metadata = { title: 'Detail dokumen' }
-const uuidSchema = z.string().uuid()
-const kindLabels = { investment_proposal: 'Proposal investasi', pitch_deck: 'Pitch deck', investor_report: 'Laporan investor', business_update: 'Pembaruan bisnis', supporting: 'Pendukung' } as const
-
-export default async function AdminDocumentDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params; if (!uuidSchema.safeParse(id).success) notFound()
-  const principal = await requireAdminPage(`/admin/documents/${id}`)
-  if (!principal.permissions.has('documents.view')) return <Alert tone="info" title="Akses terbatas">Peran Anda tidak memiliki izin untuk melihat dokumen.</Alert>
-  const supabase = await getServerSupabase()
-  const { data: document, error } = await supabase.from('documents').select('id, title, slug, summary, kind, status, visibility, current_version_id, published_version_id, created_at, updated_at, archived_at').eq('id', id).maybeSingle()
-  if (error) return <Alert tone="danger" title="Dokumen tidak dapat dimuat">Sistem gagal mengambil dokumen. Silakan coba lagi.</Alert>
-  if (!document) notFound()
-  const [versionsResult, grantsResult, auditResult, investorsResult] = await Promise.all([
-    supabase.from('document_versions').select('id, version_number, status, change_note, created_at, approved_at, published_at').eq('document_id', id).order('version_number', { ascending: false }),
-    principal.permissions.has('investor_documents.view') ? supabase.from('document_access_grants').select('id, granted_at, note, investors(legal_name, organization_name, investor_type, reference_code)').eq('document_id', id).is('revoked_at', null).order('granted_at', { ascending: false }) : Promise.resolve({ data: null, error: null }),
-    principal.permissions.has('audit_logs.view') ? supabase.from('audit_logs').select('id, action, actor_label, summary, created_at').eq('entity_type', 'document').eq('entity_id', id).order('created_at', { ascending: false }).limit(20) : Promise.resolve({ data: null, error: null }),
-    document.visibility === 'restricted' && principal.permissions.has('investor_documents.assign') ? supabase.from('investors').select('id, legal_name, organization_name, investor_type, reference_code').in('status', ['approved', 'active']).order('legal_name') : Promise.resolve({ data: null, error: null }),
-  ])
-  const grants: GrantView[] = (grantsResult.data ?? []).flatMap((grant) => { const investor = Array.isArray(grant.investors) ? grant.investors[0] : grant.investors; return investor ? [{ id: grant.id, grantedAt: grant.granted_at, note: grant.note, investorName: investor.investor_type === 'institution' ? investor.organization_name || investor.legal_name : investor.legal_name, referenceCode: investor.reference_code }] : [] })
-  const grantedIds = new Set(grantsResult.data?.map((grant) => { const investor = Array.isArray(grant.investors) ? grant.investors[0] : grant.investors; return investor?.reference_code }).filter(Boolean))
-  const investors: InvestorOption[] = (investorsResult.data ?? []).filter((investor) => !grantedIds.has(investor.reference_code)).map((investor) => ({ id: investor.id, label: investor.investor_type === 'institution' ? investor.organization_name || investor.legal_name : investor.legal_name, referenceCode: investor.reference_code }))
-  const permissions = [...principal.permissions]
-  return <Stack gap={8}><RealtimeRefresher topic={topics.admin()} kinds={['document.state_changed']} /><PageHeader eyebrow="Investor Relations" title={document.title} description={document.summary ?? 'Dokumen Investor Relations'} actions={<Button asChild variant="secondary"><Link href="/admin/documents"><ArrowLeft aria-hidden="true" />Kembali ke Dokumen</Link></Button>} /><div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]"><Stack gap={6}><Card><CardHeader><CardTitle>Metadata dokumen</CardTitle></CardHeader><CardBody><DetailList><DetailRow label="Tipe dokumen">{kindLabels[document.kind]}</DetailRow><DetailRow label="Slug"><span className="font-mono text-caption">{document.slug}</span></DetailRow><DetailRow label="Status"><PublicationBadge status={document.status as PublicationStatus} /></DetailRow><DetailRow label="Visibilitas"><div className="flex flex-col gap-1"><VisibilityBadge visibility={document.visibility as Visibility} /><span className="text-caption text-fg-muted">{VISIBILITY_DESCRIPTIONS[document.visibility as Visibility]}</span></div></DetailRow><DetailRow label="Dibuat">{formatDateTime(document.created_at)}</DetailRow><DetailRow label="Diperbarui">{formatDateTime(document.updated_at)}</DetailRow>{document.archived_at ? <DetailRow label="Diarsipkan">{formatDateTime(document.archived_at)}</DetailRow> : null}</DetailList></CardBody></Card><Card><CardHeader><CardTitle className="flex items-center gap-2"><FileText className="size-5" aria-hidden="true" />Versi dokumen</CardTitle></CardHeader><CardBody>{versionsResult.error ? <Alert tone="warning" title="Versi tidak dapat dimuat">Versi dokumen sedang tidak tersedia.</Alert> : versionsResult.data?.length ? <ol className="divide-y divide-border">{versionsResult.data.map((version) => <li key={version.id} className="py-3 first:pt-0"><div className="flex flex-wrap items-center gap-2"><span className="font-mono text-caption text-fg-subtle">v{version.version_number}</span><PublicationBadge status={version.status as PublicationStatus} />{version.id === document.current_version_id ? <span className="text-caption text-fg-muted">Versi aktif</span> : null}{version.id === document.published_version_id ? <span className="text-caption text-fg-muted">Versi terbit</span> : null}</div>{version.change_note ? <p className="mt-1 text-body-sm text-fg-muted">{version.change_note}</p> : null}<p className="mt-1 text-caption text-fg-subtle">Dibuat {formatDateTime(version.created_at)}</p></li>)}</ol> : <EmptyState title="Belum ada versi" description="Dokumen belum memiliki versi yang dapat ditinjau atau diterbitkan." />}</CardBody></Card>{document.visibility === 'restricted' && principal.permissions.has('investor_documents.view') ? <Card><CardHeader><CardTitle className="flex items-center gap-2"><Users className="size-5" aria-hidden="true" />Akses investor</CardTitle></CardHeader><CardBody>{grantsResult.error ? <Alert tone="warning" title="Akses tidak dapat dimuat">Daftar akses investor sedang tidak tersedia.</Alert> : <DocumentAccessManager documentId={id} documentTitle={document.title} grants={grants} investors={investors} canAssign={principal.permissions.has('investor_documents.assign')} canRevoke={principal.permissions.has('investor_documents.revoke')} />}</CardBody></Card> : null}{principal.permissions.has('audit_logs.view') ? <Card><CardHeader><CardTitle className="flex items-center gap-2"><ShieldCheck className="size-5" aria-hidden="true" />Aktivitas</CardTitle></CardHeader><CardBody>{auditResult.error ? <Alert tone="warning" title="Aktivitas tidak dapat dimuat">Aktivitas dokumen sedang tidak tersedia.</Alert> : auditResult.data?.length ? <ol className="divide-y divide-border">{auditResult.data.map((entry) => <li key={entry.id} className="py-3 first:pt-0"><p className="text-body-sm text-fg">{entry.summary || entry.action}</p><p className="mt-1 text-caption text-fg-subtle">{formatDateTime(entry.created_at)}{entry.actor_label ? ` · ${entry.actor_label}` : ''}</p></li>)}</ol> : <EmptyState title="Belum ada aktivitas" description="Aktivitas terkait dokumen ini akan tampil di sini." />}</CardBody></Card> : null}</Stack><aside className="h-fit xl:sticky xl:top-6"><Card variant="raised"><CardHeader><CardTitle>Publikasi</CardTitle></CardHeader><CardBody><div className="flex flex-col gap-4"><PublicationBadge status={document.status as PublicationStatus} /><p className="text-body-sm text-fg-muted">{PUBLICATION_STATUS_LABELS[document.status as PublicationStatus]}</p><DocumentActions documentId={id} title={document.title} status={document.status as PublicationStatus} permissions={permissions} /></div></CardBody></Card></aside></div></Stack>
+type PageProps = {
+  params: Promise<{
+    id: string
+  }>
 }
+
+const kinds: Record<string, string> = {
+  investment_proposal: 'Proposal investasi',
+  pitch_deck: 'Pitch deck',
+  investor_report: 'Laporan investor',
+  business_update: 'Pembaruan bisnis',
+  supporting: 'Pendukung',
+}
+
+export default async function AdminDocumentDetailPage({
+  params,
+}: PageProps) {
+  const principal = await requireAdminPage('/admin/documents')
+
+  if (!hasPermission(principal, 'documents.view')) {
+    return (
+      <Alert
+        tone="info"
+        title="Akses terbatas"
+      >
+        Peran Anda tidak memiliki izin untuk melihat dokumen.
+      </Alert>
+    )
+  }
+
+  const { id } = await params
+  const supabase = await getServerSupabase()
+
+  const [
+    { data: document, error: documentError },
+    { data: versions, error: versionsError },
+  ] = await Promise.all([
+    supabase
+      .from('documents')
+      .select(
+        'id, title, slug, kind, summary, status, visibility, owner_admin_id, current_version_id, published_version_id, archived_at, created_at, updated_at',
+      )
+      .eq('id', id)
+      .maybeSingle(),
+
+    supabase
+      .from('document_versions')
+      .select(
+        'id, document_id, version_number, title, status, change_note, file_asset_id, approved_at, published_at, created_at',
+      )
+      .eq('document_id', id)
+      .order('version_number', { ascending: false }),
+  ])
+
+  if (documentError) {
+    return (
+      <Alert
+        tone="danger"
+        title="Dokumen tidak dapat dimuat"
+      >
+        Sistem gagal mengambil data dokumen.
+      </Alert>
+    )
+  }
+
+  if (!document) {
+    notFound()
+  }
+
+  if (versionsError) {
+    return (
+      <Alert
+        tone="danger"
+        title="Versi dokumen tidak dapat dimuat"
+      >
+        Sistem gagal mengambil riwayat versi dokumen.
+      </Alert>
+    )
+  }
+
+  const permissions = Array.from(principal.permissions)
+
+  const currentVersion = (versions ?? []).find(
+    (version) => version.id === document.current_version_id,
+  )
+
+  const publishedVersion = (versions ?? []).find(
+    (version) => version.id === document.published_version_id,
+  )
+
+  const status = document.status
+
+  return (
+    <Stack gap={8}>
+      <header>
+        <Link
+          href="/admin/documents"
+          className="text-body-sm text-fg-muted hover:underline"
+        >
+          ← Kembali ke Dokumen
+        </Link>
+
+        <div className="mt-4">
+          <p className="text-caption font-medium uppercase tracking-[0.18em] text-fg-subtle">
+            Investor Relations / Dokumen
+          </p>
+
+          <div className="mt-2 flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <h1 className="text-2xl font-semibold tracking-tight text-fg">
+                {document.title}
+              </h1>
+
+              {document.summary ? (
+                <p className="mt-2 max-w-3xl text-body-sm text-fg-muted">
+                  {document.summary}
+                </p>
+              ) : null}
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <PublicationBadge status={status} />
+              <VisibilityBadge visibility={document.visibility} />
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Lifecycle Dokumen</CardTitle>
+        </CardHeader>
+
+        <CardBody>
+          <div className="flex flex-col gap-4">
+            <p className="text-body-sm text-fg-muted">
+              Perubahan status mengikuti workflow dan permission yang
+              ditetapkan oleh sistem.
+            </p>
+
+            <div className="flex flex-wrap gap-3">
+              <DocumentActions
+                documentId={document.id}
+                title={document.title}
+                status={status}
+                permissions={permissions}
+              />
+            </div>
+          </div>
+        </CardBody>
+      </Card>
+
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <Card>
+          <CardBody>
+            <p className="text-caption text-fg-subtle">Tipe</p>
+            <p className="mt-2 text-body-sm font-medium">
+              {kinds[document.kind] ?? document.kind}
+            </p>
+          </CardBody>
+        </Card>
+
+        <Card>
+          <CardBody>
+            <p className="text-caption text-fg-subtle">Visibilitas</p>
+            <div className="mt-2">
+              <VisibilityBadge visibility={document.visibility} />
+            </div>
+          </CardBody>
+        </Card>
+
+        <Card>
+          <CardBody>
+            <p className="text-caption text-fg-subtle">Versi aktif</p>
+            <p className="mt-2 text-body-sm font-medium">
+              {currentVersion
+                ? `v${currentVersion.version_number}`
+                : 'Belum tersedia'}
+            </p>
+          </CardBody>
+        </Card>
+
+        <Card>
+          <CardBody>
+            <p className="text-caption text-fg-subtle">Versi terbit</p>
+            <p className="mt-2 text-body-sm font-medium">
+              {publishedVersion
+                ? `v${publishedVersion.version_number}`
+                : 'Belum diterbitkan'}
+            </p>
+          </CardBody>
+        </Card>
+      </section>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Informasi Dokumen</CardTitle>
+        </CardHeader>
+
+        <CardBody>
+          <div className="grid gap-5 md:grid-cols-2">
+            <div>
+              <p className="text-caption text-fg-subtle">Slug</p>
+              <p className="mt-1 break-all text-body-sm">
+                {document.slug}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-caption text-fg-subtle">Status</p>
+              <p className="mt-1 text-body-sm">
+                {PUBLICATION_STATUS_LABELS[status]}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-caption text-fg-subtle">Dibuat</p>
+              <p className="mt-1 text-body-sm">
+                {formatDateTime(document.created_at)}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-caption text-fg-subtle">Diperbarui</p>
+              <p className="mt-1 text-body-sm">
+                {formatDateTime(document.updated_at)}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-caption text-fg-subtle">
+                Diarsipkan
+              </p>
+              <p className="mt-1 text-body-sm">
+                {document.archived_at
+                  ? formatDateTime(document.archived_at)
+                  : '-'}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-caption text-fg-subtle">
+                Owner Admin
+              </p>
+              <p className="mt-1 break-all text-body-sm">
+                {document.owner_admin_id ?? '-'}
+              </p>
+            </div>
+          </div>
+        </CardBody>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Riwayat Versi</CardTitle>
+        </CardHeader>
+
+        <CardBody>
+          {(versions ?? []).length === 0 ? (
+            <p className="text-body-sm text-fg-muted">
+              Belum ada versi dokumen.
+            </p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-body-sm">
+                <thead>
+                  <tr className="border-b border-border">
+                    <th className="px-3 py-3 font-medium">Versi</th>
+                    <th className="px-3 py-3 font-medium">Judul</th>
+                    <th className="px-3 py-3 font-medium">Status</th>
+                    <th className="px-3 py-3 font-medium">
+                      Catatan Perubahan
+                    </th>
+                    <th className="px-3 py-3 font-medium">
+                      Dibuat
+                    </th>
+                    <th className="px-3 py-3 font-medium">
+                      Disetujui
+                    </th>
+                    <th className="px-3 py-3 font-medium">
+                      Diterbitkan
+                    </th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {(versions ?? []).map((version) => (
+                    <tr
+                      key={version.id}
+                      className="border-b border-border last:border-0"
+                    >
+                      <td className="px-3 py-3 font-medium">
+                        v{version.version_number}
+                        {version.id === document.current_version_id ? (
+                          <span className="ml-2 text-caption text-fg-muted">
+                            Aktif
+                          </span>
+                        ) : null}
+                      </td>
+
+                      <td className="px-3 py-3">
+                        {version.title}
+                      </td>
+
+                      <td className="px-3 py-3">
+                        <PublicationBadge status={version.status} />
+                      </td>
+
+                      <td className="max-w-xs px-3 py-3 text-fg-muted">
+                        {version.change_note ?? '-'}
+                      </td>
+
+                      <td className="px-3 py-3 text-fg-muted">
+                        {formatDateTime(version.created_at)}
+                      </td>
+
+                      <td className="px-3 py-3 text-fg-muted">
+                        {version.approved_at
+                          ? formatDateTime(version.approved_at)
+                          : '-'}
+                      </td>
+
+                      <td className="px-3 py-3 text-fg-muted">
+                        {version.published_at
+                          ? formatDateTime(version.published_at)
+                          : '-'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardBody>
+      </Card>
+    </Stack>
+  )
+}
+
+
+
+

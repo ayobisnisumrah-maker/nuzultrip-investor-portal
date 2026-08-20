@@ -1,4 +1,4 @@
-/**
+﻿/**
  * The permission catalogue — defined once, here.
  *
  * This module is the source for:
@@ -23,6 +23,12 @@ export type PermissionDefinition = {
 export const PERMISSION_MODULES = [
   'dashboard',
   'investors',
+  'ownership_offerings',
+  'ownership',
+  'profit_distributions',
+  'profit_distribution_payments',
+  'ownership_transfers',
+  'ownership_inheritance',
   'investor_documents',
   'documents',
   'company_profile',
@@ -44,6 +50,12 @@ export type PermissionModule = (typeof PERMISSION_MODULES)[number]
 export const MODULE_LABELS: Readonly<Record<PermissionModule, string>> = {
   dashboard: 'Dasbor',
   investors: 'Investor',
+  ownership_offerings: 'Penawaran Kepemilikan',
+  ownership: 'Kepemilikan Investor',
+  profit_distributions: 'Distribusi Bagi Hasil',
+  profit_distribution_payments: 'Pembayaran Distribusi Bagi Hasil',
+  ownership_transfers: 'Transfer Kepemilikan',
+  ownership_inheritance: 'Pewarisan Kepemilikan',
   investor_documents: 'Dokumen investor',
   documents: 'Dokumen',
   company_profile: 'Profil perusahaan',
@@ -68,11 +80,35 @@ export const MODULE_LABELS: Readonly<Record<PermissionModule, string>> = {
  * question.
  */
 export const PERMISSIONS = [
-  { module: 'dashboard', action: 'view', description: 'Melihat dasbor admin.' },
+  /* ------------------------------------------------------------------------ */
+  /* Dashboard                                                                */
+  /* ------------------------------------------------------------------------ */
 
-  { module: 'investors', action: 'view', description: 'Melihat daftar dan profil investor.' },
-  { module: 'investors', action: 'create', description: 'Membuat catatan investor secara manual.' },
-  { module: 'investors', action: 'update', description: 'Mengubah data profil investor.' },
+  {
+    module: 'dashboard',
+    action: 'view',
+    description: 'Melihat dasbor admin.',
+  },
+
+  /* ------------------------------------------------------------------------ */
+  /* Investors                                                                */
+  /* ------------------------------------------------------------------------ */
+
+  {
+    module: 'investors',
+    action: 'view',
+    description: 'Melihat daftar dan profil investor.',
+  },
+  {
+    module: 'investors',
+    action: 'create',
+    description: 'Membuat catatan investor secara manual.',
+  },
+  {
+    module: 'investors',
+    action: 'update',
+    description: 'Mengubah data profil investor.',
+  },
   {
     module: 'investors',
     action: 'delete',
@@ -85,8 +121,16 @@ export const PERMISSIONS = [
     description: 'Menyetujui pengajuan investor.',
     dangerous: true,
   },
-  { module: 'investors', action: 'reject', description: 'Menolak pengajuan investor.' },
-  { module: 'investors', action: 'deactivate', description: 'Menonaktifkan investor aktif.' },
+  {
+    module: 'investors',
+    action: 'reject',
+    description: 'Menolak pengajuan investor.',
+  },
+  {
+    module: 'investors',
+    action: 'deactivate',
+    description: 'Menonaktifkan investor aktif.',
+  },
   {
     module: 'investors',
     action: 'reactivate',
@@ -98,6 +142,195 @@ export const PERMISSIONS = [
     description: 'Mengekspor data investor.',
     dangerous: true,
   },
+
+  /* ------------------------------------------------------------------------ */
+  /* Ownership Offerings                                                      */
+  /* ------------------------------------------------------------------------ */
+
+  {
+    module: 'ownership_offerings',
+    action: 'view',
+    description: 'Melihat konfigurasi dan penawaran kepemilikan.',
+  },
+  {
+    module: 'ownership_offerings',
+    action: 'create',
+    description: 'Membuat penawaran kepemilikan baru.',
+  },
+  {
+    module: 'ownership_offerings',
+    action: 'update',
+    description: 'Mengubah konfigurasi penawaran kepemilikan.',
+  },
+  {
+    module: 'ownership_offerings',
+    action: 'publish',
+    description: 'Membuka atau menerbitkan penawaran kepemilikan.',
+    dangerous: true,
+  },  {
+    module: 'ownership_offerings',
+    action: 'pause',
+    description: 'Menghentikan sementara penawaran kepemilikan yang sedang aktif.',
+    dangerous: true,
+  },
+  {
+    module: 'ownership_offerings',
+    action: 'resume',
+    description: 'Membuka kembali penawaran kepemilikan yang sedang dihentikan sementara.',
+  },
+  {
+    module: 'ownership_offerings',
+    action: 'close',
+    description: 'Menutup penawaran kepemilikan sehingga tidak dapat menerima investasi baru.',
+    dangerous: true,
+  },
+  {
+    module: 'ownership_offerings',
+    action: 'archive',
+    description: 'Mengarsipkan penawaran kepemilikan yang telah ditutup.',
+    dangerous: true,
+  },
+
+  /* ------------------------------------------------------------------------ */
+  /* Ownership                                                                */
+  /* ------------------------------------------------------------------------ */
+
+  {
+    module: 'ownership',
+    action: 'view',
+    description: 'Melihat kepemilikan investor.',
+  },
+  {
+    module: 'ownership',
+    action: 'create',
+    description: 'Mencatat atau mengalokasikan kepemilikan investor.',
+    dangerous: true,
+  },
+  {
+    module: 'ownership',
+    action: 'update',
+    description: 'Mengubah data kepemilikan investor.',
+    dangerous: true,
+  },
+  {
+    module: 'ownership',
+    action: 'delete',
+    description: 'Membatalkan catatan kepemilikan investor.',
+    dangerous: true,
+  },
+
+  /* ------------------------------------------------------------------------ */
+  /* Profit Distributions                                                     */
+  /* ------------------------------------------------------------------------ */
+
+  {
+    module: 'profit_distributions',
+    action: 'view',
+    description: 'Melihat perhitungan dan distribusi bagi hasil.',
+  },
+  {
+    module: 'profit_distributions',
+    action: 'create',
+    description: 'Membuat perhitungan distribusi bagi hasil.',
+  },
+  {
+    module: 'profit_distributions',
+    action: 'update',
+    description: 'Mengubah distribusi bagi hasil yang belum disetujui.',
+  },
+  {
+    module: 'profit_distributions',
+    action: 'approve',
+    description: 'Menyetujui distribusi bagi hasil.',
+    dangerous: true,
+  },
+  {
+    module: 'profit_distributions',
+    action: 'publish',
+    description: 'Menerbitkan distribusi bagi hasil kepada investor.',
+    dangerous: true,
+  },
+
+  /* ------------------------------------------------------------------------ */
+  /* Profit Distribution Payments                                             */
+  /* ------------------------------------------------------------------------ */
+
+  {
+    module: 'profit_distribution_payments',
+    action: 'view',
+    description: 'Melihat informasi pembayaran distribusi bagi hasil.',
+  },
+  {
+    module: 'profit_distribution_payments',
+    action: 'upload_proof',
+    description:
+      'Mengunggah bukti transfer pembayaran kepada investor.',
+  },
+  {
+    module: 'profit_distribution_payments',
+    action: 'replace_proof',
+    description:
+      'Mengganti bukti transfer pembayaran kepada investor.',
+  },
+  {
+    module: 'profit_distribution_payments',
+    action: 'mark_paid',
+    description:
+      'Menandai pembayaran distribusi bagi hasil sebagai telah dibayar.',
+    dangerous: true,
+  },
+
+  /* ------------------------------------------------------------------------ */
+  /* Ownership Transfers                                                      */
+  /* ------------------------------------------------------------------------ */
+
+  {
+    module: 'ownership_transfers',
+    action: 'view',
+    description: 'Melihat permintaan transfer kepemilikan.',
+  },
+  {
+    module: 'ownership_transfers',
+    action: 'create',
+    description: 'Mengajukan transfer kepemilikan.',
+  },
+  {
+    module: 'ownership_transfers',
+    action: 'approve',
+    description: 'Menyetujui transfer kepemilikan.',
+    dangerous: true,
+  },
+  {
+    module: 'ownership_transfers',
+    action: 'reject',
+    description: 'Menolak transfer kepemilikan.',
+    dangerous: true,
+  },
+
+  /* ------------------------------------------------------------------------ */
+  /* Ownership Inheritance                                                    */
+  /* ------------------------------------------------------------------------ */
+
+  {
+    module: 'ownership_inheritance',
+    action: 'view',
+    description: 'Melihat proses pewarisan kepemilikan.',
+  },
+  {
+    module: 'ownership_inheritance',
+    action: 'create',
+    description: 'Membuat pengajuan pewarisan kepemilikan.',
+  },
+  {
+    module: 'ownership_inheritance',
+    action: 'approve',
+    description: 'Menyetujui pewarisan kepemilikan.',
+    dangerous: true,
+  },
+
+  /* ------------------------------------------------------------------------ */
+  /* Investor Documents                                                       */
+  /* ------------------------------------------------------------------------ */
 
   {
     module: 'investor_documents',
@@ -115,16 +348,40 @@ export const PERMISSIONS = [
     description: 'Mencabut akses dokumen investor.',
   },
 
-  { module: 'documents', action: 'view', description: 'Melihat dokumen dan seluruh versinya.' },
-  { module: 'documents', action: 'create', description: 'Membuat dokumen dan versi draf.' },
+  /* ------------------------------------------------------------------------ */
+  /* Documents                                                                */
+  /* ------------------------------------------------------------------------ */
+
+  {
+    module: 'documents',
+    action: 'view',
+    description: 'Melihat dokumen dan seluruh versinya.',
+  },
+  {
+    module: 'documents',
+    action: 'create',
+    description: 'Membuat dokumen dan versi draf.',
+  },
   {
     module: 'documents',
     action: 'update',
     description: 'Mengubah dokumen dan versi yang belum terbit.',
   },
-  { module: 'documents', action: 'delete', description: 'Menghapus versi yang belum terbit.' },
-  { module: 'documents', action: 'review', description: 'Mengirim dokumen untuk peninjauan.' },
-  { module: 'documents', action: 'approve', description: 'Menyetujui dokumen untuk penerbitan.' },
+  {
+    module: 'documents',
+    action: 'delete',
+    description: 'Menghapus versi yang belum terbit.',
+  },
+  {
+    module: 'documents',
+    action: 'review',
+    description: 'Mengirim dokumen untuk peninjauan.',
+  },
+  {
+    module: 'documents',
+    action: 'approve',
+    description: 'Menyetujui dokumen untuk penerbitan.',
+  },
   {
     module: 'documents',
     action: 'publish',
@@ -137,12 +394,20 @@ export const PERMISSIONS = [
     description: 'Mengarsipkan dokumen yang telah terbit.',
   },
 
+  /* ------------------------------------------------------------------------ */
+  /* Company Profile                                                          */
+  /* ------------------------------------------------------------------------ */
+
   {
     module: 'company_profile',
     action: 'view',
     description: 'Melihat profil perusahaan dan riwayat versinya.',
   },
-  { module: 'company_profile', action: 'update', description: 'Mengubah profil perusahaan.' },
+  {
+    module: 'company_profile',
+    action: 'update',
+    description: 'Mengubah profil perusahaan.',
+  },
   {
     module: 'company_profile',
     action: 'publish',
@@ -150,19 +415,35 @@ export const PERMISSIONS = [
     dangerous: true,
   },
 
+  /* ------------------------------------------------------------------------ */
+  /* Financial Periods                                                        */
+  /* ------------------------------------------------------------------------ */
+
   {
     module: 'financial_periods',
     action: 'view',
     description: 'Melihat periode pelaporan keuangan.',
   },
-  { module: 'financial_periods', action: 'create', description: 'Membuat periode pelaporan baru.' },
-  { module: 'financial_periods', action: 'update', description: 'Mengubah periode pelaporan.' },
+  {
+    module: 'financial_periods',
+    action: 'create',
+    description: 'Membuat periode pelaporan baru.',
+  },
+  {
+    module: 'financial_periods',
+    action: 'update',
+    description: 'Mengubah periode pelaporan.',
+  },
   {
     module: 'financial_periods',
     action: 'close',
     description: 'Menutup atau mengunci periode pelaporan.',
     dangerous: true,
   },
+
+  /* ------------------------------------------------------------------------ */
+  /* Financial Reports                                                        */
+  /* ------------------------------------------------------------------------ */
 
   {
     module: 'financial_reports',
@@ -189,7 +470,11 @@ export const PERMISSIONS = [
     action: 'review',
     description: 'Mengirim laporan keuangan untuk peninjauan.',
   },
-  { module: 'financial_reports', action: 'approve', description: 'Menyetujui laporan keuangan.' },
+  {
+    module: 'financial_reports',
+    action: 'approve',
+    description: 'Menyetujui laporan keuangan.',
+  },
   {
     module: 'financial_reports',
     action: 'publish',
@@ -197,8 +482,20 @@ export const PERMISSIONS = [
     dangerous: true,
   },
 
-  { module: 'portal', action: 'view', description: 'Melihat konten portal termasuk draf.' },
-  { module: 'portal', action: 'update', description: 'Mengubah halaman dan bagian portal.' },
+  /* ------------------------------------------------------------------------ */
+  /* Portal                                                                   */
+  /* ------------------------------------------------------------------------ */
+
+  {
+    module: 'portal',
+    action: 'view',
+    description: 'Melihat konten portal termasuk draf.',
+  },
+  {
+    module: 'portal',
+    action: 'update',
+    description: 'Mengubah halaman dan bagian portal.',
+  },
   {
     module: 'portal',
     action: 'publish',
@@ -215,40 +512,108 @@ export const PERMISSIONS = [
     action: 'manage_navigation',
     description: 'Mengubah navigasi dan tautan portal.',
   },
-  { module: 'portal', action: 'manage_hero', description: 'Mengubah bagian hero portal.' },
-  { module: 'portal', action: 'manage_cta', description: 'Mengubah ajakan bertindak pada portal.' },
+  {
+    module: 'portal',
+    action: 'manage_hero',
+    description: 'Mengubah bagian hero portal.',
+  },
+  {
+    module: 'portal',
+    action: 'manage_cta',
+    description: 'Mengubah ajakan bertindak pada portal.',
+  },
 
-  { module: 'media', action: 'view', description: 'Melihat pustaka media.' },
-  { module: 'media', action: 'upload', description: 'Mengunggah berkas ke pustaka media.' },
-  { module: 'media', action: 'update', description: 'Mengubah metadata berkas media.' },
-  { module: 'media', action: 'delete', description: 'Menghapus berkas media.' },
+  /* ------------------------------------------------------------------------ */
+  /* Media                                                                    */
+  /* ------------------------------------------------------------------------ */
 
-  { module: 'messages', action: 'view', description: 'Melihat seluruh percakapan investor.' },
-  { module: 'messages', action: 'send', description: 'Mengirim pesan kepada investor.' },
+  {
+    module: 'media',
+    action: 'view',
+    description: 'Melihat pustaka media.',
+  },
+  {
+    module: 'media',
+    action: 'upload',
+    description: 'Mengunggah berkas ke pustaka media.',
+  },
+  {
+    module: 'media',
+    action: 'update',
+    description: 'Mengubah metadata berkas media.',
+  },
+  {
+    module: 'media',
+    action: 'delete',
+    description: 'Menghapus berkas media.',
+  },
+
+  /* ------------------------------------------------------------------------ */
+  /* Messages                                                                 */
+  /* ------------------------------------------------------------------------ */
+
+  {
+    module: 'messages',
+    action: 'view',
+    description: 'Melihat seluruh percakapan investor.',
+  },
+  {
+    module: 'messages',
+    action: 'send',
+    description: 'Mengirim pesan kepada investor.',
+  },
   {
     module: 'messages',
     action: 'broadcast',
     description: 'Mengirim pesan siaran ke banyak investor.',
     dangerous: true,
   },
-  { module: 'messages', action: 'close_thread', description: 'Menutup percakapan.' },
+  {
+    module: 'messages',
+    action: 'close_thread',
+    description: 'Menutup percakapan.',
+  },
 
-  { module: 'inquiries', action: 'view', description: 'Melihat permintaan dari portal publik.' },
-  { module: 'inquiries', action: 'handle', description: 'Menindaklanjuti permintaan masuk.' },
+  /* ------------------------------------------------------------------------ */
+  /* Inquiries                                                                */
+  /* ------------------------------------------------------------------------ */
+
+  {
+    module: 'inquiries',
+    action: 'view',
+    description: 'Melihat permintaan dari portal publik.',
+  },
+  {
+    module: 'inquiries',
+    action: 'handle',
+    description: 'Menindaklanjuti permintaan masuk.',
+  },
   {
     module: 'inquiries',
     action: 'convert',
     description: 'Mengubah permintaan menjadi pengajuan investor.',
   },
 
-  { module: 'admins', action: 'view', description: 'Melihat daftar administrator.' },
+  /* ------------------------------------------------------------------------ */
+  /* Admins                                                                   */
+  /* ------------------------------------------------------------------------ */
+
+  {
+    module: 'admins',
+    action: 'view',
+    description: 'Melihat daftar administrator.',
+  },
   {
     module: 'admins',
     action: 'create',
     description: 'Membuat administrator internal baru.',
     dangerous: true,
   },
-  { module: 'admins', action: 'update', description: 'Mengubah data administrator.' },
+  {
+    module: 'admins',
+    action: 'update',
+    description: 'Mengubah data administrator.',
+  },
   {
     module: 'admins',
     action: 'disable',
@@ -258,19 +623,38 @@ export const PERMISSIONS = [
   {
     module: 'admins',
     action: 'reset_password',
-    description: 'Mengirim tautan atur ulang kata sandi administrator.',
+    description:
+      'Mengirim tautan atur ulang kata sandi administrator.',
     dangerous: true,
   },
 
-  { module: 'roles', action: 'view', description: 'Melihat peran dan izinnya.' },
-  { module: 'roles', action: 'create', description: 'Membuat peran khusus.', dangerous: true },
+  /* ------------------------------------------------------------------------ */
+  /* Roles                                                                    */
+  /* ------------------------------------------------------------------------ */
+
+  {
+    module: 'roles',
+    action: 'view',
+    description: 'Melihat peran dan izinnya.',
+  },
+  {
+    module: 'roles',
+    action: 'create',
+    description: 'Membuat peran khusus.',
+    dangerous: true,
+  },
   {
     module: 'roles',
     action: 'update',
     description: 'Mengubah izin yang dimiliki sebuah peran.',
     dangerous: true,
   },
-  { module: 'roles', action: 'delete', description: 'Menghapus peran khusus.', dangerous: true },
+  {
+    module: 'roles',
+    action: 'delete',
+    description: 'Menghapus peran khusus.',
+    dangerous: true,
+  },
   {
     module: 'roles',
     action: 'assign',
@@ -278,12 +662,41 @@ export const PERMISSIONS = [
     dangerous: true,
   },
 
-  { module: 'permissions', action: 'view', description: 'Melihat katalog izin.' },
+  /* ------------------------------------------------------------------------ */
+  /* Permissions                                                              */
+  /* ------------------------------------------------------------------------ */
 
-  { module: 'audit_logs', action: 'view', description: 'Melihat log audit.' },
-  { module: 'audit_logs', action: 'export', description: 'Mengekspor log audit.', dangerous: true },
+  {
+    module: 'permissions',
+    action: 'view',
+    description: 'Melihat katalog izin.',
+  },
 
-  { module: 'settings', action: 'view', description: 'Melihat pengaturan sistem.' },
+  /* ------------------------------------------------------------------------ */
+  /* Audit Logs                                                               */
+  /* ------------------------------------------------------------------------ */
+
+  {
+    module: 'audit_logs',
+    action: 'view',
+    description: 'Melihat log audit.',
+  },
+  {
+    module: 'audit_logs',
+    action: 'export',
+    description: 'Mengekspor log audit.',
+    dangerous: true,
+  },
+
+  /* ------------------------------------------------------------------------ */
+  /* Settings                                                                 */
+  /* ------------------------------------------------------------------------ */
+
+  {
+    module: 'settings',
+    action: 'view',
+    description: 'Melihat pengaturan sistem.',
+  },
   {
     module: 'settings',
     action: 'update',
@@ -323,7 +736,9 @@ export function permissionsByModule(): ReadonlyArray<{
   return PERMISSION_MODULES.map((module) => ({
     module,
     label: MODULE_LABELS[module],
-    permissions: PERMISSIONS.filter((permission) => permission.module === module),
+    permissions: PERMISSIONS.filter(
+      (permission) => permission.module === module,
+    ),
   }))
 }
 
@@ -351,6 +766,7 @@ export const ADMIN_INTERNAL_EXCLUSIONS: readonly string[] = [
   'roles.update',
   'roles.delete',
   'roles.assign',
+
   // Changing system configuration, exporting personal data, and destroying an
   // investor record are all irreversible or externally consequential.
   'settings.update',
@@ -361,5 +777,8 @@ export const ADMIN_INTERNAL_EXCLUSIONS: readonly string[] = [
 
 export function adminInternalPermissions(): readonly string[] {
   const excluded = new Set(ADMIN_INTERNAL_EXCLUSIONS)
-  return PERMISSION_KEYS.filter((key) => !excluded.has(key))
+
+  return PERMISSION_KEYS.filter(
+    (key) => !excluded.has(key),
+  )
 }

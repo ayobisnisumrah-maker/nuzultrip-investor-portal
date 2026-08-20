@@ -84,3 +84,11 @@ assets/source/
 
 # Local screenshot review output
 .screenshots/
+
+# Local secrets and backups
+.env.local.backup
+.env.*.backup
+*.bak
+*.backup
+.next/
+node_modules/

@@ -1,14 +1,14 @@
-import { cn } from '@/lib/cn'
+﻿import { cn } from '@/lib/cn'
 
 /**
  * Two layers:
  *
- *   • Table primitives — for hand-built tables.
- *   • `DataTable`      — column-driven, and **stacks into definition cards
+ *   â€¢ Table primitives â€” for hand-built tables.
+ *   â€¢ `DataTable`      â€” column-driven, and **stacks into definition cards
  *                        below `md`** rather than scrolling horizontally.
  *
  * A horizontally scrolling table is unusable on a phone, and the admin surface
- * has to work on a phone (docs/DESIGN-SYSTEM.md §4).
+ * has to work on a phone (docs/DESIGN-SYSTEM.md Â§4).
  */
 
 export function Table({ className, ...props }: React.ComponentPropsWithoutRef<'table'>) {
@@ -84,7 +84,7 @@ export type Column<Row> = {
   header: React.ReactNode
   cell: (row: Row) => React.ReactNode
   align?: 'left' | 'right' | 'center'
-  /** Renders in the monospace tabular face — use for money and counts. */
+  /** Renders in the monospace tabular face â€” use for money and counts. */
   numeric?: boolean
   /** Hidden in the stacked mobile layout (e.g. a redundant row-action column). */
   hideOnStack?: boolean
@@ -97,7 +97,7 @@ export type DataTableProps<Row> = {
   columns: ReadonlyArray<Column<Row>>
   rows: readonly Row[]
   rowKey: (row: Row) => string
-  /** Shown when `rows` is empty — always pass a real designed state. */
+  /** Shown when `rows` is empty â€” always pass a real designed state. */
   empty: React.ReactNode
   caption?: string
   onRowClick?: (row: Row) => void
@@ -119,7 +119,7 @@ export function DataTable<Row>({
 
   return (
     <div className={className}>
-      {/* Tabular layout — md and up */}
+      {/* Tabular layout â€” md and up */}
       <div className="hidden md:block">
         <Table>
           {caption ? <caption className="sr-only">{caption}</caption> : null}
@@ -154,7 +154,7 @@ export function DataTable<Row>({
         </Table>
       </div>
 
-      {/* Stacked definition cards — below md */}
+      {/* Stacked definition cards â€” below md */}
       <ul className="flex flex-col gap-3 md:hidden">
         {rows.map((row) => (
           <li
@@ -162,7 +162,7 @@ export function DataTable<Row>({
             className="border-border bg-surface text-body-sm rounded-md border p-4"
           >
             {primaryColumn ? (
-              <p className="text-heading-sm text-fg mb-2">{primaryColumn.cell(row)}</p>
+              <div className="text-heading-sm text-fg mb-2">{primaryColumn.cell(row)}</div>
             ) : null}
             <dl className="grid grid-cols-[minmax(0,auto)_minmax(0,1fr)] gap-x-4 gap-y-1.5">
               {columns
@@ -184,3 +184,4 @@ export function DataTable<Row>({
     </div>
   )
 }
+

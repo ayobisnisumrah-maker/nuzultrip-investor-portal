@@ -1,9 +1,9 @@
-/**
+﻿/**
  * Input schemas for the authentication and onboarding flows.
  *
  * Every bound is deliberate. A string without a maximum length is a memory
  * exhaustion vector; a `limit` without a ceiling is a denial of service
- * (docs/SECURITY.md §5).
+ * (docs/SECURITY.md Â§5).
  */
 import { z } from 'zod'
 
@@ -32,7 +32,7 @@ export const signInSchema = z.object({
   password: z.string().min(1, 'Kata sandi wajib diisi.').max(72),
   /**
    * Where to go after signing in. Validated as an internal path so this can
-   * never become an open redirect (docs/SECURITY.md §7).
+   * never become an open redirect (docs/SECURITY.md Â§7).
    */
   redirectTo: z
     .string()
@@ -91,7 +91,7 @@ export const investorApplicationSchema = z
     applicationNote: z.string().trim().max(2000).optional().or(z.literal('')),
     /**
      * Never stored in the clear. The server hashes it before it reaches the
-     * database (docs/SECURITY.md §9).
+     * database (docs/SECURITY.md Â§9).
      */
     identityNumber: z.string().trim().max(64).optional().or(z.literal('')),
     acceptTerms: z.literal(true, {
@@ -118,6 +118,15 @@ export const createAdminSchema = z.object({
 
 export type CreateAdminInput = z.infer<typeof createAdminSchema>
 
+export const updateAdminSchema = z.object({
+  adminId: z.uuid('Administrator tidak valid.'),
+  fullName: z.string().trim().min(2, 'Nama wajib diisi.').max(200),
+  roleId: z.uuid('Peran tidak valid.'),
+  title: z.string().trim().max(120).optional().or(z.literal('')),
+})
+
+export type UpdateAdminInput = z.infer<typeof updateAdminSchema>
+
 /* -------------------------------------------------------------------------- */
 /* Public inquiry                                                             */
 /* -------------------------------------------------------------------------- */
@@ -132,3 +141,4 @@ export const portalInquirySchema = z.object({
 })
 
 export type PortalInquiryInput = z.infer<typeof portalInquirySchema>
+
