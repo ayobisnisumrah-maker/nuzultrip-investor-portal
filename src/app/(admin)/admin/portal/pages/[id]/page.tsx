@@ -18,6 +18,7 @@ export default async function PortalPageDetail({ params }: { params: Promise<{ i
 
   const sections = await listPortalPageSections(id)
   const canUpdate = principal.permissions.has('portal.update' as never)
+  const canPublish = principal.permissions.has('portal.publish' as never)
 
   return (
     <div className="space-y-6">
@@ -41,7 +42,7 @@ export default async function PortalPageDetail({ params }: { params: Promise<{ i
           </div>
           <span className="text-caption text-fg-subtle">{sections.length} section</span>
         </div>
-        <PortalPageEditor pageId={page.id} sections={sections} canUpdate={canUpdate} />
+        <PortalPageEditor pageId={page.id} sections={sections} canUpdate={canUpdate} canPublish={canPublish} pageStatus={page.status} />
       </section>
 
       <aside className="rounded-xl border border-border bg-surface p-6">
