@@ -16,11 +16,6 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "14.15"
-  }
   app: {
     Tables: {
       [_ in never]: never
@@ -55,6 +50,10 @@ export type Database = {
           version_number: number
           visibility: Database["public"]["Enums"]["visibility"]
         }[]
+      }
+      create_investor_message_thread: {
+        Args: { p_body: string; p_investor_id: string; p_subject: string }
+        Returns: string
       }
       current_actor_type: { Args: never; Returns: string }
       current_investor_id: { Args: never; Returns: string }
@@ -108,6 +107,18 @@ export type Database = {
       topic_investor: { Args: { p_investor_id: string }; Returns: string }
       topic_portal: { Args: never; Returns: string }
       topic_user: { Args: { p_user_id: string }; Returns: string }
+      transition_portal_page: {
+        Args: {
+          p_page_id: string
+          p_to_status: Database["public"]["Enums"]["publication_status"]
+        }
+        Returns: {
+          page_id: string
+          page_title: string
+          previous_status: Database["public"]["Enums"]["publication_status"]
+          status: Database["public"]["Enums"]["publication_status"]
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
@@ -429,183 +440,6 @@ export type Database = {
             columns: ["published_version_id"]
             isOneToOne: false
             referencedRelation: "company_profile_versions"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      contact_messages: {
-        Row: {
-          created_at: string | null
-          email: string | null
-          full_name: string | null
-          id: string
-          message: string | null
-          phone: string | null
-          status: string | null
-          subject: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          email?: string | null
-          full_name?: string | null
-          id?: string
-          message?: string | null
-          phone?: string | null
-          status?: string | null
-          subject?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          email?: string | null
-          full_name?: string | null
-          id?: string
-          message?: string | null
-          phone?: string | null
-          status?: string | null
-          subject?: string | null
-        }
-        Relationships: []
-      }
-      data_room_access_logs: {
-        Row: {
-          action: string
-          created_at: string
-          document_id: string | null
-          id: string
-          investor_id: string | null
-          ip_address: unknown
-          token_id: string | null
-          user_agent: string | null
-        }
-        Insert: {
-          action: string
-          created_at?: string
-          document_id?: string | null
-          id?: string
-          investor_id?: string | null
-          ip_address?: unknown
-          token_id?: string | null
-          user_agent?: string | null
-        }
-        Update: {
-          action?: string
-          created_at?: string
-          document_id?: string | null
-          id?: string
-          investor_id?: string | null
-          ip_address?: unknown
-          token_id?: string | null
-          user_agent?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "data_room_access_logs_document_id_fkey"
-            columns: ["document_id"]
-            isOneToOne: false
-            referencedRelation: "data_room_documents"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "data_room_access_logs_investor_id_fkey"
-            columns: ["investor_id"]
-            isOneToOne: false
-            referencedRelation: "legacy_investors"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "data_room_access_logs_token_id_fkey"
-            columns: ["token_id"]
-            isOneToOne: false
-            referencedRelation: "investor_tokens"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      data_room_categories: {
-        Row: {
-          created_at: string | null
-          description: string | null
-          id: string
-          name: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          name?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          name?: string | null
-        }
-        Relationships: []
-      }
-      data_room_documents: {
-        Row: {
-          category_id: string | null
-          content: Json
-          cover_image_url: string | null
-          created_at: string | null
-          description: string | null
-          embed_url: string | null
-          file_name: string | null
-          file_size: number | null
-          file_url: string | null
-          id: string
-          is_active: boolean | null
-          mime_type: string | null
-          pages: number
-          sort_order: number
-          title: string | null
-          updated_at: string
-          visibility: string | null
-        }
-        Insert: {
-          category_id?: string | null
-          content?: Json
-          cover_image_url?: string | null
-          created_at?: string | null
-          description?: string | null
-          embed_url?: string | null
-          file_name?: string | null
-          file_size?: number | null
-          file_url?: string | null
-          id?: string
-          is_active?: boolean | null
-          mime_type?: string | null
-          pages?: number
-          sort_order?: number
-          title?: string | null
-          updated_at?: string
-          visibility?: string | null
-        }
-        Update: {
-          category_id?: string | null
-          content?: Json
-          cover_image_url?: string | null
-          created_at?: string | null
-          description?: string | null
-          embed_url?: string | null
-          file_name?: string | null
-          file_size?: number | null
-          file_url?: string | null
-          id?: string
-          is_active?: boolean | null
-          mime_type?: string | null
-          pages?: number
-          sort_order?: number
-          title?: string | null
-          updated_at?: string
-          visibility?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "data_room_documents_category_id_fkey"
-            columns: ["category_id"]
-            isOneToOne: false
-            referencedRelation: "data_room_categories"
             referencedColumns: ["id"]
           },
         ]
@@ -1113,72 +947,6 @@ export type Database = {
           },
         ]
       }
-      investor_requests: {
-        Row: {
-          access_link: string | null
-          amount: string
-          approval_note: string | null
-          approved_at: string | null
-          approved_by: string | null
-          company: string
-          country: string
-          email: string
-          id: string
-          name: string
-          nda_signed: boolean
-          phone: string
-          rejected_at: string | null
-          rejection_reason: string | null
-          status: string
-          submitted_at: string
-          token: string | null
-          token_expires_at: string | null
-          updated_at: string
-        }
-        Insert: {
-          access_link?: string | null
-          amount: string
-          approval_note?: string | null
-          approved_at?: string | null
-          approved_by?: string | null
-          company: string
-          country: string
-          email: string
-          id: string
-          name: string
-          nda_signed?: boolean
-          phone: string
-          rejected_at?: string | null
-          rejection_reason?: string | null
-          status?: string
-          submitted_at?: string
-          token?: string | null
-          token_expires_at?: string | null
-          updated_at?: string
-        }
-        Update: {
-          access_link?: string | null
-          amount?: string
-          approval_note?: string | null
-          approved_at?: string | null
-          approved_by?: string | null
-          company?: string
-          country?: string
-          email?: string
-          id?: string
-          name?: string
-          nda_signed?: boolean
-          phone?: string
-          rejected_at?: string | null
-          rejection_reason?: string | null
-          status?: string
-          submitted_at?: string
-          token?: string | null
-          token_expires_at?: string | null
-          updated_at?: string
-        }
-        Relationships: []
-      }
       investor_status_history: {
         Row: {
           changed_by: string | null
@@ -1222,54 +990,10 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "investor_status_history_investor_id_fkey1"
+            foreignKeyName: "investor_status_history_investor_id_fkey"
             columns: ["investor_id"]
             isOneToOne: false
             referencedRelation: "investors"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      investor_tokens: {
-        Row: {
-          created_at: string | null
-          expires_at: string | null
-          id: string
-          investor_email: string | null
-          investor_id: string
-          investor_name: string | null
-          is_active: boolean | null
-          period: string | null
-          token: string
-        }
-        Insert: {
-          created_at?: string | null
-          expires_at?: string | null
-          id?: string
-          investor_email?: string | null
-          investor_id: string
-          investor_name?: string | null
-          is_active?: boolean | null
-          period?: string | null
-          token: string
-        }
-        Update: {
-          created_at?: string | null
-          expires_at?: string | null
-          id?: string
-          investor_email?: string | null
-          investor_id?: string
-          investor_name?: string | null
-          is_active?: boolean | null
-          period?: string | null
-          token?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "investor_tokens_investor_id_fkey"
-            columns: ["investor_id"]
-            isOneToOne: false
-            referencedRelation: "legacy_investors"
             referencedColumns: ["id"]
           },
         ]
@@ -1281,6 +1005,9 @@ export type Database = {
           application_note: string | null
           applied_at: string | null
           approved_at: string | null
+          bank_account_name: string | null
+          bank_account_number: string | null
+          bank_name: string | null
           city: string | null
           country: string
           created_at: string
@@ -1288,6 +1015,12 @@ export type Database = {
           id: string
           identity_number_hash: string | null
           investor_type: Database["public"]["Enums"]["investor_type"]
+          ktp_file_size_bytes: number | null
+          ktp_mime_type: string | null
+          ktp_original_file_name: string | null
+          ktp_storage_bucket: string | null
+          ktp_storage_path: string | null
+          ktp_uploaded_at: string | null
           legal_name: string
           organization_name: string | null
           organization_role: string | null
@@ -1298,6 +1031,7 @@ export type Database = {
           reviewed_by: string | null
           status: Database["public"]["Enums"]["investor_status"]
           updated_at: string
+          whatsapp_number: string | null
         }
         Insert: {
           activated_at?: string | null
@@ -1305,6 +1039,9 @@ export type Database = {
           application_note?: string | null
           applied_at?: string | null
           approved_at?: string | null
+          bank_account_name?: string | null
+          bank_account_number?: string | null
+          bank_name?: string | null
           city?: string | null
           country?: string
           created_at?: string
@@ -1312,6 +1049,12 @@ export type Database = {
           id: string
           identity_number_hash?: string | null
           investor_type?: Database["public"]["Enums"]["investor_type"]
+          ktp_file_size_bytes?: number | null
+          ktp_mime_type?: string | null
+          ktp_original_file_name?: string | null
+          ktp_storage_bucket?: string | null
+          ktp_storage_path?: string | null
+          ktp_uploaded_at?: string | null
           legal_name: string
           organization_name?: string | null
           organization_role?: string | null
@@ -1322,6 +1065,7 @@ export type Database = {
           reviewed_by?: string | null
           status?: Database["public"]["Enums"]["investor_status"]
           updated_at?: string
+          whatsapp_number?: string | null
         }
         Update: {
           activated_at?: string | null
@@ -1329,6 +1073,9 @@ export type Database = {
           application_note?: string | null
           applied_at?: string | null
           approved_at?: string | null
+          bank_account_name?: string | null
+          bank_account_number?: string | null
+          bank_name?: string | null
           city?: string | null
           country?: string
           created_at?: string
@@ -1336,6 +1083,12 @@ export type Database = {
           id?: string
           identity_number_hash?: string | null
           investor_type?: Database["public"]["Enums"]["investor_type"]
+          ktp_file_size_bytes?: number | null
+          ktp_mime_type?: string | null
+          ktp_original_file_name?: string | null
+          ktp_storage_bucket?: string | null
+          ktp_storage_path?: string | null
+          ktp_uploaded_at?: string | null
           legal_name?: string
           organization_name?: string | null
           organization_role?: string | null
@@ -1346,6 +1099,7 @@ export type Database = {
           reviewed_by?: string | null
           status?: Database["public"]["Enums"]["investor_status"]
           updated_at?: string
+          whatsapp_number?: string | null
         }
         Relationships: [
           {
@@ -1370,149 +1124,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      kv_store_b620c355: {
-        Row: {
-          key: string
-          value: Json
-        }
-        Insert: {
-          key: string
-          value: Json
-        }
-        Update: {
-          key?: string
-          value?: Json
-        }
-        Relationships: []
-      }
-      legacy_audit_logs: {
-        Row: {
-          action: string | null
-          created_at: string | null
-          description: string | null
-          id: string
-          ip_address: string | null
-          module: string | null
-          user_name: string | null
-        }
-        Insert: {
-          action?: string | null
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          ip_address?: string | null
-          module?: string | null
-          user_name?: string | null
-        }
-        Update: {
-          action?: string | null
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          ip_address?: string | null
-          module?: string | null
-          user_name?: string | null
-        }
-        Relationships: []
-      }
-      legacy_investor_status_history: {
-        Row: {
-          actor_id: string | null
-          actor_type: string
-          created_at: string
-          from_status: string | null
-          id: string
-          investor_id: string
-          note: string | null
-          reason: string | null
-          to_status: string
-        }
-        Insert: {
-          actor_id?: string | null
-          actor_type?: string
-          created_at?: string
-          from_status?: string | null
-          id?: string
-          investor_id: string
-          note?: string | null
-          reason?: string | null
-          to_status: string
-        }
-        Update: {
-          actor_id?: string | null
-          actor_type?: string
-          created_at?: string
-          from_status?: string | null
-          id?: string
-          investor_id?: string
-          note?: string | null
-          reason?: string | null
-          to_status?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "investor_status_history_investor_id_fkey"
-            columns: ["investor_id"]
-            isOneToOne: false
-            referencedRelation: "legacy_investors"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      legacy_investors: {
-        Row: {
-          city: string | null
-          company: string | null
-          country: string | null
-          created_at: string | null
-          email: string
-          full_name: string
-          id: string
-          investment_interest: string | null
-          notes: string | null
-          phone: string | null
-          rejection_reason: string | null
-          status: string | null
-          updated_at: string | null
-          verified_at: string | null
-          verified_by: string | null
-        }
-        Insert: {
-          city?: string | null
-          company?: string | null
-          country?: string | null
-          created_at?: string | null
-          email: string
-          full_name: string
-          id?: string
-          investment_interest?: string | null
-          notes?: string | null
-          phone?: string | null
-          rejection_reason?: string | null
-          status?: string | null
-          updated_at?: string | null
-          verified_at?: string | null
-          verified_by?: string | null
-        }
-        Update: {
-          city?: string | null
-          company?: string | null
-          country?: string | null
-          created_at?: string | null
-          email?: string
-          full_name?: string
-          id?: string
-          investment_interest?: string | null
-          notes?: string | null
-          phone?: string | null
-          rejection_reason?: string | null
-          status?: string | null
-          updated_at?: string | null
-          verified_at?: string | null
-          verified_by?: string | null
-        }
-        Relationships: []
       }
       media_assets: {
         Row: {
@@ -1578,98 +1189,6 @@ export type Database = {
             columns: ["uploaded_by"]
             isOneToOne: false
             referencedRelation: "user_accounts"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      meeting_bookings: {
-        Row: {
-          company: string
-          confirmation_code: string
-          date_label: string
-          email: string
-          id: string
-          message: string
-          name: string
-          phone: string
-          status: string
-          submitted_at: string
-          time_label: string
-          type: string
-          updated_at: string
-        }
-        Insert: {
-          company: string
-          confirmation_code: string
-          date_label: string
-          email: string
-          id: string
-          message?: string
-          name: string
-          phone: string
-          status?: string
-          submitted_at?: string
-          time_label: string
-          type: string
-          updated_at?: string
-        }
-        Update: {
-          company?: string
-          confirmation_code?: string
-          date_label?: string
-          email?: string
-          id?: string
-          message?: string
-          name?: string
-          phone?: string
-          status?: string
-          submitted_at?: string
-          time_label?: string
-          type?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      meetings: {
-        Row: {
-          created_at: string | null
-          id: string
-          investor_id: string | null
-          location: string | null
-          meeting_date: string | null
-          meeting_link: string | null
-          meeting_type: string | null
-          notes: string | null
-          status: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          investor_id?: string | null
-          location?: string | null
-          meeting_date?: string | null
-          meeting_link?: string | null
-          meeting_type?: string | null
-          notes?: string | null
-          status?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          investor_id?: string | null
-          location?: string | null
-          meeting_date?: string | null
-          meeting_link?: string | null
-          meeting_type?: string | null
-          notes?: string | null
-          status?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "meetings_investor_id_fkey"
-            columns: ["investor_id"]
-            isOneToOne: false
-            referencedRelation: "legacy_investors"
             referencedColumns: ["id"]
           },
         ]
@@ -1997,6 +1516,323 @@ export type Database = {
           },
         ]
       }
+      ownership_holdings: {
+        Row: {
+          acquisition_at: string
+          acquisition_reference: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          investor_id: string
+          notes: string | null
+          offering_id: string
+          ownership_bps: number
+          status: Database["public"]["Enums"]["ownership_holding_status"]
+          transfer_eligible_at: string
+          units: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          acquisition_at?: string
+          acquisition_reference?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          investor_id: string
+          notes?: string | null
+          offering_id: string
+          ownership_bps: number
+          status?: Database["public"]["Enums"]["ownership_holding_status"]
+          transfer_eligible_at: string
+          units: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          acquisition_at?: string
+          acquisition_reference?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          investor_id?: string
+          notes?: string | null
+          offering_id?: string
+          ownership_bps?: number
+          status?: Database["public"]["Enums"]["ownership_holding_status"]
+          transfer_eligible_at?: string
+          units?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ownership_holdings_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admins"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ownership_holdings_investor_id_fkey"
+            columns: ["investor_id"]
+            isOneToOne: false
+            referencedRelation: "investors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ownership_holdings_offering_id_fkey"
+            columns: ["offering_id"]
+            isOneToOne: false
+            referencedRelation: "ownership_offerings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ownership_holdings_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "admins"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ownership_inheritance: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          beneficiary_email: string | null
+          beneficiary_name: string
+          beneficiary_phone: string | null
+          completed_at: string | null
+          created_at: string
+          current_investor_id: string
+          holding_id: string
+          id: string
+          notes: string | null
+          rejection_reason: string | null
+          requested_at: string
+          status: Database["public"]["Enums"]["ownership_inheritance_status"]
+          units: number
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          beneficiary_email?: string | null
+          beneficiary_name: string
+          beneficiary_phone?: string | null
+          completed_at?: string | null
+          created_at?: string
+          current_investor_id: string
+          holding_id: string
+          id?: string
+          notes?: string | null
+          rejection_reason?: string | null
+          requested_at?: string
+          status?: Database["public"]["Enums"]["ownership_inheritance_status"]
+          units: number
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          beneficiary_email?: string | null
+          beneficiary_name?: string
+          beneficiary_phone?: string | null
+          completed_at?: string | null
+          created_at?: string
+          current_investor_id?: string
+          holding_id?: string
+          id?: string
+          notes?: string | null
+          rejection_reason?: string | null
+          requested_at?: string
+          status?: Database["public"]["Enums"]["ownership_inheritance_status"]
+          units?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ownership_inheritance_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "admins"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ownership_inheritance_current_investor_id_fkey"
+            columns: ["current_investor_id"]
+            isOneToOne: false
+            referencedRelation: "investors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ownership_inheritance_holding_id_fkey"
+            columns: ["holding_id"]
+            isOneToOne: false
+            referencedRelation: "ownership_holdings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ownership_offerings: {
+        Row: {
+          code: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          distribution_cadence_months: number
+          effective_from: string | null
+          effective_until: string | null
+          id: string
+          name: string
+          status: Database["public"]["Enums"]["ownership_offering_status"]
+          total_offered_bps: number
+          total_units: number
+          transfer_lock_months: number
+          unit_ownership_bps: number
+          unit_price: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          distribution_cadence_months?: number
+          effective_from?: string | null
+          effective_until?: string | null
+          id?: string
+          name: string
+          status?: Database["public"]["Enums"]["ownership_offering_status"]
+          total_offered_bps: number
+          total_units: number
+          transfer_lock_months?: number
+          unit_ownership_bps: number
+          unit_price: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          distribution_cadence_months?: number
+          effective_from?: string | null
+          effective_until?: string | null
+          id?: string
+          name?: string
+          status?: Database["public"]["Enums"]["ownership_offering_status"]
+          total_offered_bps?: number
+          total_units?: number
+          transfer_lock_months?: number
+          unit_ownership_bps?: number
+          unit_price?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ownership_offerings_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admins"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ownership_offerings_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "admins"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ownership_transfers: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          completed_at: string | null
+          created_at: string
+          eligible_at: string
+          from_investor_id: string
+          holding_id: string
+          id: string
+          notes: string | null
+          rejection_reason: string | null
+          requested_at: string
+          status: Database["public"]["Enums"]["ownership_transfer_status"]
+          to_investor_id: string | null
+          units: number
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          completed_at?: string | null
+          created_at?: string
+          eligible_at: string
+          from_investor_id: string
+          holding_id: string
+          id?: string
+          notes?: string | null
+          rejection_reason?: string | null
+          requested_at?: string
+          status?: Database["public"]["Enums"]["ownership_transfer_status"]
+          to_investor_id?: string | null
+          units: number
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          completed_at?: string | null
+          created_at?: string
+          eligible_at?: string
+          from_investor_id?: string
+          holding_id?: string
+          id?: string
+          notes?: string | null
+          rejection_reason?: string | null
+          requested_at?: string
+          status?: Database["public"]["Enums"]["ownership_transfer_status"]
+          to_investor_id?: string | null
+          units?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ownership_transfers_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "admins"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ownership_transfers_from_investor_id_fkey"
+            columns: ["from_investor_id"]
+            isOneToOne: false
+            referencedRelation: "investors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ownership_transfers_holding_id_fkey"
+            columns: ["holding_id"]
+            isOneToOne: false
+            referencedRelation: "ownership_holdings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ownership_transfers_to_investor_id_fkey"
+            columns: ["to_investor_id"]
+            isOneToOne: false
+            referencedRelation: "investors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       permissions: {
         Row: {
           action: string
@@ -2024,42 +1860,6 @@ export type Database = {
           is_dangerous?: boolean
           key?: string
           module?: string
-        }
-        Relationships: []
-      }
-      portal_content: {
-        Row: {
-          content: Json
-          created_at: string | null
-          id: string
-          page: string
-          section: string
-          slug: string | null
-          status: string | null
-          title: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          content?: Json
-          created_at?: string | null
-          id?: string
-          page: string
-          section: string
-          slug?: string | null
-          status?: string | null
-          title?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          content?: Json
-          created_at?: string | null
-          id?: string
-          page?: string
-          section?: string
-          slug?: string | null
-          status?: string | null
-          title?: string | null
-          updated_at?: string | null
         }
         Relationships: []
       }
@@ -2439,6 +2239,235 @@ export type Database = {
           },
         ]
       }
+      profit_distribution_allocations: {
+        Row: {
+          allocation_amount: number
+          created_at: string
+          distribution_id: string
+          holding_id: string
+          id: string
+          investor_id: string
+          investor_pool_share_bps: number
+          ownership_bps: number
+          paid_at: string | null
+          payment_reference: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          allocation_amount?: number
+          created_at?: string
+          distribution_id: string
+          holding_id: string
+          id?: string
+          investor_id: string
+          investor_pool_share_bps: number
+          ownership_bps: number
+          paid_at?: string | null
+          payment_reference?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          allocation_amount?: number
+          created_at?: string
+          distribution_id?: string
+          holding_id?: string
+          id?: string
+          investor_id?: string
+          investor_pool_share_bps?: number
+          ownership_bps?: number
+          paid_at?: string | null
+          payment_reference?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profit_distribution_allocations_distribution_id_fkey"
+            columns: ["distribution_id"]
+            isOneToOne: false
+            referencedRelation: "profit_distributions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profit_distribution_allocations_holding_id_fkey"
+            columns: ["holding_id"]
+            isOneToOne: false
+            referencedRelation: "ownership_holdings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profit_distribution_allocations_investor_id_fkey"
+            columns: ["investor_id"]
+            isOneToOne: false
+            referencedRelation: "investors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profit_distribution_payment_proofs: {
+        Row: {
+          allocation_id: string
+          file_size_bytes: number
+          id: string
+          investor_id: string
+          mime_type: string
+          original_file_name: string
+          payment_reference: string | null
+          storage_bucket: string
+          storage_path: string
+          updated_at: string
+          uploaded_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          allocation_id: string
+          file_size_bytes: number
+          id?: string
+          investor_id: string
+          mime_type: string
+          original_file_name: string
+          payment_reference?: string | null
+          storage_bucket?: string
+          storage_path: string
+          updated_at?: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          allocation_id?: string
+          file_size_bytes?: number
+          id?: string
+          investor_id?: string
+          mime_type?: string
+          original_file_name?: string
+          payment_reference?: string | null
+          storage_bucket?: string
+          storage_path?: string
+          updated_at?: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profit_distribution_payment_proofs_allocation_id_fkey"
+            columns: ["allocation_id"]
+            isOneToOne: false
+            referencedRelation: "profit_distribution_allocations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profit_distribution_payment_proofs_investor_id_fkey"
+            columns: ["investor_id"]
+            isOneToOne: false
+            referencedRelation: "investors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profit_distribution_payment_proofs_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "admins"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profit_distributions: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          company_share_bps: number
+          created_at: string
+          created_by: string | null
+          id: string
+          investor_pool_amount: number
+          investor_pool_bps: number
+          notes: string | null
+          offering_id: string
+          opex_amount: number
+          paid_at: string | null
+          period_end: string
+          period_start: string
+          profit_amount: number
+          revenue_amount: number
+          status: Database["public"]["Enums"]["profit_distribution_status"]
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          company_share_bps?: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          investor_pool_amount?: number
+          investor_pool_bps?: number
+          notes?: string | null
+          offering_id: string
+          opex_amount?: number
+          paid_at?: string | null
+          period_end: string
+          period_start: string
+          profit_amount?: number
+          revenue_amount?: number
+          status?: Database["public"]["Enums"]["profit_distribution_status"]
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          company_share_bps?: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          investor_pool_amount?: number
+          investor_pool_bps?: number
+          notes?: string | null
+          offering_id?: string
+          opex_amount?: number
+          paid_at?: string | null
+          period_end?: string
+          period_start?: string
+          profit_amount?: number
+          revenue_amount?: number
+          status?: Database["public"]["Enums"]["profit_distribution_status"]
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profit_distributions_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "admins"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profit_distributions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admins"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profit_distributions_offering_id_fkey"
+            columns: ["offering_id"]
+            isOneToOne: false
+            referencedRelation: "ownership_offerings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profit_distributions_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "admins"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rate_limits: {
         Row: {
           bucket: string
@@ -2553,24 +2582,6 @@ export type Database = {
           name?: string
           permission_version?: number
           updated_at?: string
-        }
-        Relationships: []
-      }
-      settings: {
-        Row: {
-          key: string
-          updated_at: string | null
-          value: Json | null
-        }
-        Insert: {
-          key: string
-          updated_at?: string | null
-          value?: Json | null
-        }
-        Update: {
-          key?: string
-          updated_at?: string | null
-          value?: Json | null
         }
         Relationships: []
       }
@@ -2693,57 +2704,6 @@ export type Database = {
         }
         Relationships: []
       }
-      user_profiles: {
-        Row: {
-          created_at: string
-          full_name: string | null
-          id: string
-          role: Database["public"]["Enums"]["app_role"]
-          status: Database["public"]["Enums"]["user_status"]
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          full_name?: string | null
-          id: string
-          role?: Database["public"]["Enums"]["app_role"]
-          status?: Database["public"]["Enums"]["user_status"]
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          full_name?: string | null
-          id?: string
-          role?: Database["public"]["Enums"]["app_role"]
-          status?: Database["public"]["Enums"]["user_status"]
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      user_roles: {
-        Row: {
-          created_at: string
-          is_active: boolean
-          role: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          is_active?: boolean
-          role: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          is_active?: boolean
-          role?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
     }
     Views: {
       [_ in never]: never
@@ -2834,7 +2794,6 @@ export type Database = {
     Enums: {
       account_status: "active" | "disabled"
       account_type: "admin" | "investor"
-      app_role: "admin" | "ir"
       asset_visibility: "public" | "internal" | "restricted"
       broadcast_audience: "all_investors" | "by_status" | "selected"
       delivery_channel: "email"
@@ -2880,10 +2839,40 @@ export type Database = {
         | "message_received"
         | "inquiry_received"
         | "account_invited"
+      ownership_holding_status:
+        | "reserved"
+        | "active"
+        | "transferred"
+        | "cancelled"
+      ownership_inheritance_status:
+        | "pending"
+        | "approved"
+        | "rejected"
+        | "completed"
+        | "cancelled"
+      ownership_offering_status:
+        | "draft"
+        | "open"
+        | "paused"
+        | "closed"
+        | "archived"
+      ownership_transfer_status:
+        | "pending"
+        | "approved"
+        | "rejected"
+        | "completed"
+        | "cancelled"
       page_kind: "home" | "standard" | "legal"
       participant_role: "investor" | "admin"
       period_status: "open" | "closed" | "locked"
       period_type: "monthly" | "quarterly" | "yearly"
+      profit_distribution_status:
+        | "draft"
+        | "review"
+        | "approved"
+        | "payable"
+        | "paid"
+        | "cancelled"
       publication_status:
         | "draft"
         | "review"
@@ -2910,7 +2899,6 @@ export type Database = {
         | "logo_wall"
         | "faq"
       thread_kind: "investor_admin" | "broadcast" | "portal_inquiry"
-      user_status: "active" | "inactive"
       visibility: "public" | "investors" | "restricted" | "internal"
     }
     CompositeTypes: {
@@ -3044,7 +3032,6 @@ export const Constants = {
     Enums: {
       account_status: ["active", "disabled"],
       account_type: ["admin", "investor"],
-      app_role: ["admin", "ir"],
       asset_visibility: ["public", "internal", "restricted"],
       broadcast_audience: ["all_investors", "by_status", "selected"],
       delivery_channel: ["email"],
@@ -3094,10 +3081,45 @@ export const Constants = {
         "inquiry_received",
         "account_invited",
       ],
+      ownership_holding_status: [
+        "reserved",
+        "active",
+        "transferred",
+        "cancelled",
+      ],
+      ownership_inheritance_status: [
+        "pending",
+        "approved",
+        "rejected",
+        "completed",
+        "cancelled",
+      ],
+      ownership_offering_status: [
+        "draft",
+        "open",
+        "paused",
+        "closed",
+        "archived",
+      ],
+      ownership_transfer_status: [
+        "pending",
+        "approved",
+        "rejected",
+        "completed",
+        "cancelled",
+      ],
       page_kind: ["home", "standard", "legal"],
       participant_role: ["investor", "admin"],
       period_status: ["open", "closed", "locked"],
       period_type: ["monthly", "quarterly", "yearly"],
+      profit_distribution_status: [
+        "draft",
+        "review",
+        "approved",
+        "payable",
+        "paid",
+        "cancelled",
+      ],
       publication_status: [
         "draft",
         "review",
@@ -3126,8 +3148,8 @@ export const Constants = {
         "faq",
       ],
       thread_kind: ["investor_admin", "broadcast", "portal_inquiry"],
-      user_status: ["active", "inactive"],
       visibility: ["public", "investors", "restricted", "internal"],
     },
   },
 } as const
+
