@@ -11,6 +11,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -69,6 +70,11 @@ jobs:
           git add src/types/database.ts
           git commit -m "chore: sync generated database types"
           git push origin HEAD:main
+
+      - name: Verify CI against synchronized main
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run ci.yml --ref main
 
       - name: Stop local Supabase
         if: always()
