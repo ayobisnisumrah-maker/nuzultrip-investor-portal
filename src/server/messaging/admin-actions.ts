@@ -79,7 +79,12 @@ export const markMessageRead = defineAction({
   input: z.object({ messageId: z.string().uuid() }),
   handler: async ({ input, supabase, principal }) => {
     const user = requireAuthenticated(principal)
-    const { error } = await supabase.from('message_reads').upsert({ message_id: input.messageId, user_id: user.userId }, { onConflict: 'message_id,user_id' })
+    const { error } = await supabase
+      .from('message_reads')
+      .upsert(
+        { message_id: input.messageId, user_id: user.userId },
+        { onConflict: 'message_id,user_id' },
+      )
     if (error) throw new ConflictError(`Failed to mark message read: ${error.message}`, 'Status pesan tidak dapat diperbarui.')
     return { read: true }
   },
@@ -105,13 +110,37 @@ export const updateInquiryStatus = defineAction({
   input: z.object({ inquiryId: z.string().uuid(), status: z.enum(['new', 'in_progress', 'converted', 'closed']) }),
   audit: { action: 'inquiry.status_changed', entityType: 'portal_inquiry' },
   handler: async ({ input, supabase, audit }) => {
-    const { data: current, error: readError } = await supabase.from('portal_inquiries').select('id, status').eq('id', input.inquiryId).maybeSingle()
+    const { data: current, error: readError } = await supabase
+      .from('portal_inquiries')
+      .select('id, status')
+      .eq('id', input.inquiryId)
+      .maybeSingle()
     if (readError) throw new ConflictError(`Failed to read inquiry: ${readError.message}`, 'Permintaan tidak dapat dibaca saat ini.')
     if (!current) throw new NotFoundError('Permintaan')
 
-    const { data: updated, error } = await supabase.from('portal_inquiries').update({ status: input.status, handled_at: input.status === 'new' ? null : new Date().toISOString() }).eq('id', input.inquiryId).select('id, status').single()
+    const { data: updated, error } = await supabase
+      .from('portal_inquiries')
+      .update({
+        status: input.status,
+        handled_at: input.status === 'new' ? null : new Date().toISOString(),
+      })
+      .eq('id', input.inquiryId)
+      .select('id, status')
+      .single()
+
     if (error || !updated) throw new ConflictError(`Failed to update inquiry: ${error?.message ?? 'no row'}`, 'Status permintaan tidak dapat diperbarui.')
-    audit({ entityId: updated.id, summary: `Status permintaan diubah dari ${current.status} menjadi ${updated.status}.`, changes: { status: { before: current.status, after: updated.status } })
+
+    audit({
+      entityId: updated.id,
+      summary: `Status permintaan diubah dari ${current.status} menjadi ${updated.status}.`,
+      changes: {
+        status: {
+          before: current.status,
+          after: updated.status,
+        },
+      },
+    })
+
     return updated
   },
 })
