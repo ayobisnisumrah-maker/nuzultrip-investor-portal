@@ -98,5 +98,5 @@ export type InvestorSurfaceSupabase = SupabaseClient<InvestorSurfaceDatabase>
 export function asInvestorSurfaceSupabase(
   client: SupabaseClient<Database>,
 ): InvestorSurfaceSupabase {
-  return client as unknown as InvestorSurfaceSupabase
+  return client
 }
