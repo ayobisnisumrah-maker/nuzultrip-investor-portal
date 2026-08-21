@@ -17,16 +17,22 @@ export const metadata: Metadata = {
 export default async function InvestorLayout({ children }: { children: React.ReactNode }) {
   const principal = await requireInvestorPage()
 
-  // Navigation is intentionally minimal until the investor surface is built
-  // (Phase 10). An investor whose application is still pending has nothing to
-  // navigate to, and a sidebar full of links they cannot open would be worse
-  // than none.
   const sections = principal.hasDataAccess
-    ? [{ items: [{ href: '/investor', label: 'Ringkasan', exact: true }] }]
+    ? [
+        {
+          items: [
+            { href: '/investor', label: 'Ringkasan', exact: true },
+            { href: '/investor/profile', label: 'Profil' },
+            { href: '/investor/documents', label: 'Dokumen & Data Room' },
+            { href: '/investor/ownership', label: 'Kepemilikan' },
+            { href: '/investor/financials', label: 'Keuangan' },
+            { href: '/investor/messages', label: 'Pesan' },
+            { href: '/investor/notifications', label: 'Notifikasi' },
+          ],
+        },
+      ]
     : []
 
-  // A pending investor still subscribes to their own channels — that is how
-  // they find out, without refreshing, that their application was approved.
   const subscribed = [
     topics.investor(principal.investorId),
     topics.user(principal.userId),
@@ -45,9 +51,7 @@ export default async function InvestorLayout({ children }: { children: React.Rea
               <div className="flex items-center gap-3">
                 <div className="hidden flex-col items-end leading-tight sm:flex">
                   <span className="text-body-sm text-fg font-medium">{principal.fullName}</span>
-                  <span className="text-caption text-fg-subtle font-mono">
-                    {principal.referenceCode}
-                  </span>
+                  <span className="text-caption text-fg-subtle font-mono">{principal.referenceCode}</span>
                 </div>
                 <RealtimeStatus />
                 <Avatar name={principal.fullName} size="sm" />
