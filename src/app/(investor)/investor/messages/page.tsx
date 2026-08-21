@@ -7,6 +7,15 @@ import { EmptyState } from '@/ui/states'
 
 export const metadata: Metadata = { title: 'Pesan' }
 
+type MessagePreview = {
+  id: string
+  thread_id: string
+  body_text: string
+  sender_id: string | null
+  sender_label: string | null
+  sent_at: string
+}
+
 export default async function InvestorMessagesPage() {
   const principal = await requireInvestorPage()
   const supabase = await getServerSupabase()
@@ -20,12 +29,16 @@ export default async function InvestorMessagesPage() {
 
   const threadIds = (threads ?? []).map((thread) => thread.id)
   const { data: messages } = threadIds.length
-    ? await supabase.from('messages').select('id, thread_id, body_text, sender_id, sender_label, sent_at').in('thread_id', threadIds).order('sent_at', { ascending: false }).limit(50)
-    : { data: [] }
+    ? await supabase
+        .from('messages')
+        .select('id, thread_id, body_text, sender_id, sender_label, sent_at')
+        .in('thread_id', threadIds)
+        .order('sent_at', { ascending: false })
+        .limit(50)
+    : { data: [] as MessagePreview[] }
 
-  const latestByThread = new Map<string, (typeof messages)[number]>(
-    (messages ?? []).map((message) => [message.thread_id, message]),
-  )
+  const latestByThread = new Map<string, MessagePreview>()
+  for (const message of messages ?? []) latestByThread.set(message.thread_id, message)
 
   return (
     <Stack gap={8}>
