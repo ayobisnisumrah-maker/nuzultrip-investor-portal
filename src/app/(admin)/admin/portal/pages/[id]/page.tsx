@@ -17,8 +17,8 @@ export default async function PortalPageDetail({ params }: { params: Promise<{ i
   if (!page) notFound()
 
   const sections = await listPortalPageSections(id)
-  const canUpdate = principal.permissions.has('portal.update' as never)
-  const canPublish = principal.permissions.has('portal.publish' as never)
+  const canUpdate = principal.permissions.has('portal.update')
+  const canPublish = principal.permissions.has('portal.publish')
 
   return (
     <div className="space-y-6">
