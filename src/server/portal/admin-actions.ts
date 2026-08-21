@@ -4,6 +4,7 @@ import { z } from 'zod'
 
 import { ForbiddenError, NotFoundError } from '@/core/errors'
 import { defineAction } from '@/server/auth/guards'
+import type { Json } from '@/types/database'
 
 const sectionKind = z.enum([
   'hero_3d', 'intro', 'vision_mission', 'business_overview', 'growth_story',
@@ -56,7 +57,7 @@ export const createPortalSection = defineAction({
 
     const { data: version, error: versionError } = await supabase
       .from('portal_section_versions')
-      .insert({ section_id: section.id, version_number: 1, status: 'draft', content: { kind: input.sectionKind } })
+      .insert({ section_id: section.id, version_number: 1, status: 'draft', content: { kind: input.sectionKind } as Json })
       .select('id, version_number, status')
       .single()
 
@@ -95,7 +96,7 @@ export const savePortalSection = defineAction({
     const nextVersion = (latest?.version_number ?? 0) + 1
     const { data: version, error: versionError } = await supabase
       .from('portal_section_versions')
-      .insert({ section_id: input.sectionId, version_number: nextVersion, status: 'draft', content: input.content, change_note: input.changeNote || null, created_by: principal.adminId })
+      .insert({ section_id: input.sectionId, version_number: nextVersion, status: 'draft', content: input.content as unknown as Json, change_note: input.changeNote || null, created_by: principal.adminId })
       .select('id, version_number').single()
 
     if (versionError || !version) throw new Error(`Gagal menyimpan section: ${versionError?.message ?? 'unknown error'}`)
@@ -126,7 +127,7 @@ async function transitionPortalPage(
   target: 'review' | 'approved' | 'published' | 'archived' | 'draft',
   supabase: Parameters<Parameters<typeof defineAction>[0]['handler']>[0]['supabase'],
 ) {
-  const { data, error } = await (supabase.schema('app') as typeof supabase).rpc('transition_portal_page' as never, {
+  const { data, error } = await (supabase.schema('app') as unknown as typeof supabase).rpc('transition_portal_page' as never, {
     p_page_id: pageId,
     p_to_status: target,
   } as never)
