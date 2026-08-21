@@ -18,20 +18,45 @@ export default async function InvestorOverviewPage() {
   const principal = await requireInvestorPage()
   const supabase = await getServerSupabase()
 
-  // An approval performed by an admin in another browser must land here without
-  // the investor touching anything. The event says only "look again"; the
-  // refresh re-renders on the server, where authorisation is applied afresh.
   const liveTopic = topics.investor(principal.investorId)
 
-  // Always constrain this query to the authenticated investor explicitly. RLS
-  // is the final boundary, but the application query must never rely on an
-  // implicit policy filter for correctness or future service-role refactors.
   const { data: history } = await supabase
     .from('investor_status_history')
     .select('id, from_status, to_status, reason, created_at')
     .eq('investor_id', principal.investorId)
     .order('created_at', { ascending: false })
     .limit(10)
+
+  let holdings: Array<{ id: string; units: number | string; ownership_bps: number | string; status: string }> = []
+  let documentCount = 0
+  let financialReportCount = 0
+
+  if (principal.hasDataAccess) {
+    const [{ data: holdingRows }, { count: documentsCount }, { count: reportsCount }] = await Promise.all([
+      supabase
+        .from('ownership_holdings')
+        .select('id, units, ownership_bps, status')
+        .eq('investor_id', principal.investorId),
+      supabase
+        .from('documents')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'published')
+        .in('visibility', ['investors', 'restricted']),
+      supabase
+        .from('financial_reports')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'published')
+        .eq('visibility', 'investors'),
+    ])
+
+    holdings = holdingRows ?? []
+    documentCount = documentsCount ?? 0
+    financialReportCount = reportsCount ?? 0
+  }
+
+  const totalUnits = holdings.reduce((sum, holding) => sum + Number(holding.units), 0)
+  const totalOwnershipBps = holdings.reduce((sum, holding) => sum + Number(holding.ownership_bps), 0)
+  const activeHoldings = holdings.filter((holding) => holding.status === 'active').length
 
   return (
     <Stack gap={8}>
@@ -48,7 +73,7 @@ export default async function InvestorOverviewPage() {
       <PageHeader
         eyebrow="Investor Relations"
         title={`Halo, ${principal.fullName.split(' ')[0]}`}
-        description="Ringkasan status dan riwayat pengajuan Anda."
+        description="Ringkasan akses, kepemilikan, dokumen, dan informasi investasi yang telah dipublikasikan Admin."
       />
 
       {!principal.hasDataAccess ? (
@@ -56,7 +81,46 @@ export default async function InvestorOverviewPage() {
           {INVESTOR_STATUS_DESCRIPTIONS[principal.status]} Anda akan menerima pemberitahuan ketika
           statusnya berubah.
         </Alert>
-      ) : null}
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <Card>
+            <CardBody>
+              <div className="text-caption text-fg-subtle">Total unit</div>
+              <div className="mt-1 text-heading-lg font-semibold tabular">{totalUnits.toLocaleString('id-ID')}</div>
+              <a href="/investor/ownership" className="mt-2 inline-block text-body-sm text-link hover:underline">
+                Lihat kepemilikan →
+              </a>
+            </CardBody>
+          </Card>
+          <Card>
+            <CardBody>
+              <div className="text-caption text-fg-subtle">Total porsi</div>
+              <div className="mt-1 text-heading-lg font-semibold tabular">
+                {(totalOwnershipBps / 100).toLocaleString('id-ID', { maximumFractionDigits: 2 })}%
+              </div>
+              <div className="mt-2 text-caption text-fg-subtle">{activeHoldings} holding aktif</div>
+            </CardBody>
+          </Card>
+          <Card>
+            <CardBody>
+              <div className="text-caption text-fg-subtle">Dokumen tersedia</div>
+              <div className="mt-1 text-heading-lg font-semibold tabular">{documentCount.toLocaleString('id-ID')}</div>
+              <a href="/investor/documents" className="mt-2 inline-block text-body-sm text-link hover:underline">
+                Buka Data Room →
+              </a>
+            </CardBody>
+          </Card>
+          <Card>
+            <CardBody>
+              <div className="text-caption text-fg-subtle">Laporan keuangan</div>
+              <div className="mt-1 text-heading-lg font-semibold tabular">{financialReportCount.toLocaleString('id-ID')}</div>
+              <a href="/investor/financials" className="mt-2 inline-block text-body-sm text-link hover:underline">
+                Lihat laporan →
+              </a>
+            </CardBody>
+          </Card>
+        </div>
+      )}
 
       <Card>
         <CardHeader>
