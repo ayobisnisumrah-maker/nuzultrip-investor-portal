@@ -12,7 +12,7 @@ permissions:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -34,6 +34,18 @@ jobs:
 
       - name: Dependency audit
         run: pnpm audit --audit-level high
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v2
+        with:
+          version: latest
+          github-token: ${{ github.token }}
+
+      - name: Start local Supabase schema
+        run: supabase db start
+
+      - name: Verify generated database types
+        run: pnpm db:types --check
 
       - name: Typecheck
         run: pnpm typecheck
