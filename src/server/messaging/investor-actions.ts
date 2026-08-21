@@ -3,7 +3,7 @@
 import { z } from 'zod'
 
 import { ConflictError, NotFoundError } from '@/core/errors'
-import { defineAction, requireAuthenticated, requireInvestorAccess } from '@/server/auth/guards'
+import { defineAction, requireInvestorAccess } from '@/server/auth/guards'
 
 const messageSchema = z.object({
   threadId: z.string().uuid(),
