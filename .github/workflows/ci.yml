@@ -12,7 +12,7 @@ permissions:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -41,8 +41,11 @@ jobs:
           version: latest
           github-token: ${{ github.token }}
 
-      - name: Start local Supabase schema
-        run: supabase db start
+      - name: Start local Supabase
+        run: supabase start
+
+      - name: Reset local schema from migrations
+        run: supabase db reset
 
       - name: Verify generated database types
         run: pnpm db:types --check
