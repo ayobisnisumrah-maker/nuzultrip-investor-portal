@@ -168,18 +168,35 @@ export function CommunicationWorkbench({
 
       {inquiries ? (
         <div className="xl:col-span-2 rounded-xl border border-border bg-surface p-5">
-          <h2 className="text-body font-semibold text-fg">Permintaan masuk</h2>
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <h2 className="text-body font-semibold text-fg">Permintaan masuk</h2>
+              <p className="mt-1 text-caption text-fg-muted">Setiap inquiry dapat ditindaklanjuti, dikonversi menjadi thread, lalu dibuka langsung dari inbox.</p>
+            </div>
+            <span className="rounded-full border border-border px-2.5 py-1 text-caption text-fg-subtle">{inquiries.length} permintaan</span>
+          </div>
           <div className="mt-4 overflow-x-auto rounded-lg border border-border">
-            <table className="w-full min-w-[900px] text-left">
+            <table className="w-full min-w-[980px] text-left">
               <thead className="border-b border-border bg-surface-muted"><tr className="text-caption text-fg-subtle"><th className="px-4 py-3">Pengirim</th><th className="px-4 py-3">Pesan</th><th className="px-4 py-3">Status</th><th className="px-4 py-3">Diterima</th><th className="px-4 py-3 text-right">Aksi</th></tr></thead>
               <tbody className="divide-y divide-border">
-                {inquiries.map((inquiry) => <tr key={inquiry.id}>
+                {inquiries.length ? inquiries.map((inquiry) => <tr key={inquiry.id}>
                   <td className="px-4 py-4"><p className="text-body-sm font-medium text-fg">{inquiry.name}</p><p className="text-caption text-fg-muted">{inquiry.email}{inquiry.organization ? ` · ${inquiry.organization}` : ''}</p></td>
                   <td className="max-w-md px-4 py-4 text-body-sm text-fg-muted"><p className="line-clamp-2">{inquiry.message}</p></td>
                   <td className="px-4 py-4"><span className="rounded-full border border-border px-2.5 py-1 text-caption text-fg">{inquiry.status}</span></td>
                   <td className="px-4 py-4 text-caption text-fg-muted">{new Date(inquiry.created_at).toLocaleString('id-ID')}</td>
-                  <td className="px-4 py-4 text-right">{canHandle ? <div className="flex justify-end gap-2">{!inquiry.thread_id ? <Button variant="secondary" disabled={pending} onClick={() => run(() => convertInquiryToThread({ inquiryId: inquiry.id }), 'Permintaan dikonversi menjadi percakapan.')}>Buka Percakapan</Button> : null}<select value={inquiry.status} disabled={pending} onChange={(event) => run(() => updateInquiryStatus({ inquiryId: inquiry.id, status: event.target.value as InquiryStatus }), 'Status permintaan diperbarui.')} className="h-9 rounded-lg border border-border bg-canvas px-2 text-caption"><option value="new">Baru</option><option value="in_progress">Diproses</option><option value="converted">Dikonversi</option><option value="closed">Ditutup</option></select></div> : <span className="text-caption text-fg-subtle">Baca saja</span>}</td>
-                </tr>)}
+                  <td className="px-4 py-4 text-right">
+                    {canHandle ? (
+                      <div className="flex justify-end gap-2">
+                        {inquiry.thread_id ? (
+                          <Button variant="secondary" disabled={pending} onClick={() => router.push(`/admin/messages?thread=${inquiry.thread_id}`)}>Buka Percakapan</Button>
+                        ) : (
+                          <Button variant="secondary" disabled={pending} onClick={() => run(() => convertInquiryToThread({ inquiryId: inquiry.id }), 'Permintaan dikonversi menjadi percakapan.')}>Buka Percakapan</Button>
+                        )}
+                        <select value={inquiry.status} disabled={pending} onChange={(event) => run(() => updateInquiryStatus({ inquiryId: inquiry.id, status: event.target.value as InquiryStatus }), 'Status permintaan diperbarui.')} className="h-9 rounded-lg border border-border bg-canvas px-2 text-caption"><option value="new">Baru</option><option value="in_progress">Diproses</option><option value="converted">Dikonversi</option><option value="closed">Ditutup</option></select>
+                      </div>
+                    ) : <span className="text-caption text-fg-subtle">Baca saja</span>}
+                  </td>
+                </tr>) : <tr><td colSpan={5} className="px-4 py-10 text-center text-body-sm text-fg-muted">Belum ada permintaan masuk.</td></tr>}
               </tbody>
             </table>
           </div>
