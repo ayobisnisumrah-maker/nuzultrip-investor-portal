@@ -23,11 +23,13 @@ export default async function InvestorOverviewPage() {
   // refresh re-renders on the server, where authorisation is applied afresh.
   const liveTopic = topics.investor(principal.investorId)
 
-  // An investor can always read their own history, whatever their status —
-  // seeing where an application stands is not a data leak, it is the point.
+  // Always constrain this query to the authenticated investor explicitly. RLS
+  // is the final boundary, but the application query must never rely on an
+  // implicit policy filter for correctness or future service-role refactors.
   const { data: history } = await supabase
     .from('investor_status_history')
     .select('id, from_status, to_status, reason, created_at')
+    .eq('investor_id', principal.investorId)
     .order('created_at', { ascending: false })
     .limit(10)
 
