@@ -137,7 +137,7 @@ export function PortalPageEditor({
             </button>
             {open ? (
               <div className="border-t border-border p-4">
-                <label className="block text-sm font-medium text-fg">Content JSON <span className="font-normal text-fg-subtle">(harus memiliki `kind: "{section.section_kind}"`)</span></label>
+                <label className="block text-sm font-medium text-fg">Content JSON <span className="font-normal text-fg-subtle">(harus memiliki `kind: &quot;{section.section_kind}&quot;`)</span></label>
                 <textarea value={drafts[section.id] ?? ''} onChange={(e) => setDrafts((current) => ({ ...current, [section.id]: e.target.value }))} disabled={!canUpdate || pending || status === 'published'} spellCheck={false} className="mt-2 min-h-64 w-full rounded-lg border border-border bg-background p-3 font-mono text-xs leading-5 text-fg" />
                 {canUpdate && status !== 'published' ? <div className="mt-3 flex flex-wrap gap-2"><button type="button" disabled={pending} onClick={() => save(section)} className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50">Simpan Draft</button><button type="button" disabled={pending} onClick={() => toggle(section)} className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-fg disabled:opacity-50">{section.is_visible ? 'Sembunyikan' : 'Tampilkan'}</button></div> : null}
               </div>
