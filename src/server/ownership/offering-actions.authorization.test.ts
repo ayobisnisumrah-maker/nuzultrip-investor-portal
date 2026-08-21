@@ -65,17 +65,6 @@ function investor(): Principal {
   })
 }
 
-const OWNERSHIP_PERMISSIONS = [
-  'ownership_offerings.view',
-  'ownership_offerings.create',
-  'ownership_offerings.update',
-  'ownership_offerings.publish',
-  'ownership_offerings.pause',
-  'ownership_offerings.resume',
-  'ownership_offerings.close',
-  'ownership_offerings.archive',
-] as const
-
 const investorRelationsAdmin = admin(
   ['ownership_offerings.view'],
   'admin_investor_relations',
@@ -144,7 +133,7 @@ describe('Ownership server action authorization', () => {
     })
   })
 
-  describe('createOwnershipOffering', () =>
+  describe('createOwnershipOffering', () => {
     it('rejects investor-relations admin', async () => {
       await expect(
         createOwnershipOffering({
@@ -194,7 +183,7 @@ describe('Ownership server action authorization', () => {
   })
 
   describe('publishOwnershipOffering', () => {
-    it('rejects investor-relations admin', async () =>
+    it('rejects investor-relations admin', async () => {
       await expect(
         publishOwnershipOffering({
           principal: investorRelationsAdmin,
@@ -213,8 +202,8 @@ describe('Ownership server action authorization', () => {
     })
   })
 
-  describe('pauseOwnershipOffering', () =>
-    it('rejects investor-relations admin', async () =>
+  describe('pauseOwnershipOffering', () => {
+    it('rejects investor-relations admin', async () => {
       await expect(
         pauseOwnershipOffering({
           principal: investorRelationsAdmin,
@@ -223,7 +212,7 @@ describe('Ownership server action authorization', () => {
       ).rejects.toThrow(ForbiddenError)
     })
 
-    it('rejects admin without pause permission', async () =>
+    it('rejects admin without pause permission', async () => {
       await expect(
         pauseOwnershipOffering({
           principal: noPermissionAdmin,
@@ -233,8 +222,8 @@ describe('Ownership server action authorization', () => {
     })
   })
 
-  describe('resumeOwnershipOffering', () =>
-    it('rejects investor-relations admin', async () =>
+  describe('resumeOwnershipOffering', () => {
+    it('rejects investor-relations admin', async () => {
       await expect(
         resumeOwnershipOffering({
           principal: investorRelationsAdmin,
@@ -243,7 +232,7 @@ describe('Ownership server action authorization', () => {
       ).rejects.toThrow(ForbiddenError)
     })
 
-    it('rejects admin without resume permission', async () =>
+    it('rejects admin without resume permission', async () => {
       await expect(
         resumeOwnershipOffering({
           principal: noPermissionAdmin,
@@ -253,8 +242,8 @@ describe('Ownership server action authorization', () => {
     })
   })
 
-  describe('closeOwnershipOffering', () =>
-    it('rejects investor-relations admin', async () =>
+  describe('closeOwnershipOffering', () => {
+    it('rejects investor-relations admin', async () => {
       await expect(
         closeOwnershipOffering({
           principal: investorRelationsAdmin,
@@ -263,7 +252,7 @@ describe('Ownership server action authorization', () => {
       ).rejects.toThrow(ForbiddenError)
     })
 
-    it('rejects admin without close permission', async () =>
+    it('rejects admin without close permission', async () => {
       await expect(
         closeOwnershipOffering({
           principal: noPermissionAdmin,
@@ -273,8 +262,8 @@ describe('Ownership server action authorization', () => {
     })
   })
 
-  describe('archiveOwnershipOffering', () =>
-    it('rejects investor-relations admin', async () =>
+  describe('archiveOwnershipOffering', () => {
+    it('rejects investor-relations admin', async () => {
       await expect(
         archiveOwnershipOffering({
           principal: investorRelationsAdmin,
@@ -283,7 +272,7 @@ describe('Ownership server action authorization', () => {
       ).rejects.toThrow(ForbiddenError)
     })
 
-    it('rejects admin without archive permission', async () =>
+    it('rejects admin without archive permission', async () => {
       await expect(
         archiveOwnershipOffering({
           principal: noPermissionAdmin,
