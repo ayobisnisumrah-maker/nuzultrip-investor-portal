@@ -1,10 +1,10 @@
 /**
- * GENERATED FILE â€” DO NOT EDIT.
+ * GENERATED FILE — DO NOT EDIT.
  *
  * Regenerate with:  pnpm db:types
  * Source of truth:  supabase/migrations/**
  *
- * See docs/DATABASE.md Â§13.
+ * See docs/DATABASE.md §13.
  */
 
 export type Json =
