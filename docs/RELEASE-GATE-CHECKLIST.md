@@ -1,0 +1,1 @@
+Before production cutover: CI green, integration tests green, Supabase RLS verified, secrets verified, backups verified, domains remain disconnected until all release gates pass.
