@@ -20,7 +20,7 @@ export function InvestorNotificationActions({ unreadIds }: { unreadIds: string[]
   function markAll() {
     setError(null)
     startTransition(async () => {
-      const result = await markAllInvestorNotificationsRead()
+      const result = await markAllInvestorNotificationsRead({})
       if (!result.ok) {
         setError(result.error.message)
         return
