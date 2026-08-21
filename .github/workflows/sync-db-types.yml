@@ -12,12 +12,27 @@ jobs:
   sync:
     if: github.event_name == 'workflow_dispatch' || github.event.head_commit.message != 'chore: sync generated database types'
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.28.1
+          run_install: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
       - name: Setup Supabase CLI
         uses: supabase/setup-cli@v2
@@ -25,8 +40,11 @@ jobs:
           version: latest
           github-token: ${{ github.token }}
 
-      - name: Start local Supabase schema
-        run: supabase db start
+      - name: Start local Supabase
+        run: supabase start
+
+      - name: Reset local schema from migrations
+        run: supabase db reset
 
       - name: Regenerate database types
         run: |
