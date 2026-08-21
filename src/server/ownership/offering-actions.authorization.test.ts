@@ -7,7 +7,6 @@ import {
   type Principal,
 } from '@/core/auth/principal'
 import { ForbiddenError, UnauthenticatedError } from '@/core/errors'
-import { PERMISSION_KEYS } from '@/core/rbac/permissions'
 import {
   archiveOwnershipOffering,
   closeOwnershipOffering,
@@ -77,13 +76,6 @@ const OWNERSHIP_PERMISSIONS = [
   'ownership_offerings.archive',
 ] as const
 
-const superAdmin = admin([...PERMISSION_KEYS], 'super_admin')
-
-const internalAdmin = admin(
-  [...OWNERSHIP_PERMISSIONS],
-  'admin_internal',
-)
-
 const investorRelationsAdmin = admin(
   ['ownership_offerings.view'],
   'admin_investor_relations',
@@ -92,14 +84,6 @@ const investorRelationsAdmin = admin(
 const noPermissionAdmin = admin([], 'admin_internal')
 
 const offeringId = '44444444-4444-4444-8444-444444444444'
-
-/**
- * The exact handler signatures are intentionally not reproduced here.
- *
- * These tests exercise the exported server actions through their public
- * authorization boundary. The database/service layer is not the subject
- * of this test.
- */
 
 describe('Ownership server action authorization', () => {
   describe('listOwnershipOfferings', () => {
@@ -160,7 +144,7 @@ describe('Ownership server action authorization', () => {
     })
   })
 
-  describe('createOwnershipOffering', () => {
+  describe('createOwnershipOffering', () =>
     it('rejects investor-relations admin', async () => {
       await expect(
         createOwnershipOffering({
@@ -210,7 +194,7 @@ describe('Ownership server action authorization', () => {
   })
 
   describe('publishOwnershipOffering', () => {
-    it('rejects investor-relations admin', async () => {
+    it('rejects investor-relations admin', async () =>
       await expect(
         publishOwnershipOffering({
           principal: investorRelationsAdmin,
@@ -229,8 +213,8 @@ describe('Ownership server action authorization', () => {
     })
   })
 
-  describe('pauseOwnershipOffering', () => {
-    it('rejects investor-relations admin', async () => {
+  describe('pauseOwnershipOffering', () =>
+    it('rejects investor-relations admin', async () =>
       await expect(
         pauseOwnershipOffering({
           principal: investorRelationsAdmin,
@@ -239,7 +223,7 @@ describe('Ownership server action authorization', () => {
       ).rejects.toThrow(ForbiddenError)
     })
 
-    it('rejects admin without pause permission', async () => {
+    it('rejects admin without pause permission', async () =>
       await expect(
         pauseOwnershipOffering({
           principal: noPermissionAdmin,
@@ -249,8 +233,8 @@ describe('Ownership server action authorization', () => {
     })
   })
 
-  describe('resumeOwnershipOffering', () => {
-    it('rejects investor-relations admin', async () => {
+  describe('resumeOwnershipOffering', () =>
+    it('rejects investor-relations admin', async () =>
       await expect(
         resumeOwnershipOffering({
           principal: investorRelationsAdmin,
@@ -259,7 +243,7 @@ describe('Ownership server action authorization', () => {
       ).rejects.toThrow(ForbiddenError)
     })
 
-    it('rejects admin without resume permission', async () => {
+    it('rejects admin without resume permission', async () =>
       await expect(
         resumeOwnershipOffering({
           principal: noPermissionAdmin,
@@ -269,8 +253,8 @@ describe('Ownership server action authorization', () => {
     })
   })
 
-  describe('closeOwnershipOffering', () => {
-    it('rejects investor-relations admin', async () => {
+  describe('closeOwnershipOffering', () =>
+    it('rejects investor-relations admin', async () =>
       await expect(
         closeOwnershipOffering({
           principal: investorRelationsAdmin,
@@ -279,7 +263,7 @@ describe('Ownership server action authorization', () => {
       ).rejects.toThrow(ForbiddenError)
     })
 
-    it('rejects admin without close permission', async () => {
+    it('rejects admin without close permission', async () =>
       await expect(
         closeOwnershipOffering({
           principal: noPermissionAdmin,
@@ -289,8 +273,8 @@ describe('Ownership server action authorization', () => {
     })
   })
 
-  describe('archiveOwnershipOffering', () => {
-    it('rejects investor-relations admin', async () => {
+  describe('archiveOwnershipOffering', () =>
+    it('rejects investor-relations admin', async () =>
       await expect(
         archiveOwnershipOffering({
           principal: investorRelationsAdmin,
@@ -299,7 +283,7 @@ describe('Ownership server action authorization', () => {
       ).rejects.toThrow(ForbiddenError)
     })
 
-    it('rejects admin without archive permission', async () => {
+    it('rejects admin without archive permission', async () =>
       await expect(
         archiveOwnershipOffering({
           principal: noPermissionAdmin,
