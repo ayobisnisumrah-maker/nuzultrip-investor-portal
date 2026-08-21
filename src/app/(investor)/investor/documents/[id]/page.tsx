@@ -8,7 +8,7 @@ import { Card, CardBody, CardHeader, CardTitle } from '@/ui/card'
 export const metadata: Metadata = { title: 'Dokumen' }
 
 export default async function InvestorDocumentDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const principal = await requireInvestorPage()
+  await requireInvestorPage()
   const { id } = await params
   const supabase = await getServerSupabase()
 
