@@ -2,7 +2,7 @@
 /**
  * Regenerates `src/types/database.ts` from the database schema.
  *
- * The database is the canonical schema (docs/DATABASE.md Â§13). This script is
+ * The database is the canonical schema (docs/DATABASE.md §13). This script is
  * also run in CI: if the regenerated output differs from what is committed, the
  * build fails, so schema drift surfaces as a build error rather than a runtime
  * surprise.
@@ -24,12 +24,12 @@ const checkOnly = args.has('--check')
 const remote = args.has('--remote')
 
 const HEADER = `/**
- * GENERATED FILE â€” DO NOT EDIT.
+ * GENERATED FILE — DO NOT EDIT.
  *
  * Regenerate with:  pnpm db:types
  * Source of truth:  supabase/migrations/**
  *
- * See docs/DATABASE.md Â§13.
+ * See docs/DATABASE.md §13.
  */
 
 `
@@ -55,6 +55,7 @@ function run() {
   }
 
   try {
+    console.log(`Generating database types from ${remote ? 'Supabase remote' : 'local migration'} schema...`)
     return execSync(`supabase ${cliArgs.join(' ')}`, {
       cwd: root,
       encoding: 'utf8',
