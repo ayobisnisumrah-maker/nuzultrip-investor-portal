@@ -1,23 +1,38 @@
 -- Harden legacy tables that are retained for compatibility/history but are not
 -- part of the current public application surface.
-REVOKE ALL ON TABLE
-  public.settings,
-  public.legacy_investors,
-  public.meetings,
-  public.contact_messages,
-  public.legacy_audit_logs,
-  public.legacy_investor_status_history,
-  public.investor_requests,
-  public.meeting_bookings,
-  public.user_roles
-FROM anon, authenticated;
+--
+-- These objects are intentionally optional: some installations no longer
+-- contain the legacy tables. Keep this migration replay-safe so a clean
+-- database can apply the complete migration history without failing on an
+-- absent compatibility table.
 
-ALTER TABLE public.settings ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.legacy_investors ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.meetings ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.contact_messages ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.legacy_audit_logs ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.legacy_investor_status_history ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.investor_requests ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.meeting_bookings ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.user_roles ENABLE ROW LEVEL SECURITY;
+DO $$
+DECLARE
+  table_name text;
+  legacy_tables constant text[] := ARRAY[
+    'settings',
+    'legacy_investors',
+    'meetings',
+    'contact_messages',
+    'legacy_audit_logs',
+    'legacy_investor_status_history',
+    'investor_requests',
+    'meeting_bookings',
+    'user_roles'
+  ];
+BEGIN
+  FOREACH table_name IN ARRAY legacy_tables LOOP
+    IF to_regclass(format('public.%I', table_name)) IS NOT NULL THEN
+      EXECUTE format(
+        'REVOKE ALL ON TABLE public.%I FROM anon, authenticated',
+        table_name
+      );
+
+      EXECUTE format(
+        'ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY',
+        table_name
+      );
+    END IF;
+  END LOOP;
+END
+$$;
