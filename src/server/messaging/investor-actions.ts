@@ -118,6 +118,7 @@ export const markInvestorNotificationRead = defineAction({
 
 export const markAllInvestorNotificationsRead = defineAction({
   access: 'investor',
+  input: z.object({}),
   audit: { action: 'notification.all_read', entityType: 'notification' },
   handler: async ({ supabase, principal, audit }) => {
     const investor = requireInvestorAccess(principal)
