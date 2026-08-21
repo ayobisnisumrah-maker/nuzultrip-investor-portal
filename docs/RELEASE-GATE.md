@@ -1,0 +1,1 @@
+Release gate: do not connect production domains until CI is green and the Supabase production runtime has passed the integration/security checklist.
