@@ -1,0 +1,50 @@
+name: Sync Database Types
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    if: github.event_name == 'workflow_dispatch' || github.event.head_commit.message != 'chore: sync generated database types'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v2
+        with:
+          version: latest
+          github-token: ${{ github.token }}
+
+      - name: Start local Supabase schema
+        run: supabase db start
+
+      - name: Regenerate database types
+        run: |
+          printf '%s\n\n' '/**' ' * GENERATED FILE — DO NOT EDIT.' ' *' ' * Regenerate with:  pnpm db:types' ' * Source of truth:  supabase/migrations/**' ' *' ' * See docs/DATABASE.md §13.' ' */' > /tmp/database.header
+          supabase gen types typescript --schema public --schema app --local > /tmp/database.generated.ts
+          cat /tmp/database.header /tmp/database.generated.ts > src/types/database.ts
+
+      - name: Show schema type changes
+        run: git diff --stat && git diff -- src/types/database.ts | sed -n '1,240p'
+
+      - name: Commit synchronized types
+        run: |
+          if git diff --quiet -- src/types/database.ts; then
+            echo 'Database types are already synchronized.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/types/database.ts
+          git commit -m 'chore: sync generated database types'
+          git push
