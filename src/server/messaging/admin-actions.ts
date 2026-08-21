@@ -1,6 +1,7 @@
 'use server'
 
 import { z } from 'zod'
+import type { SupabaseClient } from '@supabase/supabase-js'
 
 import { ConflictError, NotFoundError } from '@/core/errors'
 import {
@@ -8,6 +9,25 @@ import {
   requireAdmin,
   requireAuthenticated,
 } from '@/server/auth/guards'
+import type { Database } from '@/types/database'
+
+type AppRpcClient = {
+  rpc: (
+    name: string,
+    args: Record<string, unknown>,
+  ) => Promise<{
+    data: unknown
+    error: { message: string } | null
+  }>
+}
+
+function appRpc(
+  supabase: SupabaseClient<Database>,
+  name: string,
+  args: Record<string, unknown>,
+) {
+  return (supabase.schema('app') as unknown as AppRpcClient).rpc(name, args)
+}
 
 const sendMessageSchema = z.object({
   threadId: z.string().uuid(),
@@ -62,15 +82,18 @@ export const createInvestorMessageThread = defineAction({
   input: createThreadSchema,
   audit: { action: 'message.thread_created', entityType: 'message_thread' },
   handler: async ({ input, supabase, audit }) => {
-    const { data, error } = await (supabase.schema('app') as any).rpc('create_investor_message_thread', {
+    const result = await appRpc(supabase, 'create_investor_message_thread', {
       p_investor_id: input.investorId,
       p_subject: input.subject,
       p_body: input.body,
     })
 
-    if (error || !data) throw new ConflictError(`Failed to create thread: ${error?.message ?? 'no thread returned'}`, 'Percakapan tidak dapat dibuat saat ini.')
-    audit({ entityId: data, summary: `Percakapan investor ${input.investorId} dibuat.` })
-    return { threadId: data }
+    if (result.error || typeof result.data !== 'string') {
+      throw new ConflictError(`Failed to create thread: ${result.error?.message ?? 'no thread returned'}`, 'Percakapan tidak dapat dibuat saat ini.')
+    }
+
+    audit({ entityId: result.data, summary: `Percakapan investor ${input.investorId} dibuat.` })
+    return { threadId: result.data }
   },
 })
 
@@ -95,13 +118,17 @@ export const convertInquiryToThread = defineAction({
   input: z.object({ inquiryId: inquiryIdSchema.shape.inquiryId, subject: z.string().trim().max(200).optional() }),
   audit: { action: 'inquiry.converted_to_thread', entityType: 'portal_inquiry' },
   handler: async ({ input, supabase, audit }) => {
-    const { data, error } = await (supabase.schema('app') as any).rpc('convert_portal_inquiry_to_thread', {
+    const result = await appRpc(supabase, 'convert_portal_inquiry_to_thread', {
       p_inquiry_id: input.inquiryId,
       p_subject: input.subject || undefined,
     })
-    if (error || !data) throw new ConflictError(`Failed to convert inquiry: ${error?.message ?? 'no thread returned'}`, 'Permintaan tidak dapat dikonversi saat ini.')
+
+    if (result.error || typeof result.data !== 'string') {
+      throw new ConflictError(`Failed to convert inquiry: ${result.error?.message ?? 'no thread returned'}`, 'Permintaan tidak dapat dikonversi saat ini.')
+    }
+
     audit({ entityId: input.inquiryId, summary: 'Permintaan masuk dikonversi menjadi percakapan.' })
-    return { threadId: data }
+    return { threadId: result.data }
   },
 })
 
