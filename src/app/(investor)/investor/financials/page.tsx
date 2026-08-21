@@ -8,7 +8,7 @@ import { EmptyState } from '@/ui/states'
 export const metadata: Metadata = { title: 'Keuangan' }
 
 export default async function InvestorFinancialsPage() {
-  const principal = await requireInvestorPage()
+  await requireInvestorPage()
   const supabase = await getServerSupabase()
 
   const { data: reports } = await supabase
