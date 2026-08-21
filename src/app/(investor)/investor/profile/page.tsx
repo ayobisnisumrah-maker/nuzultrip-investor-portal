@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { requireInvestorPage } from '@/server/auth/page-guards'
 import { getServerSupabase } from '@/server/supabase/server'
+import { asInvestorSurfaceSupabase } from '@/server/supabase/investor-surface'
 import { PageHeader, Stack } from '@/ui/layout'
 import { Card, CardBody, CardHeader, CardTitle } from '@/ui/card'
 import { DetailList, DetailRow } from '@/ui/data'
@@ -10,7 +11,7 @@ export const metadata: Metadata = { title: 'Profil' }
 
 export default async function InvestorProfilePage() {
   const principal = await requireInvestorPage()
-  const supabase = await getServerSupabase()
+  const supabase = asInvestorSurfaceSupabase(await getServerSupabase())
 
   const { data: investor } = await supabase
     .from('investors')
