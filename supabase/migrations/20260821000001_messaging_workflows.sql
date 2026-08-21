@@ -1,9 +1,9 @@
 -- =============================================================================
--- Messaging and inquiry workflow completion
+-- Messaging workflow completion
 --
--- Completes the application-facing operations on top of the messaging
--- foundation: server-created threads, participant membership, first message,
--- and safe inquiry conversion.
+-- Creates an investor/admin thread and its first message atomically. The
+-- function is SECURITY DEFINER and performs all authorization and investor
+-- eligibility checks inside the database boundary.
 -- =============================================================================
 
 create or replace function app.create_investor_message_thread(
@@ -17,66 +17,75 @@ security definer
 set search_path = ''
 as $$
 declare
-  v_admin_id uuid;
   v_thread_id uuid;
-  v_investor_user_id uuid;
+  v_admin_user_id uuid;
 begin
-  if not app.has_permission('messages.send') then
-    raise exception 'Permission denied.' using errcode = '42501';
+  if not app.is_admin() or not app.has_permission('messages.send') then
+    raise exception 'forbidden';
   end if;
 
-  v_admin_id := app.current_user_id();
-
-  select id into v_investor_user_id
-  from public.user_accounts
-  where id = p_investor_id
-    and account_type = 'investor';
-
-  if v_investor_user_id is null then
-    raise exception 'Investor not found.' using errcode = 'P0002';
+  if p_subject is null or length(btrim(p_subject)) = 0 or length(btrim(p_subject)) > 200 then
+    raise exception 'invalid subject';
   end if;
 
-  if length(btrim(coalesce(p_subject, ''))) = 0 then
-    raise exception 'Subject is required.' using errcode = '22023';
+  if p_body is null or length(btrim(p_body)) = 0 or length(p_body) > 20000 then
+    raise exception 'invalid body';
   end if;
 
-  if length(btrim(coalesce(p_body, ''))) = 0 then
-    raise exception 'Message is required.' using errcode = '22023';
+  if not exists (
+    select 1
+    from public.investors i
+    where i.id = p_investor_id
+      and i.status in ('approved'::public.investor_status, 'active'::public.investor_status)
+  ) then
+    raise exception 'investor not eligible';
   end if;
+
+  v_admin_user_id := app.current_user_id();
 
   insert into public.message_threads (
     subject,
     thread_kind,
     investor_id,
     created_by,
-    last_message_at
-  )
-  values (
+    last_message_at,
+    is_closed
+  ) values (
     btrim(p_subject),
-    'investor_admin',
+    'investor_admin'::public.thread_kind,
     p_investor_id,
-    v_admin_id,
-    now()
+    v_admin_user_id,
+    now(),
+    false
   )
   returning id into v_thread_id;
 
   insert into public.thread_participants (thread_id, user_id, role)
   values
-    (v_thread_id, v_admin_id, 'admin'),
-    (v_thread_id, v_investor_user_id, 'investor');
+    (v_thread_id, p_investor_id, 'investor'::public.participant_role),
+    (v_thread_id, v_admin_user_id, 'admin'::public.participant_role);
 
   insert into public.messages (
     thread_id,
     sender_id,
-    sender_label,
     body_text,
+    body_rich,
     is_system
-  )
-  values (
+  ) values (
     v_thread_id,
-    v_admin_id,
-    null,
+    v_admin_user_id,
     btrim(p_body),
+    jsonb_build_object(
+      'type', 'doc',
+      'content', jsonb_build_array(
+        jsonb_build_object(
+          'type', 'paragraph',
+          'content', jsonb_build_array(
+            jsonb_build_object('type', 'text', 'text', btrim(p_body))
+          )
+        )
+      )
+    ),
     false
   );
 
@@ -85,83 +94,4 @@ end;
 $$;
 
 grant execute on function app.create_investor_message_thread(uuid, text, text)
-  to authenticated;
-
-create or replace function app.convert_portal_inquiry_to_thread(
-  p_inquiry_id uuid,
-  p_subject text default null
-)
-returns uuid
-language plpgsql
-security definer
-set search_path = ''
-as $$
-declare
-  v_admin_id uuid;
-  v_inquiry public.portal_inquiries%rowtype;
-  v_thread_id uuid;
-begin
-  if not app.has_permission('inquiries.handle') then
-    raise exception 'Permission denied.' using errcode = '42501';
-  end if;
-
-  v_admin_id := app.current_user_id();
-
-  select * into v_inquiry
-  from public.portal_inquiries
-  where id = p_inquiry_id
-  for update;
-
-  if not found then
-    raise exception 'Inquiry not found.' using errcode = 'P0002';
-  end if;
-
-  if v_inquiry.thread_id is not null then
-    return v_inquiry.thread_id;
-  end if;
-
-  insert into public.message_threads (
-    subject,
-    thread_kind,
-    created_by,
-    last_message_at
-  )
-  values (
-    coalesce(nullif(btrim(p_subject), ''), 'Inquiry: ' || v_inquiry.name),
-    'portal_inquiry',
-    v_admin_id,
-    now()
-  )
-  returning id into v_thread_id;
-
-  insert into public.thread_participants (thread_id, user_id, role)
-  values (v_thread_id, v_admin_id, 'admin');
-
-  insert into public.messages (
-    thread_id,
-    sender_id,
-    sender_label,
-    body_text,
-    is_system
-  )
-  values (
-    v_thread_id,
-    null,
-    v_inquiry.name,
-    v_inquiry.message,
-    false
-  );
-
-  update public.portal_inquiries
-  set thread_id = v_thread_id,
-      status = case when status = 'new' then 'in_progress' else status end,
-      handled_by = v_admin_id,
-      handled_at = coalesce(handled_at, now())
-  where id = p_inquiry_id;
-
-  return v_thread_id;
-end;
-$$;
-
-grant execute on function app.convert_portal_inquiry_to_thread(uuid, text)
   to authenticated;
