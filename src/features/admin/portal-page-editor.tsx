@@ -28,7 +28,7 @@ type Section = {
   is_visible: boolean
   anchor_id: string | null
   status: string
-  current_version: { id: string; version_number: number; status: string; content: Record<string, unknown>; change_note: string | null; created_at: string } | null
+  current_version: { id: string; version_number: number; status: string; content: unknown; change_note: string | null; created_at: string } | null
 }
 
 type PageStatus = 'draft' | 'review' | 'approved' | 'published' | 'archived'
@@ -121,7 +121,7 @@ export function PortalPageEditor({
               {SECTION_KINDS.map((kind) => <option key={kind} value={kind}>{kind}</option>)}
             </select>
           </label>
-          <button type="button" disabled={pending} onClick={addSection} className="h-10 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground disabled:opacity-50">Tambah Section</button>
+          <button type="button" disabled={pending} onClick={addSection} className="h-10 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50">Tambah Section</button>
         </div>
       ) : null}
 
