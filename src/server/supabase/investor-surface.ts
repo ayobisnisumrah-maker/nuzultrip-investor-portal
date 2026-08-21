@@ -48,8 +48,23 @@ type OwnershipHolding = {
     created_at: string
     updated_at: string
   }
-  Insert: Partial<OwnershipHolding['Row']> & Pick<OwnershipHolding['Row'], 'offering_id' | 'investor_id' | 'units' | 'ownership_bps' | 'acquisition_at' | 'transfer_eligible_at' | 'status'>
-  Update: Partial<OwnershipHolding['Row']>
+  Insert: {
+    offering_id: string
+    investor_id: string
+    units: number
+    ownership_bps: number
+    acquisition_at?: string
+    transfer_eligible_at: string
+    status?: string
+    acquisition_reference?: string | null
+    notes?: string | null
+    id?: string
+    created_by?: string | null
+    updated_by?: string | null
+    created_at?: string
+    updated_at?: string
+  }
+  Update: Partial<OwnershipHolding['Insert']>
   Relationships: []
 }
 
@@ -61,7 +76,7 @@ type OwnershipOffering = {
     status: string
     total_offered_bps: number
     unit_ownership_bps: number
-    unit_price: string
+    unit_price: number
     total_units: number
     distribution_cadence_months: number
     transfer_lock_months: number
@@ -73,23 +88,43 @@ type OwnershipOffering = {
     created_at: string
     updated_at: string
   }
-  Insert: Partial<OwnershipOffering['Row']> & Pick<OwnershipOffering['Row'], 'name' | 'code' | 'status' | 'total_offered_bps' | 'unit_ownership_bps' | 'unit_price' | 'total_units' | 'distribution_cadence_months' | 'transfer_lock_months'>
-  Update: Partial<OwnershipOffering['Row']>
+  Insert: {
+    name: string
+    code: string
+    status?: string
+    total_offered_bps: number
+    unit_ownership_bps: number
+    unit_price: number
+    total_units: number
+    distribution_cadence_months?: number
+    transfer_lock_months?: number
+    effective_from?: string | null
+    effective_until?: string | null
+    description?: string | null
+    id?: string
+    created_by?: string | null
+    updated_by?: string | null
+    created_at?: string
+    updated_at?: string
+  }
+  Update: Partial<OwnershipOffering['Insert']>
   Relationships: []
+}
+
+type InvestorSurfaceTables = Database['public']['Tables'] & {
+  investors: {
+    Row: InvestorsRow
+    Insert: InvestorsInsert
+    Update: InvestorsUpdate
+    Relationships: Database['public']['Tables']['investors']['Relationships']
+  }
+  ownership_holdings: OwnershipHolding
+  ownership_offerings: OwnershipOffering
 }
 
 type InvestorSurfaceDatabase = Omit<Database, 'public'> & {
   public: Omit<Database['public'], 'Tables'> & {
-    Tables: Omit<Database['public']['Tables'], 'investors'> & {
-      investors: {
-        Row: InvestorsRow
-        Insert: InvestorsInsert
-        Update: InvestorsUpdate
-        Relationships: Database['public']['Tables']['investors']['Relationships']
-      }
-      ownership_holdings: OwnershipHolding
-      ownership_offerings: OwnershipOffering
-    }
+    Tables: InvestorSurfaceTables
   }
 }
 
@@ -98,5 +133,5 @@ export type InvestorSurfaceSupabase = SupabaseClient<InvestorSurfaceDatabase>
 export function asInvestorSurfaceSupabase(
   client: SupabaseClient<Database>,
 ): InvestorSurfaceSupabase {
-  return client
+  return client as InvestorSurfaceSupabase
 }
