@@ -62,7 +62,9 @@ export async function getPublishedHomePage() {
   return {
     page,
     sections: (sections ?? [])
-      .filter((section) => section.published_version_id && contentById.has(section.published_version_id))
+      .filter(
+        (section) => section.published_version_id && contentById.has(section.published_version_id),
+      )
       .map((section) => ({
         id: section.id,
         section_kind: section.section_kind,
@@ -95,7 +97,9 @@ export async function getActivePortalTheme() {
 
   const { data, error } = await supabase
     .from('portal_theme')
-    .select('name, logo_asset_id, logo_dark_asset_id, favicon_asset_id, og_image_asset_id, default_color_scheme')
+    .select(
+      'name, logo_asset_id, logo_dark_asset_id, favicon_asset_id, og_image_asset_id, default_color_scheme',
+    )
     .eq('is_active', true)
     .maybeSingle()
 

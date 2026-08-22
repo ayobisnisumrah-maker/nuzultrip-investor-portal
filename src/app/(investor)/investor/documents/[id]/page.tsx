@@ -7,7 +7,11 @@ import { Card, CardBody, CardHeader, CardTitle } from '@/ui/card'
 
 export const metadata: Metadata = { title: 'Dokumen' }
 
-export default async function InvestorDocumentDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function InvestorDocumentDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>
+}) {
   await requireInvestorPage()
   const { id } = await params
   const supabase = await getServerSupabase()
@@ -34,24 +38,42 @@ export default async function InvestorDocumentDetailPage({ params }: { params: P
 
   return (
     <Stack gap={8}>
-      <PageHeader eyebrow="Data Room" title={version.title || document.title} description={document.summary || 'Dokumen investor.'} />
+      <PageHeader
+        eyebrow="Data Room"
+        title={version.title || document.title}
+        description={document.summary || 'Dokumen investor.'}
+      />
       <Card>
         <CardHeader>
           <CardTitle>Informasi dokumen</CardTitle>
         </CardHeader>
         <CardBody>
-          <div className="grid gap-4 text-body-sm sm:grid-cols-2">
-            <div><span className="text-fg-subtle">Versi</span><div className="font-mono">v{version.version_number}</div></div>
-            <div><span className="text-fg-subtle">Status</span><div>{document.status}</div></div>
-            <div><span className="text-fg-subtle">Kategori</span><div>{document.kind}</div></div>
-            <div><span className="text-fg-subtle">Akses</span><div>{document.visibility}</div></div>
+          <div className="text-body-sm grid gap-4 sm:grid-cols-2">
+            <div>
+              <span className="text-fg-subtle">Versi</span>
+              <div className="font-mono">v{version.version_number}</div>
+            </div>
+            <div>
+              <span className="text-fg-subtle">Status</span>
+              <div>{document.status}</div>
+            </div>
+            <div>
+              <span className="text-fg-subtle">Kategori</span>
+              <div>{document.kind}</div>
+            </div>
+            <div>
+              <span className="text-fg-subtle">Akses</span>
+              <div>{document.visibility}</div>
+            </div>
           </div>
         </CardBody>
       </Card>
       <Card>
-        <CardHeader><CardTitle>Konten</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle>Konten</CardTitle>
+        </CardHeader>
         <CardBody>
-          <pre className="overflow-auto whitespace-pre-wrap rounded-xl border border-border-subtle bg-surface-subtle p-4 text-caption text-fg-muted">
+          <pre className="border-border-subtle bg-surface-subtle text-caption text-fg-muted overflow-auto rounded-xl border p-4 whitespace-pre-wrap">
             {JSON.stringify(content, null, 2)}
           </pre>
         </CardBody>

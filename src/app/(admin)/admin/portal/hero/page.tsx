@@ -2,10 +2,7 @@
 import { PortalSectionPage } from '@/features/admin/portal-section-page'
 
 export default async function PortalHeroPage() {
-  const principal = await adminWithPermission(
-    'portal.manage_hero',
-    '/admin/portal/hero',
-  )
+  const principal = await adminWithPermission('portal.manage_hero', '/admin/portal/hero')
 
   return (
     <PortalSectionPage

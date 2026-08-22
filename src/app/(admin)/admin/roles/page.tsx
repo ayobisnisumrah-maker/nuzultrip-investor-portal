@@ -11,7 +11,7 @@ export default async function AdminRolesPage() {
     return (
       <main className="p-6">
         <h1 className="text-xl font-semibold">Akses ditolak</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
+        <p className="text-muted-foreground mt-2 text-sm">
           Anda tidak memiliki izin untuk melihat Role & Permission.
         </p>
       </main>
@@ -31,9 +31,7 @@ export default async function AdminRolesPage() {
    */
   const { data: roles, error } = await supabase
     .from('roles')
-    .select(
-      'id, key, name, description, is_system, permission_version, created_at, updated_at',
-    )
+    .select('id, key, name, description, is_system, permission_version, created_at, updated_at')
     .neq('key', 'super_admin')
     .order('is_system', { ascending: false })
     .order('name', { ascending: true })
@@ -49,9 +47,7 @@ export default async function AdminRolesPage() {
     .order('action', { ascending: true })
 
   if (permissionsError) {
-    throw new Error(
-      `Gagal mengambil katalog permission: ${permissionsError.message}`,
-    )
+    throw new Error(`Gagal mengambil katalog permission: ${permissionsError.message}`)
   }
 
   const { data: assignments, error: assignmentsError } = await supabase
@@ -59,9 +55,7 @@ export default async function AdminRolesPage() {
     .select('id, role_id, is_active')
 
   if (assignmentsError) {
-    throw new Error(
-      `Gagal mengambil assignment admin: ${assignmentsError.message}`,
-    )
+    throw new Error(`Gagal mengambil assignment admin: ${assignmentsError.message}`)
   }
 
   const adminCountByRole = new Map<string, number>()
@@ -71,30 +65,21 @@ export default async function AdminRolesPage() {
      * Super Admin tidak ditampilkan di halaman Role & Permission.
      * Assignment tetap dihitung untuk role operasional yang ditampilkan.
      */
-    adminCountByRole.set(
-      admin.role_id,
-      (adminCountByRole.get(admin.role_id) ?? 0) + 1,
-    )
+    adminCountByRole.set(admin.role_id, (adminCountByRole.get(admin.role_id) ?? 0) + 1)
   }
 
   const permissionCountByRole = new Map<string, number>()
 
-  const { data: rolePermissions, error: rolePermissionsError } =
-    await supabase
-      .from('role_permissions')
-      .select('role_id')
+  const { data: rolePermissions, error: rolePermissionsError } = await supabase
+    .from('role_permissions')
+    .select('role_id')
 
   if (rolePermissionsError) {
-    throw new Error(
-      `Gagal mengambil permission role: ${rolePermissionsError.message}`,
-    )
+    throw new Error(`Gagal mengambil permission role: ${rolePermissionsError.message}`)
   }
 
   for (const item of rolePermissions ?? []) {
-    permissionCountByRole.set(
-      item.role_id,
-      (permissionCountByRole.get(item.role_id) ?? 0) + 1,
-    )
+    permissionCountByRole.set(item.role_id, (permissionCountByRole.get(item.role_id) ?? 0) + 1)
   }
 
   const totalPermissions = permissions?.length ?? 0
@@ -107,55 +92,44 @@ export default async function AdminRolesPage() {
     <main className="flex flex-col gap-6 p-6">
       <header>
         <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Role & Permission
-          </h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Role & Permission</h1>
 
-          <p className="text-sm text-muted-foreground">
-            Kelola role administrator operasional dan permission yang dapat
-            diberikan oleh Super Admin.
+          <p className="text-muted-foreground text-sm">
+            Kelola role administrator operasional dan permission yang dapat diberikan oleh Super
+            Admin.
           </p>
         </div>
       </header>
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-xl border bg-card p-5">
-          <p className="text-sm text-muted-foreground">Total Role Operasional</p>
-          <p className="mt-2 text-2xl font-semibold">
-            {roleList.length}
-          </p>
+        <div className="bg-card rounded-xl border p-5">
+          <p className="text-muted-foreground text-sm">Total Role Operasional</p>
+          <p className="mt-2 text-2xl font-semibold">{roleList.length}</p>
         </div>
 
-        <div className="rounded-xl border bg-card p-5">
-          <p className="text-sm text-muted-foreground">Permission</p>
-          <p className="mt-2 text-2xl font-semibold">
-            {totalPermissions}
-          </p>
+        <div className="bg-card rounded-xl border p-5">
+          <p className="text-muted-foreground text-sm">Permission</p>
+          <p className="mt-2 text-2xl font-semibold">{totalPermissions}</p>
         </div>
 
-        <div className="rounded-xl border bg-card p-5">
-          <p className="text-sm text-muted-foreground">Role System</p>
-          <p className="mt-2 text-2xl font-semibold">
-            {systemRoleCount}
-          </p>
+        <div className="bg-card rounded-xl border p-5">
+          <p className="text-muted-foreground text-sm">Role System</p>
+          <p className="mt-2 text-2xl font-semibold">{systemRoleCount}</p>
         </div>
 
-        <div className="rounded-xl border bg-card p-5">
-          <p className="text-sm text-muted-foreground">Role Custom</p>
-          <p className="mt-2 text-2xl font-semibold">
-            {customRoleCount}
-          </p>
+        <div className="bg-card rounded-xl border p-5">
+          <p className="text-muted-foreground text-sm">Role Custom</p>
+          <p className="mt-2 text-2xl font-semibold">{customRoleCount}</p>
         </div>
       </section>
 
-      <section className="rounded-xl border bg-card">
+      <section className="bg-card rounded-xl border">
         <div className="border-b p-5">
           <h2 className="font-semibold">Daftar Role Operasional</h2>
 
-          <p className="mt-1 text-sm text-muted-foreground">
-            Super Admin adalah system authority dan tidak dikelola melalui
-            halaman Role & Permission. Role operasional dapat dikelola sesuai
-            permission yang dimiliki.
+          <p className="text-muted-foreground mt-1 text-sm">
+            Super Admin adalah system authority dan tidak dikelola melalui halaman Role &
+            Permission. Role operasional dapat dikelola sesuai permission yang dimiliki.
           </p>
         </div>
 
@@ -168,7 +142,7 @@ export default async function AdminRolesPage() {
                 <th className="px-5 py-3 font-medium">Admin</th>
                 <th className="px-5 py-3 font-medium">Permission</th>
                 <th className="px-5 py-3 font-medium">Version</th>
-                <th className="px-5 py-3 font-medium text-right">Aksi</th>
+                <th className="px-5 py-3 text-right font-medium">Aksi</th>
               </tr>
             </thead>
 
@@ -178,12 +152,10 @@ export default async function AdminRolesPage() {
                   <td className="px-5 py-4">
                     <div className="font-medium">{role.name}</div>
 
-                    <div className="text-xs text-muted-foreground">
-                      {role.key}
-                    </div>
+                    <div className="text-muted-foreground text-xs">{role.key}</div>
 
                     {role.description ? (
-                      <div className="mt-1 max-w-xl text-xs text-muted-foreground">
+                      <div className="text-muted-foreground mt-1 max-w-xl text-xs">
                         {role.description}
                       </div>
                     ) : null}
@@ -191,19 +163,13 @@ export default async function AdminRolesPage() {
 
                   <td className="px-5 py-4">
                     {role.is_system ? (
-                      <span className="rounded-full border px-2 py-1 text-xs">
-                        System
-                      </span>
+                      <span className="rounded-full border px-2 py-1 text-xs">System</span>
                     ) : (
-                      <span className="rounded-full border px-2 py-1 text-xs">
-                        Custom
-                      </span>
+                      <span className="rounded-full border px-2 py-1 text-xs">Custom</span>
                     )}
                   </td>
 
-                  <td className="px-5 py-4">
-                    {adminCountByRole.get(role.id) ?? 0}
-                  </td>
+                  <td className="px-5 py-4">{adminCountByRole.get(role.id) ?? 0}</td>
 
                   <td className="px-5 py-4">
                     {role.is_system
@@ -211,14 +177,12 @@ export default async function AdminRolesPage() {
                       : `${permissionCountByRole.get(role.id) ?? 0}/${totalPermissions}`}
                   </td>
 
-                  <td className="px-5 py-4">
-                    v{role.permission_version}
-                  </td>
+                  <td className="px-5 py-4">v{role.permission_version}</td>
 
                   <td className="px-5 py-4 text-right">
                     <Link
                       href={`/admin/roles/${role.id}`}
-                      className="inline-flex rounded-lg border px-3 py-2 text-xs font-medium hover:bg-muted"
+                      className="hover:bg-muted inline-flex rounded-lg border px-3 py-2 text-xs font-medium"
                     >
                       Kelola
                     </Link>
@@ -228,10 +192,7 @@ export default async function AdminRolesPage() {
 
               {roleList.length === 0 ? (
                 <tr>
-                  <td
-                    colSpan={6}
-                    className="px-5 py-10 text-center text-sm text-muted-foreground"
-                  >
+                  <td colSpan={6} className="text-muted-foreground px-5 py-10 text-center text-sm">
                     Belum ada role operasional.
                   </td>
                 </tr>
@@ -241,11 +202,11 @@ export default async function AdminRolesPage() {
         </div>
       </section>
 
-      <section className="rounded-xl border bg-card p-5">
+      <section className="bg-card rounded-xl border p-5">
         <div className="mb-5">
           <h2 className="font-semibold">Permission Catalogue</h2>
 
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="text-muted-foreground mt-1 text-sm">
             Katalog permission yang tersedia untuk Role Editor.
           </p>
         </div>
@@ -259,19 +220,14 @@ export default async function AdminRolesPage() {
                 {group.permissions.map((permission) => {
                   const key = `${permission.module}.${permission.action}`
 
-                  const databasePermission = permissions?.find(
-                    (item) => item.key === key,
-                  )
+                  const databasePermission = permissions?.find((item) => item.key === key)
 
                   return (
-                    <div
-                      key={key}
-                      className="flex items-start justify-between gap-3 text-sm"
-                    >
+                    <div key={key} className="flex items-start justify-between gap-3 text-sm">
                       <div>
                         <div className="font-medium">{key}</div>
 
-                        <div className="text-xs text-muted-foreground">
+                        <div className="text-muted-foreground text-xs">
                           {permission.description}
                         </div>
                       </div>

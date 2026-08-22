@@ -33,10 +33,7 @@ export async function POST(request: Request) {
   const principal = await getPrincipal()
 
   if (principal.kind === 'anonymous') {
-    return NextResponse.json(
-      { error: 'Anda harus login.' },
-      { status: 401 },
-    )
+    return NextResponse.json({ error: 'Anda harus login.' }, { status: 401 })
   }
 
   if (principal.kind !== 'admin' || !hasPermission(principal, 'media.upload')) {
@@ -50,31 +47,19 @@ export async function POST(request: Request) {
   const file = formData.get('file')
 
   if (!(file instanceof File)) {
-    return NextResponse.json(
-      { error: 'File wajib dipilih.' },
-      { status: 400 },
-    )
+    return NextResponse.json({ error: 'File wajib dipilih.' }, { status: 400 })
   }
 
   if (file.size <= 0) {
-    return NextResponse.json(
-      { error: 'File kosong tidak diperbolehkan.' },
-      { status: 400 },
-    )
+    return NextResponse.json({ error: 'File kosong tidak diperbolehkan.' }, { status: 400 })
   }
 
   if (file.size > MAX_BYTES) {
-    return NextResponse.json(
-      { error: 'Ukuran file maksimal 100 MB.' },
-      { status: 400 },
-    )
+    return NextResponse.json({ error: 'Ukuran file maksimal 100 MB.' }, { status: 400 })
   }
 
   if (!ALLOWED_MIME_TYPES.has(file.type)) {
-    return NextResponse.json(
-      { error: 'Format file tidak didukung.' },
-      { status: 400 },
-    )
+    return NextResponse.json({ error: 'Format file tidak didukung.' }, { status: 400 })
   }
 
   const bytes = Buffer.from(await file.arrayBuffer())
@@ -97,13 +82,8 @@ export async function POST(request: Request) {
     })
 
   if (uploadError) {
-    return NextResponse.json(
-      { error: 'File gagal diunggah ke storage.' },
-      { status: 500 },
-    )
+    return NextResponse.json({ error: 'File gagal diunggah ke storage.' }, { status: 500 })
   }
-
-
 
   const { data: asset, error: assetError } = await serviceClient
     .from('media_assets')
@@ -126,14 +106,9 @@ export async function POST(request: Request) {
     /*
      * Roll back the Storage object if metadata finalisation fails.
      */
-    await serviceClient.storage
-      .from(BUCKET)
-      .remove([objectPath])
+    await serviceClient.storage.from(BUCKET).remove([objectPath])
 
-    return NextResponse.json(
-      { error: 'Metadata file gagal disimpan.' },
-      { status: 500 },
-    )
+    return NextResponse.json({ error: 'Metadata file gagal disimpan.' }, { status: 500 })
   }
 
   return NextResponse.json({
@@ -141,9 +116,3 @@ export async function POST(request: Request) {
     asset,
   })
 }
-
-
-
-
-
-

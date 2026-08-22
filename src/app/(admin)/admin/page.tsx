@@ -1,16 +1,7 @@
 ﻿import type { Metadata } from 'next'
-import {
-  ArrowUpRight,
-  FileText,
-  Inbox,
-  UserCheck,
-  Users,
-} from 'lucide-react'
+import { ArrowUpRight, FileText, Inbox, UserCheck, Users } from 'lucide-react'
 
-import {
-  INVESTOR_STATUS_LABELS,
-  type InvestorStatus,
-} from '@/core/investors/status'
+import { INVESTOR_STATUS_LABELS, type InvestorStatus } from '@/core/investors/status'
 import { hasPermission } from '@/core/auth/principal'
 import { topics } from '@/core/realtime/events'
 import { RealtimeRefresher } from '@/features/realtime/realtime-refresher'
@@ -32,26 +23,13 @@ export default async function AdminDashboardPage() {
   const principal = await requireAdminPage()
   const supabase = await getServerSupabase()
 
-  const canSeeInvestors = hasPermission(
-    principal,
-    'investors.view',
-  )
+  const canSeeInvestors = hasPermission(principal, 'investors.view')
 
-  const canSeeInquiries = hasPermission(
-    principal,
-    'inquiries.view',
-  )
+  const canSeeInquiries = hasPermission(principal, 'inquiries.view')
 
-  const canSeeDocuments = hasPermission(
-    principal,
-    'documents.view',
-  )
+  const canSeeDocuments = hasPermission(principal, 'documents.view')
 
-  const [
-    investorRows,
-    inquiryCount,
-    documentCount,
-  ] = await Promise.all([
+  const [investorRows, inquiryCount, documentCount] = await Promise.all([
     canSeeInvestors
       ? supabase
           .from('investors')
@@ -87,25 +65,16 @@ export default async function AdminDashboardPage() {
   for (const row of investorRows ?? []) {
     const status = row.status
 
-    byStatus.set(
-      status,
-      (byStatus.get(status) ?? 0) + 1,
-    )
+    byStatus.set(status, (byStatus.get(status) ?? 0) + 1)
   }
 
-  const totalInvestors =
-    investorRows?.length ?? 0
+  const totalInvestors = investorRows?.length ?? 0
 
-  const activeInvestors =
-    byStatus.get('active') ?? 0
+  const activeInvestors = byStatus.get('active') ?? 0
 
-  const pendingReview =
-    (byStatus.get('submitted') ?? 0) +
-    (byStatus.get('under_review') ?? 0)
+  const pendingReview = (byStatus.get('submitted') ?? 0) + (byStatus.get('under_review') ?? 0)
 
-  const statusEntries = [
-    ...byStatus.entries(),
-  ].sort((a, b) => b[1] - a[1])
+  const statusEntries = [...byStatus.entries()].sort((a, b) => b[1] - a[1])
 
   return (
     <Stack gap={8}>
@@ -125,10 +94,7 @@ export default async function AdminDashboardPage() {
         description="Pusat kendali operasional hubungan investor Nuzultrip."
       />
 
-      <Grid
-        min="15rem"
-        gap={4}
-      >
+      <Grid min="15rem" gap={4}>
         {canSeeInvestors ? (
           <>
             <StatCard
@@ -136,12 +102,7 @@ export default async function AdminDashboardPage() {
               testId="stat-total-investors"
               value={formatNumber(totalInvestors)}
               context="seluruh investor terdaftar"
-              icon={
-                <Users
-                  aria-hidden="true"
-                  className="size-4"
-                />
-              }
+              icon={<Users aria-hidden="true" className="size-4" />}
             />
 
             <StatCard
@@ -149,12 +110,7 @@ export default async function AdminDashboardPage() {
               testId="stat-active-investors"
               value={formatNumber(activeInvestors)}
               context="status aktif saat ini"
-              icon={
-                <UserCheck
-                  aria-hidden="true"
-                  className="size-4"
-                />
-              }
+              icon={<UserCheck aria-hidden="true" className="size-4" />}
             />
 
             <StatCard
@@ -162,12 +118,7 @@ export default async function AdminDashboardPage() {
               testId="stat-pending-review"
               value={formatNumber(pendingReview)}
               context="diajukan dan sedang ditinjau"
-              icon={
-                <UserCheck
-                  aria-hidden="true"
-                  className="size-4"
-                />
-              }
+              icon={<UserCheck aria-hidden="true" className="size-4" />}
             />
           </>
         ) : null}
@@ -176,16 +127,9 @@ export default async function AdminDashboardPage() {
           <StatCard
             label="Permintaan baru"
             testId="stat-new-inquiries"
-            value={formatNumber(
-              inquiryCount ?? 0,
-            )}
+            value={formatNumber(inquiryCount ?? 0)}
             context="dari portal publik"
-            icon={
-              <Inbox
-                aria-hidden="true"
-                className="size-4"
-              />
-            }
+            icon={<Inbox aria-hidden="true" className="size-4" />}
           />
         ) : null}
 
@@ -193,16 +137,9 @@ export default async function AdminDashboardPage() {
           <StatCard
             label="Dokumen terbit"
             testId="stat-published-documents"
-            value={formatNumber(
-              documentCount ?? 0,
-            )}
+            value={formatNumber(documentCount ?? 0)}
             context="tersedia untuk investor"
-            icon={
-              <FileText
-                aria-hidden="true"
-                className="size-4"
-              />
-            }
+            icon={<FileText aria-hidden="true" className="size-4" />}
           />
         ) : null}
       </Grid>
@@ -213,18 +150,15 @@ export default async function AdminDashboardPage() {
             <CardHeader>
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <CardTitle>
-                    Sebaran status investor
-                  </CardTitle>
+                  <CardTitle>Sebaran status investor</CardTitle>
 
-                  <p className="mt-1 text-body-sm text-fg-muted">
-                    Kondisi investor berdasarkan status
-                    terkini.
+                  <p className="text-body-sm text-fg-muted mt-1">
+                    Kondisi investor berdasarkan status terkini.
                   </p>
                 </div>
 
-                <div className="hidden rounded-md border border-border bg-canvas px-2.5 py-1.5 text-caption text-fg-muted sm:flex sm:items-center sm:gap-1.5">
-                  <span className="size-1.5 rounded-full bg-success-solid" />
+                <div className="border-border bg-canvas text-caption text-fg-muted hidden rounded-md border px-2.5 py-1.5 sm:flex sm:items-center sm:gap-1.5">
+                  <span className="bg-success-solid size-1.5 rounded-full" />
                   Data realtime
                 </div>
               </div>
@@ -238,160 +172,105 @@ export default async function AdminDashboardPage() {
                 />
               ) : (
                 <div className="space-y-3">
-                  {statusEntries.map(
-                    ([status, count]) => {
-                      const percentage =
-                        totalInvestors > 0
-                          ? Math.round(
-                              (count /
-                                totalInvestors) *
-                                100,
-                            )
-                          : 0
+                  {statusEntries.map(([status, count]) => {
+                    const percentage =
+                      totalInvestors > 0 ? Math.round((count / totalInvestors) * 100) : 0
 
-                      return (
-                        <div
-                          key={status}
-                          className="space-y-2"
-                        >
-                          <div className="flex items-center justify-between gap-3">
-                            <InvestorStatusPill
-                              status={status}
-                              size="sm"
-                            />
+                    return (
+                      <div key={status} className="space-y-2">
+                        <div className="flex items-center justify-between gap-3">
+                          <InvestorStatusPill status={status} size="sm" />
 
-                            <span className="font-mono text-body-sm tabular text-fg">
-                              {formatNumber(count)}
-                              <span className="ml-2 text-caption text-fg-subtle">
-                                {percentage}%
-                              </span>
-                            </span>
-                          </div>
-
-                          <div className="h-1.5 overflow-hidden rounded-full bg-surface-muted">
-                            <div
-                              className="h-full rounded-full bg-accent-solid transition-[width] duration-500"
-                              style={{
-                                width: `${percentage}%`,
-                              }}
-                            />
-                          </div>
-
-                          <span className="sr-only">
-                            {
-                              INVESTOR_STATUS_LABELS[
-                                status
-                              ]
-                            }
+                          <span className="text-body-sm tabular text-fg font-mono">
+                            {formatNumber(count)}
+                            <span className="text-caption text-fg-subtle ml-2">{percentage}%</span>
                           </span>
                         </div>
-                      )
-                    },
-                  )}
+
+                        <div className="bg-surface-muted h-1.5 overflow-hidden rounded-full">
+                          <div
+                            className="bg-accent-solid h-full rounded-full transition-[width] duration-500"
+                            style={{
+                              width: `${percentage}%`,
+                            }}
+                          />
+                        </div>
+
+                        <span className="sr-only">{INVESTOR_STATUS_LABELS[status]}</span>
+                      </div>
+                    )
+                  })}
                 </div>
               )}
             </CardBody>
           </Card>
         ) : (
-          <Alert
-            tone="info"
-            title="Akses terbatas"
-          >
-            Peran Anda tidak mencakup izin melihat
-            data investor. Hubungi Super Admin bila
-            Anda memerlukan akses tersebut.
+          <Alert tone="info" title="Akses terbatas">
+            Peran Anda tidak mencakup izin melihat data investor. Hubungi Super Admin bila Anda
+            memerlukan akses tersebut.
           </Alert>
         )}
 
         <Card>
           <CardHeader>
-            <CardTitle>
-              Ringkasan operasional
-            </CardTitle>
+            <CardTitle>Ringkasan operasional</CardTitle>
           </CardHeader>
 
           <CardBody>
             <div className="space-y-2">
               {canSeeInquiries ? (
-                <div className="flex items-center justify-between rounded-lg border border-border bg-canvas px-3 py-3">
+                <div className="border-border bg-canvas flex items-center justify-between rounded-lg border px-3 py-3">
                   <div className="flex items-center gap-3">
-                    <div className="flex size-9 items-center justify-center rounded-lg bg-surface-muted">
-                      <Inbox
-                        aria-hidden="true"
-                        className="size-4 text-fg-muted"
-                      />
+                    <div className="bg-surface-muted flex size-9 items-center justify-center rounded-lg">
+                      <Inbox aria-hidden="true" className="text-fg-muted size-4" />
                     </div>
 
                     <div>
-                      <p className="text-body-sm font-medium text-fg">
-                        Permintaan portal
-                      </p>
-                      <p className="text-caption text-fg-subtle">
-                        Perlu diperiksa
-                      </p>
+                      <p className="text-body-sm text-fg font-medium">Permintaan portal</p>
+                      <p className="text-caption text-fg-subtle">Perlu diperiksa</p>
                     </div>
                   </div>
 
-                  <span className="font-mono text-body-sm tabular text-fg">
-                    {formatNumber(
-                      inquiryCount ?? 0,
-                    )}
+                  <span className="text-body-sm tabular text-fg font-mono">
+                    {formatNumber(inquiryCount ?? 0)}
                   </span>
                 </div>
               ) : null}
 
               {canSeeDocuments ? (
-                <div className="flex items-center justify-between rounded-lg border border-border bg-canvas px-3 py-3">
+                <div className="border-border bg-canvas flex items-center justify-between rounded-lg border px-3 py-3">
                   <div className="flex items-center gap-3">
-                    <div className="flex size-9 items-center justify-center rounded-lg bg-surface-muted">
-                      <FileText
-                        aria-hidden="true"
-                        className="size-4 text-fg-muted"
-                      />
+                    <div className="bg-surface-muted flex size-9 items-center justify-center rounded-lg">
+                      <FileText aria-hidden="true" className="text-fg-muted size-4" />
                     </div>
 
                     <div>
-                      <p className="text-body-sm font-medium text-fg">
-                        Dokumen investor
-                      </p>
-                      <p className="text-caption text-fg-subtle">
-                        Telah diterbitkan
-                      </p>
+                      <p className="text-body-sm text-fg font-medium">Dokumen investor</p>
+                      <p className="text-caption text-fg-subtle">Telah diterbitkan</p>
                     </div>
                   </div>
 
-                  <span className="font-mono text-body-sm tabular text-fg">
-                    {formatNumber(
-                      documentCount ?? 0,
-                    )}
+                  <span className="text-body-sm tabular text-fg font-mono">
+                    {formatNumber(documentCount ?? 0)}
                   </span>
                 </div>
               ) : null}
 
               {canSeeInvestors ? (
-                <div className="flex items-center justify-between rounded-lg border border-border bg-canvas px-3 py-3">
+                <div className="border-border bg-canvas flex items-center justify-between rounded-lg border px-3 py-3">
                   <div className="flex items-center gap-3">
-                    <div className="flex size-9 items-center justify-center rounded-lg bg-surface-muted">
-                      <ArrowUpRight
-                        aria-hidden="true"
-                        className="size-4 text-fg-muted"
-                      />
+                    <div className="bg-surface-muted flex size-9 items-center justify-center rounded-lg">
+                      <ArrowUpRight aria-hidden="true" className="text-fg-muted size-4" />
                     </div>
 
                     <div>
-                      <p className="text-body-sm font-medium text-fg">
-                        Review investor
-                      </p>
-                      <p className="text-caption text-fg-subtle">
-                        Menunggu tindakan
-                      </p>
+                      <p className="text-body-sm text-fg font-medium">Review investor</p>
+                      <p className="text-caption text-fg-subtle">Menunggu tindakan</p>
                     </div>
                   </div>
 
-                  <span className="font-mono text-body-sm tabular text-fg">
-                    {formatNumber(
-                      pendingReview,
-                    )}
+                  <span className="text-body-sm tabular text-fg font-mono">
+                    {formatNumber(pendingReview)}
                   </span>
                 </div>
               ) : null}

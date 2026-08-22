@@ -141,4 +141,3 @@ export const portalInquirySchema = z.object({
 })
 
 export type PortalInquiryInput = z.infer<typeof portalInquirySchema>
-

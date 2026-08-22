@@ -2,10 +2,7 @@
 import { AdminModulePage } from '@/features/admin/admin-module-page'
 
 export default async function OwnershipPage() {
-  const principal = await adminWithPermission(
-    'ownership.view',
-    '/admin/ownership',
-  )
+  const principal = await adminWithPermission('ownership.view', '/admin/ownership')
 
   return (
     <AdminModulePage

@@ -56,11 +56,7 @@ function readProvider(value: unknown): EmailProviderSettings {
   const type = value.type
   const enabled = value.enabled
 
-  if (
-    type !== 'supabase_auth' &&
-    type !== 'smtp' &&
-    type !== 'resend'
-  ) {
+  if (type !== 'supabase_auth' && type !== 'smtp' && type !== 'resend') {
     return DEFAULT_EMAIL_SETTINGS.provider
   }
 
@@ -124,9 +120,7 @@ export async function getEmailSettings(): Promise<EmailSettings> {
     throw new Error(`Failed to load email settings: ${error.message}`)
   }
 
-  const settings = new Map(
-    (data ?? []).map((row) => [row.key, row.value] as const),
-  )
+  const settings = new Map((data ?? []).map((row) => [row.key, row.value] as const))
 
   return {
     provider: readProvider(settings.get('email.provider')),

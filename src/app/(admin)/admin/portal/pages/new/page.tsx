@@ -3,19 +3,14 @@
 import { adminWithPermission } from '@/server/auth/page-guards'
 
 export default async function NewPortalPage() {
-  const principal = await adminWithPermission(
-    'portal.update',
-    '/admin/portal/pages/new',
-  )
+  const principal = await adminWithPermission('portal.update', '/admin/portal/pages/new')
 
   if (!principal) {
     return (
-      <div className="rounded-xl border border-border bg-surface p-6">
-        <h1 className="font-display text-heading-lg text-fg">
-          Akses Ditolak
-        </h1>
+      <div className="border-border bg-surface rounded-xl border p-6">
+        <h1 className="font-display text-heading-lg text-fg">Akses Ditolak</h1>
 
-        <p className="mt-2 text-body-sm text-fg-muted">
+        <p className="text-body-sm text-fg-muted mt-2">
           Anda tidak memiliki izin untuk membuat halaman Portal.
         </p>
       </div>
@@ -25,35 +20,27 @@ export default async function NewPortalPage() {
   return (
     <div className="space-y-6">
       <div>
-        <Link
-          href="/admin/portal/pages"
-          className="text-caption text-fg-muted hover:text-fg"
-        >
+        <Link href="/admin/portal/pages" className="text-caption text-fg-muted hover:text-fg">
           ← Kembali ke Halaman
         </Link>
 
         <div className="mt-4">
-          <p className="text-caption font-medium uppercase tracking-[0.14em] text-fg-subtle">
+          <p className="text-caption text-fg-subtle font-medium tracking-[0.14em] uppercase">
             Portal & Content
           </p>
 
-          <h1 className="mt-1 font-display text-heading-lg text-fg">
-            Buat Halaman
-          </h1>
+          <h1 className="font-display text-heading-lg text-fg mt-1">Buat Halaman</h1>
 
-          <p className="mt-2 max-w-2xl text-body-sm text-fg-muted">
+          <p className="text-body-sm text-fg-muted mt-2 max-w-2xl">
             Buat halaman baru untuk Portal Investor.
           </p>
         </div>
       </div>
 
-      <form className="rounded-xl border border-border bg-surface p-6">
+      <form className="border-border bg-surface rounded-xl border p-6">
         <div className="grid gap-6">
           <div>
-            <label
-              htmlFor="title"
-              className="text-body-sm font-medium text-fg"
-            >
+            <label htmlFor="title" className="text-body-sm text-fg font-medium">
               Judul Halaman
             </label>
 
@@ -62,16 +49,13 @@ export default async function NewPortalPage() {
               name="title"
               type="text"
               required
-              className="mt-2 h-11 w-full rounded-lg border border-border bg-background px-3 text-sm text-fg outline-none focus:border-primary"
+              className="border-border bg-background text-fg focus:border-primary mt-2 h-11 w-full rounded-lg border px-3 text-sm outline-none"
               placeholder="Contoh: Tentang NuzulTrip"
             />
           </div>
 
           <div>
-            <label
-              htmlFor="slug"
-              className="text-body-sm font-medium text-fg"
-            >
+            <label htmlFor="slug" className="text-body-sm text-fg font-medium">
               Slug
             </label>
 
@@ -81,20 +65,17 @@ export default async function NewPortalPage() {
               type="text"
               required
               pattern="[a-z0-9]+(-[a-z0-9]+)*"
-              className="mt-2 h-11 w-full rounded-lg border border-border bg-background px-3 text-sm text-fg outline-none focus:border-primary"
+              className="border-border bg-background text-fg focus:border-primary mt-2 h-11 w-full rounded-lg border px-3 text-sm outline-none"
               placeholder="tentang-nuzultrip"
             />
 
-            <p className="mt-1 text-caption text-fg-muted">
+            <p className="text-caption text-fg-muted mt-1">
               Hanya huruf kecil, angka, dan tanda hubung.
             </p>
           </div>
 
           <div>
-            <label
-              htmlFor="page_kind"
-              className="text-body-sm font-medium text-fg"
-            >
+            <label htmlFor="page_kind" className="text-body-sm text-fg font-medium">
               Jenis Halaman
             </label>
 
@@ -102,7 +83,7 @@ export default async function NewPortalPage() {
               id="page_kind"
               name="page_kind"
               defaultValue="standard"
-              className="mt-2 h-11 w-full rounded-lg border border-border bg-background px-3 text-sm text-fg outline-none focus:border-primary"
+              className="border-border bg-background text-fg focus:border-primary mt-2 h-11 w-full rounded-lg border px-3 text-sm outline-none"
             >
               <option value="standard">Standard</option>
               <option value="home">Beranda</option>
@@ -111,10 +92,7 @@ export default async function NewPortalPage() {
           </div>
 
           <div>
-            <label
-              htmlFor="seo_description"
-              className="text-body-sm font-medium text-fg"
-            >
+            <label htmlFor="seo_description" className="text-body-sm text-fg font-medium">
               SEO Description
             </label>
 
@@ -122,7 +100,7 @@ export default async function NewPortalPage() {
               id="seo_description"
               name="seo_description"
               rows={4}
-              className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-3 text-sm text-fg outline-none focus:border-primary"
+              className="border-border bg-background text-fg focus:border-primary mt-2 w-full rounded-lg border px-3 py-3 text-sm outline-none"
               placeholder="Deskripsi halaman untuk mesin pencari."
             />
           </div>
@@ -130,14 +108,14 @@ export default async function NewPortalPage() {
           <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
             <Link
               href="/admin/portal/pages"
-              className="inline-flex h-10 items-center justify-center rounded-lg border border-border px-4 text-sm font-medium text-fg hover:bg-muted"
+              className="border-border text-fg hover:bg-muted inline-flex h-10 items-center justify-center rounded-lg border px-4 text-sm font-medium"
             >
               Batal
             </Link>
 
             <button
               type="submit"
-              className="inline-flex h-10 items-center justify-center rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground hover:opacity-90"
+              className="bg-primary text-primary-foreground inline-flex h-10 items-center justify-center rounded-lg px-4 text-sm font-medium hover:opacity-90"
             >
               Simpan Draft
             </button>

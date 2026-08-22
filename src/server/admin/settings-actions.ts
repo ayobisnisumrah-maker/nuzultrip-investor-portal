@@ -63,17 +63,15 @@ export const updateAdminEmailSettings = defineAction({
       },
     ]
 
-    const { error } = await supabase
-      .from('site_settings')
-      .upsert(
-        settings.map((setting) => ({
-          ...setting,
-          updated_by: principal.kind === 'anonymous' ? null : principal.userId,
-        })),
-        {
-          onConflict: 'key',
-        },
-      )
+    const { error } = await supabase.from('site_settings').upsert(
+      settings.map((setting) => ({
+        ...setting,
+        updated_by: principal.kind === 'anonymous' ? null : principal.userId,
+      })),
+      {
+        onConflict: 'key',
+      },
+    )
 
     if (error) {
       throw new Error(`Gagal menyimpan konfigurasi email: ${error.message}`)

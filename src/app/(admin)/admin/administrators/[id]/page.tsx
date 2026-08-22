@@ -12,16 +12,14 @@ type PageProps = {
   }>
 }
 
-export default async function AdministratorDetailPage({
-  params,
-}: PageProps) {
+export default async function AdministratorDetailPage({ params }: PageProps) {
   const principal = await requireAdminPage('/admin/administrators')
 
   if (!hasPermission(principal, 'admins.view')) {
     return (
       <main className="p-6">
         <h1 className="text-xl font-semibold">Akses ditolak</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
+        <p className="text-muted-foreground mt-2 text-sm">
           Anda tidak memiliki izin untuk melihat administrator.
         </p>
       </main>
@@ -40,37 +38,31 @@ export default async function AdministratorDetailPage({
     .maybeSingle()
 
   if (adminError) {
-    throw new Error(
-      `Gagal mengambil administrator: ${adminError.message}`,
-    )
+    throw new Error(`Gagal mengambil administrator: ${adminError.message}`)
   }
 
   if (!admin) {
     notFound()
   }
 
-  const [
-    { data: account, error: accountError },
-    { data: roles, error: rolesError },
-  ] = await Promise.all([
-    supabase
-      .from('user_accounts')
-      .select('id, email, full_name, phone, status')
-      .eq('id', id)
-      .maybeSingle(),
+  const [{ data: account, error: accountError }, { data: roles, error: rolesError }] =
+    await Promise.all([
+      supabase
+        .from('user_accounts')
+        .select('id, email, full_name, phone, status')
+        .eq('id', id)
+        .maybeSingle(),
 
-    supabase
-      .from('roles')
-      .select('id, key, name, description, is_system')
-      .neq('key', 'super_admin')
-      .neq('key', 'admin_internal')
-      .order('name', { ascending: true }),
-  ])
+      supabase
+        .from('roles')
+        .select('id, key, name, description, is_system')
+        .neq('key', 'super_admin')
+        .neq('key', 'admin_internal')
+        .order('name', { ascending: true }),
+    ])
 
   if (accountError) {
-    throw new Error(
-      `Gagal mengambil akun administrator: ${accountError.message}`,
-    )
+    throw new Error(`Gagal mengambil akun administrator: ${accountError.message}`)
   }
 
   if (!account) {
@@ -78,14 +70,10 @@ export default async function AdministratorDetailPage({
   }
 
   if (rolesError) {
-    throw new Error(
-      `Gagal mengambil role administrator: ${rolesError.message}`,
-    )
+    throw new Error(`Gagal mengambil role administrator: ${rolesError.message}`)
   }
 
-  const currentRole = (roles ?? []).find(
-    (role) => role.id === admin.role_id,
-  )
+  const currentRole = (roles ?? []).find((role) => role.id === admin.role_id)
 
   const canUpdate = hasPermission(principal, 'admins.update')
   const canDisable = hasPermission(principal, 'admins.disable')
@@ -96,49 +84,43 @@ export default async function AdministratorDetailPage({
       <header>
         <Link
           href="/admin/administrators"
-          className="text-sm text-muted-foreground hover:underline"
+          className="text-muted-foreground text-sm hover:underline"
         >
           ← Kembali ke Administrator
         </Link>
 
         <div className="mt-4">
-          <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+          <p className="text-muted-foreground text-xs font-medium tracking-[0.18em] uppercase">
             Sistem / Administrator
           </p>
 
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight">
-            Detail Administrator
-          </h1>
+          <h1 className="mt-1 text-2xl font-semibold tracking-tight">Detail Administrator</h1>
 
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="text-muted-foreground mt-1 text-sm">
             Lihat dan kelola informasi administrator internal.
           </p>
         </div>
       </header>
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-xl border bg-card p-5">
-          <p className="text-sm text-muted-foreground">Nama</p>
+        <div className="bg-card rounded-xl border p-5">
+          <p className="text-muted-foreground text-sm">Nama</p>
           <p className="mt-2 font-semibold">{account.full_name}</p>
         </div>
 
-        <div className="rounded-xl border bg-card p-5">
-          <p className="text-sm text-muted-foreground">Email</p>
+        <div className="bg-card rounded-xl border p-5">
+          <p className="text-muted-foreground text-sm">Email</p>
           <p className="mt-2 font-semibold break-all">{account.email}</p>
         </div>
 
-        <div className="rounded-xl border bg-card p-5">
-          <p className="text-sm text-muted-foreground">Role</p>
-          <p className="mt-2 font-semibold">
-            {currentRole?.name ?? 'Role tidak tersedia'}
-          </p>
+        <div className="bg-card rounded-xl border p-5">
+          <p className="text-muted-foreground text-sm">Role</p>
+          <p className="mt-2 font-semibold">{currentRole?.name ?? 'Role tidak tersedia'}</p>
         </div>
 
-        <div className="rounded-xl border bg-card p-5">
-          <p className="text-sm text-muted-foreground">Status</p>
-          <p className="mt-2 font-semibold">
-            {admin.is_active ? 'Aktif' : 'Nonaktif'}
-          </p>
+        <div className="bg-card rounded-xl border p-5">
+          <p className="text-muted-foreground text-sm">Status</p>
+          <p className="mt-2 font-semibold">{admin.is_active ? 'Aktif' : 'Nonaktif'}</p>
         </div>
       </section>
 
@@ -164,22 +146,18 @@ export default async function AdministratorDetailPage({
           canDelete={canDelete}
         />
       ) : (
-        <section className="rounded-xl border bg-card p-5">
+        <section className="bg-card rounded-xl border p-5">
           <h2 className="font-semibold">Informasi Administrator</h2>
 
           <div className="mt-5 grid gap-4 md:grid-cols-2">
             <div>
-              <p className="text-xs text-muted-foreground">Jabatan</p>
+              <p className="text-muted-foreground text-xs">Jabatan</p>
               <p className="mt-1 text-sm">{admin.title || '-'}</p>
             </div>
 
             <div>
-              <p className="text-xs text-muted-foreground">
-                Employee Reference
-              </p>
-              <p className="mt-1 text-sm">
-                {admin.employee_ref || '-'}
-              </p>
+              <p className="text-muted-foreground text-xs">Employee Reference</p>
+              <p className="mt-1 text-sm">{admin.employee_ref || '-'}</p>
             </div>
           </div>
         </section>
@@ -187,4 +165,3 @@ export default async function AdministratorDetailPage({
     </main>
   )
 }
-

@@ -2,10 +2,7 @@
 
 import { z } from 'zod'
 
-import {
-  canTransitionFinancialPeriod,
-  financialPeriodInputSchema,
-} from '@/core/financials/periods'
+import { canTransitionFinancialPeriod, financialPeriodInputSchema } from '@/core/financials/periods'
 import { ConflictError, ForbiddenError, NotFoundError } from '@/core/errors'
 import { defineAction } from '@/server/auth/guards'
 
@@ -41,9 +38,7 @@ export const createFinancialPeriod = defineAction({
         currency: input.currency,
         status: 'open',
       })
-      .select(
-        'id, period_type, fiscal_year, period_index, starts_on, ends_on, currency, status',
-      )
+      .select('id, period_type, fiscal_year, period_index, starts_on, ends_on, currency, status')
       .single()
 
     if (error) {
@@ -86,9 +81,7 @@ export const updateFinancialPeriod = defineAction({
   handler: async ({ input, supabase, audit }) => {
     const { data: current, error: readError } = await supabase
       .from('financial_periods')
-      .select(
-        'id, period_type, fiscal_year, period_index, starts_on, ends_on, currency, status',
-      )
+      .select('id, period_type, fiscal_year, period_index, starts_on, ends_on, currency, status')
       .eq('id', input.periodId)
       .maybeSingle()
 
@@ -126,9 +119,7 @@ export const updateFinancialPeriod = defineAction({
       })
       .eq('id', input.periodId)
       .eq('status', 'open')
-      .select(
-        'id, period_type, fiscal_year, period_index, starts_on, ends_on, currency, status',
-      )
+      .select('id, period_type, fiscal_year, period_index, starts_on, ends_on, currency, status')
       .maybeSingle()
 
     if (updateError) {
@@ -272,20 +263,10 @@ export const changeFinancialPeriodStatus = defineAction({
   },
 })
 
-export type CreateFinancialPeriodInput = z.input<
-  typeof financialPeriodInputSchema
->
+export type CreateFinancialPeriodInput = z.input<typeof financialPeriodInputSchema>
 
-export type UpdateFinancialPeriodInput = z.input<
-  typeof financialPeriodInputSchema
-> & {
+export type UpdateFinancialPeriodInput = z.input<typeof financialPeriodInputSchema> & {
   periodId: string
 }
 
-export type ChangeFinancialPeriodStatusInput = z.infer<
-  typeof changeStatusSchema
->
-
-
-
-
+export type ChangeFinancialPeriodStatusInput = z.infer<typeof changeStatusSchema>

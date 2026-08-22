@@ -12,37 +12,25 @@ import {
 
 describe('financial period lifecycle', () => {
   it('allows open to closed', () => {
-    expect(
-      canTransitionFinancialPeriod('open', 'closed'),
-    ).toBe(true)
+    expect(canTransitionFinancialPeriod('open', 'closed')).toBe(true)
   })
 
   it('allows open to locked', () => {
-    expect(
-      canTransitionFinancialPeriod('open', 'locked'),
-    ).toBe(true)
+    expect(canTransitionFinancialPeriod('open', 'locked')).toBe(true)
   })
 
   it('allows closed to locked', () => {
-    expect(
-      canTransitionFinancialPeriod('closed', 'locked'),
-    ).toBe(true)
+    expect(canTransitionFinancialPeriod('closed', 'locked')).toBe(true)
   })
 
   it('does not allow closed to open', () => {
-    expect(
-      canTransitionFinancialPeriod('closed', 'open'),
-    ).toBe(false)
+    expect(canTransitionFinancialPeriod('closed', 'open')).toBe(false)
   })
 
   it('does not allow locked to any status', () => {
-    expect(
-      canTransitionFinancialPeriod('locked', 'open'),
-    ).toBe(false)
+    expect(canTransitionFinancialPeriod('locked', 'open')).toBe(false)
 
-    expect(
-      canTransitionFinancialPeriod('locked', 'closed'),
-    ).toBe(false)
+    expect(canTransitionFinancialPeriod('locked', 'closed')).toBe(false)
   })
 
   it('only open periods are editable', () => {

@@ -10,16 +10,7 @@ import { parsePrincipal } from '@/core/auth/principal'
 const callbackSchema = z.object({
   code: z.string().min(1).max(512).optional(),
   token_hash: z.string().min(1).max(1024).optional(),
-  type: z
-    .enum([
-      'email',
-      'invite',
-      'recovery',
-      'signup',
-      'magiclink',
-      'email_change',
-    ])
-    .optional(),
+  type: z.enum(['email', 'invite', 'recovery', 'signup', 'magiclink', 'email_change']).optional(),
   next: z.string().max(512).optional(),
   error: z.string().max(256).optional(),
   error_description: z.string().max(512).optional(),
@@ -68,15 +59,10 @@ export const GET = defineRoute({
     const origin = getClientEnv().NEXT_PUBLIC_SITE_URL
 
     if (input.error) {
-      const reason =
-        input.error_description ??
-        input.error ??
-        'authentication_failed'
+      const reason = input.error_description ?? input.error ?? 'authentication_failed'
 
       return NextResponse.redirect(
-        `${origin}/masuk?galat=${encodeURIComponent(
-          reason.slice(0, 200),
-        )}`,
+        `${origin}/masuk?galat=${encodeURIComponent(reason.slice(0, 200))}`,
       )
     }
 
@@ -92,9 +78,7 @@ export const GET = defineRoute({
      */
     if (input.token_hash) {
       if (!isEmailOtpType(input.type)) {
-        return NextResponse.redirect(
-          `${origin}/masuk?galat=jenis_tautan_tidak_valid`,
-        )
+        return NextResponse.redirect(`${origin}/masuk?galat=jenis_tautan_tidak_valid`)
       }
 
       const { error } = await supabase.auth.verifyOtp({
@@ -112,8 +96,7 @@ export const GET = defineRoute({
      * authentication links.
      */
     else if (input.code) {
-      const { error } =
-        await supabase.auth.exchangeCodeForSession(input.code)
+      const { error } = await supabase.auth.exchangeCodeForSession(input.code)
 
       authError = error
     }
@@ -122,15 +105,11 @@ export const GET = defineRoute({
      * 3. Nothing usable was supplied.
      */
     else {
-      return NextResponse.redirect(
-        `${origin}/masuk?galat=tautan_tidak_valid`,
-      )
+      return NextResponse.redirect(`${origin}/masuk?galat=tautan_tidak_valid`)
     }
 
     if (authError) {
-      return NextResponse.redirect(
-        `${origin}/masuk?galat=tautan_tidak_valid`,
-      )
+      return NextResponse.redirect(`${origin}/masuk?galat=tautan_tidak_valid`)
     }
 
     /**
@@ -138,23 +117,16 @@ export const GET = defineRoute({
      *
      * Do not trust account type supplied by the URL.
      */
-    const { data: principalRow, error: principalError } =
-      await supabase.rpc('current_principal')
+    const { data: principalRow, error: principalError } = await supabase.rpc('current_principal')
 
     if (principalError || !principalRow) {
-      return NextResponse.redirect(
-        `${origin}/masuk?galat=akun_tidak_ditemukan`,
-      )
+      return NextResponse.redirect(`${origin}/masuk?galat=akun_tidak_ditemukan`)
     }
 
     const principal = parsePrincipal(principalRow)
 
     const fallback =
-      principal.kind === 'admin'
-        ? '/admin'
-        : principal.kind === 'investor'
-          ? '/investor'
-          : '/masuk'
+      principal.kind === 'admin' ? '/admin' : principal.kind === 'investor' ? '/investor' : '/masuk'
 
     const destination = internalPath(input.next, fallback)
 
@@ -162,9 +134,7 @@ export const GET = defineRoute({
      * Anonymous is never allowed through an authentication callback.
      */
     if (principal.kind === 'anonymous') {
-      return NextResponse.redirect(
-        `${origin}/masuk?galat=akun_tidak_ditemukan`,
-      )
+      return NextResponse.redirect(`${origin}/masuk?galat=akun_tidak_ditemukan`)
     }
 
     return NextResponse.redirect(`${origin}${destination}`)

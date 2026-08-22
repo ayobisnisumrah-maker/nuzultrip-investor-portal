@@ -31,14 +31,9 @@ function readCheckbox(form: FormData, name: string): boolean {
   return form.get(name) === 'on'
 }
 
-export function EmailSettingsForm({
-  settings,
-}: {
-  settings: EmailSettings
-}) {
+export function EmailSettingsForm({ settings }: { settings: EmailSettings }) {
   const router = useRouter()
-  const { pending, data, errorMessage, fieldError, run } =
-    useAction(updateAdminEmailSettings)
+  const { pending, data, errorMessage, fieldError, run } = useAction(updateAdminEmailSettings)
 
   useEffect(() => {
     if (data?.updated) {
@@ -68,23 +63,15 @@ export function EmailSettingsForm({
       }}
     >
       <Stack gap={6}>
-        {errorMessage ? (
-          <Alert tone="danger">{errorMessage}</Alert>
-        ) : null}
+        {errorMessage ? <Alert tone="danger">{errorMessage}</Alert> : null}
 
-        {data?.updated ? (
-          <Alert tone="success">
-            Pengaturan email berhasil disimpan.
-          </Alert>
-        ) : null}
+        {data?.updated ? <Alert tone="success">Pengaturan email berhasil disimpan.</Alert> : null}
 
-        <section className="rounded-2xl border border-border bg-surface p-6">
+        <section className="border-border bg-surface rounded-2xl border p-6">
           <Stack gap={5}>
             <div>
-              <h3 className="font-display text-heading-sm text-fg">
-                Provider
-              </h3>
-              <p className="mt-1 text-body-sm text-fg-muted">
+              <h3 className="font-display text-heading-sm text-fg">Provider</h3>
+              <p className="text-body-sm text-fg-muted mt-1">
                 Provider yang digunakan oleh lapisan email aplikasi.
               </p>
             </div>
@@ -93,7 +80,7 @@ export function EmailSettingsForm({
               <select
                 name="provider"
                 defaultValue={settings.provider.type}
-                className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-body-sm text-fg outline-none"
+                className="border-border bg-surface text-body-sm text-fg w-full rounded-xl border px-4 py-3 outline-none"
               >
                 <option value="supabase_auth">Supabase Auth</option>
                 <option value="smtp">SMTP</option>
@@ -101,7 +88,7 @@ export function EmailSettingsForm({
               </select>
             </Field>
 
-            <label className="flex items-center gap-3 text-body-sm text-fg">
+            <label className="text-body-sm text-fg flex items-center gap-3">
               <input
                 type="checkbox"
                 name="providerEnabled"
@@ -112,22 +99,16 @@ export function EmailSettingsForm({
           </Stack>
         </section>
 
-        <section className="rounded-2xl border border-border bg-surface p-6">
+        <section className="border-border bg-surface rounded-2xl border p-6">
           <Stack gap={5}>
             <div>
-              <h3 className="font-display text-heading-sm text-fg">
-                Identitas Pengirim
-              </h3>
-              <p className="mt-1 text-body-sm text-fg-muted">
+              <h3 className="font-display text-heading-sm text-fg">Identitas Pengirim</h3>
+              <p className="text-body-sm text-fg-muted mt-1">
                 Identitas yang akan digunakan ketika email aplikasi dikirim.
               </p>
             </div>
 
-            <Field
-              label="Nama pengirim"
-              error={fieldError('senderName')}
-              required
-            >
+            <Field label="Nama pengirim" error={fieldError('senderName')} required>
               <Input
                 name="senderName"
                 defaultValue={settings.sender.name}
@@ -136,11 +117,7 @@ export function EmailSettingsForm({
               />
             </Field>
 
-            <Field
-              label="Alamat pengirim"
-              error={fieldError('senderAddress')}
-              required
-            >
+            <Field label="Alamat pengirim" error={fieldError('senderAddress')} required>
               <Input
                 name="senderAddress"
                 type="email"
@@ -150,11 +127,7 @@ export function EmailSettingsForm({
               />
             </Field>
 
-            <Field
-              label="Reply-To"
-              error={fieldError('replyTo')}
-              required
-            >
+            <Field label="Reply-To" error={fieldError('replyTo')} required>
               <Input
                 name="replyTo"
                 type="email"
@@ -166,18 +139,16 @@ export function EmailSettingsForm({
           </Stack>
         </section>
 
-        <section className="rounded-2xl border border-border bg-surface p-6">
+        <section className="border-border bg-surface rounded-2xl border p-6">
           <Stack gap={5}>
             <div>
-              <h3 className="font-display text-heading-sm text-fg">
-                Notifikasi
-              </h3>
-              <p className="mt-1 text-body-sm text-fg-muted">
+              <h3 className="font-display text-heading-sm text-fg">Notifikasi</h3>
+              <p className="text-body-sm text-fg-muted mt-1">
                 Tentukan jenis email aplikasi yang diaktifkan.
               </p>
             </div>
 
-            <label className="flex items-center gap-3 text-body-sm text-fg">
+            <label className="text-body-sm text-fg flex items-center gap-3">
               <input
                 type="checkbox"
                 name="notificationsEnabled"
@@ -186,7 +157,7 @@ export function EmailSettingsForm({
               Notifikasi email aktif
             </label>
 
-            <label className="flex items-center gap-3 text-body-sm text-fg">
+            <label className="text-body-sm text-fg flex items-center gap-3">
               <input
                 type="checkbox"
                 name="passwordReset"
@@ -195,24 +166,20 @@ export function EmailSettingsForm({
               Password reset
             </label>
 
-            <label className="flex items-center gap-3 text-body-sm text-fg">
+            <label className="text-body-sm text-fg flex items-center gap-3">
               <input
                 type="checkbox"
                 name="investorInvitation"
-                defaultChecked={
-                  settings.notifications.investor_invitation
-                }
+                defaultChecked={settings.notifications.investor_invitation}
               />
               Undangan investor
             </label>
 
-            <label className="flex items-center gap-3 text-body-sm text-fg">
+            <label className="text-body-sm text-fg flex items-center gap-3">
               <input
                 type="checkbox"
                 name="securityAlert"
-                defaultChecked={
-                  settings.notifications.security_alert
-                }
+                defaultChecked={settings.notifications.security_alert}
               />
               Security alert
             </label>

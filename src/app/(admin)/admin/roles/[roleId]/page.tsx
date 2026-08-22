@@ -20,7 +20,7 @@ export default async function AdminRoleDetailPage({
     return (
       <main className="p-6">
         <h1 className="text-xl font-semibold">Akses ditolak</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
+        <p className="text-muted-foreground mt-2 text-sm">
           Anda tidak memiliki izin untuk melihat Role & Permission.
         </p>
       </main>
@@ -31,9 +31,7 @@ export default async function AdminRoleDetailPage({
 
   const { data: role, error: roleError } = await supabase
     .from('roles')
-    .select(
-      'id, key, name, description, is_system, permission_version',
-    )
+    .select('id, key, name, description, is_system, permission_version')
     .eq('id', roleId)
     .maybeSingle()
 
@@ -47,16 +45,12 @@ export default async function AdminRoleDetailPage({
 
   const { data: permissions, error: permissionsError } = await supabase
     .from('permissions')
-    .select(
-      'id, key, module, action, description, is_dangerous',
-    )
+    .select('id, key, module, action, description, is_dangerous')
     .order('module', { ascending: true })
     .order('action', { ascending: true })
 
   if (permissionsError) {
-    throw new Error(
-      `Gagal mengambil permission: ${permissionsError.message}`,
-    )
+    throw new Error(`Gagal mengambil permission: ${permissionsError.message}`)
   }
 
   const { data: assigned, error: assignedError } = await supabase
@@ -65,19 +59,15 @@ export default async function AdminRoleDetailPage({
     .eq('role_id', role.id)
 
   if (assignedError) {
-    throw new Error(
-      `Gagal mengambil permission role: ${assignedError.message}`,
-    )
+    throw new Error(`Gagal mengambil permission role: ${assignedError.message}`)
   }
 
-  const assignedPermissionIds = (assigned ?? []).map(
-    (item) => item.permission_id,
-  )
+  const assignedPermissionIds = (assigned ?? []).map((item) => item.permission_id)
 
   return (
     <main className="flex flex-col gap-6 p-6">
       <header className="flex flex-col gap-1">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <div className="text-muted-foreground flex items-center gap-2 text-sm">
           <Link href="/admin/roles" className="hover:text-foreground">
             Role & Permission
           </Link>
@@ -85,11 +75,9 @@ export default async function AdminRoleDetailPage({
           <span>{role.name}</span>
         </div>
 
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Kelola Role
-        </h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Kelola Role</h1>
 
-        <p className="text-sm text-muted-foreground">
+        <p className="text-muted-foreground text-sm">
           Atur permission administrator menggunakan checklist.
         </p>
       </header>
@@ -110,5 +98,3 @@ export default async function AdminRoleDetailPage({
     </main>
   )
 }
-
-

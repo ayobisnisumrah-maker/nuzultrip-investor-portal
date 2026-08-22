@@ -2,10 +2,7 @@
 import { PortalSectionPage } from '@/features/admin/portal-section-page'
 
 export default async function PortalCtaPage() {
-  const principal = await adminWithPermission(
-    'portal.manage_cta',
-    '/admin/portal/cta',
-  )
+  const principal = await adminWithPermission('portal.manage_cta', '/admin/portal/cta')
 
   return (
     <PortalSectionPage

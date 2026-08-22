@@ -21,9 +21,16 @@ export default async function InvestorNotificationsPage() {
 
   return (
     <Stack gap={8}>
-      <PageHeader eyebrow="Activity" title="Notifikasi" description="Pemberitahuan akun, dokumen, laporan, dan komunikasi investor." />
+      <PageHeader
+        eyebrow="Activity"
+        title="Notifikasi"
+        description="Pemberitahuan akun, dokumen, laporan, dan komunikasi investor."
+      />
       {!notifications?.length ? (
-        <EmptyState title="Belum ada notifikasi" description="Notifikasi baru akan muncul ketika ada aktivitas penting untuk akun Anda." />
+        <EmptyState
+          title="Belum ada notifikasi"
+          description="Notifikasi baru akan muncul ketika ada aktivitas penting untuk akun Anda."
+        />
       ) : (
         <div className="grid gap-3">
           {notifications.map((notification) => (
@@ -31,18 +38,31 @@ export default async function InvestorNotificationsPage() {
               <CardHeader>
                 <div className="flex items-start justify-between gap-4">
                   <CardTitle>{notification.title}</CardTitle>
-                  {!notification.read_at ? <span className="rounded-full bg-surface-accent px-2 py-1 text-caption font-medium">Baru</span> : null}
+                  {!notification.read_at ? (
+                    <span className="bg-surface-accent text-caption rounded-full px-2 py-1 font-medium">
+                      Baru
+                    </span>
+                  ) : null}
                 </div>
               </CardHeader>
               <CardBody>
                 <div className="flex flex-col gap-2">
                   <p className="text-body-sm text-fg-muted">{notification.body}</p>
-                  <div className="flex flex-wrap items-center gap-3 text-caption text-fg-subtle">
+                  <div className="text-caption text-fg-subtle flex flex-wrap items-center gap-3">
                     <span>{notification.kind}</span>
                     <span>•</span>
-                    <time dateTime={notification.created_at}>{formatDateTime(notification.created_at, { timeZone: principal.timezone })}</time>
+                    <time dateTime={notification.created_at}>
+                      {formatDateTime(notification.created_at, { timeZone: principal.timezone })}
+                    </time>
                   </div>
-                  {notification.action_url ? <a href={notification.action_url} className="text-body-sm font-medium text-link hover:underline">Buka →</a> : null}
+                  {notification.action_url ? (
+                    <a
+                      href={notification.action_url}
+                      className="text-body-sm text-link font-medium hover:underline"
+                    >
+                      Buka →
+                    </a>
+                  ) : null}
                 </div>
               </CardBody>
             </Card>

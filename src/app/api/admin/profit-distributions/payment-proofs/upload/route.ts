@@ -24,15 +24,11 @@ export async function POST(request: Request) {
 
   if (
     principal.kind !== 'admin' ||
-    !hasPermission(
-      principal,
-      'profit_distribution_payments.upload_proof',
-    )
+    !hasPermission(principal, 'profit_distribution_payments.upload_proof')
   ) {
     return NextResponse.json(
       {
-        error:
-          'Anda tidak memiliki izin mengunggah bukti pembayaran.',
+        error: 'Anda tidak memiliki izin mengunggah bukti pembayaran.',
       },
       {
         status: 403,
@@ -47,8 +43,7 @@ export async function POST(request: Request) {
   } catch {
     return NextResponse.json(
       {
-        error:
-          'Request multipart/form-data tidak valid.',
+        error: 'Request multipart/form-data tidak valid.',
       },
       {
         status: 400,
@@ -56,22 +51,16 @@ export async function POST(request: Request) {
     )
   }
 
-  const allocationIdValue =
-    formData.get('allocationId')
+  const allocationIdValue = formData.get('allocationId')
 
-  const paymentReferenceValue =
-    formData.get('paymentReference')
+  const paymentReferenceValue = formData.get('paymentReference')
 
   const file = formData.get('file')
 
-  if (
-    typeof allocationIdValue !== 'string' ||
-    allocationIdValue.trim().length === 0
-  ) {
+  if (typeof allocationIdValue !== 'string' || allocationIdValue.trim().length === 0) {
     return NextResponse.json(
       {
-        error:
-          'Allocation pembayaran wajib dipilih.',
+        error: 'Allocation pembayaran wajib dipilih.',
       },
       {
         status: 400,
@@ -82,8 +71,7 @@ export async function POST(request: Request) {
   if (!(file instanceof File)) {
     return NextResponse.json(
       {
-        error:
-          'File bukti pembayaran wajib dipilih.',
+        error: 'File bukti pembayaran wajib dipilih.',
       },
       {
         status: 400,
@@ -97,8 +85,7 @@ export async function POST(request: Request) {
     if (typeof paymentReferenceValue !== 'string') {
       return NextResponse.json(
         {
-          error:
-            'Referensi pembayaran tidak valid.',
+          error: 'Referensi pembayaran tidak valid.',
         },
         {
           status: 400,
@@ -106,14 +93,12 @@ export async function POST(request: Request) {
       )
     }
 
-    const normalizedReference =
-      paymentReferenceValue.trim()
+    const normalizedReference = paymentReferenceValue.trim()
 
     if (normalizedReference.length > 200) {
       return NextResponse.json(
         {
-          error:
-            'Referensi pembayaran terlalu panjang.',
+          error: 'Referensi pembayaran terlalu panjang.',
         },
         {
           status: 400,
@@ -121,10 +106,7 @@ export async function POST(request: Request) {
       )
     }
 
-    paymentReference =
-      normalizedReference.length > 0
-        ? normalizedReference
-        : null
+    paymentReference = normalizedReference.length > 0 ? normalizedReference : null
   }
 
   try {
@@ -132,21 +114,17 @@ export async function POST(request: Request) {
 
     const proof = await uploadPaymentProof({
       supabase,
-      allocationId:
-        allocationIdValue.trim(),
+      allocationId: allocationIdValue.trim(),
       uploadedBy: principal.adminId,
       file,
       paymentReference,
     })
 
     await writeAudit(principal, {
-      action:
-        'profit_distribution_payment_proof.upload',
-      entityType:
-        'profit_distribution_payment_proof',
+      action: 'profit_distribution_payment_proof.upload',
+      entityType: 'profit_distribution_payment_proof',
       entityId: proof.id,
-      summary:
-        'Bukti transfer pembayaran distribusi bagi hasil berhasil diunggah.',
+      summary: 'Bukti transfer pembayaran distribusi bagi hasil berhasil diunggah.',
       changes: {
         allocation_id: {
           before: null,
@@ -181,10 +159,7 @@ export async function POST(request: Request) {
       },
     )
   } catch (error) {
-    const message =
-      error instanceof Error
-        ? error.message
-        : 'Gagal mengunggah bukti pembayaran.'
+    const message = error instanceof Error ? error.message : 'Gagal mengunggah bukti pembayaran.'
 
     return NextResponse.json(
       {

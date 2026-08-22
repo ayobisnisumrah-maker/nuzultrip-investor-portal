@@ -25,12 +25,7 @@ import {
 } from '@/ui/dialog'
 import { useToast } from '@/ui/toast'
 
-type ActionKey =
-  | 'publish'
-  | 'pause'
-  | 'resume'
-  | 'close'
-  | 'archive'
+type ActionKey = 'publish' | 'pause' | 'resume' | 'close' | 'archive'
 
 type ActionConfig = {
   label: string
@@ -71,8 +66,7 @@ const CONFIG: Record<ActionKey, ActionConfig> = {
     label: 'Buka Kembali',
     target: 'open',
     permission: 'ownership_offerings.resume',
-    consequence:
-      'Penawaran akan kembali ke status Open dan dapat diproses kembali.',
+    consequence: 'Penawaran akan kembali ke status Open dan dapat diproses kembali.',
     variant: 'primary',
   },
 
@@ -113,9 +107,7 @@ const HANDLERS = {
   archive: archiveOwnershipOffering,
 } as const
 
-function getAvailableActions(
-  status: OwnershipOfferingStatus,
-): ActionKey[] {
+function getAvailableActions(status: OwnershipOfferingStatus): ActionKey[] {
   switch (status) {
     case 'draft':
       return ['publish']
@@ -157,16 +149,15 @@ export function OwnershipOfferingActions({
   const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
 
-  const availableActions = getAvailableActions(status).filter(
-    (key) => hasPermission(permissions, CONFIG[key].permission),
+  const availableActions = getAvailableActions(status).filter((key) =>
+    hasPermission(permissions, CONFIG[key].permission),
   )
 
   if (availableActions.length === 0) {
     return null
   }
 
-  const selectedAction =
-    selected !== null ? CONFIG[selected] : null
+  const selectedAction = selected !== null ? CONFIG[selected] : null
 
   function confirm() {
     if (selected === null || pending) {
@@ -201,9 +192,7 @@ export function OwnershipOfferingActions({
         router.refresh()
       } catch (cause) {
         setError(
-          cause instanceof Error
-            ? cause.message
-            : 'Aksi penawaran tidak dapat diselesaikan.',
+          cause instanceof Error ? cause.message : 'Aksi penawaran tidak dapat diselesaikan.',
         )
       }
     })
@@ -239,53 +228,36 @@ export function OwnershipOfferingActions({
           }
         }}
       >
-        <DialogContent
-          size="sm"
-          showClose={!pending}
-        >
+        <DialogContent size="sm" showClose={!pending}>
           {selected !== null && selectedAction ? (
             <>
               <DialogHeader>
-                <DialogTitle>
-                  {selectedAction.label}?
-                </DialogTitle>
+                <DialogTitle>{selectedAction.label}?</DialogTitle>
 
                 <DialogDescription>
-                  Anda akan mengubah status{' '}
-                  <strong>{name}</strong> dari{' '}
-                  {STATUS_LABELS[status]} menjadi{' '}
-                  {STATUS_LABELS[selectedAction.target]}.
+                  Anda akan mengubah status <strong>{name}</strong> dari {STATUS_LABELS[status]}{' '}
+                  menjadi {STATUS_LABELS[selectedAction.target]}.
                 </DialogDescription>
               </DialogHeader>
 
-              <p className="rounded-md border border-border bg-sunken p-3 text-body-sm text-fg-muted">
+              <p className="border-border bg-sunken text-body-sm text-fg-muted rounded-md border p-3">
                 {selectedAction.consequence}
               </p>
 
               {error ? (
-                <Alert
-                  tone="danger"
-                  title="Aksi tidak dapat diselesaikan"
-                >
+                <Alert tone="danger" title="Aksi tidak dapat diselesaikan">
                   {error}
                 </Alert>
               ) : null}
 
               <DialogFooter>
                 <DialogClose asChild>
-                  <Button
-                    variant="secondary"
-                    disabled={pending}
-                  >
+                  <Button variant="secondary" disabled={pending}>
                     Batal
                   </Button>
                 </DialogClose>
 
-                <Button
-                  variant={selectedAction.variant}
-                  loading={pending}
-                  onClick={confirm}
-                >
+                <Button variant={selectedAction.variant} loading={pending} onClick={confirm}>
                   {selectedAction.label}
                 </Button>
               </DialogFooter>
@@ -296,4 +268,3 @@ export function OwnershipOfferingActions({
     </>
   )
 }
-

@@ -9,7 +9,11 @@ import { formatDateTime } from '@/lib/format'
 
 export const metadata: Metadata = { title: 'Percakapan' }
 
-export default async function InvestorMessageThreadPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function InvestorMessageThreadPage({
+  params,
+}: {
+  params: Promise<{ id: string }>
+}) {
   const principal = await requireInvestorPage()
   const { id } = await params
   const supabase = await getServerSupabase()
@@ -31,21 +35,36 @@ export default async function InvestorMessageThreadPage({ params }: { params: Pr
 
   return (
     <Stack gap={8}>
-      <PageHeader eyebrow="Messages" title={thread.subject} description={thread.is_closed ? 'Percakapan ditutup.' : 'Percakapan aktif dengan tim Nuzultrip.'} />
+      <PageHeader
+        eyebrow="Messages"
+        title={thread.subject}
+        description={
+          thread.is_closed ? 'Percakapan ditutup.' : 'Percakapan aktif dengan tim Nuzultrip.'
+        }
+      />
       <Card>
-        <CardHeader><CardTitle>Riwayat percakapan</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle>Riwayat percakapan</CardTitle>
+        </CardHeader>
         <CardBody>
           {!messages?.length ? (
             <EmptyState title="Belum ada pesan" description="Percakapan belum memiliki pesan." />
           ) : (
             <ol className="flex flex-col gap-4">
               {messages.map((message) => (
-                <li key={message.id} className="rounded-xl border border-border-subtle p-4">
+                <li key={message.id} className="border-border-subtle rounded-xl border p-4">
                   <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                    <span className="text-body-sm font-medium">{message.sender_label || (message.sender_id === principal.userId ? 'Anda' : 'Tim Nuzultrip')}</span>
-                    <time className="text-caption text-fg-subtle">{formatDateTime(message.sent_at, { timeZone: principal.timezone })}</time>
+                    <span className="text-body-sm font-medium">
+                      {message.sender_label ||
+                        (message.sender_id === principal.userId ? 'Anda' : 'Tim Nuzultrip')}
+                    </span>
+                    <time className="text-caption text-fg-subtle">
+                      {formatDateTime(message.sent_at, { timeZone: principal.timezone })}
+                    </time>
                   </div>
-                  <p className="whitespace-pre-wrap text-body-sm text-fg-muted">{message.body_text}</p>
+                  <p className="text-body-sm text-fg-muted whitespace-pre-wrap">
+                    {message.body_text}
+                  </p>
                 </li>
               ))}
             </ol>

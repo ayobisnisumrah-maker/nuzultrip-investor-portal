@@ -1,10 +1,6 @@
 ﻿import type { SupabaseClient } from '@supabase/supabase-js'
 
-export type OwnershipHoldingStatus =
-  | 'reserved'
-  | 'active'
-  | 'transferred'
-  | 'cancelled'
+export type OwnershipHoldingStatus = 'reserved' | 'active' | 'transferred' | 'cancelled'
 
 export type OwnershipHolding = {
   id: string
@@ -49,7 +45,6 @@ type OwnershipHoldingRow = {
   updated_at: string
 }
 
-
 type OwnershipOfferingRow = {
   id: string
   status: 'draft' | 'open' | 'paused' | 'closed' | 'archived'
@@ -61,13 +56,7 @@ type OwnershipOfferingRow = {
 type InvestorRow = {
   id: string
   status:
-    | 'prospective'
-    | 'submitted'
-    | 'under_review'
-    | 'approved'
-    | 'rejected'
-    | 'active'
-    | 'inactive'
+    'prospective' | 'submitted' | 'under_review' | 'approved' | 'rejected' | 'active' | 'inactive'
 }
 type DbClient = SupabaseClient
 
@@ -113,10 +102,7 @@ function validateUnits(units: number): void {
   }
 }
 
-function calculateTransferEligibleAt(
-  acquisitionAt: string,
-  transferLockMonths: number,
-): string {
+function calculateTransferEligibleAt(acquisitionAt: string, transferLockMonths: number): string {
   const date = new Date(acquisitionAt)
 
   if (Number.isNaN(date.getTime())) {
@@ -128,18 +114,14 @@ function calculateTransferEligibleAt(
   return date.toISOString()
 }
 
-export async function listOwnershipHoldings(
-  supabase: DbClient,
-): Promise<OwnershipHolding[]> {
+export async function listOwnershipHoldings(supabase: DbClient): Promise<OwnershipHolding[]> {
   const { data, error } = await supabase
     .from('ownership_holdings')
     .select(HOLDING_SELECT)
     .order('created_at', { ascending: false })
 
   if (error) {
-    throw new Error(
-      `Gagal mengambil kepemilikan investor: ${error.message}`,
-    )
+    throw new Error(`Gagal mengambil kepemilikan investor: ${error.message}`)
   }
 
   const rows = (data ?? []) as OwnershipHoldingRow[]
@@ -158,9 +140,7 @@ export async function getOwnershipHolding(
     .maybeSingle()
 
   if (error) {
-    throw new Error(
-      `Gagal mengambil kepemilikan investor: ${error.message}`,
-    )
+    throw new Error(`Gagal mengambil kepemilikan investor: ${error.message}`)
   }
 
   if (!data) {
@@ -183,9 +163,7 @@ export async function createOwnershipHolding(
     .maybeSingle()
 
   if (investorError) {
-    throw new Error(
-      `Gagal memeriksa investor: ${investorError.message}`,
-    )
+    throw new Error(`Gagal memeriksa investor: ${investorError.message}`)
   }
 
   if (!investor) {
@@ -194,10 +172,7 @@ export async function createOwnershipHolding(
 
   const investorStatus = investor.status as InvestorRow['status']
 
-  if (
-    investorStatus !== 'approved' &&
-    investorStatus !== 'active'
-  ) {
+  if (investorStatus !== 'approved' && investorStatus !== 'active') {
     throw new Error(
       'Investor harus berstatus approved atau active sebelum kepemilikan dapat dialokasikan.',
     )
@@ -205,73 +180,52 @@ export async function createOwnershipHolding(
 
   const { data: offering, error: offeringError } = await supabase
     .from('ownership_offerings')
-    .select(
-      'id, status, unit_ownership_bps, total_units, transfer_lock_months',
-    )
+    .select('id, status, unit_ownership_bps, total_units, transfer_lock_months')
     .eq('id', input.offering_id)
     .maybeSingle()
 
   if (offeringError) {
-    throw new Error(
-      `Gagal memeriksa penawaran kepemilikan: ${offeringError.message}`,
-    )
+    throw new Error(`Gagal memeriksa penawaran kepemilikan: ${offeringError.message}`)
   }
 
   if (!offering) {
     throw new Error('Penawaran kepemilikan tidak ditemukan.')
   }
 
-  const offeringStatus =
-    offering.status as OwnershipOfferingRow['status']
+  const offeringStatus = offering.status as OwnershipOfferingRow['status']
 
   const unitOwnershipBps = Number(offering.unit_ownership_bps)
   const totalUnits = Number(offering.total_units)
   const transferLockMonths = Number(offering.transfer_lock_months)
 
   if (offeringStatus !== 'open') {
-    throw new Error(
-      'Kepemilikan hanya dapat dialokasikan pada penawaran yang berstatus open.',
-    )
+    throw new Error('Kepemilikan hanya dapat dialokasikan pada penawaran yang berstatus open.')
   }
 
   if (!Number.isInteger(unitOwnershipBps) || unitOwnershipBps <= 0) {
-    throw new Error(
-      'Unit ownership BPS pada penawaran tidak valid.',
-    )
+    throw new Error('Unit ownership BPS pada penawaran tidak valid.')
   }
 
   if (!Number.isInteger(totalUnits) || totalUnits <= 0) {
-    throw new Error(
-      'Total unit pada penawaran tidak valid.',
-    )
+    throw new Error('Total unit pada penawaran tidak valid.')
   }
 
-  if (
-    !Number.isInteger(transferLockMonths) ||
-    transferLockMonths < 0
-  ) {
-    throw new Error(
-      'Periode transfer lock pada penawaran tidak valid.',
-    )
+  if (!Number.isInteger(transferLockMonths) || transferLockMonths < 0) {
+    throw new Error('Periode transfer lock pada penawaran tidak valid.')
   }
 
   if (input.units > totalUnits) {
-    throw new Error(
-      'Jumlah unit yang dialokasikan melebihi total unit penawaran.',
-    )
+    throw new Error('Jumlah unit yang dialokasikan melebihi total unit penawaran.')
   }
 
-  const { data: existingHoldings, error: holdingsError } =
-    await supabase
-      .from('ownership_holdings')
-      .select('units')
-      .eq('offering_id', input.offering_id)
-      .in('status', ['reserved', 'active'])
+  const { data: existingHoldings, error: holdingsError } = await supabase
+    .from('ownership_holdings')
+    .select('units')
+    .eq('offering_id', input.offering_id)
+    .in('status', ['reserved', 'active'])
 
   if (holdingsError) {
-    throw new Error(
-      `Gagal memeriksa unit yang telah dialokasikan: ${holdingsError.message}`,
-    )
+    throw new Error(`Gagal memeriksa unit yang telah dialokasikan: ${holdingsError.message}`)
   }
 
   const allocatedUnits = (existingHoldings ?? []).reduce(
@@ -282,26 +236,18 @@ export async function createOwnershipHolding(
   const remainingUnits = totalUnits - allocatedUnits
 
   if (input.units > remainingUnits) {
-    throw new Error(
-      `Unit yang tersedia tidak mencukupi. Sisa unit: ${remainingUnits}.`,
-    )
+    throw new Error(`Unit yang tersedia tidak mencukupi. Sisa unit: ${remainingUnits}.`)
   }
 
-  const ownershipBps =
-    input.units * unitOwnershipBps
+  const ownershipBps = input.units * unitOwnershipBps
 
   if (ownershipBps <= 0) {
-    throw new Error(
-      'Persentase kepemilikan hasil perhitungan tidak valid.',
-    )
+    throw new Error('Persentase kepemilikan hasil perhitungan tidak valid.')
   }
 
   const acquisitionAt = new Date().toISOString()
 
-  const transferEligibleAt = calculateTransferEligibleAt(
-    acquisitionAt,
-    transferLockMonths,
-  )
+  const transferEligibleAt = calculateTransferEligibleAt(acquisitionAt, transferLockMonths)
 
   const { data, error } = await supabase
     .from('ownership_holdings')
@@ -313,8 +259,7 @@ export async function createOwnershipHolding(
       acquisition_at: acquisitionAt,
       transfer_eligible_at: transferEligibleAt,
       status: 'reserved',
-      acquisition_reference:
-        input.acquisition_reference?.trim() || null,
+      acquisition_reference: input.acquisition_reference?.trim() || null,
       notes: input.notes?.trim() || null,
       created_by: input.created_by,
       updated_by: input.created_by,
@@ -323,17 +268,12 @@ export async function createOwnershipHolding(
     .single()
 
   if (error) {
-    throw new Error(
-      `Gagal membuat kepemilikan investor: ${error.message}`,
-    )
+    throw new Error(`Gagal membuat kepemilikan investor: ${error.message}`)
   }
 
   if (!data) {
-    throw new Error(
-      'Kepemilikan investor berhasil dibuat tetapi data hasil insert tidak tersedia.',
-    )
+    throw new Error('Kepemilikan investor berhasil dibuat tetapi data hasil insert tidak tersedia.')
   }
 
   return mapHolding(data)
 }
-

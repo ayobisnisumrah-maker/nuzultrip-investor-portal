@@ -14,22 +14,20 @@ export function PortalSectionPage({
 }) {
   if (!currentPermission) {
     return (
-      <div className="rounded-xl border border-border bg-surface p-6">
-        <h1 className="font-display text-heading-lg text-fg">
-          Akses Ditolak
-        </h1>
+      <div className="border-border bg-surface rounded-xl border p-6">
+        <h1 className="font-display text-heading-lg text-fg">Akses Ditolak</h1>
 
-        <p className="mt-2 text-body-sm text-fg-muted">
+        <p className="text-body-sm text-fg-muted mt-2">
           Anda tidak memiliki izin untuk mengakses modul ini.
         </p>
 
-        <p className="mt-3 text-caption text-fg-subtle">
+        <p className="text-caption text-fg-subtle mt-3">
           Permission: <code>{permission}</code>
         </p>
 
         <Link
           href="/admin"
-          className="mt-5 inline-flex h-9 items-center rounded-lg border border-border px-3 text-sm font-medium text-fg hover:bg-muted"
+          className="border-border text-fg hover:bg-muted mt-5 inline-flex h-9 items-center rounded-lg border px-3 text-sm font-medium"
         >
           Kembali ke Dasbor
         </Link>
@@ -40,27 +38,21 @@ export function PortalSectionPage({
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-caption font-medium uppercase tracking-[0.14em] text-fg-subtle">
+        <p className="text-caption text-fg-subtle font-medium tracking-[0.14em] uppercase">
           Portal & Content
         </p>
 
-        <h1 className="mt-1 font-display text-heading-lg text-fg">
-          {title}
-        </h1>
+        <h1 className="font-display text-heading-lg text-fg mt-1">{title}</h1>
 
-        <p className="mt-2 max-w-2xl text-body-sm text-fg-muted">
-          {description}
-        </p>
+        <p className="text-body-sm text-fg-muted mt-2 max-w-2xl">{description}</p>
       </div>
 
-      <div className="rounded-xl border border-border bg-surface p-6">
-        <p className="text-body font-medium text-fg">
-          Modul siap dikembangkan
-        </p>
+      <div className="border-border bg-surface rounded-xl border p-6">
+        <p className="text-body text-fg font-medium">Modul siap dikembangkan</p>
 
-        <p className="mt-1 text-body-sm text-fg-muted">
-          Struktur akses dan permission sudah aktif. Konten dan workflow
-          production akan dihubungkan ke database pada tahap berikutnya.
+        <p className="text-body-sm text-fg-muted mt-1">
+          Struktur akses dan permission sudah aktif. Konten dan workflow production akan dihubungkan
+          ke database pada tahap berikutnya.
         </p>
       </div>
     </div>

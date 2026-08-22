@@ -55,7 +55,9 @@ function run() {
   }
 
   try {
-    console.log(`Generating database types from ${remote ? 'Supabase remote' : 'local migration'} schema...`)
+    console.log(
+      `Generating database types from ${remote ? 'Supabase remote' : 'local migration'} schema...`,
+    )
     return execSync(`supabase ${cliArgs.join(' ')}`, {
       cwd: root,
       encoding: 'utf8',
@@ -93,4 +95,3 @@ if (checkOnly) {
 mkdirSync(dirname(outputPath), { recursive: true })
 writeFileSync(outputPath, generated, 'utf8')
 console.log(`Wrote ${outputPath}`)
-

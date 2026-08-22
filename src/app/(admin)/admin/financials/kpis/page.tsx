@@ -2,10 +2,7 @@
 import { AdminModulePage } from '@/features/admin/admin-module-page'
 
 export default async function FinancialKpisPage() {
-  const principal = await adminWithPermission(
-    'financial_reports.view',
-    '/admin/financials/kpis',
-  )
+  const principal = await adminWithPermission('financial_reports.view', '/admin/financials/kpis')
 
   return (
     <AdminModulePage

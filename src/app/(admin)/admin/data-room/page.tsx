@@ -2,10 +2,7 @@
 import { AdminModulePage } from '@/features/admin/admin-module-page'
 
 export default async function DataRoomPage() {
-  const principal = await adminWithPermission(
-    'documents.view',
-    '/admin/data-room',
-  )
+  const principal = await adminWithPermission('documents.view', '/admin/data-room')
 
   return (
     <AdminModulePage

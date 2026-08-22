@@ -9,10 +9,7 @@ import {
   type CreateOwnershipHoldingInput,
 } from '@/server/ownership/holding-service'
 
-import {
-  defineAction,
-  requirePermission,
-} from '@/server/auth/guards'
+import { defineAction, requirePermission } from '@/server/auth/guards'
 
 import { z } from 'zod'
 
@@ -70,4 +67,3 @@ export const createOwnershipHoldingAction = defineAction({
     return holding
   },
 })
-

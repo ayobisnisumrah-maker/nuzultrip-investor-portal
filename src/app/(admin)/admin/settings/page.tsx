@@ -25,7 +25,7 @@ export default async function AdminSettingsPage() {
       <section className="flex flex-col gap-5">
         <div>
           <h2 className="font-display text-heading-md text-fg">Email</h2>
-          <p className="mt-1 text-body-sm text-fg-muted">
+          <p className="text-body-sm text-fg-muted mt-1">
             Konfigurasi identitas pengirim dan perilaku notifikasi email aplikasi.
           </p>
         </div>

@@ -20,9 +20,16 @@ export default async function InvestorDocumentsPage() {
 
   return (
     <Stack gap={8}>
-      <PageHeader eyebrow="Protected Content" title="Dokumen & Data Room" description="Dokumen yang tersedia untuk akun investor Anda." />
+      <PageHeader
+        eyebrow="Protected Content"
+        title="Dokumen & Data Room"
+        description="Dokumen yang tersedia untuk akun investor Anda."
+      />
       {!documents?.length ? (
-        <EmptyState title="Belum ada dokumen" description="Dokumen yang telah dipublikasikan untuk investor akan muncul di sini." />
+        <EmptyState
+          title="Belum ada dokumen"
+          description="Dokumen yang telah dipublikasikan untuk investor akan muncul di sini."
+        />
       ) : (
         <div className="grid gap-4 lg:grid-cols-2">
           {documents.map((document) => (
@@ -32,8 +39,10 @@ export default async function InvestorDocumentsPage() {
               </CardHeader>
               <CardBody>
                 <div className="flex flex-col gap-3">
-                  <p className="text-body-sm text-fg-muted">{document.summary || 'Dokumen investor.'}</p>
-                  <div className="flex flex-wrap gap-2 text-caption text-fg-subtle">
+                  <p className="text-body-sm text-fg-muted">
+                    {document.summary || 'Dokumen investor.'}
+                  </p>
+                  <div className="text-caption text-fg-subtle flex flex-wrap gap-2">
                     <span>{document.kind}</span>
                     <span>•</span>
                     <span>{document.visibility}</span>
@@ -41,7 +50,7 @@ export default async function InvestorDocumentsPage() {
                   {document.published_version_id ? (
                     <a
                       href={`/investor/documents/${document.id}`}
-                      className="text-body-sm font-medium text-link hover:underline"
+                      className="text-body-sm text-link font-medium hover:underline"
                     >
                       Buka dokumen →
                     </a>

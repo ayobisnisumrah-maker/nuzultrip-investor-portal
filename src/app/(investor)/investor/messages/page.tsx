@@ -42,21 +42,39 @@ export default async function InvestorMessagesPage() {
 
   return (
     <Stack gap={8}>
-      <PageHeader eyebrow="Investor Relations" title="Pesan" description="Percakapan Anda dengan tim Nuzultrip." />
+      <PageHeader
+        eyebrow="Investor Relations"
+        title="Pesan"
+        description="Percakapan Anda dengan tim Nuzultrip."
+      />
       {!threads?.length ? (
-        <EmptyState title="Belum ada percakapan" description="Pesan dari tim Nuzultrip akan muncul di sini." />
+        <EmptyState
+          title="Belum ada percakapan"
+          description="Pesan dari tim Nuzultrip akan muncul di sini."
+        />
       ) : (
         <div className="grid gap-4">
           {threads.map((thread) => {
             const latest = latestByThread.get(thread.id)
             return (
               <Card key={thread.id}>
-                <CardHeader><CardTitle>{thread.subject}</CardTitle></CardHeader>
+                <CardHeader>
+                  <CardTitle>{thread.subject}</CardTitle>
+                </CardHeader>
                 <CardBody>
-                  <div className="flex flex-col gap-2 text-body-sm">
-                    <div className="text-caption text-fg-subtle">{thread.thread_kind} · {thread.is_closed ? 'Ditutup' : 'Aktif'}</div>
-                    <p className="line-clamp-2 text-fg-muted">{latest?.body_text ?? 'Belum ada pesan.'}</p>
-                    <a href={`/investor/messages/${thread.id}`} className="text-link hover:underline">Buka percakapan →</a>
+                  <div className="text-body-sm flex flex-col gap-2">
+                    <div className="text-caption text-fg-subtle">
+                      {thread.thread_kind} · {thread.is_closed ? 'Ditutup' : 'Aktif'}
+                    </div>
+                    <p className="text-fg-muted line-clamp-2">
+                      {latest?.body_text ?? 'Belum ada pesan.'}
+                    </p>
+                    <a
+                      href={`/investor/messages/${thread.id}`}
+                      className="text-link hover:underline"
+                    >
+                      Buka percakapan →
+                    </a>
                   </div>
                 </CardBody>
               </Card>

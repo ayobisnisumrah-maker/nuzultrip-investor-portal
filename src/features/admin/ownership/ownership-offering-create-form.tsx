@@ -27,8 +27,7 @@ export function OwnershipOfferingCreateForm() {
   const [unitOwnershipPercent, setUnitOwnershipPercent] = useState('')
   const [unitPrice, setUnitPrice] = useState('')
   const [totalUnits, setTotalUnits] = useState('')
-  const [distributionCadenceMonths, setDistributionCadenceMonths] =
-    useState('6')
+  const [distributionCadenceMonths, setDistributionCadenceMonths] = useState('6')
   const [transferLockMonths, setTransferLockMonths] = useState('36')
   const [effectiveFrom, setEffectiveFrom] = useState('')
   const [effectiveUntil, setEffectiveUntil] = useState('')
@@ -48,23 +47,17 @@ export function OwnershipOfferingCreateForm() {
 
     setError(null)
 
-    const parsedTotalOfferedPercent =
-      Number(totalOfferedPercent)
+    const parsedTotalOfferedPercent = Number(totalOfferedPercent)
 
-    const parsedUnitOwnershipPercent =
-      Number(unitOwnershipPercent)
+    const parsedUnitOwnershipPercent = Number(unitOwnershipPercent)
 
-    const parsedUnitPrice =
-      Number(unitPrice)
+    const parsedUnitPrice = Number(unitPrice)
 
-    const parsedTotalUnits =
-      Number(totalUnits)
+    const parsedTotalUnits = Number(totalUnits)
 
-    const parsedCadence =
-      Number(distributionCadenceMonths)
+    const parsedCadence = Number(distributionCadenceMonths)
 
-    const parsedTransferLock =
-      Number(transferLockMonths)
+    const parsedTransferLock = Number(transferLockMonths)
 
     if (!name.trim()) {
       setError('Nama penawaran wajib diisi.')
@@ -94,27 +87,17 @@ export function OwnershipOfferingCreateForm() {
       return
     }
 
-    if (
-      !Number.isFinite(parsedUnitPrice) ||
-      parsedUnitPrice <= 0
-    ) {
+    if (!Number.isFinite(parsedUnitPrice) || parsedUnitPrice <= 0) {
       setError('Harga per unit harus lebih besar dari 0.')
       return
     }
 
-    if (
-      !Number.isInteger(parsedTotalUnits) ||
-      parsedTotalUnits <= 0
-    ) {
+    if (!Number.isInteger(parsedTotalUnits) || parsedTotalUnits <= 0) {
       setError('Total unit harus berupa bilangan bulat lebih besar dari 0.')
       return
     }
 
-    if (
-      !Number.isInteger(parsedCadence) ||
-      parsedCadence < 1 ||
-      parsedCadence > 24
-    ) {
+    if (!Number.isInteger(parsedCadence) || parsedCadence < 1 || parsedCadence > 24) {
       setError('Periode distribusi harus antara 1 sampai 24 bulan.')
       return
     }
@@ -131,8 +114,7 @@ export function OwnershipOfferingCreateForm() {
     if (
       effectiveFrom &&
       effectiveUntil &&
-      new Date(`${effectiveUntil}T00:00:00`) <=
-        new Date(`${effectiveFrom}T00:00:00`)
+      new Date(`${effectiveUntil}T00:00:00`) <= new Date(`${effectiveFrom}T00:00:00`)
     ) {
       setError('Tanggal berakhir harus setelah tanggal mulai.')
       return
@@ -143,12 +125,8 @@ export function OwnershipOfferingCreateForm() {
         const result = await createOwnershipOffering({
           name: name.trim(),
           code: normalizeCode(code),
-          total_offered_bps: Math.round(
-            parsedTotalOfferedPercent * 100,
-          ),
-          unit_ownership_bps: Math.round(
-            parsedUnitOwnershipPercent * 100,
-          ),
+          total_offered_bps: Math.round(parsedTotalOfferedPercent * 100),
+          unit_ownership_bps: Math.round(parsedUnitOwnershipPercent * 100),
           unit_price: parsedUnitPrice,
           total_units: parsedTotalUnits,
           distribution_cadence_months: parsedCadence,
@@ -166,25 +144,17 @@ export function OwnershipOfferingCreateForm() {
         router.push('/admin/ownership/offerings')
         router.refresh()
       } catch (cause) {
-        setError(
-          cause instanceof Error
-            ? cause.message
-            : 'Gagal membuat penawaran kepemilikan.',
-        )
+        setError(cause instanceof Error ? cause.message : 'Gagal membuat penawaran kepemilikan.')
       }
     })
   }
 
   return (
     <section className="max-w-5xl space-y-6">
-      <div className="rounded-xl border border-border bg-surface p-6">
+      <div className="border-border bg-surface rounded-xl border p-6">
         <div className="grid gap-5 md:grid-cols-2">
-
           <div className="md:col-span-2">
-            <label
-              htmlFor="ownership-offering-name"
-              className="text-sm font-medium text-fg"
-            >
+            <label htmlFor="ownership-offering-name" className="text-fg text-sm font-medium">
               Nama Penawaran
             </label>
 
@@ -194,39 +164,29 @@ export function OwnershipOfferingCreateForm() {
               onChange={(event) => setName(event.target.value)}
               disabled={pending}
               placeholder="Contoh: Penawaran Saham Seri A"
-              className="mt-2 h-11 w-full rounded-lg border border-border bg-canvas px-3 text-sm text-fg outline-none focus:ring-2"
+              className="border-border bg-canvas text-fg mt-2 h-11 w-full rounded-lg border px-3 text-sm outline-none focus:ring-2"
             />
           </div>
 
           <div>
-            <label
-              htmlFor="ownership-offering-code"
-              className="text-sm font-medium text-fg"
-            >
+            <label htmlFor="ownership-offering-code" className="text-fg text-sm font-medium">
               Kode Penawaran
             </label>
 
             <input
               id="ownership-offering-code"
               value={code}
-              onChange={(event) =>
-                setCode(normalizeCode(event.target.value))
-              }
+              onChange={(event) => setCode(normalizeCode(event.target.value))}
               disabled={pending}
               placeholder="seri-a-2026"
-              className="mt-2 h-11 w-full rounded-lg border border-border bg-canvas px-3 text-sm text-fg outline-none focus:ring-2"
+              className="border-border bg-canvas text-fg mt-2 h-11 w-full rounded-lg border px-3 text-sm outline-none focus:ring-2"
             />
 
-            <p className="mt-1 text-xs text-fg-muted">
-              Gunakan lowercase kebab-case.
-            </p>
+            <p className="text-fg-muted mt-1 text-xs">Gunakan lowercase kebab-case.</p>
           </div>
 
           <div>
-            <label
-              htmlFor="ownership-offering-total"
-              className="text-sm font-medium text-fg"
-            >
+            <label htmlFor="ownership-offering-total" className="text-fg text-sm font-medium">
               Total Kepemilikan Ditawarkan (%)
             </label>
 
@@ -237,19 +197,17 @@ export function OwnershipOfferingCreateForm() {
               max="100"
               step="0.01"
               value={totalOfferedPercent}
-              onChange={(event) =>
-                setTotalOfferedPercent(event.target.value)
-              }
+              onChange={(event) => setTotalOfferedPercent(event.target.value)}
               disabled={pending}
               placeholder="40"
-              className="mt-2 h-11 w-full rounded-lg border border-border bg-canvas px-3 text-sm text-fg outline-none focus:ring-2"
+              className="border-border bg-canvas text-fg mt-2 h-11 w-full rounded-lg border px-3 text-sm outline-none focus:ring-2"
             />
           </div>
 
           <div>
             <label
               htmlFor="ownership-offering-unit-percent"
-              className="text-sm font-medium text-fg"
+              className="text-fg text-sm font-medium"
             >
               Kepemilikan per Unit (%)
             </label>
@@ -261,20 +219,15 @@ export function OwnershipOfferingCreateForm() {
               max="100"
               step="0.01"
               value={unitOwnershipPercent}
-              onChange={(event) =>
-                setUnitOwnershipPercent(event.target.value)
-              }
+              onChange={(event) => setUnitOwnershipPercent(event.target.value)}
               disabled={pending}
               placeholder="0.8"
-              className="mt-2 h-11 w-full rounded-lg border border-border bg-canvas px-3 text-sm text-fg outline-none focus:ring-2"
+              className="border-border bg-canvas text-fg mt-2 h-11 w-full rounded-lg border px-3 text-sm outline-none focus:ring-2"
             />
           </div>
 
           <div>
-            <label
-              htmlFor="ownership-offering-unit-price"
-              className="text-sm font-medium text-fg"
-            >
+            <label htmlFor="ownership-offering-unit-price" className="text-fg text-sm font-medium">
               Harga per Unit (Rp)
             </label>
 
@@ -284,20 +237,15 @@ export function OwnershipOfferingCreateForm() {
               min="1"
               step="1000"
               value={unitPrice}
-              onChange={(event) =>
-                setUnitPrice(event.target.value)
-              }
+              onChange={(event) => setUnitPrice(event.target.value)}
               disabled={pending}
               placeholder="10000000"
-              className="mt-2 h-11 w-full rounded-lg border border-border bg-canvas px-3 text-sm text-fg outline-none focus:ring-2"
+              className="border-border bg-canvas text-fg mt-2 h-11 w-full rounded-lg border px-3 text-sm outline-none focus:ring-2"
             />
           </div>
 
           <div>
-            <label
-              htmlFor="ownership-offering-total-units"
-              className="text-sm font-medium text-fg"
-            >
+            <label htmlFor="ownership-offering-total-units" className="text-fg text-sm font-medium">
               Total Unit
             </label>
 
@@ -307,31 +255,24 @@ export function OwnershipOfferingCreateForm() {
               min="1"
               step="1"
               value={totalUnits}
-              onChange={(event) =>
-                setTotalUnits(event.target.value)
-              }
+              onChange={(event) => setTotalUnits(event.target.value)}
               disabled={pending}
               placeholder="500"
-              className="mt-2 h-11 w-full rounded-lg border border-border bg-canvas px-3 text-sm text-fg outline-none focus:ring-2"
+              className="border-border bg-canvas text-fg mt-2 h-11 w-full rounded-lg border px-3 text-sm outline-none focus:ring-2"
             />
           </div>
 
           <div>
-            <label
-              htmlFor="ownership-offering-cadence"
-              className="text-sm font-medium text-fg"
-            >
+            <label htmlFor="ownership-offering-cadence" className="text-fg text-sm font-medium">
               Periode Distribusi
             </label>
 
             <select
               id="ownership-offering-cadence"
               value={distributionCadenceMonths}
-              onChange={(event) =>
-                setDistributionCadenceMonths(event.target.value)
-              }
+              onChange={(event) => setDistributionCadenceMonths(event.target.value)}
               disabled={pending}
-              className="mt-2 h-11 w-full rounded-lg border border-border bg-canvas px-3 text-sm text-fg outline-none focus:ring-2"
+              className="border-border bg-canvas text-fg mt-2 h-11 w-full rounded-lg border px-3 text-sm outline-none focus:ring-2"
             >
               <option value="1">Setiap 1 bulan</option>
               <option value="3">Setiap 3 bulan</option>
@@ -342,21 +283,16 @@ export function OwnershipOfferingCreateForm() {
           </div>
 
           <div>
-            <label
-              htmlFor="ownership-offering-lock"
-              className="text-sm font-medium text-fg"
-            >
+            <label htmlFor="ownership-offering-lock" className="text-fg text-sm font-medium">
               Transfer Lock
             </label>
 
             <select
               id="ownership-offering-lock"
               value={transferLockMonths}
-              onChange={(event) =>
-                setTransferLockMonths(event.target.value)
-              }
+              onChange={(event) => setTransferLockMonths(event.target.value)}
               disabled={pending}
-              className="mt-2 h-11 w-full rounded-lg border border-border bg-canvas px-3 text-sm text-fg outline-none focus:ring-2"
+              className="border-border bg-canvas text-fg mt-2 h-11 w-full rounded-lg border px-3 text-sm outline-none focus:ring-2"
             >
               <option value="36">36 bulan</option>
               <option value="48">48 bulan</option>
@@ -370,7 +306,7 @@ export function OwnershipOfferingCreateForm() {
           <div>
             <label
               htmlFor="ownership-offering-effective-from"
-              className="text-sm font-medium text-fg"
+              className="text-fg text-sm font-medium"
             >
               Berlaku Mulai
             </label>
@@ -379,18 +315,16 @@ export function OwnershipOfferingCreateForm() {
               id="ownership-offering-effective-from"
               type="date"
               value={effectiveFrom}
-              onChange={(event) =>
-                setEffectiveFrom(event.target.value)
-              }
+              onChange={(event) => setEffectiveFrom(event.target.value)}
               disabled={pending}
-              className="mt-2 h-11 w-full rounded-lg border border-border bg-canvas px-3 text-sm text-fg outline-none focus:ring-2"
+              className="border-border bg-canvas text-fg mt-2 h-11 w-full rounded-lg border px-3 text-sm outline-none focus:ring-2"
             />
           </div>
 
           <div>
             <label
               htmlFor="ownership-offering-effective-until"
-              className="text-sm font-medium text-fg"
+              className="text-fg text-sm font-medium"
             >
               Berlaku Sampai
             </label>
@@ -399,32 +333,25 @@ export function OwnershipOfferingCreateForm() {
               id="ownership-offering-effective-until"
               type="date"
               value={effectiveUntil}
-              onChange={(event) =>
-                setEffectiveUntil(event.target.value)
-              }
+              onChange={(event) => setEffectiveUntil(event.target.value)}
               disabled={pending}
-              className="mt-2 h-11 w-full rounded-lg border border-border bg-canvas px-3 text-sm text-fg outline-none focus:ring-2"
+              className="border-border bg-canvas text-fg mt-2 h-11 w-full rounded-lg border px-3 text-sm outline-none focus:ring-2"
             />
           </div>
 
           <div className="md:col-span-2">
-            <label
-              htmlFor="ownership-offering-description"
-              className="text-sm font-medium text-fg"
-            >
+            <label htmlFor="ownership-offering-description" className="text-fg text-sm font-medium">
               Deskripsi
             </label>
 
             <textarea
               id="ownership-offering-description"
               value={description}
-              onChange={(event) =>
-                setDescription(event.target.value)
-              }
+              onChange={(event) => setDescription(event.target.value)}
               disabled={pending}
               rows={5}
               placeholder="Deskripsi internal atau informasi penawaran untuk investor."
-              className="mt-2 w-full rounded-lg border border-border bg-canvas px-3 py-3 text-sm text-fg outline-none focus:ring-2"
+              className="border-border bg-canvas text-fg mt-2 w-full rounded-lg border px-3 py-3 text-sm outline-none focus:ring-2"
             />
           </div>
         </div>
@@ -432,24 +359,18 @@ export function OwnershipOfferingCreateForm() {
 
       {error ? (
         <div className="rounded-xl border border-red-300 bg-red-50 p-4 text-red-800">
-          <p className="text-sm font-semibold">
-            Gagal membuat penawaran
-          </p>
+          <p className="text-sm font-semibold">Gagal membuat penawaran</p>
 
-          <p className="mt-1 text-sm">
-            {error}
-          </p>
+          <p className="mt-1 text-sm">{error}</p>
         </div>
       ) : null}
 
       <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
         <button
           type="button"
-          onClick={() =>
-            router.push('/admin/ownership/offerings')
-          }
+          onClick={() => router.push('/admin/ownership/offerings')}
           disabled={pending}
-          className="rounded-lg border border-border px-5 py-2.5 text-sm font-medium text-fg hover:bg-muted disabled:opacity-50"
+          className="border-border text-fg hover:bg-muted rounded-lg border px-5 py-2.5 text-sm font-medium disabled:opacity-50"
         >
           Batal
         </button>
@@ -466,7 +387,7 @@ export function OwnershipOfferingCreateForm() {
             !unitPrice ||
             !totalUnits
           }
-          className="rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-on-primary shadow-sm hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+          className="bg-primary text-on-primary rounded-lg px-5 py-2.5 text-sm font-medium shadow-sm hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {pending ? 'Menyimpan...' : 'Simpan Penawaran'}
         </button>

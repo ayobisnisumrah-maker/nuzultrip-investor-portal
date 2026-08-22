@@ -28,27 +28,33 @@ export default async function InvestorOverviewPage() {
     .order('created_at', { ascending: false })
     .limit(10)
 
-  let holdings: Array<{ id: string; units: number | string; ownership_bps: number | string; status: string }> = []
+  let holdings: Array<{
+    id: string
+    units: number | string
+    ownership_bps: number | string
+    status: string
+  }> = []
   let documentCount = 0
   let financialReportCount = 0
 
   if (principal.hasDataAccess) {
-    const [{ data: holdingRows }, { count: documentsCount }, { count: reportsCount }] = await Promise.all([
-      supabase
-        .from('ownership_holdings')
-        .select('id, units, ownership_bps, status')
-        .eq('investor_id', principal.investorId),
-      supabase
-        .from('documents')
-        .select('id', { count: 'exact', head: true })
-        .eq('status', 'published')
-        .in('visibility', ['investors', 'restricted']),
-      supabase
-        .from('financial_reports')
-        .select('id', { count: 'exact', head: true })
-        .eq('status', 'published')
-        .eq('visibility', 'investors'),
-    ])
+    const [{ data: holdingRows }, { count: documentsCount }, { count: reportsCount }] =
+      await Promise.all([
+        supabase
+          .from('ownership_holdings')
+          .select('id, units, ownership_bps, status')
+          .eq('investor_id', principal.investorId),
+        supabase
+          .from('documents')
+          .select('id', { count: 'exact', head: true })
+          .eq('status', 'published')
+          .in('visibility', ['investors', 'restricted']),
+        supabase
+          .from('financial_reports')
+          .select('id', { count: 'exact', head: true })
+          .eq('status', 'published')
+          .eq('visibility', 'investors'),
+      ])
 
     holdings = holdingRows ?? []
     documentCount = documentsCount ?? 0
@@ -56,7 +62,10 @@ export default async function InvestorOverviewPage() {
   }
 
   const totalUnits = holdings.reduce((sum, holding) => sum + Number(holding.units), 0)
-  const totalOwnershipBps = holdings.reduce((sum, holding) => sum + Number(holding.ownership_bps), 0)
+  const totalOwnershipBps = holdings.reduce(
+    (sum, holding) => sum + Number(holding.ownership_bps),
+    0,
+  )
   const activeHoldings = holdings.filter((holding) => holding.status === 'active').length
 
   return (
@@ -87,8 +96,13 @@ export default async function InvestorOverviewPage() {
           <Card>
             <CardBody>
               <div className="text-caption text-fg-subtle">Total unit</div>
-              <div className="mt-1 text-heading-lg font-semibold tabular">{totalUnits.toLocaleString('id-ID')}</div>
-              <Link href="/investor/ownership" className="mt-2 inline-block text-body-sm text-link hover:underline">
+              <div className="text-heading-lg tabular mt-1 font-semibold">
+                {totalUnits.toLocaleString('id-ID')}
+              </div>
+              <Link
+                href="/investor/ownership"
+                className="text-body-sm text-link mt-2 inline-block hover:underline"
+              >
                 Lihat kepemilikan →
               </Link>
             </CardBody>
@@ -96,17 +110,22 @@ export default async function InvestorOverviewPage() {
           <Card>
             <CardBody>
               <div className="text-caption text-fg-subtle">Total porsi</div>
-              <div className="mt-1 text-heading-lg font-semibold tabular">
+              <div className="text-heading-lg tabular mt-1 font-semibold">
                 {(totalOwnershipBps / 100).toLocaleString('id-ID', { maximumFractionDigits: 2 })}%
               </div>
-              <div className="mt-2 text-caption text-fg-subtle">{activeHoldings} holding aktif</div>
+              <div className="text-caption text-fg-subtle mt-2">{activeHoldings} holding aktif</div>
             </CardBody>
           </Card>
           <Card>
             <CardBody>
               <div className="text-caption text-fg-subtle">Dokumen tersedia</div>
-              <div className="mt-1 text-heading-lg font-semibold tabular">{documentCount.toLocaleString('id-ID')}</div>
-              <Link href="/investor/documents" className="mt-2 inline-block text-body-sm text-link hover:underline">
+              <div className="text-heading-lg tabular mt-1 font-semibold">
+                {documentCount.toLocaleString('id-ID')}
+              </div>
+              <Link
+                href="/investor/documents"
+                className="text-body-sm text-link mt-2 inline-block hover:underline"
+              >
                 Buka Data Room →
               </Link>
             </CardBody>
@@ -114,8 +133,13 @@ export default async function InvestorOverviewPage() {
           <Card>
             <CardBody>
               <div className="text-caption text-fg-subtle">Laporan keuangan</div>
-              <div className="mt-1 text-heading-lg font-semibold tabular">{financialReportCount.toLocaleString('id-ID')}</div>
-              <Link href="/investor/financials" className="mt-2 inline-block text-body-sm text-link hover:underline">
+              <div className="text-heading-lg tabular mt-1 font-semibold">
+                {financialReportCount.toLocaleString('id-ID')}
+              </div>
+              <Link
+                href="/investor/financials"
+                className="text-body-sm text-link mt-2 inline-block hover:underline"
+              >
                 Lihat laporan →
               </Link>
             </CardBody>

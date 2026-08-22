@@ -2,12 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 
 const PAYMENT_PROOF_BUCKET = 'profit-distribution-proofs'
 
-const ALLOWED_MIME_TYPES = [
-  'application/pdf',
-  'image/jpeg',
-  'image/png',
-  'image/webp',
-] as const
+const ALLOWED_MIME_TYPES = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'] as const
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024
 
@@ -50,22 +45,15 @@ function sanitizeFileName(fileName: string): string {
 
 function assertAllowedFile(file: File): void {
   if (!ALLOWED_MIME_TYPES.some((mimeType) => mimeType === file.type)) {
-    throw new Error(
-      'Format bukti transfer harus PDF, JPEG, PNG, atau WebP.',
-    )
+    throw new Error('Format bukti transfer harus PDF, JPEG, PNG, atau WebP.')
   }
 
   if (file.size <= 0 || file.size > MAX_FILE_SIZE) {
-    throw new Error(
-      'Ukuran bukti transfer harus lebih dari 0 dan maksimal 10 MB.',
-    )
+    throw new Error('Ukuran bukti transfer harus lebih dari 0 dan maksimal 10 MB.')
   }
 }
 
-async function getAllocation(
-  supabase: DbClient,
-  allocationId: string,
-): Promise<AllocationRow> {
+async function getAllocation(supabase: DbClient, allocationId: string): Promise<AllocationRow> {
   const { data, error } = await supabase
     .from('profit_distribution_allocations')
     .select(
@@ -80,9 +68,7 @@ async function getAllocation(
     .maybeSingle()
 
   if (error) {
-    throw new Error(
-      `Gagal mengambil allocation pembayaran: ${error.message}`,
-    )
+    throw new Error(`Gagal mengambil allocation pembayaran: ${error.message}`)
   }
 
   if (!data) {
@@ -118,9 +104,7 @@ export async function getPaymentProof(
     .maybeSingle()
 
   if (error) {
-    throw new Error(
-      `Gagal mengambil bukti transfer: ${error.message}`,
-    )
+    throw new Error(`Gagal mengambil bukti transfer: ${error.message}`)
   }
 
   return data
@@ -141,26 +125,16 @@ export async function uploadPaymentProof({
 }): Promise<PaymentProof> {
   assertAllowedFile(file)
 
-const allocation = await getAllocation(
-  supabase,
-  allocationId,
-)
+  const allocation = await getAllocation(supabase, allocationId)
 
-if (allocation.status !== 'payable') {
-  throw new Error(
-    'Bukti transfer hanya dapat diunggah untuk allocation dengan status payable.',
-  )
-}
+  if (allocation.status !== 'payable') {
+    throw new Error('Bukti transfer hanya dapat diunggah untuk allocation dengan status payable.')
+  }
 
-const existingProof = await getPaymentProof(
-  supabase,
-  allocationId,
-)
+  const existingProof = await getPaymentProof(supabase, allocationId)
 
   if (existingProof) {
-    throw new Error(
-      'Bukti transfer untuk investor ini sudah tersedia. Gunakan aksi ganti bukti.',
-    )
+    throw new Error('Bukti transfer untuk investor ini sudah tersedia. Gunakan aksi ganti bukti.')
   }
 
   const safeFileName = sanitizeFileName(file.name)
@@ -179,9 +153,7 @@ const existingProof = await getPaymentProof(
     })
 
   if (uploadError) {
-    throw new Error(
-      `Gagal mengunggah bukti transfer: ${uploadError.message}`,
-    )
+    throw new Error(`Gagal mengunggah bukti transfer: ${uploadError.message}`)
   }
 
   const { data, error } = await supabase
@@ -216,13 +188,9 @@ const existingProof = await getPaymentProof(
     .single()
 
   if (error) {
-    await supabase.storage
-      .from(PAYMENT_PROOF_BUCKET)
-      .remove([storagePath])
+    await supabase.storage.from(PAYMENT_PROOF_BUCKET).remove([storagePath])
 
-    throw new Error(
-      `Gagal menyimpan metadata bukti transfer: ${error.message}`,
-    )
+    throw new Error(`Gagal menyimpan metadata bukti transfer: ${error.message}`)
   }
 
   return data
@@ -235,16 +203,11 @@ export async function createPaymentProofSignedUrl(
 ): Promise<string> {
   const { data, error } = await supabase.storage
     .from(proof.storage_bucket)
-    .createSignedUrl(
-      proof.storage_path,
-      expiresInSeconds,
-    )
+    .createSignedUrl(proof.storage_path, expiresInSeconds)
 
   if (error || !data?.signedUrl) {
     throw new Error(
-      `Gagal membuat URL bukti transfer: ${
-        error?.message ?? 'Signed URL tidak tersedia.'
-      }`,
+      `Gagal membuat URL bukti transfer: ${error?.message ?? 'Signed URL tidak tersedia.'}`,
     )
   }
 

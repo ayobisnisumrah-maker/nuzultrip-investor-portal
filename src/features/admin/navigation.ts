@@ -106,7 +106,6 @@ export const ADMIN_NAVIGATION: readonly AdminNavSection[] = [
         icon: 'GitBranch',
         permission: 'ownership_inheritance.view',
       },
-
     ],
   },
 
@@ -140,7 +139,8 @@ export const ADMIN_NAVIGATION: readonly AdminNavSection[] = [
         label: 'KPI Keuangan',
         icon: 'ChartNoAxesColumnIncreasing',
         permission: 'financial_reports.view',
-      },      {
+      },
+      {
         href: '/admin/profit-distributions',
         label: 'Distribusi Bagi Hasil',
         icon: 'WalletCards',
@@ -291,4 +291,3 @@ export const ADMIN_NAVIGATION: readonly AdminNavSection[] = [
     ],
   },
 ]
-

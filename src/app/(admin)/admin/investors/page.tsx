@@ -1,13 +1,6 @@
 ﻿import type { Metadata } from 'next'
 import Link from 'next/link'
-import {
-  Building2,
-  ChevronLeft,
-  ChevronRight,
-  Search,
-  UserCheck,
-  Users,
-} from 'lucide-react'
+import { Building2, ChevronLeft, ChevronRight, Search, UserCheck, Users } from 'lucide-react'
 
 import {
   INVESTOR_STATUS_LABELS,
@@ -49,9 +42,7 @@ function parseStatus(value: string | undefined): InvestorStatus | undefined {
     : undefined
 }
 
-function parseInvestorType(
-  value: string | undefined,
-): InvestorType | undefined {
+function parseInvestorType(value: string | undefined): InvestorType | undefined {
   if (value === 'individual' || value === 'institution') {
     return value
   }
@@ -83,10 +74,7 @@ export default async function AdminInvestorsPage({
 
   if (!principal.permissions.has('investors.view')) {
     return (
-      <Alert
-        tone="info"
-        title="Akses terbatas"
-      >
+      <Alert tone="info" title="Akses terbatas">
         Peran Anda tidak memiliki izin untuk melihat data investor.
       </Alert>
     )
@@ -101,10 +89,7 @@ export default async function AdminInvestorsPage({
 
   const requestedPage = Number.parseInt(params.page ?? '1', 10)
 
-  const page =
-    Number.isFinite(requestedPage) && requestedPage > 0
-      ? requestedPage
-      : 1
+  const page = Number.isFinite(requestedPage) && requestedPage > 0 ? requestedPage : 1
 
   let query = supabase
     .from('investors')
@@ -128,9 +113,7 @@ export default async function AdminInvestorsPage({
   if (q) {
     const escaped = q.replace(/[%_]/g, '\\$&')
 
-    query = query.or(
-      `legal_name.ilike.%${escaped}%,reference_code.ilike.%${escaped}%`,
-    )
+    query = query.or(`legal_name.ilike.%${escaped}%,reference_code.ilike.%${escaped}%`)
   }
 
   if (status) {
@@ -144,11 +127,7 @@ export default async function AdminInvestorsPage({
   const from = (page - 1) * PAGE_SIZE
   const to = from + PAGE_SIZE - 1
 
-  const {
-    data: investors,
-    count,
-    error,
-  } = await query.range(from, to)
+  const { data: investors, count, error } = await query.range(from, to)
 
   if (error) {
     return (
@@ -159,10 +138,7 @@ export default async function AdminInvestorsPage({
           description="Kelola seluruh calon investor dan investor aktif."
         />
 
-        <Alert
-          tone="danger"
-          title="Data investor tidak dapat dimuat"
-        >
+        <Alert tone="danger" title="Data investor tidak dapat dimuat">
           Sistem gagal mengambil data investor. Silakan coba lagi.
         </Alert>
       </Stack>
@@ -170,40 +146,25 @@ export default async function AdminInvestorsPage({
   }
 
   const total = count ?? 0
-  const totalPages = Math.max(
-    1,
-    Math.ceil(total / PAGE_SIZE),
-  )
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
 
-  const { data: statusRows } = await supabase
-    .from('investors')
-    .select('status')
+  const { data: statusRows } = await supabase.from('investors').select('status')
 
-  const statusCounts = new Map<
-    InvestorStatus,
-    number
-  >()
+  const statusCounts = new Map<InvestorStatus, number>()
 
   for (const row of statusRows ?? []) {
     const value = row.status
 
-    statusCounts.set(
-      value,
-      (statusCounts.get(value) ?? 0) + 1,
-    )
+    statusCounts.set(value, (statusCounts.get(value) ?? 0) + 1)
   }
 
-  const activeCount =
-    statusCounts.get('active') ?? 0
+  const activeCount = statusCounts.get('active') ?? 0
 
-  const submittedCount =
-    statusCounts.get('submitted') ?? 0
+  const submittedCount = statusCounts.get('submitted') ?? 0
 
-  const reviewCount =
-    statusCounts.get('under_review') ?? 0
+  const reviewCount = statusCounts.get('under_review') ?? 0
 
-  const approvedCount =
-    statusCounts.get('approved') ?? 0
+  const approvedCount = statusCounts.get('approved') ?? 0
 
   const previousQuery =
     page > 1
@@ -229,10 +190,7 @@ export default async function AdminInvestorsPage({
     <Stack gap={8}>
       <RealtimeRefresher
         topic={topics.admin()}
-        kinds={[
-          'investor.applied',
-          'investor.status_changed',
-        ]}
+        kinds={['investor.applied', 'investor.status_changed']}
       />
 
       <PageHeader
@@ -246,60 +204,35 @@ export default async function AdminInvestorsPage({
           label="Total investor"
           value={formatNumber(total)}
           context="hasil sesuai filter"
-          icon={
-            <Users
-              aria-hidden="true"
-              className="size-4"
-            />
-          }
+          icon={<Users aria-hidden="true" className="size-4" />}
         />
 
         <StatCard
           label="Pengajuan baru"
           value={formatNumber(submittedCount)}
           context="status diajukan"
-          icon={
-            <UserCheck
-              aria-hidden="true"
-              className="size-4"
-            />
-          }
+          icon={<UserCheck aria-hidden="true" className="size-4" />}
         />
 
         <StatCard
           label="Dalam peninjauan"
           value={formatNumber(reviewCount)}
           context="sedang ditinjau"
-          icon={
-            <Search
-              aria-hidden="true"
-              className="size-4"
-            />
-          }
+          icon={<Search aria-hidden="true" className="size-4" />}
         />
 
         <StatCard
           label="Disetujui"
           value={formatNumber(approvedCount)}
           context="belum atau sudah aktif"
-          icon={
-            <UserCheck
-              aria-hidden="true"
-              className="size-4"
-            />
-          }
+          icon={<UserCheck aria-hidden="true" className="size-4" />}
         />
 
         <StatCard
           label="Aktif"
           value={formatNumber(activeCount)}
           context="akses investor aktif"
-          icon={
-            <Building2
-              aria-hidden="true"
-              className="size-4"
-            />
-          }
+          icon={<Building2 aria-hidden="true" className="size-4" />}
         />
       </Grid>
 
@@ -308,8 +241,7 @@ export default async function AdminInvestorsPage({
           <CardTitle>Daftar investor</CardTitle>
 
           <p className="text-body-sm text-fg-muted">
-            Data berasal langsung dari database investor
-            dan mengikuti permission akun Anda.
+            Data berasal langsung dari database investor dan mengikuti permission akun Anda.
           </p>
         </CardHeader>
 
@@ -319,37 +251,30 @@ export default async function AdminInvestorsPage({
             className="mb-5 grid gap-3 md:grid-cols-[minmax(0,1fr)_12rem_12rem_auto]"
           >
             <label className="relative">
-              <span className="sr-only">
-                Cari investor
-              </span>
+              <span className="sr-only">Cari investor</span>
 
               <Search
                 aria-hidden="true"
-                className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-fg-subtle"
+                className="text-fg-subtle pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2"
               />
 
               <input
                 name="q"
                 defaultValue={q}
                 placeholder="Cari nama atau reference code..."
-                className="h-10 w-full rounded-lg border border-border bg-canvas pl-9 pr-3 text-body-sm text-fg outline-none transition focus:border-accent-solid focus:ring-2 focus:ring-accent-solid/20"
+                className="border-border bg-canvas text-body-sm text-fg focus:border-accent-solid focus:ring-accent-solid/20 h-10 w-full rounded-lg border pr-3 pl-9 transition outline-none focus:ring-2"
               />
             </label>
 
             <select
               name="status"
               defaultValue={status ?? ''}
-              className="h-10 rounded-lg border border-border bg-canvas px-3 text-body-sm text-fg outline-none focus:border-accent-solid"
+              className="border-border bg-canvas text-body-sm text-fg focus:border-accent-solid h-10 rounded-lg border px-3 outline-none"
             >
-              <option value="">
-                Semua status
-              </option>
+              <option value="">Semua status</option>
 
               {INVESTOR_STATUSES.map((value) => (
-                <option
-                  key={value}
-                  value={value}
-                >
+                <option key={value} value={value}>
                   {INVESTOR_STATUS_LABELS[value]}
                 </option>
               ))}
@@ -358,24 +283,18 @@ export default async function AdminInvestorsPage({
             <select
               name="type"
               defaultValue={investorType ?? ''}
-              className="h-10 rounded-lg border border-border bg-canvas px-3 text-body-sm text-fg outline-none focus:border-accent-solid"
+              className="border-border bg-canvas text-body-sm text-fg focus:border-accent-solid h-10 rounded-lg border px-3 outline-none"
             >
-              <option value="">
-                Semua tipe
-              </option>
+              <option value="">Semua tipe</option>
 
-              <option value="individual">
-                Individu
-              </option>
+              <option value="individual">Individu</option>
 
-              <option value="institution">
-                Institusi
-              </option>
+              <option value="institution">Institusi</option>
             </select>
 
             <button
               type="submit"
-              className="h-10 rounded-lg bg-accent-solid px-4 text-body-sm font-medium text-accent-contrast transition hover:opacity-90"
+              className="bg-accent-solid text-body-sm text-accent-contrast h-10 rounded-lg px-4 font-medium transition hover:opacity-90"
             >
               Terapkan
             </button>
@@ -383,106 +302,67 @@ export default async function AdminInvestorsPage({
 
           {investors && investors.length > 0 ? (
             <>
-              <div className="overflow-x-auto rounded-lg border border-border">
+              <div className="border-border overflow-x-auto rounded-lg border">
                 <table className="w-full min-w-[900px] text-left">
-                  <thead className="border-b border-border bg-surface-muted">
+                  <thead className="border-border bg-surface-muted border-b">
                     <tr className="text-caption text-fg-subtle">
-                      <th className="px-4 py-3 font-medium">
-                        Investor
-                      </th>
+                      <th className="px-4 py-3 font-medium">Investor</th>
 
-                      <th className="px-4 py-3 font-medium">
-                        Tipe
-                      </th>
+                      <th className="px-4 py-3 font-medium">Tipe</th>
 
-                      <th className="px-4 py-3 font-medium">
-                        Lokasi
-                      </th>
+                      <th className="px-4 py-3 font-medium">Lokasi</th>
 
-                      <th className="px-4 py-3 font-medium">
-                        Status
-                      </th>
+                      <th className="px-4 py-3 font-medium">Status</th>
 
-                      <th className="px-4 py-3 font-medium">
-                        Pengajuan
-                      </th>
+                      <th className="px-4 py-3 font-medium">Pengajuan</th>
 
-                      <th className="px-4 py-3 text-right font-medium">
-                        Aksi
-                      </th>
+                      <th className="px-4 py-3 text-right font-medium">Aksi</th>
                     </tr>
                   </thead>
 
-                  <tbody className="divide-y divide-border">
+                  <tbody className="divide-border divide-y">
                     {investors.map((investor) => {
                       const label =
-                        investor.investor_type ===
-                        'institution'
-                          ? investor.organization_name ||
-                            'Institusi'
+                        investor.investor_type === 'institution'
+                          ? investor.organization_name || 'Institusi'
                           : investor.legal_name
 
                       return (
-                        <tr
-                          key={investor.id}
-                          className="transition hover:bg-surface-muted/60"
-                        >
+                        <tr key={investor.id} className="hover:bg-surface-muted/60 transition">
                           <td className="px-4 py-4">
                             <div className="min-w-0">
-                              <p className="text-body-sm font-medium text-fg">
-                                {label}
-                              </p>
+                              <p className="text-body-sm text-fg font-medium">{label}</p>
 
-                              <p className="mt-0.5 font-mono text-caption text-fg-subtle">
+                              <p className="text-caption text-fg-subtle mt-0.5 font-mono">
                                 {investor.reference_code}
                               </p>
                             </div>
                           </td>
 
-                          <td className="px-4 py-4 text-body-sm text-fg-muted">
-                            {investor.investor_type ===
-                            'institution'
-                              ? 'Institusi'
-                              : 'Individu'}
+                          <td className="text-body-sm text-fg-muted px-4 py-4">
+                            {investor.investor_type === 'institution' ? 'Institusi' : 'Individu'}
                           </td>
 
-                          <td className="px-4 py-4 text-body-sm text-fg-muted">
-                            {[
-                              investor.city,
-                              investor.country,
-                            ]
-                              .filter(Boolean)
-                              .join(', ') || '—'}
+                          <td className="text-body-sm text-fg-muted px-4 py-4">
+                            {[investor.city, investor.country].filter(Boolean).join(', ') || '—'}
                           </td>
 
                           <td className="px-4 py-4">
-                            <InvestorStatusPill
-                              status={
-                                investor.status
-                              }
-                              size="sm"
-                            />
+                            <InvestorStatusPill status={investor.status} size="sm" />
                           </td>
 
-                          <td className="px-4 py-4 font-mono text-caption text-fg-muted">
+                          <td className="text-caption text-fg-muted px-4 py-4 font-mono">
                             {investor.applied_at
-                              ? new Intl.DateTimeFormat(
-                                  'id-ID',
-                                  {
-                                    dateStyle: 'medium',
-                                  },
-                                ).format(
-                                  new Date(
-                                    investor.applied_at,
-                                  ),
-                                )
+                              ? new Intl.DateTimeFormat('id-ID', {
+                                  dateStyle: 'medium',
+                                }).format(new Date(investor.applied_at))
                               : '—'}
                           </td>
 
                           <td className="px-4 py-4 text-right">
                             <Link
                               href={`/admin/investors/${investor.id}`}
-                              className="inline-flex h-9 items-center rounded-lg border border-border px-3 text-body-sm font-medium text-fg transition hover:bg-surface-muted"
+                              className="border-border text-body-sm text-fg hover:bg-surface-muted inline-flex h-9 items-center rounded-lg border px-3 font-medium transition"
                             >
                               Detail
                             </Link>
@@ -496,24 +376,16 @@ export default async function AdminInvestorsPage({
 
               <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-caption text-fg-subtle">
-                  Menampilkan {from + 1}–
-                  {Math.min(
-                    from + PAGE_SIZE,
-                    total,
-                  )}{' '}
-                  dari {total} investor
+                  Menampilkan {from + 1}–{Math.min(from + PAGE_SIZE, total)} dari {total} investor
                 </p>
 
                 <div className="flex items-center gap-2">
                   {page > 1 ? (
                     <Link
                       href={`/admin/investors${previousQuery}`}
-                      className="inline-flex h-9 items-center gap-1 rounded-lg border border-border px-3 text-body-sm text-fg transition hover:bg-surface-muted"
+                      className="border-border text-body-sm text-fg hover:bg-surface-muted inline-flex h-9 items-center gap-1 rounded-lg border px-3 transition"
                     >
-                      <ChevronLeft
-                        aria-hidden="true"
-                        className="size-4"
-                      />
+                      <ChevronLeft aria-hidden="true" className="size-4" />
                       Sebelumnya
                     </Link>
                   ) : null}
@@ -521,13 +393,10 @@ export default async function AdminInvestorsPage({
                   {page < totalPages ? (
                     <Link
                       href={`/admin/investors${nextQuery}`}
-                      className="inline-flex h-9 items-center gap-1 rounded-lg border border-border px-3 text-body-sm text-fg transition hover:bg-surface-muted"
+                      className="border-border text-body-sm text-fg hover:bg-surface-muted inline-flex h-9 items-center gap-1 rounded-lg border px-3 transition"
                     >
                       Berikutnya
-                      <ChevronRight
-                        aria-hidden="true"
-                        className="size-4"
-                      />
+                      <ChevronRight aria-hidden="true" className="size-4" />
                     </Link>
                   ) : null}
                 </div>

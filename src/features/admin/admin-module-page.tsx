@@ -19,22 +19,20 @@ export function AdminModulePage({
 }) {
   if (!allowed) {
     return (
-      <div className="rounded-xl border border-border bg-surface p-6">
-        <h1 className="font-display text-heading-lg text-fg">
-          Akses Ditolak
-        </h1>
+      <div className="border-border bg-surface rounded-xl border p-6">
+        <h1 className="font-display text-heading-lg text-fg">Akses Ditolak</h1>
 
-        <p className="mt-2 text-body-sm text-fg-muted">
+        <p className="text-body-sm text-fg-muted mt-2">
           Anda tidak memiliki izin untuk mengakses modul ini.
         </p>
 
-        <p className="mt-3 text-caption text-fg-subtle">
+        <p className="text-caption text-fg-subtle mt-3">
           Permission: <code>{permission}</code>
         </p>
 
         <Link
           href="/admin"
-          className="mt-5 inline-flex h-9 items-center rounded-lg border border-border px-3 text-sm font-medium text-fg hover:bg-muted"
+          className="border-border text-fg hover:bg-muted mt-5 inline-flex h-9 items-center rounded-lg border px-3 text-sm font-medium"
         >
           Kembali ke Dasbor
         </Link>
@@ -45,29 +43,22 @@ export function AdminModulePage({
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-caption font-medium uppercase tracking-[0.14em] text-fg-subtle">
+        <p className="text-caption text-fg-subtle font-medium tracking-[0.14em] uppercase">
           {eyebrow}
         </p>
 
-        <h1 className="mt-1 font-display text-heading-lg text-fg">
-          {title}
-        </h1>
+        <h1 className="font-display text-heading-lg text-fg mt-1">{title}</h1>
 
-        <p className="mt-2 max-w-3xl text-body-sm text-fg-muted">
-          {description}
-        </p>
+        <p className="text-body-sm text-fg-muted mt-2 max-w-3xl">{description}</p>
       </div>
 
       {children ?? (
-        <div className="rounded-xl border border-border bg-surface p-6">
-          <p className="text-body font-medium text-fg">
-            Struktur modul siap digunakan
-          </p>
+        <div className="border-border bg-surface rounded-xl border p-6">
+          <p className="text-body text-fg font-medium">Struktur modul siap digunakan</p>
 
-          <p className="mt-1 text-body-sm text-fg-muted">
-            Permission dan page-level authorization sudah aktif. Workflow
-            production modul ini akan menggunakan data dan server actions
-            sesuai domainnya.
+          <p className="text-body-sm text-fg-muted mt-1">
+            Permission dan page-level authorization sudah aktif. Workflow production modul ini akan
+            menggunakan data dan server actions sesuai domainnya.
           </p>
         </div>
       )}

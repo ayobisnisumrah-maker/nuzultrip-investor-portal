@@ -26,13 +26,7 @@ import {
 } from '@/ui/dialog'
 import { useToast } from '@/ui/toast'
 
-type ActionName =
-  | 'startReview'
-  | 'approve'
-  | 'reject'
-  | 'activate'
-  | 'deactivate'
-  | 'reactivate'
+type ActionName = 'startReview' | 'approve' | 'reject' | 'activate' | 'deactivate' | 'reactivate'
 
 type WorkflowAction = {
   name: ActionName
@@ -47,56 +41,47 @@ const ACTIONS: Record<ActionName, WorkflowAction> = {
     name: 'startReview',
     label: 'Mulai peninjauan',
     target: 'under_review',
-    consequence:
-      'Pengajuan akan masuk ke tahap peninjauan oleh tim Investor Relations.',
+    consequence: 'Pengajuan akan masuk ke tahap peninjauan oleh tim Investor Relations.',
     variant: 'primary',
   },
   approve: {
     name: 'approve',
     label: 'Setujui',
     target: 'approved',
-    consequence:
-      'Pengajuan akan disetujui dan akses materi investor dibuka sesuai kebijakan.',
+    consequence: 'Pengajuan akan disetujui dan akses materi investor dibuka sesuai kebijakan.',
     variant: 'primary',
   },
   reject: {
     name: 'reject',
     label: 'Tolak',
     target: 'rejected',
-    consequence:
-      'Pengajuan akan ditolak. Riwayat pengajuan tetap tersimpan.',
+    consequence: 'Pengajuan akan ditolak. Riwayat pengajuan tetap tersimpan.',
     variant: 'danger',
   },
   activate: {
     name: 'activate',
     label: 'Aktifkan',
     target: 'active',
-    consequence:
-      'Investor akan menjadi aktif sesuai akses yang telah diberikan.',
+    consequence: 'Investor akan menjadi aktif sesuai akses yang telah diberikan.',
     variant: 'primary',
   },
   deactivate: {
     name: 'deactivate',
     label: 'Nonaktifkan',
     target: 'inactive',
-    consequence:
-      'Akses investor dihentikan sementara; riwayat dan dokumen tetap tersimpan.',
+    consequence: 'Akses investor dihentikan sementara; riwayat dan dokumen tetap tersimpan.',
     variant: 'danger',
   },
   reactivate: {
     name: 'reactivate',
     label: 'Aktifkan kembali',
     target: 'active',
-    consequence:
-      'Akses investor akan dipulihkan sesuai akses yang telah diberikan.',
+    consequence: 'Akses investor akan dipulihkan sesuai akses yang telah diberikan.',
     variant: 'primary',
   },
 }
 
-function allowedActions(
-  status: InvestorStatus,
-  permissions: readonly string[],
-): WorkflowAction[] {
+function allowedActions(status: InvestorStatus, permissions: readonly string[]): WorkflowAction[] {
   const can = (permission: string) => permissions.includes(permission)
 
   switch (status) {
@@ -122,19 +107,13 @@ function allowedActions(
       ].filter(Boolean) as WorkflowAction[]
 
     case 'active':
-      return can('investors.deactivate')
-        ? [ACTIONS.deactivate]
-        : []
+      return can('investors.deactivate') ? [ACTIONS.deactivate] : []
 
     case 'inactive':
-      return can('investors.reactivate')
-        ? [ACTIONS.reactivate]
-        : []
+      return can('investors.reactivate') ? [ACTIONS.reactivate] : []
 
     case 'rejected':
-      return can('investors.update')
-        ? [ACTIONS.startReview]
-        : []
+      return can('investors.update') ? [ACTIONS.startReview] : []
 
     default:
       return []
@@ -163,17 +142,13 @@ export function InvestorReviewActions({
   const router = useRouter()
   const { push } = useToast()
 
-  const [selected, setSelected] =
-    useState<WorkflowAction | null>(null)
+  const [selected, setSelected] = useState<WorkflowAction | null>(null)
 
-  const [rejectionReason, setRejectionReason] =
-    useState('')
+  const [rejectionReason, setRejectionReason] = useState('')
 
-  const [error, setError] =
-    useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
-  const [pending, startTransition] =
-    useTransition()
+  const [pending, startTransition] = useTransition()
 
   const actions = allowedActions(status, permissions)
 
@@ -188,10 +163,7 @@ export function InvestorReviewActions({
   function confirm() {
     if (!selected || pending) return
 
-    if (
-      selected.name === 'reject' &&
-      !rejectionReason.trim()
-    ) {
+    if (selected.name === 'reject' && !rejectionReason.trim()) {
       setError('Alasan penolakan wajib diisi.')
       return
     }
@@ -220,8 +192,7 @@ export function InvestorReviewActions({
           return
         }
 
-        const targetLabel =
-          INVESTOR_STATUS_LABELS[selected.target]
+        const targetLabel = INVESTOR_STATUS_LABELS[selected.target]
 
         setSelected(null)
         setRejectionReason('')
@@ -229,16 +200,13 @@ export function InvestorReviewActions({
         push({
           tone: 'success',
           title: 'Status investor diperbarui',
-          description:
-            `${investorName} kini ${targetLabel.toLowerCase()}.`,
+          description: `${investorName} kini ${targetLabel.toLowerCase()}.`,
         })
 
         router.refresh()
       } catch (cause) {
         setError(
-          cause instanceof Error
-            ? cause.message
-            : `Gagal menjalankan aksi "${actionLabel}".`,
+          cause instanceof Error ? cause.message : `Gagal menjalankan aksi "${actionLabel}".`,
         )
       }
     })
@@ -271,30 +239,20 @@ export function InvestorReviewActions({
           }
         }}
       >
-        <DialogContent
-          size="sm"
-          showClose={!pending}
-        >
+        <DialogContent size="sm" showClose={!pending}>
           {selected ? (
             <>
               <DialogHeader>
-                <DialogTitle>
-                  {selected.label} investor?
-                </DialogTitle>
+                <DialogTitle>{selected.label} investor?</DialogTitle>
 
                 <DialogDescription>
-                  Anda akan mengubah status{' '}
-                  <strong>{investorName}</strong>{' '}
-                  dari{' '}
-                  {INVESTOR_STATUS_LABELS[status].toLowerCase()}{' '}
-                  menjadi{' '}
-                  {INVESTOR_STATUS_LABELS[
-                    selected.target
-                  ].toLowerCase()}.
+                  Anda akan mengubah status <strong>{investorName}</strong> dari{' '}
+                  {INVESTOR_STATUS_LABELS[status].toLowerCase()} menjadi{' '}
+                  {INVESTOR_STATUS_LABELS[selected.target].toLowerCase()}.
                 </DialogDescription>
               </DialogHeader>
 
-              <p className="rounded-md border border-border bg-sunken p-3 text-body-sm text-fg-muted">
+              <p className="border-border bg-sunken text-body-sm text-fg-muted rounded-md border p-3">
                 {selected.consequence}
               </p>
 
@@ -302,7 +260,7 @@ export function InvestorReviewActions({
                 <div className="space-y-2">
                   <label
                     htmlFor="investor-rejection-reason"
-                    className="text-body-sm font-medium text-fg"
+                    className="text-body-sm text-fg font-medium"
                   >
                     Alasan penolakan
                   </label>
@@ -310,39 +268,29 @@ export function InvestorReviewActions({
                   <textarea
                     id="investor-rejection-reason"
                     value={rejectionReason}
-                    onChange={(event) =>
-                      setRejectionReason(
-                        event.target.value,
-                      )
-                    }
+                    onChange={(event) => setRejectionReason(event.target.value)}
                     maxLength={2000}
                     rows={5}
                     disabled={pending}
                     placeholder="Masukkan alasan penolakan..."
-                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-body-sm text-fg outline-none transition focus:border-primary disabled:opacity-50"
+                    className="border-border bg-background text-body-sm text-fg focus:border-primary w-full rounded-md border px-3 py-2 transition outline-none disabled:opacity-50"
                   />
 
-                  <div className="text-right text-xs text-fg-muted">
+                  <div className="text-fg-muted text-right text-xs">
                     {rejectionReason.length}/2000
                   </div>
                 </div>
               ) : null}
 
               {error ? (
-                <Alert
-                  tone="danger"
-                  title="Aksi tidak dapat diselesaikan"
-                >
+                <Alert tone="danger" title="Aksi tidak dapat diselesaikan">
                   {error}
                 </Alert>
               ) : null}
 
               <DialogFooter>
                 <DialogClose asChild>
-                  <Button
-                    variant="secondary"
-                    disabled={pending}
-                  >
+                  <Button variant="secondary" disabled={pending}>
                     Batal
                   </Button>
                 </DialogClose>
@@ -350,10 +298,7 @@ export function InvestorReviewActions({
                 <Button
                   variant={selected.variant}
                   loading={pending}
-                  disabled={
-                    selected.name === 'reject' &&
-                    !rejectionReason.trim()
-                  }
+                  disabled={selected.name === 'reject' && !rejectionReason.trim()}
                   onClick={confirm}
                 >
                   {selected.label}
@@ -366,4 +311,3 @@ export function InvestorReviewActions({
     </div>
   )
 }
-

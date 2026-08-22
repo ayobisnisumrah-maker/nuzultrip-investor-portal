@@ -26,159 +26,120 @@ const uploadPaymentProofSchema = z.object({
   file: z.instanceof(File, { error: 'File bukti pembayaran wajib dipilih.' }),
 })
 
-export const getProfitDistributionPaymentProof =
-  defineAction({
-    access: {
-      permission: 'profit_distributions.view',
-    },
+export const getProfitDistributionPaymentProof = defineAction({
+  access: {
+    permission: 'profit_distributions.view',
+  },
 
-    input: allocationIdSchema,
+  input: allocationIdSchema,
 
-    audit: {
-      action: 'profit_distribution_payment_proof.view',
-      entityType: 'profit_distribution_payment_proof',
-    },
+  audit: {
+    action: 'profit_distribution_payment_proof.view',
+    entityType: 'profit_distribution_payment_proof',
+  },
 
-    handler: async ({
-      principal,
-      input,
+  handler: async ({ principal, input, supabase }) => {
+    if (principal.kind !== 'admin') {
+      throw new ForbiddenError('Admin principal required.')
+    }
+
+    const proof = await getPaymentProof(supabase, input.allocationId)
+
+    if (!proof) {
+      throw new NotFoundError('Bukti transfer pembayaran')
+    }
+
+    return proof
+  },
+})
+
+export const uploadProfitDistributionPaymentProof = defineAction({
+  access: {
+    permission: 'profit_distribution_payments.upload_proof',
+  },
+
+  input: uploadPaymentProofSchema,
+
+  audit: {
+    action: 'profit_distribution_payment_proof.upload',
+    entityType: 'profit_distribution_payment_proof',
+  },
+
+  handler: async ({ principal, input, supabase, audit }) => {
+    if (principal.kind !== 'admin') {
+      throw new ForbiddenError('Admin principal required.')
+    }
+
+    const paymentReference = input.paymentReference?.trim() || null
+
+    const proof = await uploadPaymentProof({
       supabase,
-    }) => {
-      if (principal.kind !== 'admin') {
-        throw new ForbiddenError(
-          'Admin principal required.',
-        )
-      }
+      allocationId: input.allocationId,
+      uploadedBy: principal.adminId,
+      file: input.file,
+      paymentReference,
+    })
 
-      const proof = await getPaymentProof(
-        supabase,
-        input.allocationId,
-      )
-
-      if (!proof) {
-        throw new NotFoundError(
-          'Bukti transfer pembayaran',
-        )
-      }
-
-      return proof
-    },
-  })
-
-export const uploadProfitDistributionPaymentProof =
-  defineAction({
-    access: {
-      permission: 'profit_distribution_payments.upload_proof',
-    },
-
-    input: uploadPaymentProofSchema,
-
-    audit: {
-      action: 'profit_distribution_payment_proof.upload',
-      entityType: 'profit_distribution_payment_proof',
-    },
-
-    handler: async ({
-      principal,
-      input,
-      supabase,
-      audit,
-    }) => {
-      if (principal.kind !== 'admin') {
-        throw new ForbiddenError(
-          'Admin principal required.',
-        )
-      }
-
-      const paymentReference =
-        input.paymentReference?.trim() || null
-
-      const proof = await uploadPaymentProof({
-        supabase,
-        allocationId: input.allocationId,
-        uploadedBy: principal.adminId,
-        file: input.file,
-        paymentReference,
-      })
-
-      audit({
-        entityId: proof.id,
-        summary:
-          'Bukti transfer pembayaran distribusi bagi hasil berhasil diunggah.',
-        changes: {
-          allocation_id: {
-            before: null,
-            after: proof.allocation_id,
-          },
-          original_file_name: {
-            before: null,
-            after: proof.original_file_name,
-          },
-          mime_type: {
-            before: null,
-            after: proof.mime_type,
-          },
-          file_size_bytes: {
-            before: null,
-            after: proof.file_size_bytes,
-          },
-          payment_reference: {
-            before: null,
-            after: proof.payment_reference,
-          },
+    audit({
+      entityId: proof.id,
+      summary: 'Bukti transfer pembayaran distribusi bagi hasil berhasil diunggah.',
+      changes: {
+        allocation_id: {
+          before: null,
+          after: proof.allocation_id,
         },
-      })
+        original_file_name: {
+          before: null,
+          after: proof.original_file_name,
+        },
+        mime_type: {
+          before: null,
+          after: proof.mime_type,
+        },
+        file_size_bytes: {
+          before: null,
+          after: proof.file_size_bytes,
+        },
+        payment_reference: {
+          before: null,
+          after: proof.payment_reference,
+        },
+      },
+    })
 
-      return proof
-    },
-  })
+    return proof
+  },
+})
 
-export const createProfitDistributionPaymentProofUrl =
-  defineAction({
-    access: {
-      permission: 'profit_distributions.view',
-    },
+export const createProfitDistributionPaymentProofUrl = defineAction({
+  access: {
+    permission: 'profit_distributions.view',
+  },
 
-    input: allocationIdSchema,
+  input: allocationIdSchema,
 
-    audit: {
-      action: 'profit_distribution_payment_proof.open',
-      entityType: 'profit_distribution_payment_proof',
-    },
+  audit: {
+    action: 'profit_distribution_payment_proof.open',
+    entityType: 'profit_distribution_payment_proof',
+  },
 
-    handler: async ({
-      principal,
-      input,
-      supabase,
-    }) => {
-      if (principal.kind !== 'admin') {
-        throw new ForbiddenError(
-          'Admin principal required.',
-        )
-      }
+  handler: async ({ principal, input, supabase }) => {
+    if (principal.kind !== 'admin') {
+      throw new ForbiddenError('Admin principal required.')
+    }
 
-      const proof = await getPaymentProof(
-        supabase,
-        input.allocationId,
-      )
+    const proof = await getPaymentProof(supabase, input.allocationId)
 
-      if (!proof) {
-        throw new NotFoundError(
-          'Bukti transfer pembayaran',
-        )
-      }
+    if (!proof) {
+      throw new NotFoundError('Bukti transfer pembayaran')
+    }
 
-      const signedUrl =
-        await createPaymentProofSignedUrl(
-          supabase,
-          proof,
-        )
+    const signedUrl = await createPaymentProofSignedUrl(supabase, proof)
 
-      return {
-        signedUrl,
-        expiresInSeconds: 300,
-        fileName: proof.original_file_name,
-      }
-    },
-  })
-
+    return {
+      signedUrl,
+      expiresInSeconds: 300,
+      fileName: proof.original_file_name,
+    }
+  },
+})

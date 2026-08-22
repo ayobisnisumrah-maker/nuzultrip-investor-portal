@@ -8,7 +8,11 @@ import { EmptyState } from '@/ui/states'
 
 export const metadata: Metadata = { title: 'Laporan Keuangan' }
 
-export default async function InvestorFinancialReportPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function InvestorFinancialReportPage({
+  params,
+}: {
+  params: Promise<{ id: string }>
+}) {
   await requireInvestorPage()
   const { id } = await params
   const supabase = await getServerSupabase()
@@ -24,8 +28,16 @@ export default async function InvestorFinancialReportPage({ params }: { params: 
   if (!report || !report.published_version_id) notFound()
 
   const [{ data: version }, { data: period }] = await Promise.all([
-    supabase.from('financial_report_versions').select('version_number, source, prepared_by, notes, document_asset_id, published_at').eq('id', report.published_version_id).maybeSingle(),
-    supabase.from('financial_periods').select('period_type, fiscal_year, period_index, starts_on, ends_on, currency').eq('id', report.financial_period_id).maybeSingle(),
+    supabase
+      .from('financial_report_versions')
+      .select('version_number, source, prepared_by, notes, document_asset_id, published_at')
+      .eq('id', report.published_version_id)
+      .maybeSingle(),
+    supabase
+      .from('financial_periods')
+      .select('period_type, fiscal_year, period_index, starts_on, ends_on, currency')
+      .eq('id', report.financial_period_id)
+      .maybeSingle(),
   ])
 
   if (!version) notFound()
@@ -44,14 +56,29 @@ export default async function InvestorFinancialReportPage({ params }: { params: 
 
   return (
     <Stack gap={8}>
-      <PageHeader eyebrow="Financial Report" title={report.title} description={report.summary || 'Laporan keuangan investor.'} />
+      <PageHeader
+        eyebrow="Financial Report"
+        title={report.title}
+        description={report.summary || 'Laporan keuangan investor.'}
+      />
       <Card>
-        <CardHeader><CardTitle>Periode & sumber</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle>Periode & sumber</CardTitle>
+        </CardHeader>
         <CardBody>
-          <div className="grid gap-4 text-body-sm sm:grid-cols-3">
-            <div><span className="text-fg-subtle">Periode</span><div>{period ? `${period.starts_on} — ${period.ends_on}` : '—'}</div></div>
-            <div><span className="text-fg-subtle">Sumber</span><div>{version.source}</div></div>
-            <div><span className="text-fg-subtle">Versi</span><div>v{version.version_number}</div></div>
+          <div className="text-body-sm grid gap-4 sm:grid-cols-3">
+            <div>
+              <span className="text-fg-subtle">Periode</span>
+              <div>{period ? `${period.starts_on} — ${period.ends_on}` : '—'}</div>
+            </div>
+            <div>
+              <span className="text-fg-subtle">Sumber</span>
+              <div>{version.source}</div>
+            </div>
+            <div>
+              <span className="text-fg-subtle">Versi</span>
+              <div>v{version.version_number}</div>
+            </div>
           </div>
         </CardBody>
       </Card>
@@ -61,25 +88,51 @@ export default async function InvestorFinancialReportPage({ params }: { params: 
             <Card key={kpi.kpi_key}>
               <CardBody>
                 <div className="text-caption text-fg-subtle">{kpi.label}</div>
-                <div className="mt-1 text-heading-lg font-semibold tabular">{Number(kpi.value).toLocaleString('id-ID')}</div>
-                <div className="text-caption text-fg-subtle">{kpi.unit} · {kpi.basis}</div>
+                <div className="text-heading-lg tabular mt-1 font-semibold">
+                  {Number(kpi.value).toLocaleString('id-ID')}
+                </div>
+                <div className="text-caption text-fg-subtle">
+                  {kpi.unit} · {kpi.basis}
+                </div>
               </CardBody>
             </Card>
           ))}
         </div>
       ) : null}
       <Card>
-        <CardHeader><CardTitle>Line items</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle>Line items</CardTitle>
+        </CardHeader>
         <CardBody>
           {!lineItems?.length ? (
-            <EmptyState title="Belum ada line item" description="Versi laporan belum memiliki rincian angka terstruktur." />
+            <EmptyState
+              title="Belum ada line item"
+              description="Versi laporan belum memiliki rincian angka terstruktur."
+            />
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-body-sm">
-                <thead><tr className="border-b border-border-subtle text-left text-caption text-fg-subtle"><th className="px-3 py-2">Statement</th><th className="px-3 py-2">Kategori</th><th className="px-3 py-2">Label</th><th className="px-3 py-2 text-right">Nilai</th></tr></thead>
+              <table className="text-body-sm w-full">
+                <thead>
+                  <tr className="border-border-subtle text-caption text-fg-subtle border-b text-left">
+                    <th className="px-3 py-2">Statement</th>
+                    <th className="px-3 py-2">Kategori</th>
+                    <th className="px-3 py-2">Label</th>
+                    <th className="px-3 py-2 text-right">Nilai</th>
+                  </tr>
+                </thead>
                 <tbody>
                   {lineItems.map((item, index) => (
-                    <tr key={`${item.label}-${index}`} className="border-b border-border-subtle last:border-0"><td className="px-3 py-2">{item.statement}</td><td className="px-3 py-2">{item.category}</td><td className="px-3 py-2">{item.label}</td><td className="px-3 py-2 text-right tabular">{Number(item.amount).toLocaleString('id-ID')} {item.currency}</td></tr>
+                    <tr
+                      key={`${item.label}-${index}`}
+                      className="border-border-subtle border-b last:border-0"
+                    >
+                      <td className="px-3 py-2">{item.statement}</td>
+                      <td className="px-3 py-2">{item.category}</td>
+                      <td className="px-3 py-2">{item.label}</td>
+                      <td className="tabular px-3 py-2 text-right">
+                        {Number(item.amount).toLocaleString('id-ID')} {item.currency}
+                      </td>
+                    </tr>
                   ))}
                 </tbody>
               </table>

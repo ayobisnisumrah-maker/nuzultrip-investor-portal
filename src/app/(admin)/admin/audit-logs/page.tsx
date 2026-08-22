@@ -42,9 +42,7 @@ type AuditRow = {
 function validPage(value: string | undefined) {
   const candidate = Number.parseInt(value ?? '1', 10)
 
-  return Number.isFinite(candidate) && candidate > 0
-    ? candidate
-    : 1
+  return Number.isFinite(candidate) && candidate > 0 ? candidate : 1
 }
 
 function buildQuery(params: SearchParams) {
@@ -88,10 +86,7 @@ export default async function AdminAuditLogsPage({
 
   if (!principal.permissions.has('audit_logs.view')) {
     return (
-      <Alert
-        tone="info"
-        title="Akses terbatas"
-      >
+      <Alert tone="info" title="Akses terbatas">
         Peran Anda tidak memiliki izin untuk melihat log audit.
       </Alert>
     )
@@ -150,11 +145,7 @@ export default async function AdminAuditLogsPage({
   const from = (page - 1) * PAGE_SIZE
   const to = from + PAGE_SIZE - 1
 
-  const {
-    data,
-    count,
-    error,
-  } = await query.range(from, to)
+  const { data, count, error } = await query.range(from, to)
 
   if (error) {
     return (
@@ -165,10 +156,7 @@ export default async function AdminAuditLogsPage({
           description="Jejak aktivitas dan perubahan penting dalam sistem."
         />
 
-        <Alert
-          tone="danger"
-          title="Audit log tidak dapat dimuat"
-        >
+        <Alert tone="danger" title="Audit log tidak dapat dimuat">
           Sistem gagal mengambil log audit. Silakan coba lagi.
         </Alert>
       </Stack>
@@ -206,7 +194,7 @@ export default async function AdminAuditLogsPage({
       id: 'created_at',
       header: 'Waktu',
       cell: (row) => (
-        <span className="whitespace-nowrap font-mono text-caption text-fg-muted">
+        <span className="text-caption text-fg-muted font-mono whitespace-nowrap">
           {formatDateTime(row.created_at)}
         </span>
       ),
@@ -217,12 +205,10 @@ export default async function AdminAuditLogsPage({
       primary: true,
       cell: (row) => (
         <div className="min-w-0">
-          <p className="truncate font-medium text-fg">
+          <p className="text-fg truncate font-medium">
             {row.actor_label || labelActorType(row.actor_type)}
           </p>
-          <p className="mt-0.5 text-caption text-fg-subtle">
-            {labelActorType(row.actor_type)}
-          </p>
+          <p className="text-caption text-fg-subtle mt-0.5">{labelActorType(row.actor_type)}</p>
         </div>
       ),
     },
@@ -230,7 +216,7 @@ export default async function AdminAuditLogsPage({
       id: 'action',
       header: 'Action',
       cell: (row) => (
-        <code className="rounded bg-surface-muted px-1.5 py-1 font-mono text-caption text-fg">
+        <code className="bg-surface-muted text-caption text-fg rounded px-1.5 py-1 font-mono">
           {row.action}
         </code>
       ),
@@ -240,14 +226,10 @@ export default async function AdminAuditLogsPage({
       header: 'Entity',
       cell: (row) => (
         <div className="min-w-0">
-          <p className="text-body-sm text-fg">
-            {row.entity_type}
-          </p>
+          <p className="text-body-sm text-fg">{row.entity_type}</p>
 
           {row.entity_id ? (
-            <p className="mt-0.5 truncate font-mono text-caption text-fg-subtle">
-              {row.entity_id}
-            </p>
+            <p className="text-caption text-fg-subtle mt-0.5 truncate font-mono">{row.entity_id}</p>
           ) : null}
         </div>
       ),
@@ -255,11 +237,7 @@ export default async function AdminAuditLogsPage({
     {
       id: 'summary',
       header: 'Ringkasan',
-      cell: (row) => (
-        <span className="text-body-sm text-fg-muted">
-          {row.summary || '—'}
-        </span>
-      ),
+      cell: (row) => <span className="text-body-sm text-fg-muted">{row.summary || '—'}</span>,
     },
     {
       id: 'detail',
@@ -269,7 +247,7 @@ export default async function AdminAuditLogsPage({
       cell: (row) => (
         <Link
           href={`/admin/audit-logs/${row.id}`}
-          className="inline-flex h-9 items-center rounded-lg border border-border px-3 text-body-sm font-medium text-fg transition hover:bg-surface-muted"
+          className="border-border text-body-sm text-fg hover:bg-surface-muted inline-flex h-9 items-center rounded-lg border px-3 font-medium transition"
         >
           Detail
         </Link>
@@ -288,10 +266,7 @@ export default async function AdminAuditLogsPage({
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Activity
-              aria-hidden="true"
-              className="size-5"
-            />
+            <Activity aria-hidden="true" className="size-5" />
             Aktivitas sistem
           </CardTitle>
 
@@ -306,20 +281,18 @@ export default async function AdminAuditLogsPage({
             className="mb-5 grid gap-3 md:grid-cols-[minmax(0,1fr)_12rem_12rem_12rem_auto]"
           >
             <label className="relative">
-              <span className="sr-only">
-                Cari audit log
-              </span>
+              <span className="sr-only">Cari audit log</span>
 
               <Search
                 aria-hidden="true"
-                className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-fg-subtle"
+                className="text-fg-subtle pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2"
               />
 
               <input
                 name="q"
                 defaultValue={q}
                 placeholder="Cari action, actor, entity, atau ringkasan..."
-                className="h-10 w-full rounded-lg border border-border bg-canvas pl-9 pr-3 text-body-sm text-fg outline-none transition focus:border-accent-solid focus:ring-2 focus:ring-accent-solid/20"
+                className="border-border bg-canvas text-body-sm text-fg focus:border-accent-solid focus:ring-accent-solid/20 h-10 w-full rounded-lg border pr-3 pl-9 transition outline-none focus:ring-2"
               />
             </label>
 
@@ -327,41 +300,31 @@ export default async function AdminAuditLogsPage({
               name="action"
               defaultValue={action}
               placeholder="Action..."
-              className="h-10 rounded-lg border border-border bg-canvas px-3 text-body-sm text-fg outline-none focus:border-accent-solid"
+              className="border-border bg-canvas text-body-sm text-fg focus:border-accent-solid h-10 rounded-lg border px-3 outline-none"
             />
 
             <select
               name="actorType"
               defaultValue={actorType}
-              className="h-10 rounded-lg border border-border bg-canvas px-3 text-body-sm text-fg outline-none focus:border-accent-solid"
+              className="border-border bg-canvas text-body-sm text-fg focus:border-accent-solid h-10 rounded-lg border px-3 outline-none"
             >
-              <option value="">
-                Semua actor
-              </option>
-              <option value="admin">
-                Admin
-              </option>
-              <option value="investor">
-                Investor
-              </option>
-              <option value="system">
-                System
-              </option>
-              <option value="anonymous">
-                Anonymous
-              </option>
+              <option value="">Semua actor</option>
+              <option value="admin">Admin</option>
+              <option value="investor">Investor</option>
+              <option value="system">System</option>
+              <option value="anonymous">Anonymous</option>
             </select>
 
             <input
               name="entityType"
               defaultValue={entityType}
               placeholder="Entity..."
-              className="h-10 rounded-lg border border-border bg-canvas px-3 text-body-sm text-fg outline-none focus:border-accent-solid"
+              className="border-border bg-canvas text-body-sm text-fg focus:border-accent-solid h-10 rounded-lg border px-3 outline-none"
             />
 
             <button
               type="submit"
-              className="h-10 rounded-lg bg-primary px-4 text-body-sm font-medium text-on-primary transition hover:opacity-90"
+              className="bg-primary text-body-sm text-on-primary h-10 rounded-lg px-4 font-medium transition hover:opacity-90"
             >
               Terapkan
             </button>
@@ -387,20 +350,16 @@ export default async function AdminAuditLogsPage({
           {totalPages > 1 ? (
             <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-caption text-fg-subtle">
-                Menampilkan {from + 1}–
-                {Math.min(from + PAGE_SIZE, total)} dari {total} aktivitas
+                Menampilkan {from + 1}–{Math.min(from + PAGE_SIZE, total)} dari {total} aktivitas
               </p>
 
               <div className="flex items-center gap-2">
                 {page > 1 ? (
                   <Link
                     href={`/admin/audit-logs${previousQuery}`}
-                    className="inline-flex h-9 items-center gap-1 rounded-lg border border-border px-3 text-body-sm text-fg transition hover:bg-surface-muted"
+                    className="border-border text-body-sm text-fg hover:bg-surface-muted inline-flex h-9 items-center gap-1 rounded-lg border px-3 transition"
                   >
-                    <ChevronLeft
-                      aria-hidden="true"
-                      className="size-4"
-                    />
+                    <ChevronLeft aria-hidden="true" className="size-4" />
                     Sebelumnya
                   </Link>
                 ) : null}
@@ -408,13 +367,10 @@ export default async function AdminAuditLogsPage({
                 {page < totalPages ? (
                   <Link
                     href={`/admin/audit-logs${nextQuery}`}
-                    className="inline-flex h-9 items-center gap-1 rounded-lg border border-border px-3 text-body-sm text-fg transition hover:bg-surface-muted"
+                    className="border-border text-body-sm text-fg hover:bg-surface-muted inline-flex h-9 items-center gap-1 rounded-lg border px-3 transition"
                   >
                     Berikutnya
-                    <ChevronRight
-                      aria-hidden="true"
-                      className="size-4"
-                    />
+                    <ChevronRight aria-hidden="true" className="size-4" />
                   </Link>
                 ) : null}
               </div>

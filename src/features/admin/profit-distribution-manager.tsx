@@ -17,10 +17,7 @@ import { markProfitDistributionAllocationPaidAction } from '@/server/ownership/p
 
 type Props = {
   distributions: ProfitDistribution[]
-  allocationsByDistribution: Record<
-    string,
-    ProfitDistributionAllocation[]
-  >
+  allocationsByDistribution: Record<string, ProfitDistributionAllocation[]>
   permissions: {
     uploadProof: boolean
     replaceProof: boolean
@@ -96,16 +93,13 @@ export function ProfitDistributionManager({
   permissions,
 }: Props) {
   const router = useRouter()
-  const [selectedDistributionId, setSelectedDistributionId] =
-    useState<string | null>(
-      distributions[0]?.id ?? null,
-    )
+  const [selectedDistributionId, setSelectedDistributionId] = useState<string | null>(
+    distributions[0]?.id ?? null,
+  )
 
-  const [busyAllocationId, setBusyAllocationId] =
-    useState<string | null>(null)
+  const [busyAllocationId, setBusyAllocationId] = useState<string | null>(null)
 
-  const [referenceByAllocation, setReferenceByAllocation] =
-    useState<Record<string, string>>({})
+  const [referenceByAllocation, setReferenceByAllocation] = useState<Record<string, string>>({})
 
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -113,38 +107,27 @@ export function ProfitDistributionManager({
   const [isPending, startTransition] = useTransition()
 
   const selectedDistribution =
-    distributions.find(
-      (distribution) =>
-        distribution.id === selectedDistributionId,
-    ) ?? null
+    distributions.find((distribution) => distribution.id === selectedDistributionId) ?? null
 
   const allocations = selectedDistribution
-    ? allocationsByDistribution[selectedDistribution.id] ?? []
+    ? (allocationsByDistribution[selectedDistribution.id] ?? [])
     : []
 
   const totalAllocated = allocations.reduce(
-    (sum, allocation) =>
-      sum + Number(allocation.allocation_amount),
+    (sum, allocation) => sum + Number(allocation.allocation_amount),
     0,
   )
 
-  const paidCount = allocations.filter(
-    (allocation) => allocation.status === 'paid',
-  ).length
+  const paidCount = allocations.filter((allocation) => allocation.status === 'paid').length
 
-  const payableCount = allocations.filter(
-    (allocation) => allocation.status === 'payable',
-  ).length
+  const payableCount = allocations.filter((allocation) => allocation.status === 'payable').length
 
   function clearFeedback() {
     setMessage(null)
     setError(null)
   }
 
-  async function uploadProof(
-    allocationId: string,
-    file: File,
-  ) {
+  async function uploadProof(allocationId: string, file: File) {
     clearFeedback()
     setBusyAllocationId(allocationId)
 
@@ -152,19 +135,13 @@ export function ProfitDistributionManager({
       const formData = new FormData()
 
       formData.append('allocationId', allocationId)
-      formData.append(
-        'paymentReference',
-        referenceByAllocation[allocationId] ?? '',
-      )
+      formData.append('paymentReference', referenceByAllocation[allocationId] ?? '')
       formData.append('file', file)
 
-      const response = await fetch(
-        '/api/admin/profit-distributions/payment-proofs/upload',
-        {
-          method: 'POST',
-          body: formData,
-        },
-      )
+      const response = await fetch('/api/admin/profit-distributions/payment-proofs/upload', {
+        method: 'POST',
+        body: formData,
+      })
 
       const payload: unknown = await response.json()
 
@@ -180,18 +157,14 @@ export function ProfitDistributionManager({
         throw new Error(errorMessage)
       }
 
-      setMessage(
-        'Bukti pembayaran berhasil diunggah.',
-      )
+      setMessage('Bukti pembayaran berhasil diunggah.')
 
       startTransition(() => {
         router.refresh()
       })
     } catch (uploadError) {
       setError(
-        uploadError instanceof Error
-          ? uploadError.message
-          : 'Gagal mengunggah bukti pembayaran.',
+        uploadError instanceof Error ? uploadError.message : 'Gagal mengunggah bukti pembayaran.',
       )
     } finally {
       setBusyAllocationId(null)
@@ -203,26 +176,17 @@ export function ProfitDistributionManager({
     setBusyAllocationId(allocationId)
 
     try {
-      const result =
-        await createProfitDistributionPaymentProofUrl({
-          allocationId,
-        })
+      const result = await createProfitDistributionPaymentProofUrl({
+        allocationId,
+      })
 
       if (!result.ok) {
         throw new Error(result.error.message)
       }
 
-      window.open(
-        result.data.signedUrl,
-        '_blank',
-        'noopener,noreferrer',
-      )
+      window.open(result.data.signedUrl, '_blank', 'noopener,noreferrer')
     } catch (openError) {
-      setError(
-        openError instanceof Error
-          ? openError.message
-          : 'Gagal membuka bukti pembayaran.',
-      )
+      setError(openError instanceof Error ? openError.message : 'Gagal membuka bukti pembayaran.')
     } finally {
       setBusyAllocationId(null)
     }
@@ -240,29 +204,23 @@ export function ProfitDistributionManager({
     setBusyAllocationId(allocationId)
 
     try {
-      const result =
-        await markProfitDistributionAllocationPaidAction({
-          allocationId,
-          paymentReference:
-            referenceByAllocation[allocationId] ?? null,
-        })
+      const result = await markProfitDistributionAllocationPaidAction({
+        allocationId,
+        paymentReference: referenceByAllocation[allocationId] ?? null,
+      })
 
       if (!result.ok) {
         throw new Error(result.error.message)
       }
 
-      setMessage(
-        'Pembayaran berhasil ditandai sebagai PAID.',
-      )
+      setMessage('Pembayaran berhasil ditandai sebagai PAID.')
 
       startTransition(() => {
         router.refresh()
       })
     } catch (markError) {
       setError(
-        markError instanceof Error
-          ? markError.message
-          : 'Gagal menandai pembayaran sebagai PAID.',
+        markError instanceof Error ? markError.message : 'Gagal menandai pembayaran sebagai PAID.',
       )
     } finally {
       setBusyAllocationId(null)
@@ -274,23 +232,18 @@ export function ProfitDistributionManager({
     setBusyAllocationId(allocationId)
 
     try {
-      const result =
-        await getProfitDistributionPaymentProof({
-          allocationId,
-        })
+      const result = await getProfitDistributionPaymentProof({
+        allocationId,
+      })
 
       if (!result.ok) {
         throw new Error(result.error.message)
       }
 
-      setMessage(
-        `Bukti tersedia: ${result.data.original_file_name}`,
-      )
+      setMessage(`Bukti tersedia: ${result.data.original_file_name}`)
     } catch (proofError) {
       setError(
-        proofError instanceof Error
-          ? proofError.message
-          : 'Bukti pembayaran belum tersedia.',
+        proofError instanceof Error ? proofError.message : 'Bukti pembayaran belum tersedia.',
       )
     } finally {
       setBusyAllocationId(null)
@@ -300,18 +253,15 @@ export function ProfitDistributionManager({
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-caption font-medium uppercase tracking-[0.14em] text-fg-subtle">
+        <p className="text-caption text-fg-subtle font-medium tracking-[0.14em] uppercase">
           Kepemilikan
         </p>
 
-        <h1 className="mt-1 font-display text-heading-lg text-fg">
-          Distribusi Bagi Hasil
-        </h1>
+        <h1 className="font-display text-heading-lg text-fg mt-1">Distribusi Bagi Hasil</h1>
 
-        <p className="mt-2 max-w-3xl text-body-sm text-fg-muted">
-          Kelola perhitungan distribusi, allocation investor,
-          bukti pembayaran, dan status pembayaran secara langsung
-          dari data produksi.
+        <p className="text-body-sm text-fg-muted mt-2 max-w-3xl">
+          Kelola perhitungan distribusi, allocation investor, bukti pembayaran, dan status
+          pembayaran secara langsung dari data produksi.
         </p>
       </div>
 
@@ -328,60 +278,39 @@ export function ProfitDistributionManager({
       ) : null}
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-xl border border-border bg-surface p-5">
-          <p className="text-caption text-fg-muted">
-            Total Distribusi
-          </p>
-          <p className="mt-2 text-2xl font-semibold text-fg">
-            {distributions.length}
-          </p>
+        <div className="border-border bg-surface rounded-xl border p-5">
+          <p className="text-caption text-fg-muted">Total Distribusi</p>
+          <p className="text-fg mt-2 text-2xl font-semibold">{distributions.length}</p>
         </div>
 
-        <div className="rounded-xl border border-border bg-surface p-5">
-          <p className="text-caption text-fg-muted">
-            Investor Allocation
-          </p>
-          <p className="mt-2 text-2xl font-semibold text-fg">
-            {allocations.length}
-          </p>
+        <div className="border-border bg-surface rounded-xl border p-5">
+          <p className="text-caption text-fg-muted">Investor Allocation</p>
+          <p className="text-fg mt-2 text-2xl font-semibold">{allocations.length}</p>
         </div>
 
-        <div className="rounded-xl border border-border bg-surface p-5">
-          <p className="text-caption text-fg-muted">
-            Sudah Dibayar
-          </p>
-          <p className="mt-2 text-2xl font-semibold text-fg">
-            {paidCount}
-          </p>
+        <div className="border-border bg-surface rounded-xl border p-5">
+          <p className="text-caption text-fg-muted">Sudah Dibayar</p>
+          <p className="text-fg mt-2 text-2xl font-semibold">{paidCount}</p>
         </div>
 
-        <div className="rounded-xl border border-border bg-surface p-5">
-          <p className="text-caption text-fg-muted">
-            Siap Dibayar
-          </p>
-          <p className="mt-2 text-2xl font-semibold text-fg">
-            {payableCount}
-          </p>
+        <div className="border-border bg-surface rounded-xl border p-5">
+          <p className="text-caption text-fg-muted">Siap Dibayar</p>
+          <p className="text-fg mt-2 text-2xl font-semibold">{payableCount}</p>
         </div>
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,0.85fr)_minmax(0,1.5fr)]">
-        <section className="rounded-xl border border-border bg-surface">
-          <div className="border-b border-border px-5 py-4">
-            <h2 className="font-semibold text-fg">
-              Distribusi
-            </h2>
+        <section className="border-border bg-surface rounded-xl border">
+          <div className="border-border border-b px-5 py-4">
+            <h2 className="text-fg font-semibold">Distribusi</h2>
           </div>
 
-          <div className="divide-y divide-border">
+          <div className="divide-border divide-y">
             {distributions.length === 0 ? (
-              <div className="p-6 text-sm text-fg-muted">
-                Belum ada distribusi bagi hasil.
-              </div>
+              <div className="text-fg-muted p-6 text-sm">Belum ada distribusi bagi hasil.</div>
             ) : (
               distributions.map((distribution) => {
-                const selected =
-                  distribution.id === selectedDistributionId
+                const selected = distribution.id === selectedDistributionId
 
                 return (
                   <button
@@ -389,30 +318,21 @@ export function ProfitDistributionManager({
                     type="button"
                     onClick={() => {
                       clearFeedback()
-                      setSelectedDistributionId(
-                        distribution.id,
-                      )
+                      setSelectedDistributionId(distribution.id)
                     }}
                     className={[
                       'block w-full px-5 py-4 text-left transition',
-                      selected
-                        ? 'bg-muted'
-                        : 'hover:bg-muted/60',
+                      selected ? 'bg-muted' : 'hover:bg-muted/60',
                     ].join(' ')}
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-fg">
-                          {formatDate(
-                            distribution.period_start,
-                          )}{' '}
-                          —{' '}
-                          {formatDate(
-                            distribution.period_end,
-                          )}
+                        <p className="text-fg truncate text-sm font-semibold">
+                          {formatDate(distribution.period_start)} —{' '}
+                          {formatDate(distribution.period_end)}
                         </p>
 
-                        <p className="mt-1 truncate font-mono text-[11px] text-fg-subtle">
+                        <p className="text-fg-subtle mt-1 truncate font-mono text-[11px]">
                           {distribution.id}
                         </p>
                       </div>
@@ -420,38 +340,26 @@ export function ProfitDistributionManager({
                       <span
                         className={[
                           'shrink-0 rounded-full border px-2 py-1 text-[11px] font-medium',
-                          statusClass(
-                            distribution.status,
-                          ),
+                          statusClass(distribution.status),
                         ].join(' ')}
                       >
-                        {statusLabel(
-                          distribution.status,
-                        )}
+                        {statusLabel(distribution.status)}
                       </span>
                     </div>
 
                     <div className="mt-3 flex items-center justify-between text-xs">
-                      <span className="text-fg-muted">
-                        Profit
-                      </span>
+                      <span className="text-fg-muted">Profit</span>
 
-                      <span className="font-medium text-fg">
-                        {formatCurrency(
-                          distribution.profit_amount,
-                        )}
+                      <span className="text-fg font-medium">
+                        {formatCurrency(distribution.profit_amount)}
                       </span>
                     </div>
 
                     <div className="mt-1 flex items-center justify-between text-xs">
-                      <span className="text-fg-muted">
-                        Investor Pool
-                      </span>
+                      <span className="text-fg-muted">Investor Pool</span>
 
-                      <span className="font-medium text-fg">
-                        {formatCurrency(
-                          distribution.investor_pool_amount,
-                        )}
+                      <span className="text-fg font-medium">
+                        {formatCurrency(distribution.investor_pool_amount)}
                       </span>
                     </div>
                   </button>
@@ -461,165 +369,112 @@ export function ProfitDistributionManager({
           </div>
         </section>
 
-        <section className="rounded-xl border border-border bg-surface">
-          <div className="border-b border-border px-5 py-4">
+        <section className="border-border bg-surface rounded-xl border">
+          <div className="border-border border-b px-5 py-4">
             {selectedDistribution ? (
               <div>
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <h2 className="font-semibold text-fg">
-                      Allocation Pembayaran
-                    </h2>
+                    <h2 className="text-fg font-semibold">Allocation Pembayaran</h2>
 
-                    <p className="mt-1 text-xs text-fg-muted">
-                      {formatDate(
-                        selectedDistribution.period_start,
-                      )}{' '}
-                      —{' '}
-                      {formatDate(
-                        selectedDistribution.period_end,
-                      )}
+                    <p className="text-fg-muted mt-1 text-xs">
+                      {formatDate(selectedDistribution.period_start)} —{' '}
+                      {formatDate(selectedDistribution.period_end)}
                     </p>
                   </div>
 
                   <span
                     className={[
                       'rounded-full border px-2.5 py-1 text-xs font-medium',
-                      statusClass(
-                        selectedDistribution.status,
-                      ),
+                      statusClass(selectedDistribution.status),
                     ].join(' ')}
                   >
-                    {statusLabel(
-                      selectedDistribution.status,
-                    )}
+                    {statusLabel(selectedDistribution.status)}
                   </span>
                 </div>
 
                 <div className="mt-4 grid gap-3 sm:grid-cols-3">
                   <div>
-                    <p className="text-[11px] text-fg-muted">
-                      Profit
-                    </p>
-                    <p className="mt-1 text-sm font-semibold text-fg">
-                      {formatCurrency(
-                        selectedDistribution.profit_amount,
-                      )}
+                    <p className="text-fg-muted text-[11px]">Profit</p>
+                    <p className="text-fg mt-1 text-sm font-semibold">
+                      {formatCurrency(selectedDistribution.profit_amount)}
                     </p>
                   </div>
 
                   <div>
-                    <p className="text-[11px] text-fg-muted">
-                      Investor Pool
-                    </p>
-                    <p className="mt-1 text-sm font-semibold text-fg">
-                      {formatCurrency(
-                        selectedDistribution.investor_pool_amount,
-                      )}
+                    <p className="text-fg-muted text-[11px]">Investor Pool</p>
+                    <p className="text-fg mt-1 text-sm font-semibold">
+                      {formatCurrency(selectedDistribution.investor_pool_amount)}
                     </p>
                   </div>
 
                   <div>
-                    <p className="text-[11px] text-fg-muted">
-                      Total Allocation
-                    </p>
-                    <p className="mt-1 text-sm font-semibold text-fg">
+                    <p className="text-fg-muted text-[11px]">Total Allocation</p>
+                    <p className="text-fg mt-1 text-sm font-semibold">
                       {formatCurrency(totalAllocated)}
                     </p>
                   </div>
                 </div>
               </div>
             ) : (
-              <h2 className="font-semibold text-fg">
-                Pilih Distribusi
-              </h2>
+              <h2 className="text-fg font-semibold">Pilih Distribusi</h2>
             )}
           </div>
 
           {selectedDistribution && allocations.length > 0 ? (
             <div className="overflow-x-auto">
-              <table className="min-w-[980px] w-full text-sm">
+              <table className="w-full min-w-[980px] text-sm">
                 <thead>
-                  <tr className="border-b border-border text-left text-xs text-fg-muted">
-                    <th className="px-5 py-3 font-medium">
-                      Investor
-                    </th>
-                    <th className="px-5 py-3 font-medium">
-                      Kepemilikan
-                    </th>
-                    <th className="px-5 py-3 font-medium">
-                      Allocation
-                    </th>
-                    <th className="px-5 py-3 font-medium">
-                      Status
-                    </th>
-                    <th className="px-5 py-3 font-medium">
-                      Reference
-                    </th>
-                    <th className="px-5 py-3 font-medium">
-                      Aksi
-                    </th>
+                  <tr className="border-border text-fg-muted border-b text-left text-xs">
+                    <th className="px-5 py-3 font-medium">Investor</th>
+                    <th className="px-5 py-3 font-medium">Kepemilikan</th>
+                    <th className="px-5 py-3 font-medium">Allocation</th>
+                    <th className="px-5 py-3 font-medium">Status</th>
+                    <th className="px-5 py-3 font-medium">Reference</th>
+                    <th className="px-5 py-3 font-medium">Aksi</th>
                   </tr>
                 </thead>
 
-                <tbody className="divide-y divide-border">
+                <tbody className="divide-border divide-y">
                   {allocations.map((allocation) => {
-                    const busy =
-                      busyAllocationId === allocation.id
+                    const busy = busyAllocationId === allocation.id
 
-                    const canPay =
-                      allocation.status === 'payable'
+                    const canPay = allocation.status === 'payable'
 
                     const hasProof =
-                      allocation.status === 'paid' ||
-                      Boolean(
-                        allocation.payment_reference,
-                      )
+                      allocation.status === 'paid' || Boolean(allocation.payment_reference)
 
                     return (
                       <tr key={allocation.id}>
                         <td className="px-5 py-4">
-                          <p className="font-medium text-fg">
-                            Investor
-                          </p>
+                          <p className="text-fg font-medium">Investor</p>
 
-                          <p className="mt-1 font-mono text-[11px] text-fg-subtle">
+                          <p className="text-fg-subtle mt-1 font-mono text-[11px]">
                             {allocation.investor_id}
                           </p>
                         </td>
 
                         <td className="px-5 py-4">
-                          {(allocation.ownership_bps / 100).toFixed(
-                            2,
-                          )}
-                          %
+                          {(allocation.ownership_bps / 100).toFixed(2)}%
                         </td>
 
                         <td className="px-5 py-4 font-medium">
-                          {formatCurrency(
-                            allocation.allocation_amount,
-                          )}
+                          {formatCurrency(allocation.allocation_amount)}
                         </td>
 
                         <td className="px-5 py-4">
                           <span
                             className={[
                               'rounded-full border px-2 py-1 text-[11px] font-medium',
-                              statusClass(
-                                allocation.status,
-                              ),
+                              statusClass(allocation.status),
                             ].join(' ')}
                           >
-                            {statusLabel(
-                              allocation.status,
-                            )}
+                            {statusLabel(allocation.status)}
                           </span>
 
                           {allocation.paid_at ? (
-                            <p className="mt-1 text-[11px] text-fg-subtle">
-                              {formatDate(
-                                allocation.paid_at,
-                              )}
+                            <p className="text-fg-subtle mt-1 text-[11px]">
+                              {formatDate(allocation.paid_at)}
                             </p>
                           ) : null}
                         </td>
@@ -627,35 +482,27 @@ export function ProfitDistributionManager({
                         <td className="px-5 py-4">
                           <input
                             value={
-                              referenceByAllocation[
-                                allocation.id
-                              ] ??
+                              referenceByAllocation[allocation.id] ??
                               allocation.payment_reference ??
                               ''
                             }
                             onChange={(event) =>
-                              setReferenceByAllocation(
-                                (current) => ({
-                                  ...current,
-                                  [allocation.id]:
-                                    event.target.value,
-                                }),
-                              )
+                              setReferenceByAllocation((current) => ({
+                                ...current,
+                                [allocation.id]: event.target.value,
+                              }))
                             }
                             maxLength={200}
                             placeholder="No. referensi"
-                            className="h-9 w-44 rounded-lg border border-border bg-background px-3 text-xs text-fg outline-none focus:border-primary-solid"
+                            className="border-border bg-background text-fg focus:border-primary-solid h-9 w-44 rounded-lg border px-3 text-xs outline-none"
                           />
                         </td>
 
                         <td className="px-5 py-4">
                           <div className="flex flex-wrap gap-2">
-                            {permissions.uploadProof &&
-                            canPay ? (
-                              <label className="inline-flex h-9 cursor-pointer items-center rounded-lg border border-border px-3 text-xs font-medium text-fg hover:bg-muted">
-                                {busy
-                                  ? 'Uploading...'
-                                  : 'Upload Bukti'}
+                            {permissions.uploadProof && canPay ? (
+                              <label className="border-border text-fg hover:bg-muted inline-flex h-9 cursor-pointer items-center rounded-lg border px-3 text-xs font-medium">
+                                {busy ? 'Uploading...' : 'Upload Bukti'}
 
                                 <input
                                   type="file"
@@ -663,18 +510,12 @@ export function ProfitDistributionManager({
                                   className="hidden"
                                   disabled={busy}
                                   onChange={(event) => {
-                                    const file =
-                                      event.target
-                                        .files?.[0]
+                                    const file = event.target.files?.[0]
 
-                                    event.currentTarget.value =
-                                      ''
+                                    event.currentTarget.value = ''
 
                                     if (file) {
-                                      void uploadProof(
-                                        allocation.id,
-                                        file,
-                                      )
+                                      void uploadProof(allocation.id, file)
                                     }
                                   }}
                                 />
@@ -686,12 +527,8 @@ export function ProfitDistributionManager({
                                 <button
                                   type="button"
                                   disabled={busy}
-                                  onClick={() =>
-                                    void inspectProof(
-                                      allocation.id,
-                                    )
-                                  }
-                                  className="inline-flex h-9 items-center rounded-lg border border-border px-3 text-xs font-medium text-fg hover:bg-muted disabled:opacity-50"
+                                  onClick={() => void inspectProof(allocation.id)}
+                                  className="border-border text-fg hover:bg-muted inline-flex h-9 items-center rounded-lg border px-3 text-xs font-medium disabled:opacity-50"
                                 >
                                   Cek Bukti
                                 </button>
@@ -699,33 +536,22 @@ export function ProfitDistributionManager({
                                 <button
                                   type="button"
                                   disabled={busy}
-                                  onClick={() =>
-                                    void openProof(
-                                      allocation.id,
-                                    )
-                                  }
-                                  className="inline-flex h-9 items-center rounded-lg border border-border px-3 text-xs font-medium text-fg hover:bg-muted disabled:opacity-50"
+                                  onClick={() => void openProof(allocation.id)}
+                                  className="border-border text-fg hover:bg-muted inline-flex h-9 items-center rounded-lg border px-3 text-xs font-medium disabled:opacity-50"
                                 >
                                   Buka Bukti
                                 </button>
                               </>
                             ) : null}
 
-                            {permissions.markPaid &&
-                            canPay ? (
+                            {permissions.markPaid && canPay ? (
                               <button
                                 type="button"
                                 disabled={busy || isPending}
-                                onClick={() =>
-                                  void markPaid(
-                                    allocation.id,
-                                  )
-                                }
-                                className="inline-flex h-9 items-center rounded-lg bg-primary-solid px-3 text-xs font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-50"
+                                onClick={() => void markPaid(allocation.id)}
+                                className="bg-primary-solid text-primary-foreground inline-flex h-9 items-center rounded-lg px-3 text-xs font-semibold hover:opacity-90 disabled:opacity-50"
                               >
-                                {busy
-                                  ? 'Memproses...'
-                                  : 'Mark Paid'}
+                                {busy ? 'Memproses...' : 'Mark Paid'}
                               </button>
                             ) : null}
                           </div>
@@ -737,11 +563,11 @@ export function ProfitDistributionManager({
               </table>
             </div>
           ) : selectedDistribution ? (
-            <div className="p-8 text-center text-sm text-fg-muted">
+            <div className="text-fg-muted p-8 text-center text-sm">
               Belum ada allocation untuk distribusi ini.
             </div>
           ) : (
-            <div className="p-8 text-center text-sm text-fg-muted">
+            <div className="text-fg-muted p-8 text-center text-sm">
               Pilih distribusi di sebelah kiri.
             </div>
           )}
@@ -750,4 +576,3 @@ export function ProfitDistributionManager({
     </div>
   )
 }
-

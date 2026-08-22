@@ -12,9 +12,9 @@ export default async function NewAdministratorPage() {
     return (
       <main className="p-6">
         <h1 className="text-xl font-semibold">Akses ditolak</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Hanya administrator yang memiliki permission admins.create yang dapat
-          membuat administrator baru.
+        <p className="text-muted-foreground mt-2 text-sm">
+          Hanya administrator yang memiliki permission admins.create yang dapat membuat
+          administrator baru.
         </p>
       </main>
     )
@@ -38,16 +38,14 @@ export default async function NewAdministratorPage() {
       <header>
         <Link
           href="/admin/administrators"
-          className="text-sm text-muted-foreground hover:underline"
+          className="text-muted-foreground text-sm hover:underline"
         >
           ← Kembali ke Administrator
         </Link>
 
-        <h1 className="mt-3 text-2xl font-semibold tracking-tight">
-          Tambah Administrator
-        </h1>
+        <h1 className="mt-3 text-2xl font-semibold tracking-tight">Tambah Administrator</h1>
 
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="text-muted-foreground mt-1 text-sm">
           Buat akun administrator internal dan tetapkan role aksesnya.
         </p>
       </header>
@@ -64,6 +62,3 @@ export default async function NewAdministratorPage() {
     </main>
   )
 }
-
-
-

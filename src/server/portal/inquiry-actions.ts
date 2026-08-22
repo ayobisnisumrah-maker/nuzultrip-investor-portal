@@ -11,7 +11,11 @@ import { getServerSupabase } from '@/server/supabase/server'
 
 const inquirySchema = z.object({
   name: z.string().trim().min(1).max(200),
-  email: z.string().trim().email().transform((value) => value.toLowerCase()),
+  email: z
+    .string()
+    .trim()
+    .email()
+    .transform((value) => value.toLowerCase()),
   phone: z.string().trim().max(50).optional(),
   organization: z.string().trim().max(200).optional(),
   message: z.string().trim().min(1).max(5000),

@@ -10,7 +10,11 @@ export const metadata: Metadata = { title: 'Permintaan Masuk' }
 export default async function InquiriesPage() {
   const principal = await requireAdminPage('/admin/inquiries')
   if (!principal.permissions.has('inquiries.view')) {
-    return <Alert tone="info" title="Akses terbatas">Peran Anda tidak memiliki izin untuk melihat permintaan masuk.</Alert>
+    return (
+      <Alert tone="info" title="Akses terbatas">
+        Peran Anda tidak memiliki izin untuk melihat permintaan masuk.
+      </Alert>
+    )
   }
 
   const supabase = await getServerSupabase()
@@ -21,15 +25,23 @@ export default async function InquiriesPage() {
     .limit(100)
 
   if (error) {
-    return <Alert tone="danger" title="Permintaan tidak dapat dimuat">Data permintaan masuk gagal diambil. Silakan coba lagi.</Alert>
+    return (
+      <Alert tone="danger" title="Permintaan tidak dapat dimuat">
+        Data permintaan masuk gagal diambil. Silakan coba lagi.
+      </Alert>
+    )
   }
 
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-caption font-medium uppercase tracking-[0.14em] text-fg-subtle">Hubungan Investor</p>
-        <h1 className="mt-1 font-display text-heading-lg text-fg">Permintaan Masuk</h1>
-        <p className="mt-2 max-w-3xl text-body-sm text-fg-muted">Kelola inquiry dari portal publik, tindak lanjutnya, dan konversinya menjadi percakapan.</p>
+        <p className="text-caption text-fg-subtle font-medium tracking-[0.14em] uppercase">
+          Hubungan Investor
+        </p>
+        <h1 className="font-display text-heading-lg text-fg mt-1">Permintaan Masuk</h1>
+        <p className="text-body-sm text-fg-muted mt-2 max-w-3xl">
+          Kelola inquiry dari portal publik, tindak lanjutnya, dan konversinya menjadi percakapan.
+        </p>
       </div>
       <CommunicationWorkbench
         threads={[]}

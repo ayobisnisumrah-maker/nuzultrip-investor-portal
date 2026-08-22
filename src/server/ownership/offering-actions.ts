@@ -22,70 +22,26 @@ const offeringIdSchema = z.object({
 })
 
 const createOwnershipOfferingSchema = z.object({
-  name: z
-    .string()
-    .trim()
-    .min(1, 'Nama penawaran kepemilikan wajib diisi.'),
+  name: z.string().trim().min(1, 'Nama penawaran kepemilikan wajib diisi.'),
   code: z
     .string()
     .trim()
     .toLowerCase()
-    .regex(
-      /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
-      'Kode penawaran harus menggunakan lowercase kebab-case.',
-    ),
-  total_offered_bps: z
-    .number()
-    .int()
-    .min(1)
-    .max(10000),
-  unit_ownership_bps: z
-    .number()
-    .int()
-    .min(1)
-    .max(10000),
-  unit_price: z
-    .number()
-    .finite()
-    .positive(),
-  total_units: z
-    .number()
-    .int()
-    .positive(),
-  distribution_cadence_months: z
-    .number()
-    .int()
-    .min(1)
-    .max(24)
-    .optional(),
-  transfer_lock_months: z
-    .number()
-    .int()
-    .min(36)
-    .max(120)
-    .optional(),
-  effective_from: z
-    .string()
-    .datetime()
-    .nullable()
-    .optional(),
-  effective_until: z
-    .string()
-    .datetime()
-    .nullable()
-    .optional(),
-  description: z
-    .string()
-    .trim()
-    .nullable()
-    .optional(),
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Kode penawaran harus menggunakan lowercase kebab-case.'),
+  total_offered_bps: z.number().int().min(1).max(10000),
+  unit_ownership_bps: z.number().int().min(1).max(10000),
+  unit_price: z.number().finite().positive(),
+  total_units: z.number().int().positive(),
+  distribution_cadence_months: z.number().int().min(1).max(24).optional(),
+  transfer_lock_months: z.number().int().min(36).max(120).optional(),
+  effective_from: z.string().datetime().nullable().optional(),
+  effective_until: z.string().datetime().nullable().optional(),
+  description: z.string().trim().nullable().optional(),
 })
 
-const updateOwnershipOfferingSchema = createOwnershipOfferingSchema
-  .partial()
-  .extend({
-    offeringId: z.uuid('Penawaran kepemilikan tidak valid.'),
-  })
+const updateOwnershipOfferingSchema = createOwnershipOfferingSchema.partial().extend({
+  offeringId: z.uuid('Penawaran kepemilikan tidak valid.'),
+})
 
 export const listOwnershipOfferings = defineAction({
   access: { permission: 'ownership_offerings.view' },
@@ -117,10 +73,7 @@ export const getOwnershipOffering = defineAction({
       throw new ForbiddenError('Admin principal required.')
     }
 
-    const offering = await getOwnershipOfferingService(
-      supabase,
-      input.offeringId,
-    )
+    const offering = await getOwnershipOfferingService(supabase, input.offeringId)
 
     if (!offering) {
       throw new NotFoundError('Penawaran kepemilikan')
@@ -163,10 +116,7 @@ export const updateOwnershipOffering = defineAction({
       throw new ForbiddenError('Admin principal required.')
     }
 
-    const offering = await getOwnershipOfferingService(
-      supabase,
-      input.offeringId,
-    )
+    const offering = await getOwnershipOfferingService(supabase, input.offeringId)
 
     if (!offering) {
       throw new NotFoundError('Penawaran kepemilikan')
@@ -192,20 +142,13 @@ export const publishOwnershipOffering = defineAction({
       throw new ForbiddenError('Admin principal required.')
     }
 
-    const offering = await getOwnershipOfferingService(
-      supabase,
-      input.offeringId,
-    )
+    const offering = await getOwnershipOfferingService(supabase, input.offeringId)
 
     if (!offering) {
       throw new NotFoundError('Penawaran kepemilikan')
     }
 
-    return await publishOwnershipOfferingService(
-      supabase,
-      input.offeringId,
-      principal.adminId,
-    )
+    return await publishOwnershipOfferingService(supabase, input.offeringId, principal.adminId)
   },
 })
 
@@ -222,20 +165,13 @@ export const pauseOwnershipOffering = defineAction({
       throw new ForbiddenError('Admin principal required.')
     }
 
-    const offering = await getOwnershipOfferingService(
-      supabase,
-      input.offeringId,
-    )
+    const offering = await getOwnershipOfferingService(supabase, input.offeringId)
 
     if (!offering) {
       throw new NotFoundError('Penawaran kepemilikan')
     }
 
-    return await pauseOwnershipOfferingService(
-      supabase,
-      input.offeringId,
-      principal.adminId,
-    )
+    return await pauseOwnershipOfferingService(supabase, input.offeringId, principal.adminId)
   },
 })
 
@@ -252,20 +188,13 @@ export const resumeOwnershipOffering = defineAction({
       throw new ForbiddenError('Admin principal required.')
     }
 
-    const offering = await getOwnershipOfferingService(
-      supabase,
-      input.offeringId,
-    )
+    const offering = await getOwnershipOfferingService(supabase, input.offeringId)
 
     if (!offering) {
       throw new NotFoundError('Penawaran kepemilikan')
     }
 
-    return await resumeOwnershipOfferingService(
-      supabase,
-      input.offeringId,
-      principal.adminId,
-    )
+    return await resumeOwnershipOfferingService(supabase, input.offeringId, principal.adminId)
   },
 })
 
@@ -282,20 +211,13 @@ export const closeOwnershipOffering = defineAction({
       throw new ForbiddenError('Admin principal required.')
     }
 
-    const offering = await getOwnershipOfferingService(
-      supabase,
-      input.offeringId,
-    )
+    const offering = await getOwnershipOfferingService(supabase, input.offeringId)
 
     if (!offering) {
       throw new NotFoundError('Penawaran kepemilikan')
     }
 
-    return await closeOwnershipOfferingService(
-      supabase,
-      input.offeringId,
-      principal.adminId,
-    )
+    return await closeOwnershipOfferingService(supabase, input.offeringId, principal.adminId)
   },
 })
 
@@ -312,19 +234,12 @@ export const archiveOwnershipOffering = defineAction({
       throw new ForbiddenError('Admin principal required.')
     }
 
-    const offering = await getOwnershipOfferingService(
-      supabase,
-      input.offeringId,
-    )
+    const offering = await getOwnershipOfferingService(supabase, input.offeringId)
 
     if (!offering) {
       throw new NotFoundError('Penawaran kepemilikan')
     }
 
-    return await archiveOwnershipOfferingService(
-      supabase,
-      input.offeringId,
-      principal.adminId,
-    )
+    return await archiveOwnershipOfferingService(supabase, input.offeringId, principal.adminId)
   },
 })

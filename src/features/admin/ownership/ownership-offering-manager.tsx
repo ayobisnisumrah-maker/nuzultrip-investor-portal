@@ -85,112 +85,82 @@ export function OwnershipOfferingManager({ offerings }: Props) {
         offering.name.toLowerCase().includes(normalizedQuery) ||
         offering.code.toLowerCase().includes(normalizedQuery)
 
-      const matchesStatus =
-        !status || offering.status === status
+      const matchesStatus = !status || offering.status === status
 
       return matchesQuery && matchesStatus
     })
   }, [offerings, query, status])
 
-  const totalUnits = offerings.reduce(
-    (sum, offering) => sum + Number(offering.total_units),
-    0,
-  )
+  const totalUnits = offerings.reduce((sum, offering) => sum + Number(offering.total_units), 0)
 
   const totalOfferingValue = offerings.reduce(
-    (sum, offering) =>
-      sum +
-      Number(offering.total_units) * Number(offering.unit_price),
+    (sum, offering) => sum + Number(offering.total_units) * Number(offering.unit_price),
     0,
   )
 
-  const activeCount = offerings.filter(
-    (offering) => offering.status === 'open',
-  ).length
+  const activeCount = offerings.filter((offering) => offering.status === 'open').length
 
-  const draftCount = offerings.filter(
-    (offering) => offering.status === 'draft',
-  ).length
+  const draftCount = offerings.filter((offering) => offering.status === 'draft').length
 
   return (
     <section className="space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div>
-          <p className="text-sm font-medium text-fg-muted">
-            Investor Relations
-          </p>
+          <p className="text-fg-muted text-sm font-medium">Investor Relations</p>
 
-          <h1 className="mt-1 font-display text-heading-xl text-fg">
-            Penawaran Kepemilikan
-          </h1>
+          <h1 className="font-display text-heading-xl text-fg mt-1">Penawaran Kepemilikan</h1>
 
-          <p className="mt-2 max-w-3xl text-body-sm text-fg-muted">
-            Kelola penawaran kepemilikan, unit, harga, persentase,
-            periode lock, dan status penawaran investor.
+          <p className="text-body-sm text-fg-muted mt-2 max-w-3xl">
+            Kelola penawaran kepemilikan, unit, harga, persentase, periode lock, dan status
+            penawaran investor.
           </p>
         </div>
 
         <Link
           href="/admin/ownership/offerings/new"
-          className="inline-flex h-10 items-center justify-center rounded-lg bg-primary px-4 text-sm font-medium text-on-primary shadow-sm hover:opacity-90"
+          className="bg-primary text-on-primary inline-flex h-10 items-center justify-center rounded-lg px-4 text-sm font-medium shadow-sm hover:opacity-90"
         >
           + Buat Penawaran
         </Link>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-xl border border-border bg-surface p-5">
-          <p className="text-caption text-fg-subtle">
-            Total Penawaran
-          </p>
-          <p className="mt-2 text-2xl font-semibold text-fg">
-            {formatNumber(offerings.length)}
-          </p>
+        <div className="border-border bg-surface rounded-xl border p-5">
+          <p className="text-caption text-fg-subtle">Total Penawaran</p>
+          <p className="text-fg mt-2 text-2xl font-semibold">{formatNumber(offerings.length)}</p>
         </div>
 
-        <div className="rounded-xl border border-border bg-surface p-5">
-          <p className="text-caption text-fg-subtle">
-            Penawaran Aktif
-          </p>
-          <p className="mt-2 text-2xl font-semibold text-fg">
-            {formatNumber(activeCount)}
-          </p>
+        <div className="border-border bg-surface rounded-xl border p-5">
+          <p className="text-caption text-fg-subtle">Penawaran Aktif</p>
+          <p className="text-fg mt-2 text-2xl font-semibold">{formatNumber(activeCount)}</p>
         </div>
 
-        <div className="rounded-xl border border-border bg-surface p-5">
-          <p className="text-caption text-fg-subtle">
-            Total Unit
-          </p>
-          <p className="mt-2 text-2xl font-semibold text-fg">
-            {formatNumber(totalUnits)}
-          </p>
+        <div className="border-border bg-surface rounded-xl border p-5">
+          <p className="text-caption text-fg-subtle">Total Unit</p>
+          <p className="text-fg mt-2 text-2xl font-semibold">{formatNumber(totalUnits)}</p>
         </div>
 
-        <div className="rounded-xl border border-border bg-surface p-5">
-          <p className="text-caption text-fg-subtle">
-            Nilai Penawaran
-          </p>
-          <p className="mt-2 text-xl font-semibold text-fg">
-            {formatRupiah(totalOfferingValue)}
-          </p>
+        <div className="border-border bg-surface rounded-xl border p-5">
+          <p className="text-caption text-fg-subtle">Nilai Penawaran</p>
+          <p className="text-fg mt-2 text-xl font-semibold">{formatRupiah(totalOfferingValue)}</p>
         </div>
       </div>
 
-      <div className="rounded-xl border border-border bg-surface">
-        <div className="border-b border-border p-5">
+      <div className="border-border bg-surface rounded-xl border">
+        <div className="border-border border-b p-5">
           <div className="flex flex-col gap-3 lg:flex-row">
             <input
               type="search"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Cari nama atau kode penawaran..."
-              className="h-10 min-w-0 flex-1 rounded-lg border border-border bg-canvas px-3 text-body-sm outline-none focus:ring-2"
+              className="border-border bg-canvas text-body-sm h-10 min-w-0 flex-1 rounded-lg border px-3 outline-none focus:ring-2"
             />
 
             <select
               value={status}
               onChange={(event) => setStatus(event.target.value)}
-              className="h-10 rounded-lg border border-border bg-canvas px-3 text-body-sm outline-none focus:ring-2"
+              className="border-border bg-canvas text-body-sm h-10 rounded-lg border px-3 outline-none focus:ring-2"
             >
               <option value="">Semua status</option>
               <option value="draft">Draft</option>
@@ -204,11 +174,9 @@ export function OwnershipOfferingManager({ offerings }: Props) {
 
         {filteredOfferings.length === 0 ? (
           <div className="p-10 text-center">
-            <h2 className="text-sm font-semibold text-fg">
-              Tidak ada penawaran
-            </h2>
+            <h2 className="text-fg text-sm font-semibold">Tidak ada penawaran</h2>
 
-            <p className="mt-1 text-sm text-fg-muted">
+            <p className="text-fg-muted mt-1 text-sm">
               {offerings.length === 0
                 ? 'Belum ada penawaran kepemilikan yang tersedia.'
                 : 'Tidak ada penawaran yang sesuai dengan filter saat ini.'}
@@ -217,8 +185,8 @@ export function OwnershipOfferingManager({ offerings }: Props) {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[1100px] text-left">
-              <thead className="border-b border-border bg-canvas">
-                <tr className="text-xs font-medium uppercase tracking-wide text-fg-subtle">
+              <thead className="border-border bg-canvas border-b">
+                <tr className="text-fg-subtle text-xs font-medium tracking-wide uppercase">
                   <th className="px-5 py-3">Penawaran</th>
                   <th className="px-5 py-3">Status</th>
                   <th className="px-5 py-3 text-right">Unit</th>
@@ -229,18 +197,14 @@ export function OwnershipOfferingManager({ offerings }: Props) {
                 </tr>
               </thead>
 
-              <tbody className="divide-y divide-border">
+              <tbody className="divide-border divide-y">
                 {filteredOfferings.map((offering) => (
                   <tr key={offering.id} className="align-middle">
                     <td className="px-5 py-4">
                       <div>
-                        <p className="font-medium text-fg">
-                          {offering.name}
-                        </p>
+                        <p className="text-fg font-medium">{offering.name}</p>
 
-                        <p className="mt-1 text-xs text-fg-subtle">
-                          {offering.code}
-                        </p>
+                        <p className="text-fg-subtle mt-1 text-xs">{offering.code}</p>
                       </div>
                     </td>
 
@@ -250,39 +214,32 @@ export function OwnershipOfferingManager({ offerings }: Props) {
                           offering.status,
                         )}`}
                       >
-                        {STATUS_LABELS[offering.status] ??
-                          offering.status}
+                        {STATUS_LABELS[offering.status] ?? offering.status}
                       </span>
                     </td>
 
-                    <td className="px-5 py-4 text-right text-sm text-fg">
+                    <td className="text-fg px-5 py-4 text-right text-sm">
                       {formatNumber(Number(offering.total_units))}
                     </td>
 
-                    <td className="px-5 py-4 text-right text-sm text-fg">
+                    <td className="text-fg px-5 py-4 text-right text-sm">
                       {formatRupiah(Number(offering.unit_price))}
                     </td>
 
-                    <td className="px-5 py-4 text-right text-sm text-fg">
-                      {formatPercentageBps(
-                        Number(offering.total_offered_bps),
-                      )}
+                    <td className="text-fg px-5 py-4 text-right text-sm">
+                      {formatPercentageBps(Number(offering.total_offered_bps))}
                     </td>
 
-                    <td className="px-5 py-4 text-sm text-fg-muted">
-                      <div>
-                        {formatDate(offering.effective_from)}
-                      </div>
+                    <td className="text-fg-muted px-5 py-4 text-sm">
+                      <div>{formatDate(offering.effective_from)}</div>
 
-                      <div className="mt-1 text-xs">
-                        s/d {formatDate(offering.effective_until)}
-                      </div>
+                      <div className="mt-1 text-xs">s/d {formatDate(offering.effective_until)}</div>
                     </td>
 
                     <td className="px-5 py-4 text-right">
                       <Link
                         href={`/admin/ownership/offerings/${offering.id}`}
-                        className="text-sm font-medium text-primary hover:underline"
+                        className="text-primary text-sm font-medium hover:underline"
                       >
                         Detail
                       </Link>
@@ -295,31 +252,22 @@ export function OwnershipOfferingManager({ offerings }: Props) {
         )}
       </div>
 
-      <div className="rounded-xl border border-border bg-surface p-5">
+      <div className="border-border bg-surface rounded-xl border p-5">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-sm font-medium text-fg">
-              Ringkasan Status
-            </p>
-            <p className="mt-1 text-xs text-fg-muted">
-              Data berasal langsung dari penawaran kepemilikan yang
-              tersimpan di database.
+            <p className="text-fg text-sm font-medium">Ringkasan Status</p>
+            <p className="text-fg-muted mt-1 text-xs">
+              Data berasal langsung dari penawaran kepemilikan yang tersimpan di database.
             </p>
           </div>
 
           <div className="flex gap-5 text-sm">
             <span className="text-fg-muted">
-              Draft:{' '}
-              <strong className="text-fg">
-                {formatNumber(draftCount)}
-              </strong>
+              Draft: <strong className="text-fg">{formatNumber(draftCount)}</strong>
             </span>
 
             <span className="text-fg-muted">
-              Aktif:{' '}
-              <strong className="text-fg">
-                {formatNumber(activeCount)}
-              </strong>
+              Aktif: <strong className="text-fg">{formatNumber(activeCount)}</strong>
             </span>
           </div>
         </div>
@@ -327,5 +275,3 @@ export function OwnershipOfferingManager({ offerings }: Props) {
     </section>
   )
 }
-
-

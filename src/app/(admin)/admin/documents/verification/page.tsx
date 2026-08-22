@@ -2,10 +2,7 @@
 import { AdminModulePage } from '@/features/admin/admin-module-page'
 
 export default async function DocumentVerificationPage() {
-  const principal = await adminWithPermission(
-    'documents.review',
-    '/admin/documents/verification',
-  )
+  const principal = await adminWithPermission('documents.review', '/admin/documents/verification')
 
   return (
     <AdminModulePage

@@ -2,13 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import {
-  FilePlus2,
-  FileText,
-  Loader2,
-  Upload,
-  X,
-} from 'lucide-react'
+import { FilePlus2, FileText, Loader2, Upload, X } from 'lucide-react'
 
 import { createDocument } from '@/server/documents/admin-actions'
 import { useAction } from '@/ui/use-action'
@@ -61,7 +55,7 @@ function FieldError({ message }: { message?: string }) {
   if (!message) return null
 
   return (
-    <p className="mt-1 text-xs text-danger" role="alert">
+    <p className="text-danger mt-1 text-xs" role="alert">
       {message}
     </p>
   )
@@ -84,8 +78,7 @@ export function DocumentCreateForm() {
   const [title, setTitle] = useState('')
   const [slug, setSlug] = useState('')
   const [slugTouched, setSlugTouched] = useState(false)
-  const [kind, setKind] =
-    useState<(typeof KIND_OPTIONS)[number]['value']>('investment_proposal')
+  const [kind, setKind] = useState<(typeof KIND_OPTIONS)[number]['value']>('investment_proposal')
   const [summary, setSummary] = useState('')
   const [visibility, setVisibility] =
     useState<(typeof VISIBILITY_OPTIONS)[number]['value']>('investors')
@@ -169,17 +162,13 @@ export function DocumentCreateForm() {
       }
 
       if (!response.ok || !payload.ok || !payload.asset) {
-        throw new Error(
-          payload.error || 'File gagal diunggah. Silakan coba lagi.',
-        )
+        throw new Error(payload.error || 'File gagal diunggah. Silakan coba lagi.')
       }
 
       setUploadedAsset(payload.asset)
     } catch (error) {
       setUploadError(
-        error instanceof Error
-          ? error.message
-          : 'File gagal diunggah. Silakan coba lagi.',
+        error instanceof Error ? error.message : 'File gagal diunggah. Silakan coba lagi.',
       )
 
       if (fileInputRef.current) {
@@ -217,7 +206,7 @@ export function DocumentCreateForm() {
   const busy = action.pending || uploadPending
 
   return (
-    <section className="max-w-3xl rounded-xl border bg-card p-5">
+    <section className="bg-card max-w-3xl rounded-xl border p-5">
       <div className="grid gap-5">
         <div>
           <label htmlFor="document-title" className="text-sm font-medium">
@@ -232,7 +221,7 @@ export function DocumentCreateForm() {
             autoFocus
             maxLength={200}
             placeholder="Contoh: Investor Update Q3 2026"
-            className="mt-2 h-11 w-full rounded-lg border bg-background px-3 text-sm outline-none focus:ring-2"
+            className="bg-background mt-2 h-11 w-full rounded-lg border px-3 text-sm outline-none focus:ring-2"
           />
 
           <FieldError message={action.fieldError('title')} />
@@ -250,10 +239,10 @@ export function DocumentCreateForm() {
             disabled={busy}
             maxLength={200}
             placeholder="investor-update-q3-2026"
-            className="mt-2 h-11 w-full rounded-lg border bg-background px-3 text-sm font-mono outline-none focus:ring-2"
+            className="bg-background mt-2 h-11 w-full rounded-lg border px-3 font-mono text-sm outline-none focus:ring-2"
           />
 
-          <p className="mt-1 text-xs text-muted-foreground">
+          <p className="text-muted-foreground mt-1 text-xs">
             Hanya huruf kecil, angka, dan tanda hubung.
           </p>
 
@@ -269,12 +258,10 @@ export function DocumentCreateForm() {
             id="document-kind"
             value={kind}
             onChange={(event) =>
-              setKind(
-                event.target.value as (typeof KIND_OPTIONS)[number]['value'],
-              )
+              setKind(event.target.value as (typeof KIND_OPTIONS)[number]['value'])
             }
             disabled={busy}
-            className="mt-2 h-11 w-full rounded-lg border bg-background px-3 text-sm outline-none focus:ring-2"
+            className="bg-background mt-2 h-11 w-full rounded-lg border px-3 text-sm outline-none focus:ring-2"
           >
             {KIND_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
@@ -287,10 +274,7 @@ export function DocumentCreateForm() {
         </div>
 
         <div>
-          <label
-            htmlFor="document-visibility"
-            className="text-sm font-medium"
-          >
+          <label htmlFor="document-visibility" className="text-sm font-medium">
             Visibilitas
           </label>
 
@@ -298,12 +282,10 @@ export function DocumentCreateForm() {
             id="document-visibility"
             value={visibility}
             onChange={(event) =>
-              setVisibility(
-                event.target.value as (typeof VISIBILITY_OPTIONS)[number]['value'],
-              )
+              setVisibility(event.target.value as (typeof VISIBILITY_OPTIONS)[number]['value'])
             }
             disabled={busy}
-            className="mt-2 h-11 w-full rounded-lg border bg-background px-3 text-sm outline-none focus:ring-2"
+            className="bg-background mt-2 h-11 w-full rounded-lg border px-3 text-sm outline-none focus:ring-2"
           >
             {VISIBILITY_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
@@ -328,50 +310,40 @@ export function DocumentCreateForm() {
             maxLength={1000}
             rows={5}
             placeholder="Ringkasan singkat mengenai isi dan tujuan dokumen."
-            className="mt-2 w-full resize-y rounded-lg border bg-background px-3 py-2.5 text-sm outline-none focus:ring-2"
+            className="bg-background mt-2 w-full resize-y rounded-lg border px-3 py-2.5 text-sm outline-none focus:ring-2"
           />
 
           <div className="mt-1 flex justify-between gap-4">
             <FieldError message={action.fieldError('summary')} />
 
-            <span className="ml-auto text-xs text-muted-foreground">
-              {summary.length}/1000
-            </span>
+            <span className="text-muted-foreground ml-auto text-xs">{summary.length}/1000</span>
           </div>
         </div>
 
         <div>
           <div className="flex items-center justify-between gap-3">
             <div>
-              <label
-                htmlFor="document-file"
-                className="text-sm font-medium"
-              >
+              <label htmlFor="document-file" className="text-sm font-medium">
                 File Dokumen
               </label>
 
-              <p className="mt-1 text-xs text-muted-foreground">
+              <p className="text-muted-foreground mt-1 text-xs">
                 Maksimal 100 MB. PDF, JPG, PNG, WebP, XLSX, PPTX, atau DOCX.
               </p>
             </div>
           </div>
 
-          <div className="mt-3 rounded-xl border border-dashed border-border-strong p-4">
+          <div className="border-border-strong mt-3 rounded-xl border border-dashed p-4">
             {uploadedAsset ? (
               <div className="flex items-center gap-3">
-                <div className="grid size-10 shrink-0 place-items-center rounded-lg bg-sunken">
-                  <FileText
-                    className="size-5 text-fg-muted"
-                    aria-hidden="true"
-                  />
+                <div className="bg-sunken grid size-10 shrink-0 place-items-center rounded-lg">
+                  <FileText className="text-fg-muted size-5" aria-hidden="true" />
                 </div>
 
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">
-                    {uploadedAsset.original_filename}
-                  </p>
+                  <p className="truncate text-sm font-medium">{uploadedAsset.original_filename}</p>
 
-                  <p className="mt-0.5 text-xs text-muted-foreground">
+                  <p className="text-muted-foreground mt-0.5 text-xs">
                     {formatBytes(uploadedAsset.byte_size)}
                   </p>
                 </div>
@@ -389,27 +361,19 @@ export function DocumentCreateForm() {
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-5 text-center">
-                <div className="grid size-11 place-items-center rounded-full bg-sunken">
+                <div className="bg-sunken grid size-11 place-items-center rounded-full">
                   {uploadPending ? (
-                    <Loader2
-                      className="size-5 animate-spin text-fg-muted"
-                      aria-hidden="true"
-                    />
+                    <Loader2 className="text-fg-muted size-5 animate-spin" aria-hidden="true" />
                   ) : (
-                    <Upload
-                      className="size-5 text-fg-muted"
-                      aria-hidden="true"
-                    />
+                    <Upload className="text-fg-muted size-5" aria-hidden="true" />
                   )}
                 </div>
 
                 <p className="mt-3 text-sm font-medium">
-                  {uploadPending
-                    ? 'Mengunggah file...'
-                    : 'Pilih file dokumen'}
+                  {uploadPending ? 'Mengunggah file...' : 'Pilih file dokumen'}
                 </p>
 
-                <p className="mt-1 text-xs text-muted-foreground">
+                <p className="text-muted-foreground mt-1 text-xs">
                   File akan diunggah ke storage sebelum dokumen dibuat.
                 </p>
 
@@ -428,7 +392,7 @@ export function DocumentCreateForm() {
                     className="sr-only"
                   />
 
-                  <span className="inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-on-primary hover:bg-primary-hover">
+                  <span className="bg-primary text-on-primary hover:bg-primary-hover inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-md px-4 text-sm font-medium">
                     <Upload className="size-4" aria-hidden="true" />
                     Pilih File
                   </span>
@@ -438,7 +402,7 @@ export function DocumentCreateForm() {
           </div>
 
           {uploadError ? (
-            <p className="mt-2 text-xs text-danger" role="alert">
+            <p className="text-danger mt-2 text-xs" role="alert">
               {uploadError}
             </p>
           ) : null}
@@ -446,18 +410,13 @@ export function DocumentCreateForm() {
 
         {action.errorMessage ? (
           <div className="rounded-lg border p-4" role="alert">
-            <p className="text-sm font-medium">
-              Dokumen tidak dapat dibuat
-            </p>
+            <p className="text-sm font-medium">Dokumen tidak dapat dibuat</p>
 
-            <p className="mt-1 text-sm text-muted-foreground">
-              {action.errorMessage}
-            </p>
+            <p className="text-muted-foreground mt-1 text-sm">{action.errorMessage}</p>
 
             {action.correlationId ? (
-              <p className="mt-2 text-xs text-muted-foreground">
-                Kode referensi:{' '}
-                <code className="font-mono">{action.correlationId}</code>
+              <p className="text-muted-foreground mt-2 text-xs">
+                Kode referensi: <code className="font-mono">{action.correlationId}</code>
               </p>
             ) : null}
           </div>
@@ -487,6 +446,3 @@ export function DocumentCreateForm() {
     </section>
   )
 }
-
-
-

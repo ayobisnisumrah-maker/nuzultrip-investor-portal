@@ -9,10 +9,18 @@ export const metadata: Metadata = { title: 'Pesan' }
 
 type SearchParams = { thread?: string }
 
-export default async function MessagesPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
+export default async function MessagesPage({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParams>
+}) {
   const principal = await requireAdminPage('/admin/messages')
   if (!principal.permissions.has('messages.view')) {
-    return <Alert tone="info" title="Akses terbatas">Peran Anda tidak memiliki izin untuk melihat pesan.</Alert>
+    return (
+      <Alert tone="info" title="Akses terbatas">
+        Peran Anda tidak memiliki izin untuk melihat pesan.
+      </Alert>
+    )
   }
 
   const supabase = await getServerSupabase()
@@ -23,11 +31,22 @@ export default async function MessagesPage({ searchParams }: { searchParams: Pro
     .order('last_message_at', { ascending: false, nullsFirst: false })
     .limit(100)
 
-  if (error) return <Alert tone="danger" title="Pesan tidak dapat dimuat">Data percakapan gagal diambil. Silakan coba lagi.</Alert>
+  if (error)
+    return (
+      <Alert tone="danger" title="Pesan tidak dapat dimuat">
+        Data percakapan gagal diambil. Silakan coba lagi.
+      </Alert>
+    )
 
   const selectedId = params.thread
   const selectedThread = threads?.find((thread) => thread.id === selectedId) ?? null
-  let messages: { id: string; body_text: string; sender_label: string | null; sender_id: string | null; sent_at: string }[] = []
+  let messages: {
+    id: string
+    body_text: string
+    sender_label: string | null
+    sender_id: string | null
+    sent_at: string
+  }[] = []
 
   if (selectedThread) {
     const result = await supabase
@@ -49,9 +68,13 @@ export default async function MessagesPage({ searchParams }: { searchParams: Pro
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-caption font-medium uppercase tracking-[0.14em] text-fg-subtle">Komunikasi</p>
-        <h1 className="mt-1 font-display text-heading-lg text-fg">Pesan</h1>
-        <p className="mt-2 max-w-3xl text-body-sm text-fg-muted">Kelola percakapan investor secara real-time dari inbox admin.</p>
+        <p className="text-caption text-fg-subtle font-medium tracking-[0.14em] uppercase">
+          Komunikasi
+        </p>
+        <h1 className="font-display text-heading-lg text-fg mt-1">Pesan</h1>
+        <p className="text-body-sm text-fg-muted mt-2 max-w-3xl">
+          Kelola percakapan investor secara real-time dari inbox admin.
+        </p>
       </div>
       <CommunicationWorkbench
         threads={threads ?? []}

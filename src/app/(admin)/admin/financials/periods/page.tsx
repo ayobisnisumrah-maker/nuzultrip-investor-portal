@@ -42,19 +42,14 @@ function statusClass(status: string) {
 }
 
 export default async function FinancialPeriodsPage() {
-  const principal = await adminWithPermission(
-    'financial_periods.view',
-    '/admin/financials/periods',
-  )
+  const principal = await adminWithPermission('financial_periods.view', '/admin/financials/periods')
 
   if (!principal) {
     return (
-      <div className="rounded-xl border border-border bg-surface p-6">
-        <h1 className="font-display text-heading-lg text-fg">
-          Akses Ditolak
-        </h1>
+      <div className="border-border bg-surface rounded-xl border p-6">
+        <h1 className="font-display text-heading-lg text-fg">Akses Ditolak</h1>
 
-        <p className="mt-2 text-body-sm text-fg-muted">
+        <p className="text-body-sm text-fg-muted mt-2">
           Anda tidak memiliki izin untuk melihat periode keuangan.
         </p>
       </div>
@@ -72,12 +67,10 @@ export default async function FinancialPeriodsPage() {
 
   if (error) {
     return (
-      <div className="rounded-xl border border-danger/30 bg-danger/5 p-6">
-        <h1 className="font-display text-heading-lg text-fg">
-          Periode Keuangan
-        </h1>
+      <div className="border-danger/30 bg-danger/5 rounded-xl border p-6">
+        <h1 className="font-display text-heading-lg text-fg">Periode Keuangan</h1>
 
-        <p className="mt-2 text-body-sm text-danger">
+        <p className="text-body-sm text-danger mt-2">
           Data periode keuangan tidak dapat dimuat saat ini.
         </p>
       </div>
@@ -85,33 +78,26 @@ export default async function FinancialPeriodsPage() {
   }
 
   const openCount = periods?.filter((period) => period.status === 'open').length ?? 0
-  const closedCount =
-    periods?.filter((period) => period.status === 'closed').length ?? 0
-  const lockedCount =
-    periods?.filter((period) => period.status === 'locked').length ?? 0
+  const closedCount = periods?.filter((period) => period.status === 'closed').length ?? 0
+  const lockedCount = periods?.filter((period) => period.status === 'locked').length ?? 0
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-sm font-medium text-fg-subtle">
-            Keuangan
-          </p>
+          <p className="text-fg-subtle text-sm font-medium">Keuangan</p>
 
-          <h1 className="mt-1 font-display text-heading-lg text-fg">
-            Periode Keuangan
-          </h1>
+          <h1 className="font-display text-heading-lg text-fg mt-1">Periode Keuangan</h1>
 
-          <p className="mt-2 max-w-2xl text-body-sm text-fg-muted">
-            Kelola periode pelaporan keuangan perusahaan dan lifecycle
-            setiap periode.
+          <p className="text-body-sm text-fg-muted mt-2 max-w-2xl">
+            Kelola periode pelaporan keuangan perusahaan dan lifecycle setiap periode.
           </p>
         </div>
 
         {principal.permissions.has('financial_periods.create') ? (
           <Link
             href="/admin/financials/periods/new"
-            className="inline-flex h-10 items-center justify-center rounded-lg bg-primary-solid px-4 text-sm font-medium text-primary-fg transition hover:opacity-90"
+            className="bg-primary-solid text-primary-fg inline-flex h-10 items-center justify-center rounded-lg px-4 text-sm font-medium transition hover:opacity-90"
           >
             + Periode Baru
           </Link>
@@ -119,60 +105,44 @@ export default async function FinancialPeriodsPage() {
       </div>
 
       <div className="grid gap-3 sm:grid-cols-3">
-        <div className="rounded-xl border border-border bg-surface p-4">
-          <p className="text-caption text-fg-subtle">
-            Terbuka
-          </p>
+        <div className="border-border bg-surface rounded-xl border p-4">
+          <p className="text-caption text-fg-subtle">Terbuka</p>
 
-          <p className="mt-1 text-heading-md font-semibold text-fg">
-            {openCount}
-          </p>
+          <p className="text-heading-md text-fg mt-1 font-semibold">{openCount}</p>
         </div>
 
-        <div className="rounded-xl border border-border bg-surface p-4">
-          <p className="text-caption text-fg-subtle">
-            Ditutup
-          </p>
+        <div className="border-border bg-surface rounded-xl border p-4">
+          <p className="text-caption text-fg-subtle">Ditutup</p>
 
-          <p className="mt-1 text-heading-md font-semibold text-fg">
-            {closedCount}
-          </p>
+          <p className="text-heading-md text-fg mt-1 font-semibold">{closedCount}</p>
         </div>
 
-        <div className="rounded-xl border border-border bg-surface p-4">
-          <p className="text-caption text-fg-subtle">
-            Terkunci
-          </p>
+        <div className="border-border bg-surface rounded-xl border p-4">
+          <p className="text-caption text-fg-subtle">Terkunci</p>
 
-          <p className="mt-1 text-heading-md font-semibold text-fg">
-            {lockedCount}
-          </p>
+          <p className="text-heading-md text-fg mt-1 font-semibold">{lockedCount}</p>
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-border bg-surface">
-        <div className="border-b border-border px-5 py-4">
-          <h2 className="text-body font-semibold text-fg">
-            Semua Periode
-          </h2>
+      <div className="border-border bg-surface overflow-hidden rounded-xl border">
+        <div className="border-border border-b px-5 py-4">
+          <h2 className="text-body text-fg font-semibold">Semua Periode</h2>
 
-          <p className="mt-1 text-caption text-fg-muted">
+          <p className="text-caption text-fg-muted mt-1">
             {periods?.length ?? 0} periode terdaftar.
           </p>
         </div>
 
         {!periods?.length ? (
           <div className="px-5 py-12 text-center">
-            <p className="text-body font-medium text-fg">
-              Belum ada periode keuangan
-            </p>
+            <p className="text-body text-fg font-medium">Belum ada periode keuangan</p>
 
-            <p className="mt-1 text-body-sm text-fg-muted">
+            <p className="text-body-sm text-fg-muted mt-1">
               Buat periode pertama untuk mulai mengelola pelaporan keuangan.
             </p>
           </div>
         ) : (
-          <div className="divide-y divide-border">
+          <div className="divide-border divide-y">
             {periods.map((period) => (
               <div
                 key={period.id}
@@ -180,9 +150,9 @@ export default async function FinancialPeriodsPage() {
               >
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="text-body font-semibold text-fg">
-                      {formatPeriodType(period.period_type)}{' '}
-                      {period.period_index} / {period.fiscal_year}
+                    <h3 className="text-body text-fg font-semibold">
+                      {formatPeriodType(period.period_type)} {period.period_index} /{' '}
+                      {period.fiscal_year}
                     </h3>
 
                     <span
@@ -192,19 +162,17 @@ export default async function FinancialPeriodsPage() {
                     </span>
                   </div>
 
-                  <p className="mt-1 text-body-sm text-fg-muted">
+                  <p className="text-body-sm text-fg-muted mt-1">
                     {formatDate(period.starts_on)} — {formatDate(period.ends_on)}
                   </p>
 
-                  <p className="mt-1 text-caption text-fg-subtle">
-                    Mata uang: {period.currency}
-                  </p>
+                  <p className="text-caption text-fg-subtle mt-1">Mata uang: {period.currency}</p>
                 </div>
 
                 <div className="flex shrink-0 flex-wrap gap-2">
                   <Link
                     href={`/admin/financials/periods/${period.id}`}
-                    className="inline-flex h-9 items-center rounded-lg border border-border px-3 text-sm font-medium text-fg transition hover:bg-muted"
+                    className="border-border text-fg hover:bg-muted inline-flex h-9 items-center rounded-lg border px-3 text-sm font-medium transition"
                   >
                     Lihat
                   </Link>
@@ -213,7 +181,7 @@ export default async function FinancialPeriodsPage() {
                   principal.permissions.has('financial_periods.update') ? (
                     <Link
                       href={`/admin/financials/periods/${period.id}/edit`}
-                      className="inline-flex h-9 items-center rounded-lg border border-border px-3 text-sm font-medium text-fg transition hover:bg-muted"
+                      className="border-border text-fg hover:bg-muted inline-flex h-9 items-center rounded-lg border px-3 text-sm font-medium transition"
                     >
                       Edit
                     </Link>
@@ -227,4 +195,3 @@ export default async function FinancialPeriodsPage() {
     </div>
   )
 }
-

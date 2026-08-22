@@ -175,7 +175,3 @@ export async function signOutAndRedirect(): Promise<never> {
   await supabase.auth.signOut({ scope: 'global' })
   redirect('/masuk')
 }
-
-
-
-

@@ -88,7 +88,9 @@ describe('consume_rate_limit', () => {
   it('rejects a nonsensical configuration rather than silently allowing', async () => {
     // A limit of zero, or a zero-length window, would otherwise divide by the
     // wrong thing and let everything through.
-    await expect(db()`select * from public.consume_rate_limit(${bucket()}, 0, 60)`).rejects.toThrow()
+    await expect(
+      db()`select * from public.consume_rate_limit(${bucket()}, 0, 60)`,
+    ).rejects.toThrow()
     await expect(db()`select * from public.consume_rate_limit(${bucket()}, 5, 0)`).rejects.toThrow()
   })
 

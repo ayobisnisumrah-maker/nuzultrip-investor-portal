@@ -73,20 +73,15 @@ function statusClass(status: InvestorStatus) {
   }
 }
 
-export function InvestorApplicationsManager({
-  investors,
-  permissions,
-}: Props) {
+export function InvestorApplicationsManager({ investors, permissions }: Props) {
   if (!investors.length) {
     return (
-      <div className="rounded-2xl border border-dashed border-border bg-surface p-12 text-center">
-        <CheckCircle2 className="mx-auto h-10 w-10 text-fg-muted" />
+      <div className="border-border bg-surface rounded-2xl border border-dashed p-12 text-center">
+        <CheckCircle2 className="text-fg-muted mx-auto h-10 w-10" />
 
-        <h2 className="mt-4 text-lg font-semibold text-fg">
-          Tidak ada pengajuan
-        </h2>
+        <h2 className="text-fg mt-4 text-lg font-semibold">Tidak ada pengajuan</h2>
 
-        <p className="mx-auto mt-2 max-w-lg text-sm text-fg-muted">
+        <p className="text-fg-muted mx-auto mt-2 max-w-lg text-sm">
           Belum ada investor yang masuk ke antrean pengajuan.
         </p>
       </div>
@@ -94,64 +89,45 @@ export function InvestorApplicationsManager({
   }
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-border bg-surface">
+    <div className="border-border bg-surface overflow-hidden rounded-2xl border">
       <div className="overflow-x-auto">
-        <table className="min-w-[1100px] w-full text-sm">
-          <thead className="border-b border-border bg-surface-subtle">
+        <table className="w-full min-w-[1100px] text-sm">
+          <thead className="border-border bg-surface-subtle border-b">
             <tr>
-              <th className="px-5 py-4 text-left font-semibold">
-                Investor
-              </th>
+              <th className="px-5 py-4 text-left font-semibold">Investor</th>
 
-              <th className="px-5 py-4 text-left font-semibold">
-                Tipe
-              </th>
+              <th className="px-5 py-4 text-left font-semibold">Tipe</th>
 
-              <th className="px-5 py-4 text-left font-semibold">
-                Status
-              </th>
+              <th className="px-5 py-4 text-left font-semibold">Status</th>
 
-              <th className="px-5 py-4 text-left font-semibold">
-                Pengajuan
-              </th>
+              <th className="px-5 py-4 text-left font-semibold">Pengajuan</th>
 
-              <th className="px-5 py-4 text-right font-semibold">
-                Aksi
-              </th>
+              <th className="px-5 py-4 text-right font-semibold">Aksi</th>
             </tr>
           </thead>
 
-          <tbody className="divide-y divide-border">
+          <tbody className="divide-border divide-y">
             {investors.map((investor) => (
-              <tr
-                key={investor.id}
-                className="hover:bg-surface-subtle/60"
-              >
+              <tr key={investor.id} className="hover:bg-surface-subtle/60">
                 <td className="px-5 py-4">
                   <div>
                     <Link
                       href={`/admin/investors/${investor.id}`}
-                      className="font-semibold text-fg hover:underline"
+                      className="text-fg font-semibold hover:underline"
                     >
                       {investor.legal_name}
                     </Link>
 
-                    <div className="mt-1 text-xs text-fg-muted">
-                      {investor.reference_code}
-                    </div>
+                    <div className="text-fg-muted mt-1 text-xs">{investor.reference_code}</div>
 
                     {investor.organization_name ? (
-                      <div className="mt-1 text-xs text-fg-muted">
-                        {investor.organization_name}
-                      </div>
+                      <div className="text-fg-muted mt-1 text-xs">{investor.organization_name}</div>
                     ) : null}
                   </div>
                 </td>
 
                 <td className="px-5 py-4">
-                  {investor.investor_type === 'institution'
-                    ? 'Institusi'
-                    : 'Individu'}
+                  {investor.investor_type === 'institution' ? 'Institusi' : 'Individu'}
                 </td>
 
                 <td className="px-5 py-4">
@@ -165,12 +141,10 @@ export function InvestorApplicationsManager({
                 </td>
 
                 <td className="px-5 py-4">
-                  <div className="text-fg">
-                    {formatDate(investor.applied_at)}
-                  </div>
+                  <div className="text-fg">{formatDate(investor.applied_at)}</div>
 
                   {investor.city ? (
-                    <div className="mt-1 text-xs text-fg-muted">
+                    <div className="text-fg-muted mt-1 text-xs">
                       {investor.city}, {investor.country}
                     </div>
                   ) : null}
@@ -180,7 +154,7 @@ export function InvestorApplicationsManager({
                   <div className="flex flex-wrap justify-end gap-2">
                     <Link
                       href={`/admin/investors/${investor.id}`}
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-xs font-medium text-fg hover:bg-surface-subtle"
+                      className="border-border text-fg hover:bg-surface-subtle inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium"
                     >
                       <Eye className="h-3.5 w-3.5" />
                       Detail

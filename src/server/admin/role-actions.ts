@@ -12,10 +12,7 @@ const roleKeySchema = z
   .trim()
   .min(2)
   .max(64)
-  .regex(
-    /^[a-z][a-z0-9_]*$/,
-    'Role key hanya boleh berisi huruf kecil, angka, dan underscore.',
-  )
+  .regex(/^[a-z][a-z0-9_]*$/, 'Role key hanya boleh berisi huruf kecil, angka, dan underscore.')
 
 const createRoleSchema = z.object({
   key: roleKeySchema,
@@ -41,12 +38,8 @@ function uniqueIds(ids: string[]): string[] {
 }
 
 async function assertAssignablePermissions(
-  supabase: Parameters<
-    Parameters<typeof defineAction>[0]['handler']
-  >[0]['supabase'],
-  principal: Parameters<
-    Parameters<typeof defineAction>[0]['handler']
-  >[0]['principal'],
+  supabase: Parameters<Parameters<typeof defineAction>[0]['handler']>[0]['supabase'],
+  principal: Parameters<Parameters<typeof defineAction>[0]['handler']>[0]['principal'],
   permissionIds: string[],
 ) {
   if (!isAdmin(principal)) {
@@ -59,10 +52,7 @@ async function assertAssignablePermissions(
 
   if (ids.length === 0) return
 
-  const { data, error } = await supabase
-    .from('permissions')
-    .select('id, key')
-    .in('id', ids)
+  const { data, error } = await supabase.from('permissions').select('id, key').in('id', ids)
 
   if (error) {
     throw new Error(`Gagal memeriksa permission: ${error.message}`)
@@ -74,9 +64,7 @@ async function assertAssignablePermissions(
 
   const missing = data
     .map((permission) => permission.key)
-    .filter(
-      (key) => isPermission(key) && !principal.permissions.has(key),
-    )
+    .filter((key) => isPermission(key) && !principal.permissions.has(key))
 
   if (missing.length > 0) {
     throw new ForbiddenError(
@@ -96,11 +84,7 @@ export const createRole = defineAction({
   handler: async ({ input, supabase, audit, principal }) => {
     const permissionIds = uniqueIds(input.permissionIds)
 
-    await assertAssignablePermissions(
-      supabase,
-      principal,
-      permissionIds,
-    )
+    await assertAssignablePermissions(supabase, principal, permissionIds)
 
     const { data: existing } = await supabase
       .from('roles')
@@ -134,28 +118,22 @@ export const createRole = defineAction({
         .in('id', permissionIds)
 
       if (permissionsError) {
-        throw new Error(
-          `Gagal membaca permission: ${permissionsError.message}`,
-        )
+        throw new Error(`Gagal membaca permission: ${permissionsError.message}`)
       }
 
       if ((permissions?.length ?? 0) !== permissionIds.length) {
         throw new NotFoundError('Permission')
       }
 
-      const { error: insertError } = await supabase
-        .from('role_permissions')
-        .insert(
-          permissionIds.map((permissionId) => ({
-            role_id: role.id,
-            permission_id: permissionId,
-          })),
-        )
+      const { error: insertError } = await supabase.from('role_permissions').insert(
+        permissionIds.map((permissionId) => ({
+          role_id: role.id,
+          permission_id: permissionId,
+        })),
+      )
 
       if (insertError) {
-        throw new Error(
-          `Role dibuat tetapi permission gagal disimpan: ${insertError.message}`,
-        )
+        throw new Error(`Role dibuat tetapi permission gagal disimpan: ${insertError.message}`)
       }
     }
 
@@ -190,16 +168,12 @@ export const updateRole = defineAction({
 
     const { data: role, error: roleError } = await supabase
       .from('roles')
-      .select(
-        'id, key, name, description, is_system, permission_version',
-      )
+      .select('id, key, name, description, is_system, permission_version')
       .eq('id', input.roleId)
       .maybeSingle()
 
     if (roleError) {
-      throw new Error(
-        `Gagal membaca role: ${roleError.message}`,
-      )
+      throw new Error(`Gagal membaca role: ${roleError.message}`)
     }
 
     if (!role) {
@@ -207,16 +181,10 @@ export const updateRole = defineAction({
     }
 
     if (role.key === 'super_admin') {
-      throw new ForbiddenError(
-        'Role Super Admin tidak dapat diubah melalui Role Editor.',
-      )
+      throw new ForbiddenError('Role Super Admin tidak dapat diubah melalui Role Editor.')
     }
 
-    await assertAssignablePermissions(
-      supabase,
-      principal,
-      permissionIds,
-    )
+    await assertAssignablePermissions(supabase, principal, permissionIds)
 
     /*
      * Read the current permission set only for audit/comparison.
@@ -230,18 +198,10 @@ export const updateRole = defineAction({
       .eq('role_id', role.id)
 
     if (currentError) {
-      throw new Error(
-        `Gagal membaca permission role: ${currentError.message}`,
-      )
+      throw new Error(`Gagal membaca permission role: ${currentError.message}`)
     }
 
-    const currentIds = [
-      ...new Set(
-        (currentPermissions ?? []).map(
-          (item) => item.permission_id,
-        ),
-      ),
-    ]
+    const currentIds = [...new Set((currentPermissions ?? []).map((item) => item.permission_id))]
 
     const { data: updatedRole, error: updateError } = await supabase.rpc(
       'update_role_permissions_atomic',
@@ -257,9 +217,7 @@ export const updateRole = defineAction({
     if (updateError) {
       if (
         updateError.code === '40001' ||
-        updateError.message.includes(
-          'ROLE_PERMISSION_VERSION_CONFLICT',
-        )
+        updateError.message.includes('ROLE_PERMISSION_VERSION_CONFLICT')
       ) {
         throw new ForbiddenError(
           'Permission role sudah berubah oleh administrator lain. Muat ulang halaman sebelum menyimpan.',
@@ -268,30 +226,22 @@ export const updateRole = defineAction({
 
       if (
         updateError.code === '42501' ||
-        updateError.message.includes(
-          'System roles cannot be modified',
-        )
+        updateError.message.includes('System roles cannot be modified')
       ) {
-        throw new ForbiddenError(
-          'Role system tidak dapat diubah melalui Role Editor.',
-        )
+        throw new ForbiddenError('Role system tidak dapat diubah melalui Role Editor.')
       }
 
       if (updateError.code === 'P0002') {
         throw new NotFoundError('Role')
       }
 
-      throw new Error(
-        `Gagal memperbarui role secara atomik: ${updateError.message}`,
-      )
+      throw new Error(`Gagal memperbarui role secara atomik: ${updateError.message}`)
     }
 
     const result = updatedRole?.[0]
 
     if (!result) {
-      throw new Error(
-        'Role berhasil diproses tetapi hasil transaksi tidak dikembalikan.',
-      )
+      throw new Error('Role berhasil diproses tetapi hasil transaksi tidak dikembalikan.')
     }
 
     const previousPermissionIds = currentIds
@@ -347,9 +297,7 @@ export const deleteRole = defineAction({
     }
 
     if (role.is_system || role.key === 'super_admin') {
-      throw new ForbiddenError(
-        'Role system tidak dapat dihapus.',
-      )
+      throw new ForbiddenError('Role system tidak dapat dihapus.')
     }
 
     const { count, error: countError } = await supabase
@@ -358,15 +306,11 @@ export const deleteRole = defineAction({
       .eq('role_id', role.id)
 
     if (countError) {
-      throw new Error(
-        `Gagal memeriksa administrator role: ${countError.message}`,
-      )
+      throw new Error(`Gagal memeriksa administrator role: ${countError.message}`)
     }
 
     if ((count ?? 0) > 0) {
-      throw new ForbiddenError(
-        'Role masih digunakan oleh administrator dan tidak dapat dihapus.',
-      )
+      throw new ForbiddenError('Role masih digunakan oleh administrator dan tidak dapat dihapus.')
     }
 
     const { error: deleteError } = await supabase
@@ -376,9 +320,7 @@ export const deleteRole = defineAction({
       .eq('is_system', false)
 
     if (deleteError) {
-      throw new Error(
-        `Gagal menghapus role: ${deleteError.message}`,
-      )
+      throw new Error(`Gagal menghapus role: ${deleteError.message}`)
     }
 
     audit({
@@ -394,6 +336,3 @@ export const deleteRole = defineAction({
     return { id: role.id }
   },
 })
-
-
-

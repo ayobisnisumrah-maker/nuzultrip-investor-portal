@@ -1,11 +1,6 @@
 ﻿import type { SupabaseClient } from '@supabase/supabase-js'
 
-export type OwnershipOfferingStatus =
-  | 'draft'
-  | 'open'
-  | 'paused'
-  | 'closed'
-  | 'archived'
+export type OwnershipOfferingStatus = 'draft' | 'open' | 'paused' | 'closed' | 'archived'
 
 export type OwnershipOffering = {
   id: string
@@ -100,9 +95,7 @@ const OFFERING_SELECT = `
 
 type DbClient = SupabaseClient
 
-function mapOffering(
-  row: OwnershipOfferingRow,
-): OwnershipOffering {
+function mapOffering(row: OwnershipOfferingRow): OwnershipOffering {
   return {
     id: row.id,
     name: row.name,
@@ -112,8 +105,7 @@ function mapOffering(
     unit_ownership_bps: row.unit_ownership_bps,
     unit_price: Number(row.unit_price),
     total_units: row.total_units,
-    distribution_cadence_months:
-      row.distribution_cadence_months,
+    distribution_cadence_months: row.distribution_cadence_months,
     transfer_lock_months: row.transfer_lock_months,
     effective_from: row.effective_from,
     effective_until: row.effective_until,
@@ -146,17 +138,11 @@ function validateOfferingValues(input: {
   effective_until?: string | null
 }) {
   if (!input.name.trim()) {
-    throw new Error(
-      'Nama penawaran kepemilikan wajib diisi.',
-    )
+    throw new Error('Nama penawaran kepemilikan wajib diisi.')
   }
 
-  if (
-    !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(input.code)
-  ) {
-    throw new Error(
-      'Kode penawaran harus menggunakan lowercase kebab-case.',
-    )
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(input.code)) {
+    throw new Error('Kode penawaran harus menggunakan lowercase kebab-case.')
   }
 
   if (
@@ -164,9 +150,7 @@ function validateOfferingValues(input: {
     input.total_offered_bps <= 0 ||
     input.total_offered_bps > 10000
   ) {
-    throw new Error(
-      'Total offered BPS harus antara 1 dan 10000.',
-    )
+    throw new Error('Total offered BPS harus antara 1 dan 10000.')
   }
 
   if (
@@ -174,36 +158,19 @@ function validateOfferingValues(input: {
     input.unit_ownership_bps <= 0 ||
     input.unit_ownership_bps > 10000
   ) {
-    throw new Error(
-      'Unit ownership BPS harus antara 1 dan 10000.',
-    )
+    throw new Error('Unit ownership BPS harus antara 1 dan 10000.')
   }
 
-  if (
-    !Number.isInteger(input.total_units) ||
-    input.total_units <= 0
-  ) {
-    throw new Error(
-      'Total unit harus lebih besar dari 0.',
-    )
+  if (!Number.isInteger(input.total_units) || input.total_units <= 0) {
+    throw new Error('Total unit harus lebih besar dari 0.')
   }
 
-  if (
-    input.unit_ownership_bps * input.total_units !==
-    input.total_offered_bps
-  ) {
-    throw new Error(
-      'Total offered BPS harus sama dengan unit ownership BPS dikalikan total unit.',
-    )
+  if (input.unit_ownership_bps * input.total_units !== input.total_offered_bps) {
+    throw new Error('Total offered BPS harus sama dengan unit ownership BPS dikalikan total unit.')
   }
 
-  if (
-    !Number.isFinite(input.unit_price) ||
-    input.unit_price <= 0
-  ) {
-    throw new Error(
-      'Harga per unit harus lebih besar dari 0.',
-    )
+  if (!Number.isFinite(input.unit_price) || input.unit_price <= 0) {
+    throw new Error('Harga per unit harus lebih besar dari 0.')
   }
 
   if (
@@ -211,9 +178,7 @@ function validateOfferingValues(input: {
     input.distribution_cadence_months < 1 ||
     input.distribution_cadence_months > 24
   ) {
-    throw new Error(
-      'Cadence distribusi harus antara 1 dan 24 bulan.',
-    )
+    throw new Error('Cadence distribusi harus antara 1 dan 24 bulan.')
   }
 
   if (
@@ -221,35 +186,26 @@ function validateOfferingValues(input: {
     input.transfer_lock_months < 36 ||
     input.transfer_lock_months > 120
   ) {
-    throw new Error(
-      'Transfer lock harus antara 36 dan 120 bulan.',
-    )
+    throw new Error('Transfer lock harus antara 36 dan 120 bulan.')
   }
 
   if (
     input.effective_from &&
     input.effective_until &&
-    new Date(input.effective_until) <=
-      new Date(input.effective_from)
+    new Date(input.effective_until) <= new Date(input.effective_from)
   ) {
-    throw new Error(
-      'Tanggal efektif sampai harus setelah tanggal efektif mulai.',
-    )
+    throw new Error('Tanggal efektif sampai harus setelah tanggal efektif mulai.')
   }
 }
 
-export async function listOwnershipOfferings(
-  supabase: DbClient,
-): Promise<OwnershipOffering[]> {
+export async function listOwnershipOfferings(supabase: DbClient): Promise<OwnershipOffering[]> {
   const { data, error } = await supabase
     .from('ownership_offerings')
     .select(OFFERING_SELECT)
     .order('created_at', { ascending: false })
 
   if (error) {
-    throw new Error(
-      `Gagal mengambil penawaran kepemilikan: ${error.message}`,
-    )
+    throw new Error(`Gagal mengambil penawaran kepemilikan: ${error.message}`)
   }
 
   const rows = (data ?? []) as OwnershipOfferingRow[]
@@ -268,9 +224,7 @@ export async function getOwnershipOffering(
     .maybeSingle()
 
   if (error) {
-    throw new Error(
-      `Gagal mengambil penawaran kepemilikan: ${error.message}`,
-    )
+    throw new Error(`Gagal mengambil penawaran kepemilikan: ${error.message}`)
   }
 
   if (!data) {
@@ -287,11 +241,9 @@ export async function createOwnershipOffering(
   const name = normalizeName(input.name)
   const code = normalizeCode(input.code)
 
-  const distributionCadenceMonths =
-    input.distribution_cadence_months ?? 6
+  const distributionCadenceMonths = input.distribution_cadence_months ?? 6
 
-  const transferLockMonths =
-    input.transfer_lock_months ?? 36
+  const transferLockMonths = input.transfer_lock_months ?? 36
 
   validateOfferingValues({
     name,
@@ -300,8 +252,7 @@ export async function createOwnershipOffering(
     unit_ownership_bps: input.unit_ownership_bps,
     unit_price: input.unit_price,
     total_units: input.total_units,
-    distribution_cadence_months:
-      distributionCadenceMonths,
+    distribution_cadence_months: distributionCadenceMonths,
     transfer_lock_months: transferLockMonths,
     effective_from: input.effective_from,
     effective_until: input.effective_until,
@@ -317,13 +268,11 @@ export async function createOwnershipOffering(
       unit_ownership_bps: input.unit_ownership_bps,
       unit_price: input.unit_price,
       total_units: input.total_units,
-      distribution_cadence_months:
-        distributionCadenceMonths,
+      distribution_cadence_months: distributionCadenceMonths,
       transfer_lock_months: transferLockMonths,
       effective_from: input.effective_from ?? null,
       effective_until: input.effective_until ?? null,
-      description:
-        input.description?.trim() || null,
+      description: input.description?.trim() || null,
       created_by: input.created_by,
       updated_by: input.created_by,
     })
@@ -332,89 +281,51 @@ export async function createOwnershipOffering(
 
   if (error) {
     if (error.code === '23505') {
-      throw new Error(
-        'Kode penawaran sudah digunakan.',
-      )
+      throw new Error('Kode penawaran sudah digunakan.')
     }
 
-    throw new Error(
-      `Gagal membuat penawaran kepemilikan: ${error.message}`,
-    )
+    throw new Error(`Gagal membuat penawaran kepemilikan: ${error.message}`)
   }
 
-  return mapOffering(
-    data,
-  )
+  return mapOffering(data)
 }
 
 export async function updateOwnershipOffering(
   supabase: DbClient,
   input: UpdateOwnershipOfferingInput,
 ): Promise<OwnershipOffering> {
-  const current =
-    await getOwnershipOffering(
-      supabase,
-      input.offeringId,
-    )
+  const current = await getOwnershipOffering(supabase, input.offeringId)
 
   if (!current) {
-    throw new Error(
-      'Penawaran kepemilikan tidak ditemukan.',
-    )
+    throw new Error('Penawaran kepemilikan tidak ditemukan.')
   }
 
-  if (
-    current.status !== 'draft' &&
-    current.status !== 'paused'
-  ) {
-    throw new Error(
-      'Penawaran hanya dapat diubah saat berstatus draft atau paused.',
-    )
+  if (current.status !== 'draft' && current.status !== 'paused') {
+    throw new Error('Penawaran hanya dapat diubah saat berstatus draft atau paused.')
   }
 
-  const name =
-    input.name !== undefined
-      ? normalizeName(input.name)
-      : current.name
+  const name = input.name !== undefined ? normalizeName(input.name) : current.name
 
-  const code =
-    input.code !== undefined
-      ? normalizeCode(input.code)
-      : current.code
+  const code = input.code !== undefined ? normalizeCode(input.code) : current.code
 
-  const totalOfferedBps =
-    input.total_offered_bps ??
-    current.total_offered_bps
+  const totalOfferedBps = input.total_offered_bps ?? current.total_offered_bps
 
-  const unitOwnershipBps =
-    input.unit_ownership_bps ??
-    current.unit_ownership_bps
+  const unitOwnershipBps = input.unit_ownership_bps ?? current.unit_ownership_bps
 
-  const unitPrice =
-    input.unit_price ??
-    current.unit_price
+  const unitPrice = input.unit_price ?? current.unit_price
 
-  const totalUnits =
-    input.total_units ??
-    current.total_units
+  const totalUnits = input.total_units ?? current.total_units
 
   const distributionCadenceMonths =
-    input.distribution_cadence_months ??
-    current.distribution_cadence_months
+    input.distribution_cadence_months ?? current.distribution_cadence_months
 
-  const transferLockMonths =
-    input.transfer_lock_months ??
-    current.transfer_lock_months
+  const transferLockMonths = input.transfer_lock_months ?? current.transfer_lock_months
 
   const effectiveFrom =
-    input.effective_from !== undefined
-      ? input.effective_from
-      : current.effective_from
+    input.effective_from !== undefined ? input.effective_from : current.effective_from
 
   const effectiveUntil =
-    input.effective_until !== undefined
-      ? input.effective_until
-      : current.effective_until
+    input.effective_until !== undefined ? input.effective_until : current.effective_until
 
   validateOfferingValues({
     name,
@@ -423,8 +334,7 @@ export async function updateOwnershipOffering(
     unit_ownership_bps: unitOwnershipBps,
     unit_price: unitPrice,
     total_units: totalUnits,
-    distribution_cadence_months:
-      distributionCadenceMonths,
+    distribution_cadence_months: distributionCadenceMonths,
     transfer_lock_months: transferLockMonths,
     effective_from: effectiveFrom,
     effective_until: effectiveUntil,
@@ -439,15 +349,12 @@ export async function updateOwnershipOffering(
       unit_ownership_bps: unitOwnershipBps,
       unit_price: unitPrice,
       total_units: totalUnits,
-      distribution_cadence_months:
-        distributionCadenceMonths,
+      distribution_cadence_months: distributionCadenceMonths,
       transfer_lock_months: transferLockMonths,
       effective_from: effectiveFrom,
       effective_until: effectiveUntil,
       description:
-        input.description !== undefined
-          ? input.description?.trim() || null
-          : current.description,
+        input.description !== undefined ? input.description?.trim() || null : current.description,
       updated_by: input.updated_by,
     })
     .eq('id', input.offeringId)
@@ -456,19 +363,13 @@ export async function updateOwnershipOffering(
 
   if (error) {
     if (error.code === '23505') {
-      throw new Error(
-        'Kode penawaran sudah digunakan.',
-      )
+      throw new Error('Kode penawaran sudah digunakan.')
     }
 
-    throw new Error(
-      `Gagal mengubah penawaran kepemilikan: ${error.message}`,
-    )
+    throw new Error(`Gagal mengubah penawaran kepemilikan: ${error.message}`)
   }
 
-  return mapOffering(
-    data,
-  )
+  return mapOffering(data)
 }
 
 export async function publishOwnershipOffering(
@@ -476,37 +377,25 @@ export async function publishOwnershipOffering(
   offeringId: string,
   updatedBy: string,
 ): Promise<OwnershipOffering> {
-  const current =
-    await getOwnershipOffering(
-      supabase,
-      offeringId,
-    )
+  const current = await getOwnershipOffering(supabase, offeringId)
 
   if (!current) {
-    throw new Error(
-      'Penawaran kepemilikan tidak ditemukan.',
-    )
+    throw new Error('Penawaran kepemilikan tidak ditemukan.')
   }
 
   if (current.status !== 'draft') {
-    throw new Error(
-      'Hanya penawaran berstatus draft yang dapat diterbitkan.',
-    )
+    throw new Error('Hanya penawaran berstatus draft yang dapat diterbitkan.')
   }
 
   validateOfferingValues({
     name: current.name,
     code: current.code,
-    total_offered_bps:
-      current.total_offered_bps,
-    unit_ownership_bps:
-      current.unit_ownership_bps,
+    total_offered_bps: current.total_offered_bps,
+    unit_ownership_bps: current.unit_ownership_bps,
     unit_price: current.unit_price,
     total_units: current.total_units,
-    distribution_cadence_months:
-      current.distribution_cadence_months,
-    transfer_lock_months:
-      current.transfer_lock_months,
+    distribution_cadence_months: current.distribution_cadence_months,
+    transfer_lock_months: current.transfer_lock_months,
     effective_from: current.effective_from,
     effective_until: current.effective_until,
   })
@@ -516,9 +405,7 @@ export async function publishOwnershipOffering(
     .update({
       status: 'open',
       updated_by: updatedBy,
-      effective_from:
-        current.effective_from ??
-        new Date().toISOString(),
+      effective_from: current.effective_from ?? new Date().toISOString(),
     })
     .eq('id', offeringId)
     .eq('status', 'draft')
@@ -526,20 +413,14 @@ export async function publishOwnershipOffering(
     .maybeSingle()
 
   if (error) {
-    throw new Error(
-      `Gagal menerbitkan penawaran kepemilikan: ${error.message}`,
-    )
+    throw new Error(`Gagal menerbitkan penawaran kepemilikan: ${error.message}`)
   }
 
   if (!data) {
-    throw new Error(
-      'Penawaran tidak dapat diterbitkan karena statusnya telah berubah.',
-    )
+    throw new Error('Penawaran tidak dapat diterbitkan karena statusnya telah berubah.')
   }
 
-  return mapOffering(
-    data,
-  )
+  return mapOffering(data)
 }
 
 export async function pauseOwnershipOffering(
@@ -547,21 +428,14 @@ export async function pauseOwnershipOffering(
   offeringId: string,
   updatedBy: string,
 ): Promise<OwnershipOffering> {
-  const current = await getOwnershipOffering(
-    supabase,
-    offeringId,
-  )
+  const current = await getOwnershipOffering(supabase, offeringId)
 
   if (!current) {
-    throw new Error(
-      'Penawaran kepemilikan tidak ditemukan.',
-    )
+    throw new Error('Penawaran kepemilikan tidak ditemukan.')
   }
 
   if (current.status !== 'open') {
-    throw new Error(
-      'Hanya penawaran berstatus open yang dapat dihentikan sementara.',
-    )
+    throw new Error('Hanya penawaran berstatus open yang dapat dihentikan sementara.')
   }
 
   const { data, error } = await supabase
@@ -576,15 +450,11 @@ export async function pauseOwnershipOffering(
     .maybeSingle()
 
   if (error) {
-    throw new Error(
-      `Gagal menghentikan penawaran kepemilikan: ${error.message}`,
-    )
+    throw new Error(`Gagal menghentikan penawaran kepemilikan: ${error.message}`)
   }
 
   if (!data) {
-    throw new Error(
-      'Penawaran tidak dapat dihentikan karena statusnya telah berubah.',
-    )
+    throw new Error('Penawaran tidak dapat dihentikan karena statusnya telah berubah.')
   }
 
   return mapOffering(data)
@@ -595,21 +465,14 @@ export async function resumeOwnershipOffering(
   offeringId: string,
   updatedBy: string,
 ): Promise<OwnershipOffering> {
-  const current = await getOwnershipOffering(
-    supabase,
-    offeringId,
-  )
+  const current = await getOwnershipOffering(supabase, offeringId)
 
   if (!current) {
-    throw new Error(
-      'Penawaran kepemilikan tidak ditemukan.',
-    )
+    throw new Error('Penawaran kepemilikan tidak ditemukan.')
   }
 
   if (current.status !== 'paused') {
-    throw new Error(
-      'Hanya penawaran berstatus paused yang dapat dibuka kembali.',
-    )
+    throw new Error('Hanya penawaran berstatus paused yang dapat dibuka kembali.')
   }
 
   const { data, error } = await supabase
@@ -624,15 +487,11 @@ export async function resumeOwnershipOffering(
     .maybeSingle()
 
   if (error) {
-    throw new Error(
-      `Gagal membuka kembali penawaran kepemilikan: ${error.message}`,
-    )
+    throw new Error(`Gagal membuka kembali penawaran kepemilikan: ${error.message}`)
   }
 
   if (!data) {
-    throw new Error(
-      'Penawaran tidak dapat dibuka kembali karena statusnya telah berubah.',
-    )
+    throw new Error('Penawaran tidak dapat dibuka kembali karena statusnya telah berubah.')
   }
 
   return mapOffering(data)
@@ -643,24 +502,14 @@ export async function closeOwnershipOffering(
   offeringId: string,
   updatedBy: string,
 ): Promise<OwnershipOffering> {
-  const current = await getOwnershipOffering(
-    supabase,
-    offeringId,
-  )
+  const current = await getOwnershipOffering(supabase, offeringId)
 
   if (!current) {
-    throw new Error(
-      'Penawaran kepemilikan tidak ditemukan.',
-    )
+    throw new Error('Penawaran kepemilikan tidak ditemukan.')
   }
 
-  if (
-    current.status !== 'open' &&
-    current.status !== 'paused'
-  ) {
-    throw new Error(
-      'Hanya penawaran berstatus open atau paused yang dapat ditutup.',
-    )
+  if (current.status !== 'open' && current.status !== 'paused') {
+    throw new Error('Hanya penawaran berstatus open atau paused yang dapat ditutup.')
   }
 
   const { data, error } = await supabase
@@ -675,15 +524,11 @@ export async function closeOwnershipOffering(
     .maybeSingle()
 
   if (error) {
-    throw new Error(
-      `Gagal menutup penawaran kepemilikan: ${error.message}`,
-    )
+    throw new Error(`Gagal menutup penawaran kepemilikan: ${error.message}`)
   }
 
   if (!data) {
-    throw new Error(
-      'Penawaran tidak dapat ditutup karena statusnya telah berubah.',
-    )
+    throw new Error('Penawaran tidak dapat ditutup karena statusnya telah berubah.')
   }
 
   return mapOffering(data)
@@ -694,21 +539,14 @@ export async function archiveOwnershipOffering(
   offeringId: string,
   updatedBy: string,
 ): Promise<OwnershipOffering> {
-  const current = await getOwnershipOffering(
-    supabase,
-    offeringId,
-  )
+  const current = await getOwnershipOffering(supabase, offeringId)
 
   if (!current) {
-    throw new Error(
-      'Penawaran kepemilikan tidak ditemukan.',
-    )
+    throw new Error('Penawaran kepemilikan tidak ditemukan.')
   }
 
   if (current.status !== 'closed') {
-    throw new Error(
-      'Hanya penawaran berstatus closed yang dapat diarsipkan.',
-    )
+    throw new Error('Hanya penawaran berstatus closed yang dapat diarsipkan.')
   }
 
   const { data, error } = await supabase
@@ -723,15 +561,11 @@ export async function archiveOwnershipOffering(
     .maybeSingle()
 
   if (error) {
-    throw new Error(
-      `Gagal mengarsipkan penawaran kepemilikan: ${error.message}`,
-    )
+    throw new Error(`Gagal mengarsipkan penawaran kepemilikan: ${error.message}`)
   }
 
   if (!data) {
-    throw new Error(
-      'Penawaran tidak dapat diarsipkan karena statusnya telah berubah.',
-    )
+    throw new Error('Penawaran tidak dapat diarsipkan karena statusnya telah berubah.')
   }
 
   return mapOffering(data)

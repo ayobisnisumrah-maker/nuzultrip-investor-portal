@@ -3,12 +3,7 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 
-import {
-  activateAdmin,
-  deactivateAdmin,
-  deleteAdmin,
-  updateAdmin,
-} from '@/server/admin/actions'
+import { activateAdmin, deactivateAdmin, deleteAdmin, updateAdmin } from '@/server/admin/actions'
 
 type RoleOption = {
   id: string
@@ -51,14 +46,10 @@ export function AdministratorEditForm({
   const [success, setSuccess] = useState<string | null>(null)
 
   const assignableRoles = roles.filter(
-    (role) =>
-      role.key !== 'super_admin' &&
-      role.key !== 'admin_internal',
+    (role) => role.key !== 'super_admin' && role.key !== 'admin_internal',
   )
 
-  const selectedRole = assignableRoles.find(
-    (role) => role.id === roleId,
-  )
+  const selectedRole = assignableRoles.find((role) => role.id === roleId)
 
   function submit() {
     if (pending) return
@@ -93,11 +84,7 @@ export function AdministratorEditForm({
         setSuccess('Administrator berhasil diperbarui.')
         router.refresh()
       } catch (cause) {
-        setError(
-          cause instanceof Error
-            ? cause.message
-            : 'Gagal memperbarui administrator.',
-        )
+        setError(cause instanceof Error ? cause.message : 'Gagal memperbarui administrator.')
       }
     })
   }
@@ -112,9 +99,7 @@ export function AdministratorEditForm({
 
     if (
       admin.isActive &&
-      !window.confirm(
-        `Apakah Anda yakin ingin menonaktifkan administrator "${admin.fullName}"?`,
-      )
+      !window.confirm(`Apakah Anda yakin ingin menonaktifkan administrator "${admin.fullName}"?`)
     ) {
       return
     }
@@ -143,11 +128,7 @@ export function AdministratorEditForm({
 
         router.refresh()
       } catch (cause) {
-        setError(
-          cause instanceof Error
-            ? cause.message
-            : `Gagal ${action} administrator.`,
-        )
+        setError(cause instanceof Error ? cause.message : `Gagal ${action} administrator.`)
       }
     })
   }
@@ -181,30 +162,23 @@ export function AdministratorEditForm({
         router.replace('/admin/administrators')
         router.refresh()
       } catch (cause) {
-        setError(
-          cause instanceof Error
-            ? cause.message
-            : 'Gagal menghapus administrator.',
-        )
+        setError(cause instanceof Error ? cause.message : 'Gagal menghapus administrator.')
       }
     })
   }
 
   return (
-    <section className="rounded-xl border bg-card">
+    <section className="bg-card rounded-xl border">
       <div className="border-b p-5">
         <h2 className="font-semibold">Edit Administrator</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="text-muted-foreground mt-1 text-sm">
           Perbarui informasi, role, dan status administrator.
         </p>
       </div>
 
       <div className="grid gap-5 p-5">
         <div>
-          <label
-            htmlFor="administrator-edit-name"
-            className="text-sm font-medium"
-          >
+          <label htmlFor="administrator-edit-name" className="text-sm font-medium">
             Nama Lengkap
           </label>
 
@@ -214,15 +188,12 @@ export function AdministratorEditForm({
             onChange={(event) => setFullName(event.target.value)}
             disabled={pending}
             autoComplete="name"
-            className="mt-2 h-11 w-full rounded-lg border bg-background px-3 text-sm outline-none focus:ring-2"
+            className="bg-background mt-2 h-11 w-full rounded-lg border px-3 text-sm outline-none focus:ring-2"
           />
         </div>
 
         <div>
-          <label
-            htmlFor="administrator-edit-email"
-            className="text-sm font-medium"
-          >
+          <label htmlFor="administrator-edit-email" className="text-sm font-medium">
             Email
           </label>
 
@@ -231,19 +202,16 @@ export function AdministratorEditForm({
             value={admin.email}
             disabled
             readOnly
-            className="mt-2 h-11 w-full rounded-lg border bg-muted px-3 text-sm text-muted-foreground outline-none"
+            className="bg-muted text-muted-foreground mt-2 h-11 w-full rounded-lg border px-3 text-sm outline-none"
           />
 
-          <p className="mt-1 text-xs text-muted-foreground">
+          <p className="text-muted-foreground mt-1 text-xs">
             Email akun tidak diubah melalui form ini.
           </p>
         </div>
 
         <div>
-          <label
-            htmlFor="administrator-edit-role"
-            className="text-sm font-medium"
-          >
+          <label htmlFor="administrator-edit-role" className="text-sm font-medium">
             Role Administrator
           </label>
 
@@ -252,11 +220,9 @@ export function AdministratorEditForm({
             value={roleId}
             onChange={(event) => setRoleId(event.target.value)}
             disabled={pending}
-            className="mt-2 h-11 w-full rounded-lg border bg-background px-3 text-sm outline-none focus:ring-2"
+            className="bg-background mt-2 h-11 w-full rounded-lg border px-3 text-sm outline-none focus:ring-2"
           >
-            <option value="">
-              Pilih role administrator
-            </option>
+            <option value="">Pilih role administrator</option>
 
             {assignableRoles.map((role) => (
               <option key={role.id} value={role.id}>
@@ -265,29 +231,22 @@ export function AdministratorEditForm({
             ))}
           </select>
 
-          <p className="mt-2 text-xs text-muted-foreground">
-            Super Admin dan Admin Internal adalah role sistem yang
-            tidak dapat diberikan melalui pengelolaan Administrator.
+          <p className="text-muted-foreground mt-2 text-xs">
+            Super Admin dan Admin Internal adalah role sistem yang tidak dapat diberikan melalui
+            pengelolaan Administrator.
           </p>
 
           {selectedRole ? (
             <div className="mt-3 rounded-lg border p-4">
-              <p className="text-sm font-medium">
-                {selectedRole.name}
-              </p>
+              <p className="text-sm font-medium">{selectedRole.name}</p>
 
-              <p className="mt-1 text-xs text-muted-foreground">
-                {selectedRole.description}
-              </p>
+              <p className="text-muted-foreground mt-1 text-xs">{selectedRole.description}</p>
             </div>
           ) : null}
         </div>
 
         <div>
-          <label
-            htmlFor="administrator-edit-title"
-            className="text-sm font-medium"
-          >
+          <label htmlFor="administrator-edit-title" className="text-sm font-medium">
             Jabatan
           </label>
 
@@ -297,37 +256,31 @@ export function AdministratorEditForm({
             onChange={(event) => setTitle(event.target.value)}
             disabled={pending}
             placeholder="Contoh: Investor Relations Manager"
-            className="mt-2 h-11 w-full rounded-lg border bg-background px-3 text-sm outline-none focus:ring-2"
+            className="bg-background mt-2 h-11 w-full rounded-lg border px-3 text-sm outline-none focus:ring-2"
           />
         </div>
 
         <div>
-          <label className="text-sm font-medium">
-            Employee Reference
-          </label>
+          <label className="text-sm font-medium">Employee Reference</label>
 
-          <div className="mt-2 rounded-lg border bg-muted px-3 py-2.5 text-sm text-muted-foreground">
+          <div className="bg-muted text-muted-foreground mt-2 rounded-lg border px-3 py-2.5 text-sm">
             {admin.employeeRef || '-'}
           </div>
 
-          <p className="mt-1 text-xs text-muted-foreground">
-            Employee reference dikelola oleh sistem dan tidak diubah
-            melalui form ini.
+          <p className="text-muted-foreground mt-1 text-xs">
+            Employee reference dikelola oleh sistem dan tidak diubah melalui form ini.
           </p>
         </div>
 
         <div>
-          <label className="text-sm font-medium">
-            Status Akun
-          </label>
+          <label className="text-sm font-medium">Status Akun</label>
 
           <div className="mt-2 rounded-lg border px-3 py-2.5 text-sm">
             {admin.isActive ? 'Aktif' : 'Nonaktif'}
           </div>
 
-          <p className="mt-1 text-xs text-muted-foreground">
-            Status akun dapat diubah melalui kontrol lifecycle
-            Administrator di bawah.
+          <p className="text-muted-foreground mt-1 text-xs">
+            Status akun dapat diubah melalui kontrol lifecycle Administrator di bawah.
           </p>
 
           {canDisable ? (
@@ -335,7 +288,7 @@ export function AdministratorEditForm({
               type="button"
               onClick={toggleStatus}
               disabled={pending}
-              className="mt-3 rounded-lg border px-4 py-2.5 text-sm font-medium hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+              className="hover:bg-muted mt-3 rounded-lg border px-4 py-2.5 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50"
             >
               {pending
                 ? 'Memproses...'
@@ -348,23 +301,17 @@ export function AdministratorEditForm({
 
         {error ? (
           <div className="rounded-lg border p-4">
-            <p className="text-sm font-medium">
-              Operasi administrator gagal
-            </p>
+            <p className="text-sm font-medium">Operasi administrator gagal</p>
 
-            <p className="mt-1 text-sm text-muted-foreground">
-              {error}
-            </p>
+            <p className="text-muted-foreground mt-1 text-sm">{error}</p>
           </div>
         ) : null}
 
         {success ? (
           <div className="rounded-lg border p-4">
-            <p className="text-sm font-medium">
-              Operasi berhasil.
-            </p>
+            <p className="text-sm font-medium">Operasi berhasil.</p>
 
-            <p className="mt-1 text-sm text-muted-foreground">
+            <p className="text-muted-foreground mt-1 text-sm">
               Perubahan telah disimpan dan dicatat ke audit trail.
             </p>
           </div>
@@ -376,7 +323,7 @@ export function AdministratorEditForm({
               type="button"
               onClick={() => router.push('/admin/administrators')}
               disabled={pending}
-              className="rounded-lg border px-4 py-2.5 text-sm font-medium hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+              className="hover:bg-muted rounded-lg border px-4 py-2.5 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50"
             >
               Kembali
             </button>
@@ -384,12 +331,8 @@ export function AdministratorEditForm({
             <button
               type="button"
               onClick={submit}
-              disabled={
-                pending ||
-                !fullName.trim() ||
-                !roleId
-              }
-              className="rounded-lg border bg-background px-5 py-2.5 text-sm font-medium shadow-sm hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={pending || !fullName.trim() || !roleId}
+              className="bg-background hover:bg-muted rounded-lg border px-5 py-2.5 text-sm font-medium shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
             >
               {pending ? 'Menyimpan...' : 'Simpan Perubahan'}
             </button>
@@ -397,20 +340,17 @@ export function AdministratorEditForm({
 
           {canDelete ? (
             <div className="rounded-xl border p-4">
-              <p className="text-sm font-semibold">
-                Zona Berbahaya
-              </p>
+              <p className="text-sm font-semibold">Zona Berbahaya</p>
 
-              <p className="mt-1 text-sm text-muted-foreground">
-                Menghapus administrator bersifat permanen dan tidak
-                dapat dibatalkan.
+              <p className="text-muted-foreground mt-1 text-sm">
+                Menghapus administrator bersifat permanen dan tidak dapat dibatalkan.
               </p>
 
               <button
                 type="button"
                 onClick={removeAdministrator}
                 disabled={pending}
-                className="mt-4 rounded-lg border px-4 py-2.5 text-sm font-medium hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+                className="hover:bg-muted mt-4 rounded-lg border px-4 py-2.5 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Hapus Administrator Permanen
               </button>
@@ -421,5 +361,3 @@ export function AdministratorEditForm({
     </section>
   )
 }
-
-

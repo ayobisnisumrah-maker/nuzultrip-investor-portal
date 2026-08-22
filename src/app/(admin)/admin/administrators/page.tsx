@@ -11,7 +11,7 @@ export default async function AdministratorsPage() {
     return (
       <main className="p-6">
         <h1 className="text-xl font-semibold">Akses ditolak</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
+        <p className="text-muted-foreground mt-2 text-sm">
           Anda tidak memiliki izin untuk melihat administrator.
         </p>
       </main>
@@ -22,9 +22,7 @@ export default async function AdministratorsPage() {
 
   const { data: admins, error: adminsError } = await supabase
     .from('admins')
-    .select(
-      'id, role_id, title, employee_ref, is_active, disabled_at, created_at, updated_at',
-    )
+    .select('id, role_id, title, employee_ref, is_active, disabled_at, created_at, updated_at')
     .order('created_at', { ascending: false })
 
   if (adminsError) {
@@ -46,10 +44,7 @@ export default async function AdministratorsPage() {
         : Promise.resolve({ data: [], error: null }),
 
       roleIds.length > 0
-        ? supabase
-            .from('roles')
-            .select('id, key, name, is_system')
-            .in('id', roleIds)
+        ? supabase.from('roles').select('id, key, name, is_system').in('id', roleIds)
         : Promise.resolve({ data: [], error: null }),
     ])
 
@@ -61,13 +56,9 @@ export default async function AdministratorsPage() {
     throw new Error(`Gagal mengambil role administrator: ${rolesError.message}`)
   }
 
-  const accountById = new Map(
-    (accounts ?? []).map((account) => [account.id, account]),
-  )
+  const accountById = new Map((accounts ?? []).map((account) => [account.id, account]))
 
-  const roleById = new Map(
-    (roles ?? []).map((role) => [role.id, role]),
-  )
+  const roleById = new Map((roles ?? []).map((role) => [role.id, role]))
 
   const canCreate = hasPermission(principal, 'admins.create')
   const canUpdate = hasPermission(principal, 'admins.update')
@@ -76,15 +67,13 @@ export default async function AdministratorsPage() {
     <main className="flex flex-col gap-6 p-6">
       <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+          <p className="text-muted-foreground text-xs font-medium tracking-[0.18em] uppercase">
             Sistem / Administrator
           </p>
 
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight">
-            Administrator
-          </h1>
+          <h1 className="mt-1 text-2xl font-semibold tracking-tight">Administrator</h1>
 
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="text-muted-foreground mt-1 text-sm">
             Kelola administrator internal, role, dan status akses sistem.
           </p>
         </div>
@@ -92,7 +81,7 @@ export default async function AdministratorsPage() {
         {canCreate ? (
           <Link
             href="/admin/administrators/new"
-            className="inline-flex items-center justify-center rounded-lg border bg-background px-4 py-2.5 text-sm font-medium shadow-sm hover:bg-muted"
+            className="bg-background hover:bg-muted inline-flex items-center justify-center rounded-lg border px-4 py-2.5 text-sm font-medium shadow-sm"
           >
             + Tambah Administrator
           </Link>
@@ -100,35 +89,35 @@ export default async function AdministratorsPage() {
       </header>
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-xl border bg-card p-5">
-          <p className="text-sm text-muted-foreground">Total Administrator</p>
+        <div className="bg-card rounded-xl border p-5">
+          <p className="text-muted-foreground text-sm">Total Administrator</p>
           <p className="mt-2 text-2xl font-semibold">{adminRows.length}</p>
         </div>
 
-        <div className="rounded-xl border bg-card p-5">
-          <p className="text-sm text-muted-foreground">Aktif</p>
+        <div className="bg-card rounded-xl border p-5">
+          <p className="text-muted-foreground text-sm">Aktif</p>
           <p className="mt-2 text-2xl font-semibold">
             {adminRows.filter((admin) => admin.is_active).length}
           </p>
         </div>
 
-        <div className="rounded-xl border bg-card p-5">
-          <p className="text-sm text-muted-foreground">Nonaktif</p>
+        <div className="bg-card rounded-xl border p-5">
+          <p className="text-muted-foreground text-sm">Nonaktif</p>
           <p className="mt-2 text-2xl font-semibold">
             {adminRows.filter((admin) => !admin.is_active).length}
           </p>
         </div>
 
-        <div className="rounded-xl border bg-card p-5">
-          <p className="text-sm text-muted-foreground">Role Terpakai</p>
+        <div className="bg-card rounded-xl border p-5">
+          <p className="text-muted-foreground text-sm">Role Terpakai</p>
           <p className="mt-2 text-2xl font-semibold">{roleIds.length}</p>
         </div>
       </section>
 
-      <section className="rounded-xl border bg-card">
+      <section className="bg-card rounded-xl border">
         <div className="border-b p-5">
           <h2 className="font-semibold">Daftar Administrator</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="text-muted-foreground mt-1 text-sm">
             Administrator internal yang memiliki akses ke Admin Console.
           </p>
         </div>
@@ -157,37 +146,27 @@ export default async function AdministratorsPage() {
                       <div className="font-medium">
                         {account?.full_name ?? 'Nama tidak tersedia'}
                       </div>
-                      <div className="mt-0.5 text-xs text-muted-foreground">
+                      <div className="text-muted-foreground mt-0.5 text-xs">
                         {account?.email ?? '-'}
                       </div>
                     </td>
 
                     <td className="px-5 py-4">
-                      <div className="font-medium">
-                        {role?.name ?? 'Role tidak tersedia'}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        {role?.key ?? '-'}
-                      </div>
+                      <div className="font-medium">{role?.name ?? 'Role tidak tersedia'}</div>
+                      <div className="text-muted-foreground text-xs">{role?.key ?? '-'}</div>
                     </td>
 
-                    <td className="px-5 py-4">
-                      {admin.title || '-'}
-                    </td>
+                    <td className="px-5 py-4">{admin.title || '-'}</td>
 
                     <td className="px-5 py-4">
                       {admin.is_active ? (
-                        <span className="rounded-full border px-2 py-1 text-xs">
-                          Aktif
-                        </span>
+                        <span className="rounded-full border px-2 py-1 text-xs">Aktif</span>
                       ) : (
-                        <span className="rounded-full border px-2 py-1 text-xs">
-                          Nonaktif
-                        </span>
+                        <span className="rounded-full border px-2 py-1 text-xs">Nonaktif</span>
                       )}
                     </td>
 
-                    <td className="px-5 py-4 text-xs text-muted-foreground">
+                    <td className="text-muted-foreground px-5 py-4 text-xs">
                       {new Intl.DateTimeFormat('id-ID', {
                         dateStyle: 'medium',
                       }).format(new Date(admin.created_at))}
@@ -197,14 +176,12 @@ export default async function AdministratorsPage() {
                       {canUpdate ? (
                         <Link
                           href={`/admin/administrators/${admin.id}`}
-                          className="inline-flex rounded-lg border px-3 py-2 text-xs font-medium hover:bg-muted"
+                          className="hover:bg-muted inline-flex rounded-lg border px-3 py-2 text-xs font-medium"
                         >
                           Kelola
                         </Link>
                       ) : (
-                        <span className="text-xs text-muted-foreground">
-                          —
-                        </span>
+                        <span className="text-muted-foreground text-xs">—</span>
                       )}
                     </td>
                   </tr>
@@ -213,10 +190,7 @@ export default async function AdministratorsPage() {
 
               {adminRows.length === 0 ? (
                 <tr>
-                  <td
-                    colSpan={6}
-                    className="px-5 py-10 text-center text-sm text-muted-foreground"
-                  >
+                  <td colSpan={6} className="text-muted-foreground px-5 py-10 text-center text-sm">
                     Belum ada administrator.
                   </td>
                 </tr>

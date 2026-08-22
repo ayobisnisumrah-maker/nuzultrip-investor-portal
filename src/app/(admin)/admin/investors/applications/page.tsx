@@ -11,18 +11,12 @@ export const metadata: Metadata = {
 }
 
 export default async function InvestorApplicationsPage() {
-  const principal = await requireAdminPage(
-    '/admin/investors/applications',
-  )
+  const principal = await requireAdminPage('/admin/investors/applications')
 
   if (!principal.permissions.has('investors.view')) {
     return (
-      <Alert
-        tone="info"
-        title="Akses terbatas"
-      >
-        Peran Anda tidak memiliki izin untuk melihat
-        pengajuan investor.
+      <Alert tone="info" title="Akses terbatas">
+        Peran Anda tidak memiliki izin untuk melihat pengajuan investor.
       </Alert>
     )
   }
@@ -47,15 +41,7 @@ export default async function InvestorApplicationsPage() {
         created_at
       `,
     )
-    .in(
-      'status',
-      [
-        'submitted',
-        'under_review',
-        'approved',
-        'rejected',
-      ],
-    )
+    .in('status', ['submitted', 'under_review', 'approved', 'rejected'])
     .order('applied_at', {
       ascending: false,
       nullsFirst: false,
@@ -73,12 +59,8 @@ export default async function InvestorApplicationsPage() {
           description="Kelola seluruh pengajuan investor dari submission sampai keputusan."
         />
 
-        <Alert
-          tone="danger"
-          title="Pengajuan tidak dapat dimuat"
-        >
-          Sistem gagal mengambil data pengajuan investor.
-          Silakan coba lagi.
+        <Alert tone="danger" title="Pengajuan tidak dapat dimuat">
+          Sistem gagal mengambil data pengajuan investor. Silakan coba lagi.
         </Alert>
       </Stack>
     )
@@ -86,25 +68,13 @@ export default async function InvestorApplicationsPage() {
 
   const rows = investors ?? []
 
-  const submitted =
-    rows.filter(
-      (item) => item.status === 'submitted',
-    ).length
+  const submitted = rows.filter((item) => item.status === 'submitted').length
 
-  const underReview =
-    rows.filter(
-      (item) => item.status === 'under_review',
-    ).length
+  const underReview = rows.filter((item) => item.status === 'under_review').length
 
-  const approved =
-    rows.filter(
-      (item) => item.status === 'approved',
-    ).length
+  const approved = rows.filter((item) => item.status === 'approved').length
 
-  const rejected =
-    rows.filter(
-      (item) => item.status === 'rejected',
-    ).length
+  const rejected = rows.filter((item) => item.status === 'rejected').length
 
   return (
     <Stack gap={8}>
@@ -115,40 +85,24 @@ export default async function InvestorApplicationsPage() {
       />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-2xl border border-border bg-surface p-5">
-          <div className="text-sm text-fg-muted">
-            Menunggu Review
-          </div>
-          <div className="mt-2 text-3xl font-semibold text-fg">
-            {submitted}
-          </div>
+        <div className="border-border bg-surface rounded-2xl border p-5">
+          <div className="text-fg-muted text-sm">Menunggu Review</div>
+          <div className="text-fg mt-2 text-3xl font-semibold">{submitted}</div>
         </div>
 
-        <div className="rounded-2xl border border-border bg-surface p-5">
-          <div className="text-sm text-fg-muted">
-            Sedang Ditinjau
-          </div>
-          <div className="mt-2 text-3xl font-semibold text-fg">
-            {underReview}
-          </div>
+        <div className="border-border bg-surface rounded-2xl border p-5">
+          <div className="text-fg-muted text-sm">Sedang Ditinjau</div>
+          <div className="text-fg mt-2 text-3xl font-semibold">{underReview}</div>
         </div>
 
-        <div className="rounded-2xl border border-border bg-surface p-5">
-          <div className="text-sm text-fg-muted">
-            Disetujui
-          </div>
-          <div className="mt-2 text-3xl font-semibold text-fg">
-            {approved}
-          </div>
+        <div className="border-border bg-surface rounded-2xl border p-5">
+          <div className="text-fg-muted text-sm">Disetujui</div>
+          <div className="text-fg mt-2 text-3xl font-semibold">{approved}</div>
         </div>
 
-        <div className="rounded-2xl border border-border bg-surface p-5">
-          <div className="text-sm text-fg-muted">
-            Ditolak
-          </div>
-          <div className="mt-2 text-3xl font-semibold text-fg">
-            {rejected}
-          </div>
+        <div className="border-border bg-surface rounded-2xl border p-5">
+          <div className="text-fg-muted text-sm">Ditolak</div>
+          <div className="text-fg mt-2 text-3xl font-semibold">{rejected}</div>
         </div>
       </div>
 
@@ -159,4 +113,3 @@ export default async function InvestorApplicationsPage() {
     </Stack>
   )
 }
-

@@ -1,19 +1,14 @@
 ﻿import { adminWithPermission } from '@/server/auth/page-guards'
 
 export default async function FinancialsPage() {
-  const principal = await adminWithPermission(
-    'financial_periods.view',
-    '/admin/financials',
-  )
+  const principal = await adminWithPermission('financial_periods.view', '/admin/financials')
 
   if (!principal) {
     return (
-      <div className="rounded-xl border border-border bg-surface p-6">
-        <h1 className="font-display text-heading-lg text-fg">
-          Akses Ditolak
-        </h1>
+      <div className="border-border bg-surface rounded-xl border p-6">
+        <h1 className="font-display text-heading-lg text-fg">Akses Ditolak</h1>
 
-        <p className="mt-2 text-body-sm text-fg-muted">
+        <p className="text-body-sm text-fg-muted mt-2">
           Anda tidak memiliki izin untuk melihat modul keuangan.
         </p>
       </div>
@@ -23,46 +18,37 @@ export default async function FinancialsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-sm font-medium text-fg-subtle">
-          Keuangan
-        </p>
+        <p className="text-fg-subtle text-sm font-medium">Keuangan</p>
 
-        <h1 className="mt-1 font-display text-heading-lg text-fg">
-          Ringkasan Keuangan
-        </h1>
+        <h1 className="font-display text-heading-lg text-fg mt-1">Ringkasan Keuangan</h1>
 
-        <p className="mt-2 max-w-2xl text-body-sm text-fg-muted">
-          Kelola periode pelaporan dan laporan keuangan perusahaan
-          yang menjadi sumber informasi resmi untuk investor.
+        <p className="text-body-sm text-fg-muted mt-2 max-w-2xl">
+          Kelola periode pelaporan dan laporan keuangan perusahaan yang menjadi sumber informasi
+          resmi untuk investor.
         </p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
         <a
           href="/admin/financials/periods"
-          className="rounded-xl border border-border bg-surface p-5 transition hover:border-primary-solid"
+          className="border-border bg-surface hover:border-primary-solid rounded-xl border p-5 transition"
         >
-          <h2 className="text-body font-semibold text-fg">
-            Periode Keuangan
-          </h2>
+          <h2 className="text-body text-fg font-semibold">Periode Keuangan</h2>
 
-          <p className="mt-2 text-body-sm text-fg-muted">
-            Kelola periode pelaporan, status periode, dan siklus
-            pembukaan hingga penguncian periode.
+          <p className="text-body-sm text-fg-muted mt-2">
+            Kelola periode pelaporan, status periode, dan siklus pembukaan hingga penguncian
+            periode.
           </p>
         </a>
 
         <a
           href="/admin/financials/reports"
-          className="rounded-xl border border-border bg-surface p-5 transition hover:border-primary-solid"
+          className="border-border bg-surface hover:border-primary-solid rounded-xl border p-5 transition"
         >
-          <h2 className="text-body font-semibold text-fg">
-            Laporan Keuangan
-          </h2>
+          <h2 className="text-body text-fg font-semibold">Laporan Keuangan</h2>
 
-          <p className="mt-2 text-body-sm text-fg-muted">
-            Kelola laporan keuangan, proses review, approval, dan
-            publikasi kepada investor.
+          <p className="text-body-sm text-fg-muted mt-2">
+            Kelola laporan keuangan, proses review, approval, dan publikasi kepada investor.
           </p>
         </a>
       </div>

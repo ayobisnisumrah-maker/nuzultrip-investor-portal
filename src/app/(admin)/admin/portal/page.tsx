@@ -2,10 +2,7 @@
 import { PortalSectionPage } from '@/features/admin/portal-section-page'
 
 export default async function PortalPage() {
-  const principal = await adminWithPermission(
-    'portal.view',
-    '/admin/portal',
-  )
+  const principal = await adminWithPermission('portal.view', '/admin/portal')
 
   return (
     <PortalSectionPage

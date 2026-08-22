@@ -167,7 +167,8 @@ export const PERMISSIONS = [
     action: 'publish',
     description: 'Membuka atau menerbitkan penawaran kepemilikan.',
     dangerous: true,
-  },  {
+  },
+  {
     module: 'ownership_offerings',
     action: 'pause',
     description: 'Menghentikan sementara penawaran kepemilikan yang sedang aktif.',
@@ -263,20 +264,17 @@ export const PERMISSIONS = [
   {
     module: 'profit_distribution_payments',
     action: 'upload_proof',
-    description:
-      'Mengunggah bukti transfer pembayaran kepada investor.',
+    description: 'Mengunggah bukti transfer pembayaran kepada investor.',
   },
   {
     module: 'profit_distribution_payments',
     action: 'replace_proof',
-    description:
-      'Mengganti bukti transfer pembayaran kepada investor.',
+    description: 'Mengganti bukti transfer pembayaran kepada investor.',
   },
   {
     module: 'profit_distribution_payments',
     action: 'mark_paid',
-    description:
-      'Menandai pembayaran distribusi bagi hasil sebagai telah dibayar.',
+    description: 'Menandai pembayaran distribusi bagi hasil sebagai telah dibayar.',
     dangerous: true,
   },
 
@@ -623,8 +621,7 @@ export const PERMISSIONS = [
   {
     module: 'admins',
     action: 'reset_password',
-    description:
-      'Mengirim tautan atur ulang kata sandi administrator.',
+    description: 'Mengirim tautan atur ulang kata sandi administrator.',
     dangerous: true,
   },
 
@@ -736,9 +733,7 @@ export function permissionsByModule(): ReadonlyArray<{
   return PERMISSION_MODULES.map((module) => ({
     module,
     label: MODULE_LABELS[module],
-    permissions: PERMISSIONS.filter(
-      (permission) => permission.module === module,
-    ),
+    permissions: PERMISSIONS.filter((permission) => permission.module === module),
   }))
 }
 
@@ -778,7 +773,5 @@ export const ADMIN_INTERNAL_EXCLUSIONS: readonly string[] = [
 export function adminInternalPermissions(): readonly string[] {
   const excluded = new Set(ADMIN_INTERNAL_EXCLUSIONS)
 
-  return PERMISSION_KEYS.filter(
-    (key) => !excluded.has(key),
-  )
+  return PERMISSION_KEYS.filter((key) => !excluded.has(key))
 }

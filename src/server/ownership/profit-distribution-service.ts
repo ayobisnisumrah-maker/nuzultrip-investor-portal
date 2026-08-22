@@ -3,12 +3,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 type DbClient = SupabaseClient
 
 export type ProfitDistributionStatus =
-  | 'draft'
-  | 'review'
-  | 'approved'
-  | 'payable'
-  | 'paid'
-  | 'cancelled'
+  'draft' | 'review' | 'approved' | 'payable' | 'paid' | 'cancelled'
 
 export type ProfitDistribution = {
   id: string
@@ -130,9 +125,7 @@ const ALLOCATION_SELECT = `
   updated_at
 `
 
-function mapDistribution(
-  row: ProfitDistributionRow,
-): ProfitDistribution {
+function mapDistribution(row: ProfitDistributionRow): ProfitDistribution {
   return {
     id: row.id,
     offering_id: row.offering_id,
@@ -156,9 +149,7 @@ function mapDistribution(
   }
 }
 
-function mapAllocation(
-  row: AllocationRow,
-): ProfitDistributionAllocation {
+function mapAllocation(row: AllocationRow): ProfitDistributionAllocation {
   return {
     id: row.id,
     distribution_id: row.distribution_id,
@@ -175,9 +166,7 @@ function mapAllocation(
   }
 }
 
-export async function listProfitDistributions(
-  supabase: DbClient,
-): Promise<ProfitDistribution[]> {
+export async function listProfitDistributions(supabase: DbClient): Promise<ProfitDistribution[]> {
   const { data, error } = await supabase
     .from('profit_distributions')
     .select(DISTRIBUTION_SELECT)
@@ -185,14 +174,10 @@ export async function listProfitDistributions(
     .order('created_at', { ascending: false })
 
   if (error) {
-    throw new Error(
-      `Gagal mengambil distribusi bagi hasil: ${error.message}`,
-    )
+    throw new Error(`Gagal mengambil distribusi bagi hasil: ${error.message}`)
   }
 
-  return ((data ?? []) as ProfitDistributionRow[]).map(
-    mapDistribution,
-  )
+  return ((data ?? []) as ProfitDistributionRow[]).map(mapDistribution)
 }
 
 export async function getProfitDistribution(
@@ -206,9 +191,7 @@ export async function getProfitDistribution(
     .maybeSingle()
 
   if (error) {
-    throw new Error(
-      `Gagal mengambil distribusi bagi hasil: ${error.message}`,
-    )
+    throw new Error(`Gagal mengambil distribusi bagi hasil: ${error.message}`)
   }
 
   if (!data) {
@@ -229,9 +212,7 @@ export async function listProfitDistributionAllocations(
     .order('created_at', { ascending: true })
 
   if (error) {
-    throw new Error(
-      `Gagal mengambil allocation distribusi: ${error.message}`,
-    )
+    throw new Error(`Gagal mengambil allocation distribusi: ${error.message}`)
   }
 
   return ((data ?? []) as AllocationRow[]).map(mapAllocation)
@@ -241,48 +222,32 @@ export async function calculateInvestorPoolAmount(
   supabase: DbClient,
   distributionId: string,
 ): Promise<number> {
-  const distribution = await getProfitDistribution(
-    supabase,
-    distributionId,
-  )
+  const distribution = await getProfitDistribution(supabase, distributionId)
 
   if (!distribution) {
     throw new Error('Distribusi bagi hasil tidak ditemukan.')
   }
 
-  return (
-    distribution.profit_amount *
-    distribution.investor_pool_bps /
-    10_000
-  )
+  return (distribution.profit_amount * distribution.investor_pool_bps) / 10_000
 }
 
 export async function generateProfitDistributionAllocations(
   supabase: DbClient,
   distributionId: string,
 ): Promise<ProfitDistributionAllocation[]> {
-  const distribution = await getProfitDistribution(
-    supabase,
-    distributionId,
-  )
+  const distribution = await getProfitDistribution(supabase, distributionId)
 
   if (!distribution) {
     throw new Error('Distribusi bagi hasil tidak ditemukan.')
   }
 
-  if (
-    distribution.status !== 'draft' &&
-    distribution.status !== 'review'
-  ) {
+  if (distribution.status !== 'draft' && distribution.status !== 'review') {
     throw new Error(
       'Allocation hanya dapat dibuat atau dihitung ulang ketika distribusi masih draft atau review.',
     )
   }
 
-  const investorPoolAmount =
-    distribution.profit_amount *
-    distribution.investor_pool_bps /
-    10_000
+  const investorPoolAmount = (distribution.profit_amount * distribution.investor_pool_bps) / 10_000
 
   const { error: updateDistributionError } = await supabase
     .from('profit_distributions')
@@ -292,9 +257,7 @@ export async function generateProfitDistributionAllocations(
     .eq('id', distribution.id)
 
   if (updateDistributionError) {
-    throw new Error(
-      `Gagal menyimpan investor pool: ${updateDistributionError.message}`,
-    )
+    throw new Error(`Gagal menyimpan investor pool: ${updateDistributionError.message}`)
   }
 
   /*
@@ -302,16 +265,10 @@ export async function generateProfitDistributionAllocations(
    * masih pending. Allocation yang sudah payable/paid tidak boleh
    * dihancurkan oleh proses generate ulang.
    */
-  const existingAllocations =
-    await listProfitDistributionAllocations(
-      supabase,
-      distribution.id,
-    )
+  const existingAllocations = await listProfitDistributionAllocations(supabase, distribution.id)
 
   const hasLockedAllocation = existingAllocations.some(
-    (allocation) =>
-      allocation.status === 'payable' ||
-      allocation.status === 'paid',
+    (allocation) => allocation.status === 'payable' || allocation.status === 'paid',
   )
 
   if (hasLockedAllocation) {
@@ -327,9 +284,7 @@ export async function generateProfitDistributionAllocations(
       .eq('distribution_id', distribution.id)
 
     if (deleteError) {
-      throw new Error(
-        `Gagal membersihkan allocation lama: ${deleteError.message}`,
-      )
+      throw new Error(`Gagal membersihkan allocation lama: ${deleteError.message}`)
     }
   }
 
@@ -337,11 +292,10 @@ export async function generateProfitDistributionAllocations(
     return []
   }
 
-  const { data: holdings, error: holdingsError } =
-    await supabase
-      .from('ownership_holdings')
-      .select(
-        `
+  const { data: holdings, error: holdingsError } = await supabase
+    .from('ownership_holdings')
+    .select(
+      `
           id,
           offering_id,
           investor_id,
@@ -349,16 +303,14 @@ export async function generateProfitDistributionAllocations(
           ownership_bps,
           status
         `,
-      )
-      .eq('offering_id', distribution.offering_id)
-      .eq('status', 'active')
-      .gt('ownership_bps', 0)
-      .gt('units', 0)
+    )
+    .eq('offering_id', distribution.offering_id)
+    .eq('status', 'active')
+    .gt('ownership_bps', 0)
+    .gt('units', 0)
 
   if (holdingsError) {
-    throw new Error(
-      `Gagal mengambil ownership holdings aktif: ${holdingsError.message}`,
-    )
+    throw new Error(`Gagal mengambil ownership holdings aktif: ${holdingsError.message}`)
   }
 
   const activeHoldings = (holdings ?? []) as HoldingRow[]
@@ -368,28 +320,18 @@ export async function generateProfitDistributionAllocations(
   }
 
   const totalOwnershipBps = activeHoldings.reduce(
-    (total, holding) =>
-      total + holding.ownership_bps,
+    (total, holding) => total + holding.ownership_bps,
     0,
   )
 
   if (totalOwnershipBps <= 0) {
-    throw new Error(
-      'Total ownership investor aktif tidak valid.',
-    )
+    throw new Error('Total ownership investor aktif tidak valid.')
   }
 
   const rows = activeHoldings.map((holding) => {
-    const investorPoolShareBps = Math.round(
-      holding.ownership_bps *
-      10_000 /
-      totalOwnershipBps,
-    )
+    const investorPoolShareBps = Math.round((holding.ownership_bps * 10_000) / totalOwnershipBps)
 
-    const allocationAmount =
-      investorPoolAmount *
-      investorPoolShareBps /
-      10_000
+    const allocationAmount = (investorPoolAmount * investorPoolShareBps) / 10_000
 
     return {
       distribution_id: distribution.id,
@@ -408,14 +350,10 @@ export async function generateProfitDistributionAllocations(
     .select(ALLOCATION_SELECT)
 
   if (error) {
-    throw new Error(
-      `Gagal membuat allocation distribusi: ${error.message}`,
-    )
+    throw new Error(`Gagal membuat allocation distribusi: ${error.message}`)
   }
 
-  return ((data ?? []) as AllocationRow[]).map(
-    mapAllocation,
-  )
+  return ((data ?? []) as AllocationRow[]).map(mapAllocation)
 }
 
 export async function submitProfitDistributionForReview(
@@ -423,34 +361,20 @@ export async function submitProfitDistributionForReview(
   distributionId: string,
   updatedBy: string,
 ): Promise<ProfitDistribution> {
-  const distribution = await getProfitDistribution(
-    supabase,
-    distributionId,
-  )
+  const distribution = await getProfitDistribution(supabase, distributionId)
 
   if (!distribution) {
     throw new Error('Distribusi bagi hasil tidak ditemukan.')
   }
 
   if (distribution.status !== 'draft') {
-    throw new Error(
-      'Hanya distribusi draft yang dapat diajukan untuk review.',
-    )
+    throw new Error('Hanya distribusi draft yang dapat diajukan untuk review.')
   }
 
-  const allocations =
-    await listProfitDistributionAllocations(
-      supabase,
-      distribution.id,
-    )
+  const allocations = await listProfitDistributionAllocations(supabase, distribution.id)
 
-  if (
-    distribution.profit_amount > 0 &&
-    allocations.length === 0
-  ) {
-    throw new Error(
-      'Allocation investor belum dibuat.',
-    )
+  if (distribution.profit_amount > 0 && allocations.length === 0) {
+    throw new Error('Allocation investor belum dibuat.')
   }
 
   const { data, error } = await supabase
@@ -466,9 +390,7 @@ export async function submitProfitDistributionForReview(
 
   if (error || !data) {
     throw new Error(
-      `Gagal mengajukan distribusi untuk review: ${
-        error?.message ?? 'Distribusi tidak berubah.'
-      }`,
+      `Gagal mengajukan distribusi untuk review: ${error?.message ?? 'Distribusi tidak berubah.'}`,
     )
   }
 
@@ -480,19 +402,14 @@ export async function approveProfitDistribution(
   distributionId: string,
   approvedBy: string,
 ): Promise<ProfitDistribution> {
-  const distribution = await getProfitDistribution(
-    supabase,
-    distributionId,
-  )
+  const distribution = await getProfitDistribution(supabase, distributionId)
 
   if (!distribution) {
     throw new Error('Distribusi bagi hasil tidak ditemukan.')
   }
 
   if (distribution.status !== 'review') {
-    throw new Error(
-      'Hanya distribusi berstatus review yang dapat disetujui.',
-    )
+    throw new Error('Hanya distribusi berstatus review yang dapat disetujui.')
   }
 
   const { data, error } = await supabase
@@ -509,11 +426,7 @@ export async function approveProfitDistribution(
     .single()
 
   if (error || !data) {
-    throw new Error(
-      `Gagal menyetujui distribusi: ${
-        error?.message ?? 'Distribusi tidak berubah.'
-      }`,
-    )
+    throw new Error(`Gagal menyetujui distribusi: ${error?.message ?? 'Distribusi tidak berubah.'}`)
   }
 
   return mapDistribution(data)
@@ -524,19 +437,14 @@ export async function markProfitDistributionPayable(
   distributionId: string,
   updatedBy: string,
 ): Promise<ProfitDistribution> {
-  const distribution = await getProfitDistribution(
-    supabase,
-    distributionId,
-  )
+  const distribution = await getProfitDistribution(supabase, distributionId)
 
   if (!distribution) {
     throw new Error('Distribusi bagi hasil tidak ditemukan.')
   }
 
   if (distribution.status !== 'approved') {
-    throw new Error(
-      'Hanya distribusi yang sudah approved yang dapat menjadi payable.',
-    )
+    throw new Error('Hanya distribusi yang sudah approved yang dapat menjadi payable.')
   }
 
   const { error: allocationError } = await supabase
@@ -549,9 +457,7 @@ export async function markProfitDistributionPayable(
     .eq('status', 'pending')
 
   if (allocationError) {
-    throw new Error(
-      `Gagal mengubah allocation menjadi payable: ${allocationError.message}`,
-    )
+    throw new Error(`Gagal mengubah allocation menjadi payable: ${allocationError.message}`)
   }
 
   const { data, error } = await supabase
@@ -567,9 +473,7 @@ export async function markProfitDistributionPayable(
 
   if (error || !data) {
     throw new Error(
-      `Gagal mengubah distribusi menjadi payable: ${
-        error?.message ?? 'Distribusi tidak berubah.'
-      }`,
+      `Gagal mengubah distribusi menjadi payable: ${error?.message ?? 'Distribusi tidak berubah.'}`,
     )
   }
 
@@ -581,32 +485,24 @@ export async function markProfitDistributionAllocationPaid(
   allocationId: string,
   paymentReference: string | null,
 ): Promise<ProfitDistributionAllocation> {
-  const { data: allocation, error: allocationError } =
-    await supabase
-      .from('profit_distribution_allocations')
-      .select(ALLOCATION_SELECT)
-      .eq('id', allocationId)
-      .maybeSingle()
+  const { data: allocation, error: allocationError } = await supabase
+    .from('profit_distribution_allocations')
+    .select(ALLOCATION_SELECT)
+    .eq('id', allocationId)
+    .maybeSingle()
 
   if (allocationError) {
-    throw new Error(
-      `Gagal mengambil allocation pembayaran: ${allocationError.message}`,
-    )
+    throw new Error(`Gagal mengambil allocation pembayaran: ${allocationError.message}`)
   }
 
   if (!allocation) {
-    throw new Error(
-      'Allocation pembayaran tidak ditemukan.',
-    )
+    throw new Error('Allocation pembayaran tidak ditemukan.')
   }
 
-  const currentAllocation =
-    allocation
+  const currentAllocation = allocation
 
   if (currentAllocation.status !== 'payable') {
-    throw new Error(
-      'Hanya allocation payable yang dapat ditandai paid.',
-    )
+    throw new Error('Hanya allocation payable yang dapat ditandai paid.')
   }
 
   const { data, error } = await supabase
@@ -614,8 +510,7 @@ export async function markProfitDistributionAllocationPaid(
     .update({
       status: 'paid',
       paid_at: new Date().toISOString(),
-      payment_reference:
-        paymentReference?.trim() || null,
+      payment_reference: paymentReference?.trim() || null,
       updated_at: new Date().toISOString(),
     })
     .eq('id', allocationId)
@@ -625,9 +520,7 @@ export async function markProfitDistributionAllocationPaid(
 
   if (error || !data) {
     throw new Error(
-      `Gagal menandai allocation sebagai paid: ${
-        error?.message ?? 'Allocation tidak berubah.'
-      }`,
+      `Gagal menandai allocation sebagai paid: ${error?.message ?? 'Allocation tidak berubah.'}`,
     )
   }
 
@@ -639,26 +532,16 @@ export async function refreshProfitDistributionPaidStatus(
   distributionId: string,
   updatedBy: string,
 ): Promise<ProfitDistribution> {
-  const allocations =
-    await listProfitDistributionAllocations(
-      supabase,
-      distributionId,
-    )
+  const allocations = await listProfitDistributionAllocations(supabase, distributionId)
 
   if (allocations.length === 0) {
-    throw new Error(
-      'Distribusi belum memiliki allocation.',
-    )
+    throw new Error('Distribusi belum memiliki allocation.')
   }
 
-  const allPaid = allocations.every(
-    (allocation) => allocation.status === 'paid',
-  )
+  const allPaid = allocations.every((allocation) => allocation.status === 'paid')
 
   if (!allPaid) {
-    throw new Error(
-      'Belum semua allocation investor berstatus paid.',
-    )
+    throw new Error('Belum semua allocation investor berstatus paid.')
   }
 
   const { data, error } = await supabase
@@ -675,9 +558,7 @@ export async function refreshProfitDistributionPaidStatus(
 
   if (error || !data) {
     throw new Error(
-      `Gagal menandai distribusi sebagai paid: ${
-        error?.message ?? 'Distribusi tidak berubah.'
-      }`,
+      `Gagal menandai distribusi sebagai paid: ${error?.message ?? 'Distribusi tidak berubah.'}`,
     )
   }
 

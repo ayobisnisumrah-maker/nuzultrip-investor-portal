@@ -51,7 +51,9 @@ export default async function InvestorLayout({ children }: { children: React.Rea
               <div className="flex items-center gap-3">
                 <div className="hidden flex-col items-end leading-tight sm:flex">
                   <span className="text-body-sm text-fg font-medium">{principal.fullName}</span>
-                  <span className="text-caption text-fg-subtle font-mono">{principal.referenceCode}</span>
+                  <span className="text-caption text-fg-subtle font-mono">
+                    {principal.referenceCode}
+                  </span>
                 </div>
                 <RealtimeStatus />
                 <Avatar name={principal.fullName} size="sm" />
