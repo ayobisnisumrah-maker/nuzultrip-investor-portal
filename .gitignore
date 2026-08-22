@@ -92,3 +92,5 @@ assets/source/
 *.backup
 .next/
 node_modules/
+
+supabase/backups/
