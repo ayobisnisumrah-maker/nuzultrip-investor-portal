@@ -45,6 +45,16 @@ jobs:
           version: latest
           github-token: ${{ github.token }}
 
+      - name: Diagnose Docker and Supabase ports
+        run: |
+          docker ps -a
+          echo "=== PORT 54322 ==="
+          sudo ss -ltnp | grep 54322 || true
+          echo "=== PORT 54320 ==="
+          sudo ss -ltnp | grep 54320 || true
+          echo "=== DOCKER NETWORKS ==="
+          docker network ls
+
       - name: Start local Supabase
         run: supabase start
 
