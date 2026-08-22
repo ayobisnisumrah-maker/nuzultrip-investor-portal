@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import type { Metadata } from 'next'
 import { INVESTOR_STATUS_DESCRIPTIONS } from '@/core/investors/status'
 import { topics } from '@/core/realtime/events'
@@ -87,9 +88,9 @@ export default async function InvestorOverviewPage() {
             <CardBody>
               <div className="text-caption text-fg-subtle">Total unit</div>
               <div className="mt-1 text-heading-lg font-semibold tabular">{totalUnits.toLocaleString('id-ID')}</div>
-              <a href="/investor/ownership" className="mt-2 inline-block text-body-sm text-link hover:underline">
+              <Link href="/investor/ownership" className="mt-2 inline-block text-body-sm text-link hover:underline">
                 Lihat kepemilikan →
-              </a>
+              </Link>
             </CardBody>
           </Card>
           <Card>
@@ -105,18 +106,18 @@ export default async function InvestorOverviewPage() {
             <CardBody>
               <div className="text-caption text-fg-subtle">Dokumen tersedia</div>
               <div className="mt-1 text-heading-lg font-semibold tabular">{documentCount.toLocaleString('id-ID')}</div>
-              <a href="/investor/documents" className="mt-2 inline-block text-body-sm text-link hover:underline">
+              <Link href="/investor/documents" className="mt-2 inline-block text-body-sm text-link hover:underline">
                 Buka Data Room →
-              </a>
+              </Link>
             </CardBody>
           </Card>
           <Card>
             <CardBody>
               <div className="text-caption text-fg-subtle">Laporan keuangan</div>
               <div className="mt-1 text-heading-lg font-semibold tabular">{financialReportCount.toLocaleString('id-ID')}</div>
-              <a href="/investor/financials" className="mt-2 inline-block text-body-sm text-link hover:underline">
+              <Link href="/investor/financials" className="mt-2 inline-block text-body-sm text-link hover:underline">
                 Lihat laporan →
-              </a>
+              </Link>
             </CardBody>
           </Card>
         </div>
