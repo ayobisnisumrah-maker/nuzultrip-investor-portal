@@ -6,6 +6,7 @@ import { PageHeader, Stack } from '@/ui/layout'
 import { Card, CardBody, CardHeader, CardTitle } from '@/ui/card'
 import { EmptyState } from '@/ui/states'
 import { formatDateTime } from '@/lib/format'
+import { InvestorMessageComposer } from '@/features/investor/investor-message-composer'
 
 export const metadata: Metadata = { title: 'Percakapan' }
 
@@ -50,6 +51,7 @@ export default async function InvestorMessageThreadPage({ params }: { params: Pr
               ))}
             </ol>
           )}
+          <InvestorMessageComposer threadId={thread.id} disabled={thread.is_closed} />
         </CardBody>
       </Card>
     </Stack>
