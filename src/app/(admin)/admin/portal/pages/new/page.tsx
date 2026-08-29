@@ -1,4 +1,4 @@
-﻿import Link from 'next/link'
+import Link from 'next/link'
 
 import { adminWithPermission } from '@/server/auth/page-guards'
 
@@ -26,7 +26,7 @@ export default async function NewPortalPage() {
 
         <div className="mt-4">
           <p className="text-caption text-fg-subtle font-medium tracking-[0.14em] uppercase">
-            Portal & Content
+            Portal & Konten
           </p>
 
           <h1 className="font-display text-heading-lg text-fg mt-1">Buat Halaman</h1>
@@ -117,7 +117,7 @@ export default async function NewPortalPage() {
               type="submit"
               className="bg-primary text-primary-foreground inline-flex h-10 items-center justify-center rounded-lg px-4 text-sm font-medium hover:opacity-90"
             >
-              Simpan Draft
+              Simpan Draf
             </button>
           </div>
         </div>

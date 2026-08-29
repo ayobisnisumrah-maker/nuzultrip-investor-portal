@@ -2718,6 +2718,19 @@ export type Database = {
           retry_after_seconds: number
         }[]
       }
+      create_notification: {
+        Args: {
+          p_action_url?: string
+          p_body?: string
+          p_entity_id?: string
+          p_entity_type?: string
+          p_kind: Database["public"]["Enums"]["notification_kind"]
+          p_payload?: Json
+          p_recipient_id: string
+          p_title: string
+        }
+        Returns: string
+      }
       current_principal: { Args: never; Returns: Json }
       custom_access_token_hook: { Args: { event: Json }; Returns: Json }
       deactivate_admin_account: {

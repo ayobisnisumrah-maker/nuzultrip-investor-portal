@@ -1,5 +1,6 @@
-﻿import { adminWithPermission } from '@/server/auth/page-guards'
-import { PortalSectionPage } from '@/features/admin/portal-section-page'
+import { adminWithPermission } from '@/server/auth/page-guards'
+import { PortalNavigationManager } from '@/features/admin/portal-navigation-manager'
+import { getPortalNavigationItems } from '@/server/portal/navigation-queries'
 
 export default async function PortalNavigationPage() {
   const principal = await adminWithPermission(
@@ -7,12 +8,11 @@ export default async function PortalNavigationPage() {
     '/admin/portal/navigation',
   )
 
-  return (
-    <PortalSectionPage
-      title="Navigasi"
-      description="Kelola menu, urutan navigasi, dan tautan yang tersedia pada portal."
-      permission="portal.manage_navigation"
-      currentPermission={principal !== null}
-    />
-  )
+  if (!principal) {
+    return null
+  }
+
+  const items = await getPortalNavigationItems()
+
+  return <PortalNavigationManager initialItems={items} />
 }

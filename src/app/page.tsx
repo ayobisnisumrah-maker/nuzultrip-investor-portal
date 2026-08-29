@@ -9,22 +9,43 @@ import {
 export async function generateMetadata(): Promise<Metadata> {
   const portal = await getPublishedHomePage()
 
+  if (!portal) {
+    return {
+      title: 'Investor Portal',
+      robots: {
+        index: false,
+        follow: false,
+      },
+    }
+  }
+
+  const seo =
+    portal.page.seo &&
+    typeof portal.page.seo === 'object' &&
+    !Array.isArray(portal.page.seo)
+      ? (portal.page.seo as Record<string, unknown>)
+      : {}
+
   const title =
-    portal?.page.title ||
-    'Nuzultrip Investor Relations'
+    typeof seo.title === 'string' && seo.title.trim()
+      ? seo.title.trim()
+      : portal.page.title
+
+  const description =
+    typeof seo.description === 'string' && seo.description.trim()
+      ? seo.description.trim()
+      : undefined
 
   return {
     title,
-    description:
-      'Investor Relations Nuzultrip — peluang investasi untuk mendukung pengembangan digital, penguatan operasional, dan pertumbuhan bisnis.',
+    description,
     robots: {
       index: true,
       follow: true,
     },
     openGraph: {
       title,
-      description:
-        'Peluang investasi dan informasi hubungan investor Nuzultrip.',
+      ...(description ? { description } : {}),
       type: 'website',
     },
   }
@@ -42,28 +63,18 @@ export default async function Home() {
         id="main"
         className="mx-auto flex min-h-dvh max-w-3xl flex-col justify-center px-6 py-16"
       >
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">
-          Investor Relations
+        <p className="text-primary text-xs font-semibold tracking-[0.16em] uppercase">
+          Investor Portal
         </p>
 
-        <h1 className="font-display mt-3 text-4xl font-semibold text-fg">
-          Nuzultrip Investor Relations
+        <h1 className="font-display text-fg mt-3 text-4xl font-semibold">
+          Portal belum dipublikasikan
         </h1>
 
-        <p className="mt-4 max-w-2xl text-lg leading-8 text-fg-muted">
-          Portal publik Investor Relations Nuzultrip sedang
-          dipersiapkan. Informasi investasi akan tersedia setelah
-          halaman dipublikasikan oleh Admin.
+        <p className="text-fg-muted mt-4 max-w-2xl text-lg leading-8">
+          Halaman publik belum tersedia. Konten akan ditampilkan setelah
+          dipublikasikan melalui dashboard admin.
         </p>
-
-        <div className="mt-8">
-          <a
-            href="/daftar-investor"
-            className="inline-flex min-h-11 items-center justify-center rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground"
-          >
-            Ajukan Minat Investasi
-          </a>
-        </div>
       </main>
     )
   }

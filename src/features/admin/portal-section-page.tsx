@@ -1,4 +1,4 @@
-﻿import Link from 'next/link'
+import Link from 'next/link'
 import type { Permission } from '@/core/rbac/permissions'
 
 export function PortalSectionPage({
@@ -39,7 +39,7 @@ export function PortalSectionPage({
     <div className="space-y-6">
       <div>
         <p className="text-caption text-fg-subtle font-medium tracking-[0.14em] uppercase">
-          Portal & Content
+          Portal & Konten
         </p>
 
         <h1 className="font-display text-heading-lg text-fg mt-1">{title}</h1>

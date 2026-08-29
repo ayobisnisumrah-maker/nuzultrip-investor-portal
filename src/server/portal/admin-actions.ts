@@ -188,6 +188,100 @@ export const setPortalSectionVisibility = defineAction({
   },
 })
 
+export const deletePortalSection = defineAction({
+  access: { permission: 'portal.update' },
+  input: z.object({ sectionId: z.uuid() }),
+  audit: { action: 'portal.section.deleted', entityType: 'portal_section' },
+
+  handler: async ({ principal, input, supabase, audit }) => {
+    if (principal.kind !== 'admin') {
+      throw new ForbiddenError('Admin principal required.')
+    }
+
+    const { data: section, error: sectionError } = await supabase
+      .from('portal_sections')
+      .select(
+        'id, page_id, section_kind, position, status, is_visible, current_version_id, published_version_id',
+      )
+      .eq('id', input.sectionId)
+      .maybeSingle()
+
+    if (sectionError || !section) {
+      throw new NotFoundError('Bagian portal')
+    }
+
+    /*
+     * Bagian yang sudah pernah diterbitkan tidak boleh dihapus
+     * secara fisik karena masih menjadi referensi versi terbit.
+     *
+     * Untuk section seperti ini gunakan "Sembunyikan".
+     */
+    if (section.published_version_id) {
+      throw new ForbiddenError(
+        'Bagian yang sudah pernah diterbitkan tidak dapat dihapus permanen. Sembunyikan bagian tersebut jika tidak ingin menampilkannya.',
+      )
+    }
+
+    /*
+     * Hanya section yang masih berada dalam siklus draf
+     * yang boleh dihapus permanen.
+     */
+    if (section.status !== 'draft') {
+      throw new ForbiddenError(
+        'Hanya bagian berstatus Draf yang dapat dihapus permanen.',
+      )
+    }
+
+    const { data: page, error: pageError } = await supabase
+      .from('portal_pages')
+      .select('id, title, status')
+      .eq('id', section.page_id)
+      .maybeSingle()
+
+    if (pageError || !page) {
+      throw new NotFoundError('Halaman portal')
+    }
+
+    /*
+     * Section yang tidak pernah diterbitkan aman untuk dihapus.
+     * portal_section_versions memiliki ON DELETE CASCADE
+     * terhadap section_id.
+     */
+    const { error: deleteError } = await supabase
+      .from('portal_sections')
+      .delete()
+      .eq('id', section.id)
+
+    if (deleteError) {
+      throw new Error(
+        `Gagal menghapus bagian portal: ${deleteError.message}`,
+      )
+    }
+
+    audit({
+      entityId: section.id,
+      summary: `Bagian ${section.section_kind} pada halaman ${page.title} dihapus permanen.`,
+      changes: {
+        section_kind: {
+          before: section.section_kind,
+          after: 'deleted',
+        },
+        position: {
+          before: section.position,
+          after: null,
+        },
+      },
+    })
+
+    return {
+      deleted: true,
+      sectionId: section.id,
+      pageId: page.id,
+      pageTitle: page.title,
+    }
+  },
+})
+
 async function transitionPortalPage(
   pageId: string,
   target: 'review' | 'approved' | 'published' | 'archived' | 'draft',
@@ -261,6 +355,7 @@ export const returnPortalPageToDraft = definePortalTransitionAction(
   (title, from) => `Halaman portal ${title} dikembalikan dari ${from} menjadi draf.`,
 )
 
+
 export const deletePortalPage = defineAction({
   access: { permission: 'portal.update' },
   input: pageTransitionSchema,
@@ -280,10 +375,21 @@ export const deletePortalPage = defineAction({
       throw new NotFoundError('Halaman portal')
     }
 
-    if (page.is_system) {
-      throw new ForbiddenError('Halaman sistem tidak dapat dihapus.')
+    /*
+     * Halaman sistem hanya boleh dihapus oleh Super Admin.
+     * Halaman non-sistem dapat dihapus oleh administrator
+     * yang memiliki permission portal.update.
+     */
+    if (page.is_system && principal.roleKey !== 'super_admin') {
+      throw new ForbiddenError(
+        'Hanya Super Admin yang dapat menghapus halaman sistem.',
+      )
     }
 
+    /*
+     * Penghapusan permanen tetap harus melalui status Diarsipkan.
+     * Halaman Terbit tidak boleh langsung dihapus.
+     */
     if (page.status !== 'archived') {
       throw new ForbiddenError(
         'Hanya halaman yang sudah diarsipkan yang dapat dihapus permanen.',
@@ -296,7 +402,9 @@ export const deletePortalPage = defineAction({
       .eq('id', input.pageId)
 
     if (deleteError) {
-      throw new Error(`Gagal menghapus halaman portal: ${deleteError.message}`)
+      throw new Error(
+        `Gagal menghapus halaman portal: ${deleteError.message}`,
+      )
     }
 
     audit({
