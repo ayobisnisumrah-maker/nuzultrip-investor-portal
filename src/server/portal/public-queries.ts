@@ -75,14 +75,24 @@ export async function getPublishedHomePage() {
   }
 }
 
-export async function getPublishedNavigation() {
+export type PublicPortalNavigationItem = {
+  id: string
+  location: 'header' | 'footer' | 'legal' | 'social'
+  label: string
+  href: string
+  target: string
+  position: number
+  parent_id: string | null
+}
+
+export async function getPublishedNavigation(): Promise<PublicPortalNavigationItem[]> {
   const supabase = await getServerSupabase()
 
   const { data, error } = await supabase
     .from('portal_navigation')
     .select('id, location, label, href, target, position, parent_id')
-    .eq('location', 'header')
     .eq('is_visible', true)
+    .order('location', { ascending: true })
     .order('position', { ascending: true })
 
   if (error) {

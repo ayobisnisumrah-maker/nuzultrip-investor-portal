@@ -4,7 +4,7 @@ import type { NextConfig } from 'next'
  * Static security headers.
  *
  * Content-Security-Policy is deliberately NOT set here: it needs a per-request
- * nonce, so it is emitted from `src/middleware.ts`. Everything below is
+ * nonce, so it is emitted from `src/proxy.ts`. Everything below is
  * request-independent and therefore belongs in the static header config.
  *
  * See docs/SECURITY.md §7.
@@ -28,6 +28,7 @@ const securityHeaders = [
 const supabaseHost = (() => {
   const url = process.env['NEXT_PUBLIC_SUPABASE_URL']
   if (!url) return null
+
   try {
     return new URL(url).hostname
   } catch {
@@ -49,7 +50,13 @@ const nextConfig: NextConfig = {
   images: {
     // `domains` is removed in Next 16 — remotePatterns only.
     remotePatterns: supabaseHost
-      ? [{ protocol: 'https', hostname: supabaseHost, pathname: '/storage/v1/object/public/**' }]
+      ? [
+          {
+            protocol: 'https',
+            hostname: supabaseHost,
+            pathname: '/storage/v1/object/public/**',
+          },
+        ]
       : [],
     formats: ['image/avif', 'image/webp'],
   },
@@ -68,5 +75,3 @@ const nextConfig: NextConfig = {
 }
 
 export default nextConfig
-
-import('@opennextjs/cloudflare').then((m) => m.initOpenNextCloudflareForDev())

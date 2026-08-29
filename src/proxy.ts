@@ -1,6 +1,7 @@
-﻿import { NextResponse, type NextRequest } from 'next/server'
-import { createServerClient } from '@Supabase/ssr'
+import { NextResponse, type NextRequest } from 'next/server'
+import { createServerClient } from '@supabase/ssr'
 import { getClientEnv, isDevelopment } from '@/lib/env'
+
 
 const SIGN_IN_PATH = '/masuk'
 
@@ -21,7 +22,11 @@ function createNonce(): string {
   return btoa(binary)
 }
 
-function buildCsp(nonce: string, supabaseOrigin: string, isDev: boolean): string {
+function buildCsp(
+  nonce: string,
+  supabaseOrigin: string,
+  isDev: boolean,
+): string {
   const supabaseWs = supabaseOrigin.replace(/^http/, 'ws')
 
   return [
@@ -68,6 +73,7 @@ export async function proxy(request: NextRequest) {
       getAll() {
         return request.cookies.getAll()
       },
+
       setAll(cookiesToSet, headers) {
         for (const { name, value } of cookiesToSet) {
           request.cookies.set(name, value)
@@ -97,7 +103,9 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   const protectedRoute = PROTECTED_PREFIXES.find(
-    (entry) => pathname === entry.prefix || pathname.startsWith(`${entry.prefix}/`),
+    (entry) =>
+      pathname === entry.prefix ||
+      pathname.startsWith(`${entry.prefix}/`),
   )
 
   if (protectedRoute && !userId) {
@@ -146,5 +154,3 @@ export const config = {
     },
   ],
 }
-
-

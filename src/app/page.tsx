@@ -1,8 +1,71 @@
+import type { Metadata } from 'next'
+
 import { PublicPortal } from '@/features/portal/public-portal'
-import { getPublishedHomePage, getPublishedNavigation } from '@/server/portal/public-queries'
+import {
+  getPublishedHomePage,
+  getPublishedNavigation,
+} from '@/server/portal/public-queries'
+
+export async function generateMetadata(): Promise<Metadata> {
+  const portal = await getPublishedHomePage()
+
+  if (!portal) {
+    return {
+      title: 'Investor Portal',
+      robots: {
+        index: false,
+        follow: false,
+      },
+    }
+  }
+
+  const seo =
+    portal.page.seo &&
+    typeof portal.page.seo === 'object' &&
+    !Array.isArray(portal.page.seo)
+      ? (portal.page.seo as Record<string, unknown>)
+      : {}
+
+  const title =
+    typeof seo.title === 'string' && seo.title.trim()
+      ? seo.title.trim()
+      : portal.page.title
+
+  const description =
+    typeof seo.description === 'string' && seo.description.trim()
+      ? seo.description.trim()
+      : undefined
+
+  return {
+    title,
+    description,
+    robots: {
+      index: true,
+      follow: true,
+    },
+    openGraph: {
+      title,
+      ...(description ? { description } : {}),
+      type: 'website',
+    },
+  }
+}
 
 export default async function Home() {
-  const [portal, navigation] = await Promise.all([getPublishedHomePage(), getPublishedNavigation()])
+  const [portal, navigation] = await Promise.all([
+    getPublishedHomePage(),
+    getPublishedNavigation(),
+  ])
+
+  console.log('[PUBLIC PORTAL]', {
+    hasPortal: Boolean(portal),
+    page: portal?.page?.title,
+    sections: portal?.sections?.map((section) => ({
+      kind: section.section_kind,
+      position: section.position,
+      title: section.content?.title,
+    })),
+  })
 
   if (!portal) {
     return (
@@ -10,13 +73,17 @@ export default async function Home() {
         id="main"
         className="mx-auto flex min-h-dvh max-w-3xl flex-col justify-center px-6 py-16"
       >
-        <p className="text-caption text-fg-subtle font-medium tracking-[0.16em] uppercase">
-          Investor Relations
+        <p className="text-primary text-xs font-semibold tracking-[0.16em] uppercase">
+          Investor Portal
         </p>
-        <h1 className="font-display text-display-lg text-fg mt-3">Nuzultrip Investor Portal</h1>
-        <p className="text-body-lg text-fg-muted mt-4 max-w-2xl leading-8">
-          Portal publik belum dipublikasikan. Silakan kembali setelah konten Investor Relations
-          tersedia.
+
+        <h1 className="font-display text-fg mt-3 text-4xl font-semibold">
+          Portal belum dipublikasikan
+        </h1>
+
+        <p className="text-fg-muted mt-4 max-w-2xl text-lg leading-8">
+          Halaman publik belum tersedia. Konten akan ditampilkan setelah
+          dipublikasikan melalui dashboard admin.
         </p>
       </main>
     )
@@ -24,7 +91,10 @@ export default async function Home() {
 
   return (
     <PublicPortal
-      page={{ title: portal.page.title, seo: portal.page.seo }}
+      page={{
+        title: portal.page.title,
+        seo: portal.page.seo,
+      }}
       sections={portal.sections}
       navigation={navigation}
     />

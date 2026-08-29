@@ -20,11 +20,8 @@ next-env.d.ts
 # Secrets — NEVER commit these
 # ---------------------------------------------------------------------------
 .env
-.env.local
-.env.*.local
-.env.development
-.env.staging
-.env.production
+.env.*
+!.env.example
 *.pem
 *.key
 *.p12
@@ -32,15 +29,13 @@ next-env.d.ts
 service-account*.json
 secrets/
 
-# Allowed: the documented template
-!.env.example
-
 # ---------------------------------------------------------------------------
 # Supabase local development
 # ---------------------------------------------------------------------------
 supabase/.branches/
 supabase/.temp/
 supabase/logs/
+supabase/backups/
 .supabase/
 
 # ---------------------------------------------------------------------------
@@ -76,29 +71,25 @@ yarn-error.log*
 .turbo/
 
 # ---------------------------------------------------------------------------
-# 3D asset pipeline — source models are large; only optimised output is tracked
+# 3D asset pipeline
 # ---------------------------------------------------------------------------
 assets/source/
 *.blend
 *.blend1
 
-# Local screenshot review output
+# ---------------------------------------------------------------------------
+# Local development artifacts
+# ---------------------------------------------------------------------------
 .screenshots/
-
-# Local secrets and backups
-.env.local.backup
-.env.*.backup
 *.bak
 *.backup
-.next/
-node_modules/
+*.backup-*
+.backup-*/
 
-supabase/backups/
-
-# OpenNext
+# ---------------------------------------------------------------------------
+# OpenNext / Cloudflare local files
+# ---------------------------------------------------------------------------
 .open-next
-
-# wrangler files
 .wrangler
 .dev.vars*
 !.dev.vars.example
