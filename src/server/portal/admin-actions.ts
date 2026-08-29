@@ -260,3 +260,60 @@ export const returnPortalPageToDraft = definePortalTransitionAction(
   'portal.page.returned_to_draft',
   (title, from) => `Halaman portal ${title} dikembalikan dari ${from} menjadi draf.`,
 )
+
+export const deletePortalPage = defineAction({
+  access: { permission: 'portal.update' },
+  input: pageTransitionSchema,
+  audit: { action: 'portal.page.deleted', entityType: 'portal_page' },
+  handler: async ({ principal, input, supabase, audit }) => {
+    if (principal.kind !== 'admin') {
+      throw new ForbiddenError('Admin principal required.')
+    }
+
+    const { data: page, error: pageError } = await supabase
+      .from('portal_pages')
+      .select('id, title, status, is_system')
+      .eq('id', input.pageId)
+      .maybeSingle()
+
+    if (pageError || !page) {
+      throw new NotFoundError('Halaman portal')
+    }
+
+    if (page.is_system) {
+      throw new ForbiddenError('Halaman sistem tidak dapat dihapus.')
+    }
+
+    if (page.status !== 'archived') {
+      throw new ForbiddenError(
+        'Hanya halaman yang sudah diarsipkan yang dapat dihapus permanen.',
+      )
+    }
+
+    const { error: deleteError } = await supabase
+      .from('portal_pages')
+      .delete()
+      .eq('id', input.pageId)
+
+    if (deleteError) {
+      throw new Error(`Gagal menghapus halaman portal: ${deleteError.message}`)
+    }
+
+    audit({
+      entityId: page.id,
+      summary: `Halaman portal ${page.title} dihapus permanen.`,
+      changes: {
+        status: {
+          before: page.status,
+          after: 'deleted',
+        },
+      },
+    })
+
+    return {
+      deleted: true,
+      pageId: page.id,
+      pageTitle: page.title,
+    }
+  },
+})

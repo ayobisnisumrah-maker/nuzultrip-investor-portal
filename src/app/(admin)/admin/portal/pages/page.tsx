@@ -6,15 +6,15 @@ import { listPortalPages } from '@/server/portal/queries'
 function statusLabel(status: string) {
   switch (status) {
     case 'draft':
-      return 'Draft'
+      return 'Draf'
     case 'review':
-      return 'Review'
+      return 'Ditinjau'
     case 'approved':
-      return 'Approved'
+      return 'Disetujui'
     case 'published':
-      return 'Published'
+      return 'Terbit'
     case 'archived':
-      return 'Archived'
+      return 'Diarsipkan'
     default:
       return status
   }
@@ -25,9 +25,9 @@ function pageKindLabel(kind: string) {
     case 'home':
       return 'Beranda'
     case 'standard':
-      return 'Standard'
+      return 'Halaman Standar'
     case 'legal':
-      return 'Legal'
+      return 'Halaman Legal'
     default:
       return kind
   }

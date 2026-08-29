@@ -102,3 +102,14 @@ supabase/backups/
 .wrangler
 .dev.vars*
 !.dev.vars.example
+
+.env.local.dev
+
+# Local environment
+.env
+.env.*
+!.env.example
+
+# Local backups
+*.bak
+*.backup
