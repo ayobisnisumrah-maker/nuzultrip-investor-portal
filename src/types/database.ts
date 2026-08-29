@@ -444,6 +444,183 @@ export type Database = {
           },
         ]
       }
+      contact_messages: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          full_name: string | null
+          id: string
+          message: string | null
+          phone: string | null
+          status: string | null
+          subject: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          message?: string | null
+          phone?: string | null
+          status?: string | null
+          subject?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          message?: string | null
+          phone?: string | null
+          status?: string | null
+          subject?: string | null
+        }
+        Relationships: []
+      }
+      data_room_access_logs: {
+        Row: {
+          action: string
+          created_at: string
+          document_id: string | null
+          id: string
+          investor_id: string | null
+          ip_address: unknown
+          token_id: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          document_id?: string | null
+          id?: string
+          investor_id?: string | null
+          ip_address?: unknown
+          token_id?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          document_id?: string | null
+          id?: string
+          investor_id?: string | null
+          ip_address?: unknown
+          token_id?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "data_room_access_logs_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "data_room_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "data_room_access_logs_investor_id_fkey"
+            columns: ["investor_id"]
+            isOneToOne: false
+            referencedRelation: "legacy_investors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "data_room_access_logs_token_id_fkey"
+            columns: ["token_id"]
+            isOneToOne: false
+            referencedRelation: "investor_tokens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      data_room_categories: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string | null
+        }
+        Relationships: []
+      }
+      data_room_documents: {
+        Row: {
+          category_id: string | null
+          content: Json
+          cover_image_url: string | null
+          created_at: string | null
+          description: string | null
+          embed_url: string | null
+          file_name: string | null
+          file_size: number | null
+          file_url: string | null
+          id: string
+          is_active: boolean | null
+          mime_type: string | null
+          pages: number
+          sort_order: number
+          title: string | null
+          updated_at: string
+          visibility: string | null
+        }
+        Insert: {
+          category_id?: string | null
+          content?: Json
+          cover_image_url?: string | null
+          created_at?: string | null
+          description?: string | null
+          embed_url?: string | null
+          file_name?: string | null
+          file_size?: number | null
+          file_url?: string | null
+          id?: string
+          is_active?: boolean | null
+          mime_type?: string | null
+          pages?: number
+          sort_order?: number
+          title?: string | null
+          updated_at?: string
+          visibility?: string | null
+        }
+        Update: {
+          category_id?: string | null
+          content?: Json
+          cover_image_url?: string | null
+          created_at?: string | null
+          description?: string | null
+          embed_url?: string | null
+          file_name?: string | null
+          file_size?: number | null
+          file_url?: string | null
+          id?: string
+          is_active?: boolean | null
+          mime_type?: string | null
+          pages?: number
+          sort_order?: number
+          title?: string | null
+          updated_at?: string
+          visibility?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "data_room_documents_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "data_room_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       document_access_grants: {
         Row: {
           document_id: string
@@ -947,6 +1124,72 @@ export type Database = {
           },
         ]
       }
+      investor_requests: {
+        Row: {
+          access_link: string | null
+          amount: string
+          approval_note: string | null
+          approved_at: string | null
+          approved_by: string | null
+          company: string
+          country: string
+          email: string
+          id: string
+          name: string
+          nda_signed: boolean
+          phone: string
+          rejected_at: string | null
+          rejection_reason: string | null
+          status: string
+          submitted_at: string
+          token: string | null
+          token_expires_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          access_link?: string | null
+          amount: string
+          approval_note?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          company: string
+          country: string
+          email: string
+          id: string
+          name: string
+          nda_signed?: boolean
+          phone: string
+          rejected_at?: string | null
+          rejection_reason?: string | null
+          status?: string
+          submitted_at?: string
+          token?: string | null
+          token_expires_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          access_link?: string | null
+          amount?: string
+          approval_note?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          company?: string
+          country?: string
+          email?: string
+          id?: string
+          name?: string
+          nda_signed?: boolean
+          phone?: string
+          rejected_at?: string | null
+          rejection_reason?: string | null
+          status?: string
+          submitted_at?: string
+          token?: string | null
+          token_expires_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       investor_status_history: {
         Row: {
           changed_by: string | null
@@ -990,10 +1233,54 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "investor_status_history_investor_id_fkey"
+            foreignKeyName: "investor_status_history_investor_id_fkey1"
             columns: ["investor_id"]
             isOneToOne: false
             referencedRelation: "investors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      investor_tokens: {
+        Row: {
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          investor_email: string | null
+          investor_id: string
+          investor_name: string | null
+          is_active: boolean | null
+          period: string | null
+          token: string
+        }
+        Insert: {
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          investor_email?: string | null
+          investor_id: string
+          investor_name?: string | null
+          is_active?: boolean | null
+          period?: string | null
+          token: string
+        }
+        Update: {
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          investor_email?: string | null
+          investor_id?: string
+          investor_name?: string | null
+          is_active?: boolean | null
+          period?: string | null
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "investor_tokens_investor_id_fkey"
+            columns: ["investor_id"]
+            isOneToOne: false
+            referencedRelation: "legacy_investors"
             referencedColumns: ["id"]
           },
         ]
@@ -1125,6 +1412,149 @@ export type Database = {
           },
         ]
       }
+      kv_store_b620c355: {
+        Row: {
+          key: string
+          value: Json
+        }
+        Insert: {
+          key: string
+          value: Json
+        }
+        Update: {
+          key?: string
+          value?: Json
+        }
+        Relationships: []
+      }
+      legacy_audit_logs: {
+        Row: {
+          action: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          ip_address: string | null
+          module: string | null
+          user_name: string | null
+        }
+        Insert: {
+          action?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          ip_address?: string | null
+          module?: string | null
+          user_name?: string | null
+        }
+        Update: {
+          action?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          ip_address?: string | null
+          module?: string | null
+          user_name?: string | null
+        }
+        Relationships: []
+      }
+      legacy_investor_status_history: {
+        Row: {
+          actor_id: string | null
+          actor_type: string
+          created_at: string
+          from_status: string | null
+          id: string
+          investor_id: string
+          note: string | null
+          reason: string | null
+          to_status: string
+        }
+        Insert: {
+          actor_id?: string | null
+          actor_type?: string
+          created_at?: string
+          from_status?: string | null
+          id?: string
+          investor_id: string
+          note?: string | null
+          reason?: string | null
+          to_status: string
+        }
+        Update: {
+          actor_id?: string | null
+          actor_type?: string
+          created_at?: string
+          from_status?: string | null
+          id?: string
+          investor_id?: string
+          note?: string | null
+          reason?: string | null
+          to_status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "investor_status_history_investor_id_fkey"
+            columns: ["investor_id"]
+            isOneToOne: false
+            referencedRelation: "legacy_investors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      legacy_investors: {
+        Row: {
+          city: string | null
+          company: string | null
+          country: string | null
+          created_at: string | null
+          email: string
+          full_name: string
+          id: string
+          investment_interest: string | null
+          notes: string | null
+          phone: string | null
+          rejection_reason: string | null
+          status: string | null
+          updated_at: string | null
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          city?: string | null
+          company?: string | null
+          country?: string | null
+          created_at?: string | null
+          email: string
+          full_name: string
+          id?: string
+          investment_interest?: string | null
+          notes?: string | null
+          phone?: string | null
+          rejection_reason?: string | null
+          status?: string | null
+          updated_at?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          city?: string | null
+          company?: string | null
+          country?: string | null
+          created_at?: string | null
+          email?: string
+          full_name?: string
+          id?: string
+          investment_interest?: string | null
+          notes?: string | null
+          phone?: string | null
+          rejection_reason?: string | null
+          status?: string | null
+          updated_at?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: []
+      }
       media_assets: {
         Row: {
           alt_text: string | null
@@ -1189,6 +1619,98 @@ export type Database = {
             columns: ["uploaded_by"]
             isOneToOne: false
             referencedRelation: "user_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meeting_bookings: {
+        Row: {
+          company: string
+          confirmation_code: string
+          date_label: string
+          email: string
+          id: string
+          message: string
+          name: string
+          phone: string
+          status: string
+          submitted_at: string
+          time_label: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          company: string
+          confirmation_code: string
+          date_label: string
+          email: string
+          id: string
+          message?: string
+          name: string
+          phone: string
+          status?: string
+          submitted_at?: string
+          time_label: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          company?: string
+          confirmation_code?: string
+          date_label?: string
+          email?: string
+          id?: string
+          message?: string
+          name?: string
+          phone?: string
+          status?: string
+          submitted_at?: string
+          time_label?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      meetings: {
+        Row: {
+          created_at: string | null
+          id: string
+          investor_id: string | null
+          location: string | null
+          meeting_date: string | null
+          meeting_link: string | null
+          meeting_type: string | null
+          notes: string | null
+          status: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          investor_id?: string | null
+          location?: string | null
+          meeting_date?: string | null
+          meeting_link?: string | null
+          meeting_type?: string | null
+          notes?: string | null
+          status?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          investor_id?: string | null
+          location?: string | null
+          meeting_date?: string | null
+          meeting_link?: string | null
+          meeting_type?: string | null
+          notes?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meetings_investor_id_fkey"
+            columns: ["investor_id"]
+            isOneToOne: false
+            referencedRelation: "legacy_investors"
             referencedColumns: ["id"]
           },
         ]
@@ -1860,6 +2382,42 @@ export type Database = {
           is_dangerous?: boolean
           key?: string
           module?: string
+        }
+        Relationships: []
+      }
+      portal_content: {
+        Row: {
+          content: Json
+          created_at: string | null
+          id: string
+          page: string
+          section: string
+          slug: string | null
+          status: string | null
+          title: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          content?: Json
+          created_at?: string | null
+          id?: string
+          page: string
+          section: string
+          slug?: string | null
+          status?: string | null
+          title?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          content?: Json
+          created_at?: string | null
+          id?: string
+          page?: string
+          section?: string
+          slug?: string | null
+          status?: string | null
+          title?: string | null
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -2585,6 +3143,24 @@ export type Database = {
         }
         Relationships: []
       }
+      settings: {
+        Row: {
+          key: string
+          updated_at: string | null
+          value: Json | null
+        }
+        Insert: {
+          key: string
+          updated_at?: string | null
+          value?: Json | null
+        }
+        Update: {
+          key?: string
+          updated_at?: string | null
+          value?: Json | null
+        }
+        Relationships: []
+      }
       site_settings: {
         Row: {
           description: string
@@ -2704,6 +3280,57 @@ export type Database = {
         }
         Relationships: []
       }
+      user_profiles: {
+        Row: {
+          created_at: string
+          full_name: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          status: Database["public"]["Enums"]["user_status"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          full_name?: string | null
+          id: string
+          role?: Database["public"]["Enums"]["app_role"]
+          status?: Database["public"]["Enums"]["user_status"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          status?: Database["public"]["Enums"]["user_status"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          is_active: boolean
+          role: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          is_active?: boolean
+          role: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          is_active?: boolean
+          role?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -2807,6 +3434,7 @@ export type Database = {
     Enums: {
       account_status: "active" | "disabled"
       account_type: "admin" | "investor"
+      app_role: "admin" | "ir"
       asset_visibility: "public" | "internal" | "restricted"
       broadcast_audience: "all_investors" | "by_status" | "selected"
       delivery_channel: "email"
@@ -2912,6 +3540,7 @@ export type Database = {
         | "logo_wall"
         | "faq"
       thread_kind: "investor_admin" | "broadcast" | "portal_inquiry"
+      user_status: "active" | "inactive"
       visibility: "public" | "investors" | "restricted" | "internal"
     }
     CompositeTypes: {
@@ -3045,6 +3674,7 @@ export const Constants = {
     Enums: {
       account_status: ["active", "disabled"],
       account_type: ["admin", "investor"],
+      app_role: ["admin", "ir"],
       asset_visibility: ["public", "internal", "restricted"],
       broadcast_audience: ["all_investors", "by_status", "selected"],
       delivery_channel: ["email"],
@@ -3161,6 +3791,7 @@ export const Constants = {
         "faq",
       ],
       thread_kind: ["investor_admin", "broadcast", "portal_inquiry"],
+      user_status: ["active", "inactive"],
       visibility: ["public", "investors", "restricted", "internal"],
     },
   },
