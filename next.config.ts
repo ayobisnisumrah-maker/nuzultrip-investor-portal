@@ -62,7 +62,7 @@ const nextConfig: NextConfig = {
   },
 
   experimental: {
-    // Keeps large icon/3D barrel imports from bloating client bundles.
+    // Avoids shipping the full Lucide icon barrel when only individual icons are used.
     optimizePackageImports: ['lucide-react'],
   },
 
