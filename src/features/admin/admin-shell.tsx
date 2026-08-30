@@ -1,6 +1,5 @@
 ﻿'use client'
 
-import { motion } from 'framer-motion'
 import {
   ArrowLeftRight,
   BadgePercent,
@@ -169,15 +168,7 @@ export function AdminShell({
         </div>
       }
     >
-      <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{
-          duration: 0.28,
-          ease: 'easeOut',
-        }}
-        className="mx-auto w-full max-w-[1600px]"
-      >
+      <div className="animate-page-enter mx-auto w-full max-w-[1600px]">
         <div className="border-border bg-surface mb-6 overflow-hidden rounded-xl border">
           <div className="relative px-5 py-5 sm:px-6 sm:py-6">
             <div
@@ -212,7 +203,7 @@ export function AdminShell({
         </div>
 
         {children}
-      </motion.div>
+      </div>
     </AppShell>
   )
 }
