@@ -63,7 +63,7 @@ const nextConfig: NextConfig = {
 
   experimental: {
     // Keeps large icon/3D barrel imports from bloating client bundles.
-    optimizePackageImports: ['lucide-react', '@react-three/drei'],
+    optimizePackageImports: ['lucide-react'],
   },
 
   // Next's config type requires this to be async even though it resolves
