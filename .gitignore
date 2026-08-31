@@ -104,3 +104,8 @@ assets/source/
 # Local backups
 *.bak
 *.backup
+
+# Cloudflare / OpenNext build artifacts
+.open-next
+.cf-dry-run
+.cf-analysis
