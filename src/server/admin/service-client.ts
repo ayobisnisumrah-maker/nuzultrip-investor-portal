@@ -1,7 +1,8 @@
 import 'server-only'
 
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
-import { getClientEnv, getServerEnv } from '@/lib/env'
+import { getClientEnv } from '@/lib/env'
+import { getServerEnv } from '@/lib/server-env'
 import type { Database } from '@/types/database'
 
 /**

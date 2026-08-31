@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import Link from 'next/link'
 
 import type { PublicPortalSection } from '@/server/portal/public-queries'
@@ -565,9 +566,11 @@ function LogoWallSection({ section }: { section: PublicPortalSection }) {
             const contentNode = (
               <div className="border-border bg-surface flex min-h-28 items-center justify-center rounded-2xl border p-5 text-center">
                 {text(logo.image_url) || text(logo.image) ? (
-                  <img
+                  <Image
                     src={text(logo.image_url) ?? text(logo.image) ?? ''}
                     alt={label}
+                    width={160}
+                    height={56}
                     className="max-h-14 max-w-full object-contain"
                   />
                 ) : (

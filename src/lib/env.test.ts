@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { getClientEnv, getServerEnv, isDevelopment, isProduction } from './env'
+import { getClientEnv, isDevelopment, isProduction } from './env'
+import { getServerEnv } from './server-env'
 
 describe('clientEnv', () => {
   it('parses the public configuration provided by the test setup', () => {

@@ -1,6 +1,6 @@
 import 'server-only'
 
-import { getServerEnv } from '@/lib/env'
+import { getServerEnv } from '@/lib/server-env'
 import { RATE_LIMITS, rateLimitBucket, type RateLimitScope } from '@/core/rate-limit/policy'
 import { RateLimitError } from '@/core/errors'
 import { getServiceRoleClient } from './service-client'

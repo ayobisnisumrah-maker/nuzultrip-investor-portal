@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation'
 import { z } from 'zod'
 
 import { rateLimitBucket } from '@/core/rate-limit/policy'
-import { getServerEnv } from '@/lib/env'
+import { getServerEnv } from '@/lib/server-env'
 import { enforceRateLimit } from '@/server/admin/rate-limit'
 import { getServerSupabase } from '@/server/supabase/server'
 

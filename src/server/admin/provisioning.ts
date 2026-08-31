@@ -1,7 +1,8 @@
 import 'server-only'
 
 import { createHash } from 'node:crypto'
-import { getClientEnv, getServerEnv } from '@/lib/env'
+import { getClientEnv } from '@/lib/env'
+import { getServerEnv } from '@/lib/server-env'
 import { ConflictError, InternalError } from '@/core/errors'
 import type { InvestorApplicationInput, CreateAdminInput } from '@/core/auth/schemas'
 import { getServiceRoleClient } from './service-client'

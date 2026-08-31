@@ -472,15 +472,11 @@ function VisualEditor({
     )
   }
 
-  function ArrayHeader({
-    title,
-    description,
-    arrayKey,
-  }: {
-    title: string
-    description: string
-    arrayKey: string
-  }) {
+  function renderArrayHeader(
+    title: string,
+    description: string,
+    arrayKey: string,
+  ) {
     return (
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
@@ -499,20 +495,16 @@ function VisualEditor({
     )
   }
 
-  function ObjectArrayEditor({
-    arrayKey,
-    items,
-    fields,
-  }: {
-    arrayKey: string
-    items: ContentRecord[]
+  function renderObjectArrayEditor(
+    arrayKey: string,
+    items: ContentRecord[],
     fields: Array<{
       key: string
       label: string
       multiline?: boolean
       placeholder?: string
-    }>
-  }) {
+    }>,
+  ) {
     return (
       <div className="space-y-4">
         {items.length === 0 ? (
@@ -746,16 +738,12 @@ function VisualEditor({
         />
 
         <div className="border-border space-y-4 rounded-xl border p-4">
-          <ArrayHeader
-            title="Penggunaan Dana"
-            description="Tambahkan alokasi penggunaan dana yang akan ditampilkan di Portal."
-            arrayKey="use_of_funds"
-          />
+          {renderArrayHeader('Penggunaan Dana', 'Tambahkan alokasi penggunaan dana yang akan ditampilkan di Portal.', 'use_of_funds')}
 
-          <ObjectArrayEditor
-            arrayKey="use_of_funds"
-            items={useOfFunds}
-            fields={[
+          {renderObjectArrayEditor(
+            'use_of_funds',
+            useOfFunds,
+            [
               {
                 key: 'title',
                 label: 'Judul',
@@ -765,8 +753,8 @@ function VisualEditor({
                 label: 'Deskripsi',
                 multiline: true,
               },
-            ]}
-          />
+            ],
+          )}
         </div>
       </div>
     )
@@ -798,16 +786,12 @@ function VisualEditor({
         />
 
         <div className="border-border space-y-4 rounded-xl border p-4">
-          <ArrayHeader
-            title="Pilar Strategis"
-            description="Kelola pilar strategis yang ditampilkan di Portal."
-            arrayKey="pillars"
-          />
+          {renderArrayHeader('Pilar Strategis', 'Kelola pilar strategis yang ditampilkan di Portal.', 'pillars')}
 
-          <ObjectArrayEditor
-            arrayKey="pillars"
-            items={pillars}
-            fields={[
+          {renderObjectArrayEditor(
+            'pillars',
+            pillars,
+            [
               {
                 key: 'title',
                 label: 'Judul Pilar',
@@ -817,8 +801,8 @@ function VisualEditor({
                 label: 'Deskripsi',
                 multiline: true,
               },
-            ]}
-          />
+            ],
+          )}
         </div>
       </div>
     )
@@ -826,13 +810,6 @@ function VisualEditor({
 
   if (kind === 'business_overview' || kind === 'ecosystem' || kind === 'investor_updates') {
     const items = Array.isArray(content.items) ? content.items.filter(isRecord) : []
-
-    const title =
-      kind === 'business_overview'
-        ? 'Item Bisnis'
-        : kind === 'ecosystem'
-          ? 'Item Ekosistem'
-          : 'Pembaruan Investor'
 
     return (
       <div className="space-y-5">
@@ -857,16 +834,12 @@ function VisualEditor({
         />
 
         <div className="border-border space-y-4 rounded-xl border p-4">
-          <ArrayHeader
-            title={title}
-            description="Tambahkan dan kelola item yang ditampilkan kepada pengunjung Portal."
-            arrayKey="items"
-          />
+          {renderArrayHeader('title', 'Tambahkan dan kelola item yang ditampilkan kepada pengunjung Portal.', 'items')}
 
-          <ObjectArrayEditor
-            arrayKey="items"
-            items={items}
-            fields={[
+          {renderObjectArrayEditor(
+            'items',
+            items,
+            [
               {
                 key: 'title',
                 label: 'Judul',
@@ -876,8 +849,8 @@ function VisualEditor({
                 label: 'Deskripsi',
                 multiline: true,
               },
-            ]}
-          />
+            ],
+          )}
         </div>
       </div>
     )
@@ -909,16 +882,12 @@ function VisualEditor({
         />
 
         <div className="border-border space-y-4 rounded-xl border p-4">
-          <ArrayHeader
-            title="Linimasa Pertumbuhan"
-            description="Kelola perjalanan pertumbuhan perusahaan berdasarkan periode."
-            arrayKey="milestones"
-          />
+          {renderArrayHeader('Linimasa Pertumbuhan', 'Kelola perjalanan pertumbuhan perusahaan berdasarkan periode.', 'milestones')}
 
-          <ObjectArrayEditor
-            arrayKey="milestones"
-            items={milestones}
-            fields={[
+          {renderObjectArrayEditor(
+            'milestones',
+            milestones,
+            [
               {
                 key: 'year',
                 label: 'Tahun / Periode',
@@ -933,8 +902,8 @@ function VisualEditor({
                 label: 'Deskripsi',
                 multiline: true,
               },
-            ]}
-          />
+            ],
+          )}
         </div>
       </div>
     )
@@ -959,16 +928,12 @@ function VisualEditor({
         />
 
         <div className="border-border space-y-4 rounded-xl border p-4">
-          <ArrayHeader
-            title="Tonggak Pencapaian"
-            description="Kelola pencapaian penting perusahaan."
-            arrayKey="items"
-          />
+          {renderArrayHeader('Tonggak Pencapaian', 'Kelola pencapaian penting perusahaan.', 'items')}
 
-          <ObjectArrayEditor
-            arrayKey="items"
-            items={items}
-            fields={[
+          {renderObjectArrayEditor(
+            'items',
+            items,
+            [
               {
                 key: 'year',
                 label: 'Tahun / Periode',
@@ -982,8 +947,8 @@ function VisualEditor({
                 label: 'Deskripsi',
                 multiline: true,
               },
-            ]}
-          />
+            ],
+          )}
         </div>
       </div>
     )
@@ -1015,16 +980,12 @@ function VisualEditor({
         />
 
         <div className="border-border space-y-4 rounded-xl border p-4">
-          <ArrayHeader
-            title="Metrik"
-            description="Kelola angka, KPI, atau indikator utama yang ditampilkan di Portal."
-            arrayKey="metrics"
-          />
+          {renderArrayHeader('Metrik', 'Kelola angka, KPI, atau indikator utama yang ditampilkan di Portal.', 'metrics')}
 
-          <ObjectArrayEditor
-            arrayKey="metrics"
-            items={metrics}
-            fields={[
+          {renderObjectArrayEditor(
+            'metrics',
+            metrics,
+            [
               {
                 key: 'label',
                 label: 'Label',
@@ -1038,8 +999,8 @@ function VisualEditor({
                 label: 'Keterangan',
                 multiline: true,
               },
-            ]}
-          />
+            ],
+          )}
         </div>
       </div>
     )
@@ -1071,16 +1032,12 @@ function VisualEditor({
         />
 
         <div className="border-border space-y-4 rounded-xl border p-4">
-          <ArrayHeader
-            title="Dokumen Publik"
-            description="Kelola dokumen yang dapat dilihat oleh pengunjung Portal."
-            arrayKey="items"
-          />
+          {renderArrayHeader('Dokumen Publik', 'Kelola dokumen yang dapat dilihat oleh pengunjung Portal.', 'items')}
 
-          <ObjectArrayEditor
-            arrayKey="items"
-            items={items}
-            fields={[
+          {renderObjectArrayEditor(
+            'items',
+            items,
+            [
               {
                 key: 'title',
                 label: 'Nama Dokumen',
@@ -1095,8 +1052,8 @@ function VisualEditor({
                 label: 'Tautan Dokumen',
                 placeholder: 'https://...',
               },
-            ]}
-          />
+            ],
+          )}
         </div>
       </div>
     )
@@ -1121,16 +1078,12 @@ function VisualEditor({
         />
 
         <div className="border-border space-y-4 rounded-xl border p-4">
-          <ArrayHeader
-            title="Logo & Jaringan"
-            description="Kelola logo mitra, klien, atau pihak terkait."
-            arrayKey="logos"
-          />
+          {renderArrayHeader('Logo & Jaringan', 'Kelola logo mitra, klien, atau pihak terkait.', 'logos')}
 
-          <ObjectArrayEditor
-            arrayKey="logos"
-            items={logos}
-            fields={[
+          {renderObjectArrayEditor(
+            'logos',
+            logos,
+            [
               {
                 key: 'name',
                 label: 'Nama',
@@ -1145,8 +1098,8 @@ function VisualEditor({
                 label: 'Tautan',
                 placeholder: 'https://...',
               },
-            ]}
-          />
+            ],
+          )}
         </div>
       </div>
     )
@@ -1171,16 +1124,12 @@ function VisualEditor({
         />
 
         <div className="border-border space-y-4 rounded-xl border p-4">
-          <ArrayHeader
-            title="Pertanyaan Umum"
-            description="Kelola pertanyaan dan jawaban yang ditampilkan kepada pengunjung."
-            arrayKey="items"
-          />
+          {renderArrayHeader('Pertanyaan Umum', 'Kelola pertanyaan dan jawaban yang ditampilkan kepada pengunjung.', 'items')}
 
-          <ObjectArrayEditor
-            arrayKey="items"
-            items={items}
-            fields={[
+          {renderObjectArrayEditor(
+            'items',
+            items,
+            [
               {
                 key: 'question',
                 label: 'Pertanyaan',
@@ -1190,8 +1139,8 @@ function VisualEditor({
                 label: 'Jawaban',
                 multiline: true,
               },
-            ]}
-          />
+            ],
+          )}
         </div>
       </div>
     )
