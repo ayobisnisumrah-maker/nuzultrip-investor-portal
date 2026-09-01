@@ -65,14 +65,14 @@ const SECTION_LABELS: Record<SectionKind, string> = {
   hero_3d: 'Hero 3D',
   intro: 'Pengenalan',
   vision_mission: 'Visi & Misi',
-  business_overview: 'Ikhtisar Bisnis',
-  growth_story: 'Perjalanan Pertumbuhan',
+  business_overview: 'Tentang Nuzultrip',
+  growth_story: 'Perjalanan Pengembangan',
   ecosystem: 'Ekosistem Bisnis',
-  investment_info: 'Informasi Investasi',
-  milestones: 'Tonggak Pencapaian',
-  strategic_direction: 'Arah Strategis',
+  investment_info: 'Kebutuhan Modal',
+  milestones: 'Perkembangan & Pencapaian',
+  strategic_direction: 'Fokus Pengembangan',
   financial_highlights: 'Sorotan Keuangan',
-  investor_updates: 'Pembaruan Investor',
+  investor_updates: 'Pembaruan Perusahaan',
   documents: 'Dokumen Publik',
   contact_cta: 'Kontak & Ajakan',
   legal_notice: 'Pemberitahuan Hukum',
@@ -83,24 +83,30 @@ const SECTION_LABELS: Record<SectionKind, string> = {
 }
 
 const SECTION_DESCRIPTIONS: Record<SectionKind, string> = {
-  hero_3d: 'Judul utama dan positioning Nuzultrip Hubungan Investor.',
-  intro: 'Pengenalan singkat mengenai Nuzultrip kepada calon investor.',
+  hero_3d: 'Judul utama dan positioning Nuzultrip Equity Relations.',
+  intro: 'Pengenalan singkat mengenai Nuzultrip, fondasi bisnis, dan arah pengembangannya.',
   vision_mission: 'Visi, misi, dan arah besar perusahaan.',
-  business_overview: 'Penjelasan model dan aktivitas bisnis Nuzultrip.',
-  growth_story: 'Cerita pertumbuhan dan perkembangan bisnis.',
+  business_overview:
+    'Penjelasan mengenai bisnis Nuzultrip, sistem yang telah dibangun, dan fondasi operasional yang sudah berjalan.',
+  growth_story:
+    'Perjalanan pembangunan, pengembangan sistem, dan perkembangan Nuzultrip dari waktu ke waktu.',
   ecosystem: 'Komponen bisnis dan ekosistem Nuzultrip.',
-  investment_info: 'Informasi kebutuhan dan tujuan pendanaan Nuzultrip.',
-  milestones: 'Pencapaian penting dan tonggak perusahaan.',
-  strategic_direction: 'Rencana pengembangan digital, operasional, dan ekspansi.',
-  financial_highlights: 'Indikator dan informasi keuangan utama.',
-  investor_updates: 'Pembaruan yang relevan untuk investor.',
+  investment_info:
+    'Penjelasan kebutuhan modal dan fokus penggunaan modal untuk pengembangan digital serta penguatan operasional.',
+  milestones: 'Perkembangan penting, pencapaian, dan tahapan yang telah dicapai Nuzultrip.',
+  strategic_direction:
+    'Prioritas pengembangan kapabilitas digital dan penguatan kapasitas operasional Nuzultrip.',
+  financial_highlights:
+    'Indikator dan informasi keuangan utama yang telah disetujui untuk dipublikasikan.',
+  investor_updates:
+    'Pembaruan perusahaan dan perkembangan penting yang relevan bagi pemangku kepentingan.',
   documents: 'Materi dan dokumen yang tersedia secara publik.',
-  contact_cta: 'Ajakan komunikasi dan pertanyaan investor.',
+  contact_cta: 'Kanal komunikasi untuk pertanyaan dan kebutuhan informasi lebih lanjut.',
   legal_notice: 'Catatan hukum dan penafian.',
   rich_content: 'Konten fleksibel untuk kebutuhan khusus.',
   stat_grid: 'Kumpulan angka atau KPI utama.',
   logo_wall: 'Logo mitra, klien, atau pihak terkait.',
-  faq: 'Pertanyaan umum calon investor.',
+  faq: 'Pertanyaan umum mengenai Nuzultrip, pengembangan perusahaan, dan kebutuhan modal.',
 }
 
 function isRecord(value: unknown): value is ContentRecord {
@@ -183,10 +189,10 @@ function createDefaultContent(kind: SectionKind): ContentRecord {
     case 'investment_info':
       return {
         kind,
-        eyebrow: 'Investment Opportunity',
+        eyebrow: 'Kebutuhan Modal',
         title: '',
         description: '',
-        funding_label: 'Target Pendanaan',
+        funding_label: 'Kebutuhan Modal',
         funding_target: '',
         funding_currency: 'IDR',
         use_of_funds: [
@@ -212,7 +218,7 @@ function createDefaultContent(kind: SectionKind): ContentRecord {
     case 'milestones':
       return {
         kind,
-        eyebrow: 'Milestones',
+        eyebrow: 'Perkembangan Nuzultrip',
         title: '',
         items: [],
       }
@@ -220,7 +226,7 @@ function createDefaultContent(kind: SectionKind): ContentRecord {
     case 'strategic_direction':
       return {
         kind,
-        eyebrow: 'Strategic Direction',
+        eyebrow: 'Prioritas Pengembangan',
         title: '',
         description: '',
         pillars: [
@@ -472,11 +478,7 @@ function VisualEditor({
     )
   }
 
-  function renderArrayHeader(
-    title: string,
-    description: string,
-    arrayKey: string,
-  ) {
+  function renderArrayHeader(title: string, description: string, arrayKey: string) {
     return (
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
@@ -691,7 +693,7 @@ function VisualEditor({
         <div className="border-primary/20 bg-primary/5 rounded-lg border p-4">
           <p className="text-fg text-sm font-semibold">Ruang Lingkup Pendanaan</p>
           <p className="text-fg-muted mt-1 text-xs leading-5">
-            Kelola target pendanaan dan penggunaan dana yang ditampilkan kepada calon investor.
+            Kelola kebutuhan modal dan fokus penggunaannya yang ditampilkan pada portal publik.
           </p>
         </div>
 
@@ -699,7 +701,7 @@ function VisualEditor({
           label="Eyebrow"
           value={asString(content.eyebrow)}
           onChange={(eyebrow) => update({ eyebrow })}
-          placeholder="Contoh: Investment Opportunity"
+          placeholder="Contoh: Kebutuhan Modal"
         />
 
         <div className="grid gap-4 md:grid-cols-2">
@@ -710,13 +712,13 @@ function VisualEditor({
           />
 
           <Field
-            label="Label Target Pendanaan"
-            value={asString(content.funding_label, 'Target Pendanaan')}
+            label="Label Kebutuhan Modal"
+            value={asString(content.funding_label, 'Kebutuhan Modal')}
             onChange={(funding_label) => update({ funding_label })}
           />
 
           <Field
-            label="Target Pendanaan"
+            label="Nilai Kebutuhan Modal"
             value={asString(content.funding_target)}
             onChange={(funding_target) => update({ funding_target })}
             placeholder="Contoh: 1.000.000.000"
@@ -731,30 +733,30 @@ function VisualEditor({
         </div>
 
         <Field
-          label="Deskripsi Investasi"
+          label="Deskripsi Kebutuhan Modal"
           value={asString(content.description)}
           onChange={(description) => update({ description })}
           multiline
         />
 
         <div className="border-border space-y-4 rounded-xl border p-4">
-          {renderArrayHeader('Penggunaan Dana', 'Tambahkan alokasi penggunaan dana yang akan ditampilkan di Portal.', 'use_of_funds')}
-
-          {renderObjectArrayEditor(
+          {renderArrayHeader(
+            'Fokus Penggunaan Modal',
+            'Tambahkan prioritas penggunaan modal yang akan ditampilkan pada portal publik.',
             'use_of_funds',
-            useOfFunds,
-            [
-              {
-                key: 'title',
-                label: 'Judul',
-              },
-              {
-                key: 'description',
-                label: 'Deskripsi',
-                multiline: true,
-              },
-            ],
           )}
+
+          {renderObjectArrayEditor('use_of_funds', useOfFunds, [
+            {
+              key: 'title',
+              label: 'Judul',
+            },
+            {
+              key: 'description',
+              label: 'Deskripsi',
+              multiline: true,
+            },
+          ])}
         </div>
       </div>
     )
@@ -786,23 +788,23 @@ function VisualEditor({
         />
 
         <div className="border-border space-y-4 rounded-xl border p-4">
-          {renderArrayHeader('Pilar Strategis', 'Kelola pilar strategis yang ditampilkan di Portal.', 'pillars')}
-
-          {renderObjectArrayEditor(
+          {renderArrayHeader(
+            'Pilar Strategis',
+            'Kelola pilar strategis yang ditampilkan di Portal.',
             'pillars',
-            pillars,
-            [
-              {
-                key: 'title',
-                label: 'Judul Pilar',
-              },
-              {
-                key: 'description',
-                label: 'Deskripsi',
-                multiline: true,
-              },
-            ],
           )}
+
+          {renderObjectArrayEditor('pillars', pillars, [
+            {
+              key: 'title',
+              label: 'Judul Pilar',
+            },
+            {
+              key: 'description',
+              label: 'Deskripsi',
+              multiline: true,
+            },
+          ])}
         </div>
       </div>
     )
@@ -834,23 +836,23 @@ function VisualEditor({
         />
 
         <div className="border-border space-y-4 rounded-xl border p-4">
-          {renderArrayHeader('title', 'Tambahkan dan kelola item yang ditampilkan kepada pengunjung Portal.', 'items')}
-
-          {renderObjectArrayEditor(
+          {renderArrayHeader(
+            'title',
+            'Tambahkan dan kelola item yang ditampilkan kepada pengunjung Portal.',
             'items',
-            items,
-            [
-              {
-                key: 'title',
-                label: 'Judul',
-              },
-              {
-                key: 'description',
-                label: 'Deskripsi',
-                multiline: true,
-              },
-            ],
           )}
+
+          {renderObjectArrayEditor('items', items, [
+            {
+              key: 'title',
+              label: 'Judul',
+            },
+            {
+              key: 'description',
+              label: 'Deskripsi',
+              multiline: true,
+            },
+          ])}
         </div>
       </div>
     )
@@ -882,28 +884,28 @@ function VisualEditor({
         />
 
         <div className="border-border space-y-4 rounded-xl border p-4">
-          {renderArrayHeader('Linimasa Pertumbuhan', 'Kelola perjalanan pertumbuhan perusahaan berdasarkan periode.', 'milestones')}
-
-          {renderObjectArrayEditor(
+          {renderArrayHeader(
+            'Linimasa Pertumbuhan',
+            'Kelola perjalanan pertumbuhan perusahaan berdasarkan periode.',
             'milestones',
-            milestones,
-            [
-              {
-                key: 'year',
-                label: 'Tahun / Periode',
-                placeholder: 'Contoh: 2026',
-              },
-              {
-                key: 'title',
-                label: 'Judul',
-              },
-              {
-                key: 'description',
-                label: 'Deskripsi',
-                multiline: true,
-              },
-            ],
           )}
+
+          {renderObjectArrayEditor('milestones', milestones, [
+            {
+              key: 'year',
+              label: 'Tahun / Periode',
+              placeholder: 'Contoh: 2026',
+            },
+            {
+              key: 'title',
+              label: 'Judul',
+            },
+            {
+              key: 'description',
+              label: 'Deskripsi',
+              multiline: true,
+            },
+          ])}
         </div>
       </div>
     )
@@ -928,27 +930,27 @@ function VisualEditor({
         />
 
         <div className="border-border space-y-4 rounded-xl border p-4">
-          {renderArrayHeader('Tonggak Pencapaian', 'Kelola pencapaian penting perusahaan.', 'items')}
-
-          {renderObjectArrayEditor(
+          {renderArrayHeader(
+            'Tonggak Pencapaian',
+            'Kelola pencapaian penting perusahaan.',
             'items',
-            items,
-            [
-              {
-                key: 'year',
-                label: 'Tahun / Periode',
-              },
-              {
-                key: 'title',
-                label: 'Judul Pencapaian',
-              },
-              {
-                key: 'description',
-                label: 'Deskripsi',
-                multiline: true,
-              },
-            ],
           )}
+
+          {renderObjectArrayEditor('items', items, [
+            {
+              key: 'year',
+              label: 'Tahun / Periode',
+            },
+            {
+              key: 'title',
+              label: 'Judul Pencapaian',
+            },
+            {
+              key: 'description',
+              label: 'Deskripsi',
+              multiline: true,
+            },
+          ])}
         </div>
       </div>
     )
@@ -980,27 +982,27 @@ function VisualEditor({
         />
 
         <div className="border-border space-y-4 rounded-xl border p-4">
-          {renderArrayHeader('Metrik', 'Kelola angka, KPI, atau indikator utama yang ditampilkan di Portal.', 'metrics')}
-
-          {renderObjectArrayEditor(
+          {renderArrayHeader(
+            'Metrik',
+            'Kelola angka, KPI, atau indikator utama yang ditampilkan di Portal.',
             'metrics',
-            metrics,
-            [
-              {
-                key: 'label',
-                label: 'Label',
-              },
-              {
-                key: 'value',
-                label: 'Nilai',
-              },
-              {
-                key: 'description',
-                label: 'Keterangan',
-                multiline: true,
-              },
-            ],
           )}
+
+          {renderObjectArrayEditor('metrics', metrics, [
+            {
+              key: 'label',
+              label: 'Label',
+            },
+            {
+              key: 'value',
+              label: 'Nilai',
+            },
+            {
+              key: 'description',
+              label: 'Keterangan',
+              multiline: true,
+            },
+          ])}
         </div>
       </div>
     )
@@ -1032,28 +1034,28 @@ function VisualEditor({
         />
 
         <div className="border-border space-y-4 rounded-xl border p-4">
-          {renderArrayHeader('Dokumen Publik', 'Kelola dokumen yang dapat dilihat oleh pengunjung Portal.', 'items')}
-
-          {renderObjectArrayEditor(
+          {renderArrayHeader(
+            'Dokumen Publik',
+            'Kelola dokumen yang dapat dilihat oleh pengunjung Portal.',
             'items',
-            items,
-            [
-              {
-                key: 'title',
-                label: 'Nama Dokumen',
-              },
-              {
-                key: 'description',
-                label: 'Deskripsi',
-                multiline: true,
-              },
-              {
-                key: 'href',
-                label: 'Tautan Dokumen',
-                placeholder: 'https://...',
-              },
-            ],
           )}
+
+          {renderObjectArrayEditor('items', items, [
+            {
+              key: 'title',
+              label: 'Nama Dokumen',
+            },
+            {
+              key: 'description',
+              label: 'Deskripsi',
+              multiline: true,
+            },
+            {
+              key: 'href',
+              label: 'Tautan Dokumen',
+              placeholder: 'https://...',
+            },
+          ])}
         </div>
       </div>
     )
@@ -1078,28 +1080,28 @@ function VisualEditor({
         />
 
         <div className="border-border space-y-4 rounded-xl border p-4">
-          {renderArrayHeader('Logo & Jaringan', 'Kelola logo mitra, klien, atau pihak terkait.', 'logos')}
-
-          {renderObjectArrayEditor(
+          {renderArrayHeader(
+            'Logo & Jaringan',
+            'Kelola logo mitra, klien, atau pihak terkait.',
             'logos',
-            logos,
-            [
-              {
-                key: 'name',
-                label: 'Nama',
-              },
-              {
-                key: 'image_url',
-                label: 'URL Gambar Logo',
-                placeholder: 'https://...',
-              },
-              {
-                key: 'href',
-                label: 'Tautan',
-                placeholder: 'https://...',
-              },
-            ],
           )}
+
+          {renderObjectArrayEditor('logos', logos, [
+            {
+              key: 'name',
+              label: 'Nama',
+            },
+            {
+              key: 'image_url',
+              label: 'URL Gambar Logo',
+              placeholder: 'https://...',
+            },
+            {
+              key: 'href',
+              label: 'Tautan',
+              placeholder: 'https://...',
+            },
+          ])}
         </div>
       </div>
     )
@@ -1124,23 +1126,23 @@ function VisualEditor({
         />
 
         <div className="border-border space-y-4 rounded-xl border p-4">
-          {renderArrayHeader('Pertanyaan Umum', 'Kelola pertanyaan dan jawaban yang ditampilkan kepada pengunjung.', 'items')}
-
-          {renderObjectArrayEditor(
+          {renderArrayHeader(
+            'Pertanyaan Umum',
+            'Kelola pertanyaan dan jawaban yang ditampilkan kepada pengunjung.',
             'items',
-            items,
-            [
-              {
-                key: 'question',
-                label: 'Pertanyaan',
-              },
-              {
-                key: 'answer',
-                label: 'Jawaban',
-                multiline: true,
-              },
-            ],
           )}
+
+          {renderObjectArrayEditor('items', items, [
+            {
+              key: 'question',
+              label: 'Pertanyaan',
+            },
+            {
+              key: 'answer',
+              label: 'Jawaban',
+              multiline: true,
+            },
+          ])}
         </div>
       </div>
     )

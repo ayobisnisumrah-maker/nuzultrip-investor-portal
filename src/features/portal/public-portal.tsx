@@ -246,7 +246,7 @@ function GrowthSection({ section }: { section: PublicPortalSection }) {
   )
 }
 
-function InvestmentSection({ section }: { section: PublicPortalSection }) {
+function CapitalRequirementSection({ section }: { section: PublicPortalSection }) {
   const content = section.content
   const title = text(content.title)
   const description = text(content.description)
@@ -274,7 +274,7 @@ function InvestmentSection({ section }: { section: PublicPortalSection }) {
         </div>
 
         <div>
-          <p className="text-fg text-sm font-semibold">Penggunaan Dana</p>
+          <p className="text-fg text-sm font-semibold">Fokus Penggunaan Modal</p>
 
           {useOfFunds.length > 0 ? (
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
@@ -664,7 +664,7 @@ function SectionContent({ section }: { section: PublicPortalSection }) {
       return <CardItemsSection section={section} />
 
     case 'investment_info':
-      return <InvestmentSection section={section} />
+      return <CapitalRequirementSection section={section} />
 
     case 'milestones':
       return <MilestonesSection section={section} />
@@ -843,16 +843,9 @@ export function PublicPortal({
           <div className="flex items-center gap-2.5">
             <Link
               href="/masuk"
-              className="border-border text-fg hover:bg-surface hidden min-h-10 items-center rounded-xl border px-4 text-sm font-semibold transition-colors sm:inline-flex"
+              className="border-border text-fg hover:bg-surface inline-flex min-h-10 items-center rounded-xl border px-4 text-sm font-semibold transition-colors"
             >
               Masuk
-            </Link>
-
-            <Link
-              href="/daftar-investor"
-              className="bg-primary text-primary-foreground inline-flex min-h-10 items-center justify-center rounded-xl px-4 text-sm font-semibold shadow-sm transition-opacity hover:opacity-90 sm:px-5"
-            >
-              Jadi Investor
             </Link>
           </div>
         </div>
@@ -999,7 +992,7 @@ export function PublicPortal({
               © {new Date().getFullYear()} {pageTitle}
             </p>
 
-            <p className="text-fg-subtle text-xs">Investor Relations Portal</p>
+            <p className="text-fg-subtle text-xs">Nuzultrip Equity Relations</p>
           </div>
         </div>
       </footer>

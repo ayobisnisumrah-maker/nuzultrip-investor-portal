@@ -1,20 +1,35 @@
 import type { Metadata, Viewport } from 'next'
 import { cookies } from 'next/headers'
+
 import '@/styles/globals.css'
+
+import { getClientEnv } from '@/lib/env'
 import { fontVariables } from '@/ui/fonts'
 import { ThemeProvider } from '@/ui/theme/theme-provider'
 import { THEME_COOKIE, resolveInitialTheme, themeAttribute } from '@/ui/theme/theme'
 
+const env = getClientEnv()
+
 export const metadata: Metadata = {
   title: {
-    default: 'Nuzultrip Investor Relations',
-    template: '%s · Nuzultrip Investor Relations',
+    default: 'Nuzultrip Equity Relations',
+    template: '%s · Nuzultrip Equity Relations',
   },
   description:
-    'Platform hubungan investor Nuzultrip — informasi perusahaan, materi investor, pelaporan, dan komunikasi.',
-  // The portal opts back in per-route once Phase 9 lands; private surfaces
-  // never do.
-  robots: { index: false, follow: false },
+    'Platform resmi Nuzultrip untuk informasi perusahaan, pengelolaan equity, kepemilikan, dan komunikasi pemangku kepentingan.',
+  applicationName: 'Nuzultrip Equity Relations',
+  metadataBase: new URL(env.NEXT_PUBLIC_SITE_URL),
+  openGraph: {
+    type: 'website',
+    siteName: 'Nuzultrip Equity Relations',
+    title: 'Nuzultrip Equity Relations',
+    description:
+      'Platform resmi untuk informasi perusahaan, pengelolaan equity, kepemilikan, dan komunikasi pemangku kepentingan.',
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 }
 
 export const viewport: Viewport = {
@@ -27,31 +42,20 @@ export const viewport: Viewport = {
   ],
 }
 
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  // Reading the theme cookie server-side means the correct theme is present in
-  // the first byte of HTML — no flash, and no render-blocking inline script.
+export default async function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode
+}>) {
   const cookieStore = await cookies()
-  const preference = resolveInitialTheme(cookieStore.get(THEME_COOKIE)?.value)
-  const attribute = themeAttribute(preference)
+  const initialTheme = resolveInitialTheme(cookieStore.get(THEME_COOKIE)?.value)
 
   return (
-    <html
-      lang="id"
-      {...(attribute ? { 'data-theme': attribute } : {})}
-      // Tells Next the smooth scrolling in globals.css is intentional, so it
-      // suppresses it during route transitions rather than warning about it.
-      data-scroll-behavior="smooth"
-      className={fontVariables}
-      suppressHydrationWarning
-    >
-      <body>
-        <a
-          href="#main"
-          className="bg-primary text-on-primary focus:z-toast sr-only rounded-md px-4 py-2 focus:not-sr-only focus:absolute focus:top-3 focus:left-3"
-        >
-          Lompat ke konten utama
-        </a>
-        <ThemeProvider initialPreference={preference}>{children}</ThemeProvider>
+    <html lang="id" data-theme={themeAttribute(initialTheme)} suppressHydrationWarning>
+      <body
+        className={`${fontVariables} bg-background text-foreground min-h-dvh font-sans antialiased`}
+      >
+        <ThemeProvider initialPreference={initialTheme}>{children}</ThemeProvider>
       </body>
     </html>
   )
