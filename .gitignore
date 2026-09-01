@@ -109,3 +109,5 @@ assets/source/
 .open-next
 .cf-dry-run
 .cf-analysis
+.vercel
+.env*
