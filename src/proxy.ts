@@ -1,5 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server'
 
+import { getClientEnv } from '@/lib/env'
+
 function createNonce(): string {
   const bytes = new Uint8Array(16)
   crypto.getRandomValues(bytes)
@@ -34,7 +36,10 @@ function buildCsp(nonce: string, isDev: boolean): string {
 
 export function proxy(request: NextRequest) {
   const nonce = createNonce()
-  const isDev = process.env.NODE_ENV === 'development'
+
+  const environment = getClientEnv()
+  const isDev = environment.NEXT_PUBLIC_APP_ENV === 'development'
+
   const csp = buildCsp(nonce, isDev)
 
   const requestHeaders = new Headers(request.headers)

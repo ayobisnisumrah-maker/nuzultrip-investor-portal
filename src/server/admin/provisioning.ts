@@ -93,7 +93,9 @@ export async function provisionInvestorApplication(
         : undefined,
     })
 
-    if (error) throw new InternalError(`Failed to provision the investor: ${error.message}`, error)
+    if (error) {
+      throw new InternalError(`Failed to provision the investor: ${error.message}`, error)
+    }
 
     const result = data as { investorId: string; referenceCode: string }
 
@@ -122,6 +124,7 @@ export async function provisionInvestorApplication(
  */
 async function generateConfirmationLink(email: string, password: string): Promise<string | null> {
   const client = getServiceRoleClient()
+
   const { data, error } = await client.auth.admin.generateLink({
     type: 'signup',
     email,
@@ -132,6 +135,7 @@ async function generateConfirmationLink(email: string, password: string): Promis
   })
 
   if (error || !data.properties) return null
+
   return data.properties.action_link
 }
 
@@ -139,7 +143,10 @@ async function generateConfirmationLink(email: string, password: string): Promis
 /* Administrators                                                             */
 /* -------------------------------------------------------------------------- */
 
-export type ProvisionedAdmin = { userId: string; inviteLink: string | null }
+export type ProvisionedAdmin = {
+  userId: string
+  inviteLink: string | null
+}
 
 /**
  * Create an internal administrator.
@@ -147,11 +154,19 @@ export type ProvisionedAdmin = { userId: string; inviteLink: string | null }
  * The invited account never receives a password from us: it sets its own
  * through a single-use, expiring invite link. A password chosen by the creator
  * is a password the creator knows.
+ *
+ * The human-readable role name is passed explicitly because the invitation
+ * email is generated before the domain provisioning RPC runs. Supabase Auth
+ * metadata therefore needs the role name at invitation time.
  */
 export async function provisionAdmin(
   input: CreateAdminInput,
+
   /** The administrator performing the action; null only when bootstrapping. */
   createdBy: string | null,
+
+  /** Human-readable role name for Supabase invitation email metadata. */
+  roleName: string,
 ): Promise<ProvisionedAdmin> {
   const client = getServiceRoleClient()
 
@@ -159,19 +174,28 @@ export async function provisionAdmin(
     input.email,
     {
       redirectTo: `${getClientEnv().NEXT_PUBLIC_SITE_URL}/auth/callback?next=${encodeURIComponent('/atur-sandi')}`,
-      data: { full_name: input.fullName },
+
+      data: {
+        full_name: input.fullName,
+        role_name: roleName,
+      },
     },
   )
 
   if (inviteError || !invited.user) {
     const message = inviteError?.message ?? 'no user returned'
+
     if (/already (been )?registered|already exists/i.test(message)) {
       throw new ConflictError(
         'Auth user already exists for the submitted address.',
         'Alamat surel ini sudah digunakan oleh akun lain.',
       )
     }
-    throw new InternalError(`Failed to invite the administrator: ${message}`, inviteError)
+
+    throw new InternalError(
+      `Failed to invite the administrator: ${message}`,
+      inviteError,
+    )
   }
 
   const userId = invited.user.id
@@ -187,12 +211,26 @@ export async function provisionAdmin(
     })
 
     if (error) {
-      throw new InternalError(`Failed to provision the administrator: ${error.message}`, error)
+      throw new InternalError(
+        `Failed to provision the administrator: ${error.message}`,
+        error,
+      )
     }
 
-    return { userId, inviteLink: null }
+    return {
+      userId,
+      inviteLink: null,
+    }
   } catch (error) {
+    /**
+     * Compensation:
+     *
+     * If domain provisioning fails after the invitation Auth user has been
+     * created, remove the Auth user so the email address is not permanently
+     * occupied by an orphaned account.
+     */
     await client.auth.admin.deleteUser(userId).catch(() => {})
+
     throw error
   }
 }
@@ -256,6 +294,7 @@ export async function bootstrapFirstSuperAdmin(input: {
       p_email: input.email,
       p_full_name: input.fullName,
       p_role_id: role.id,
+
       // No prior administrator exists to attribute this to.
       p_created_by: undefined,
     })
@@ -285,7 +324,11 @@ export async function hasAnyAdmin(): Promise<boolean> {
     .select('id', { count: 'exact', head: true })
 
   if (error) {
-    throw new InternalError(`Failed to check for existing admins: ${error.message}`, error)
+    throw new InternalError(
+      `Failed to check for existing admins: ${error.message}`,
+      error,
+    )
   }
+
   return (count ?? 0) > 0
 }

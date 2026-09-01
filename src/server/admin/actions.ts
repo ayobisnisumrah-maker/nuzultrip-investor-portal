@@ -61,7 +61,17 @@ export const createAdmin = defineAction({
       }
     }
 
-    const provisioned = await provisionAdmin(input, principal.adminId)
+    /**
+     * Pass the validated human-readable role name into provisioning.
+     *
+     * Supabase Auth needs this metadata before sending the invitation email,
+     * allowing the email template to safely render {{ .Data.role_name }}.
+     */
+    const provisioned = await provisionAdmin(
+      input,
+      principal.adminId,
+      role.name,
+    )
 
     audit({
       entityId: provisioned.userId,
@@ -84,6 +94,7 @@ export const createAdmin = defineAction({
     }
   },
 })
+
 const updateAdminSchema = z.object({
   adminId: z.uuid('Administrator tidak valid.'),
   fullName: z.string().trim().min(2, 'Nama wajib diisi.').max(200),
@@ -155,7 +166,9 @@ export const updateAdmin = defineAction({
      * Guard database juga menegakkan aturan ini.
      */
     if (principal.adminId === input.adminId && target.role_id !== input.roleId) {
-      throw new ForbiddenError('Anda tidak dapat mengubah role administrator milik sendiri.')
+      throw new ForbiddenError(
+        'Anda tidak dapat mengubah role administrator milik sendiri.',
+      )
     }
 
     /*
@@ -185,7 +198,9 @@ export const updateAdmin = defineAction({
       }
     }
 
-    const serviceClient = (await import('./service-client')).getServiceRoleClient()
+    const serviceClient = (
+      await import('./service-client')
+    ).getServiceRoleClient()
 
     const { error: rpcError } = await serviceClient.rpc('update_admin_account', {
       p_admin_id: input.adminId,
@@ -195,18 +210,24 @@ export const updateAdmin = defineAction({
     })
 
     if (rpcError) {
-      throw new ForbiddenError(`Gagal memperbarui administrator: ${rpcError.message}`)
+      throw new ForbiddenError(
+        `Gagal memperbarui administrator: ${rpcError.message}`,
+      )
     }
 
     const { error: authUpdateError } = await serviceClient.auth.admin.updateUserById(
       input.adminId,
       {
-        user_metadata: { full_name: input.fullName.trim() },
+        user_metadata: {
+          full_name: input.fullName.trim(),
+        },
       },
     )
 
     if (authUpdateError) {
-      throw new ForbiddenError('Gagal memperbarui metadata akun Auth: ' + authUpdateError.message)
+      throw new ForbiddenError(
+        'Gagal memperbarui metadata akun Auth: ' + authUpdateError.message,
+      )
     }
 
     audit({
@@ -263,12 +284,17 @@ export const activateAdmin = defineAction({
 
     const serviceClient = getServiceRoleClient()
 
-    const { error: rpcError } = await serviceClient.rpc('activate_admin_account', {
-      p_admin_id: input.adminId,
-    })
+    const { error: rpcError } = await serviceClient.rpc(
+      'activate_admin_account',
+      {
+        p_admin_id: input.adminId,
+      },
+    )
 
     if (rpcError) {
-      throw new ForbiddenError(`Gagal mengaktifkan administrator: ${rpcError.message}`)
+      throw new ForbiddenError(
+        `Gagal mengaktifkan administrator: ${rpcError.message}`,
+      )
     }
 
     audit({
@@ -303,7 +329,9 @@ export const deactivateAdmin = defineAction({
     }
 
     if (principal.adminId === input.adminId) {
-      throw new ForbiddenError('Anda tidak dapat menonaktifkan administrator milik sendiri.')
+      throw new ForbiddenError(
+        'Anda tidak dapat menonaktifkan administrator milik sendiri.',
+      )
     }
 
     const { data: target, error: targetError } = await supabase
@@ -325,13 +353,18 @@ export const deactivateAdmin = defineAction({
 
     const serviceClient = getServiceRoleClient()
 
-    const { error: rpcError } = await serviceClient.rpc('deactivate_admin_account', {
-      p_admin_id: input.adminId,
-      p_reason: input.reason?.trim() || undefined,
-    })
+    const { error: rpcError } = await serviceClient.rpc(
+      'deactivate_admin_account',
+      {
+        p_admin_id: input.adminId,
+        p_reason: input.reason?.trim() || undefined,
+      },
+    )
 
     if (rpcError) {
-      throw new ForbiddenError(`Gagal menonaktifkan administrator: ${rpcError.message}`)
+      throw new ForbiddenError(
+        `Gagal menonaktifkan administrator: ${rpcError.message}`,
+      )
     }
 
     audit({
@@ -388,7 +421,9 @@ export const deleteAdmin = defineAction({
      * The last Super Admin is also protected by the database trigger.
      */
     if (principal.adminId === input.adminId) {
-      throw new ForbiddenError('Anda tidak dapat menghapus akun administrator milik sendiri.')
+      throw new ForbiddenError(
+        'Anda tidak dapat menghapus akun administrator milik sendiri.',
+      )
     }
 
     const { data: target, error: targetError } = await supabase
@@ -416,12 +451,18 @@ export const deleteAdmin = defineAction({
      * Deleting auth.users causes the existing FK CASCADE to remove the
      * corresponding user_accounts and admins records.
      */
-    const serviceClient = (await import('./service-client')).getServiceRoleClient()
+    const serviceClient = (
+      await import('./service-client')
+    ).getServiceRoleClient()
 
-    const { error: deleteError } = await serviceClient.auth.admin.deleteUser(input.adminId)
+    const { error: deleteError } = await serviceClient.auth.admin.deleteUser(
+      input.adminId,
+    )
 
     if (deleteError) {
-      throw new ForbiddenError(`Gagal menghapus administrator: ${deleteError.message}`)
+      throw new ForbiddenError(
+        `Gagal menghapus administrator: ${deleteError.message}`,
+      )
     }
 
     audit({
