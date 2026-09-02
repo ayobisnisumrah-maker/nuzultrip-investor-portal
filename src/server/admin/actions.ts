@@ -316,7 +316,7 @@ export const activateAdmin = defineAction({
 })
 
 export const deactivateAdmin = defineAction({
-  access: { permission: 'admins.update' },
+  access: { permission: 'admins.disable' },
   input: z.object({
     adminId: z.uuid('Administrator tidak valid.'),
     reason: z.string().trim().max(500).optional().or(z.literal('')),
@@ -394,7 +394,12 @@ export const deactivateAdmin = defineAction({
 /* -------------------------------------------------------------------------- */
 
 export const deleteAdmin = defineAction({
-  access: { permission: 'admins.view' },
+  /*
+   * Permanent deletion is a system-authority operation.
+   * It must never be delegated through a normal RBAC permission.
+   * The handler below enforces the Super Admin role explicitly.
+   */
+  access: 'admin',
   input: z.object({
     adminId: z.uuid('Administrator tidak valid.'),
   }),
