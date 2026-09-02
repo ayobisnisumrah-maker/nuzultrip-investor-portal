@@ -1422,7 +1422,35 @@ export function PortalPageEditor({
   }
 
   function restoreArchivedPage() {
-    runTransition(() => returnPortalPageToDraft({ pageId }))
+    const confirmed = window.confirm(
+      'Kembalikan halaman ini ke Draf?\n\nVersi yang sudah diterbitkan tetap disimpan sebagai riwayat. Salinan baru akan dibuat sebagai versi Draf yang dapat diedit.',
+    )
+
+    if (!confirmed) return
+
+    setError(null)
+
+    startTransition(async () => {
+      try {
+        const result = await returnPortalPageToDraft({ pageId })
+
+        if (!result.ok) {
+          setError(
+            result.error?.message ??
+              'Gagal mengembalikan halaman ke Draf.',
+          )
+          return
+        }
+
+        router.refresh()
+      } catch (actionError) {
+        setError(
+          actionError instanceof Error
+            ? actionError.message
+            : 'Gagal mengembalikan halaman ke Draf.',
+        )
+      }
+    })
   }
 
   function confirmDelete() {
@@ -1459,7 +1487,7 @@ export function PortalPageEditor({
         </div>
       ) : null}
 
-      {canPublish ? (
+      {(canPublish || (status === 'archived' && canUpdate)) ? (
         <div className="border-border bg-muted/40 flex flex-wrap items-center gap-2 rounded-xl border p-4">
           <div className="mr-auto min-w-[180px]">
             <p className="text-fg text-sm font-semibold">Siklus Publikasi</p>

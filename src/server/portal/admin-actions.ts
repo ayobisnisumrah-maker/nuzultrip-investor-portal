@@ -49,6 +49,100 @@ const pageTransitionSchema = z.object({
   pageId: z.uuid(),
 })
 
+const createPortalPageSchema = z.object({
+  title: z.string().trim().min(3).max(200),
+  slug: z
+    .string()
+    .trim()
+    .min(1)
+    .max(120)
+    .regex(
+      /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
+      'Slug hanya boleh berisi huruf kecil, angka, dan tanda hubung.',
+    ),
+  pageKind: z.enum(['home', 'standard', 'legal']),
+  seoDescription: z.string().trim().max(500).optional().or(z.literal('')),
+})
+
+export const createPortalPage = defineAction({
+  access: { permission: 'portal.update' },
+  input: createPortalPageSchema,
+  audit: { action: 'portal.page.create', entityType: 'portal_page' },
+
+  handler: async ({ principal, input, supabase, audit }) => {
+    if (principal.kind !== 'admin') {
+      throw new ForbiddenError('Admin principal required.')
+    }
+
+    const { data: existing } = await supabase
+      .from('portal_pages')
+      .select('id')
+      .eq('slug', input.slug)
+      .maybeSingle()
+
+    if (existing) {
+      throw new Error('Slug halaman sudah digunakan.')
+    }
+
+    if (input.pageKind === 'home') {
+      const { data: existingHome } = await supabase
+        .from('portal_pages')
+        .select('id')
+        .eq('page_kind', 'home')
+        .neq('status', 'archived')
+        .maybeSingle()
+
+      if (existingHome) {
+        throw new Error(
+          'Halaman Beranda sudah ada. Sistem hanya dapat memiliki satu halaman Beranda aktif.',
+        )
+      }
+    }
+
+    const { data: page, error } = await supabase
+      .from('portal_pages')
+      .insert({
+        title: input.title,
+        slug: input.slug,
+        page_kind: input.pageKind,
+        seo: input.seoDescription
+          ? { description: input.seoDescription }
+          : {},
+        status: 'draft',
+        is_system: false,
+      })
+      .select('id, title, slug, page_kind, status')
+      .single()
+
+    if (error || !page) {
+      throw new Error(
+        `Gagal membuat halaman portal: ${error?.message ?? 'unknown error'}`,
+      )
+    }
+
+    audit({
+      entityId: page.id,
+      summary: `Halaman portal ${page.title} dibuat sebagai draf.`,
+      changes: {
+        title: {
+          before: null,
+          after: page.title,
+        },
+        slug: {
+          before: null,
+          after: page.slug,
+        },
+        status: {
+          before: null,
+          after: 'draft',
+        },
+      },
+    })
+
+    return page
+  },
+})
+
 export const createPortalSection = defineAction({
   access: { permission: 'portal.update' },
   input: createSectionSchema,
