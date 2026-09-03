@@ -85,6 +85,86 @@ export type PublicPortalNavigationItem = {
   parent_id: string | null
 }
 
+
+export async function getPublishedPortalPageBySlug(slug: string) {
+  const supabase = await getServerSupabase()
+
+  const { data: page, error: pageError } = await supabase
+    .from('portal_pages')
+    .select('id, slug, title, seo, published_at')
+    .eq('slug', slug)
+    .eq('status', 'published')
+    .maybeSingle()
+
+  if (pageError) {
+    throw new Error(
+      `Failed to load published portal page: ${pageError.message}`,
+    )
+  }
+
+  if (!page) return null
+
+  const { data: sections, error: sectionError } = await supabase
+    .from('portal_sections')
+    .select('id, section_kind, position, anchor_id, published_version_id')
+    .eq('page_id', page.id)
+    .eq('status', 'published')
+    .eq('is_visible', true)
+    .order('position', { ascending: true })
+
+  if (sectionError) {
+    throw new Error(
+      `Failed to load published portal sections: ${sectionError.message}`,
+    )
+  }
+
+  const versionIds = (sections ?? [])
+    .map((section) => section.published_version_id)
+    .filter((id): id is string => Boolean(id))
+
+  if (versionIds.length === 0) {
+    return {
+      page,
+      sections: [] as PublicPortalSection[],
+    }
+  }
+
+  const { data: versions, error: versionError } = await supabase
+    .from('portal_section_versions')
+    .select('id, content')
+    .in('id', versionIds)
+
+  if (versionError) {
+    throw new Error(
+      `Failed to load published portal content: ${versionError.message}`,
+    )
+  }
+
+  const contentById = new Map(
+    (versions ?? []).map((version) => [
+      version.id,
+      version.content as Record<string, unknown>,
+    ]),
+  )
+
+  return {
+    page,
+    sections: (sections ?? [])
+      .filter(
+        (section) =>
+          section.published_version_id &&
+          contentById.has(section.published_version_id),
+      )
+      .map((section) => ({
+        id: section.id,
+        section_kind: section.section_kind,
+        position: section.position,
+        anchor_id: section.anchor_id,
+        content: contentById.get(section.published_version_id!) ?? {},
+      })),
+  }
+}
+
 export async function getPublishedNavigation(): Promise<PublicPortalNavigationItem[]> {
   const supabase = await getServerSupabase()
 
