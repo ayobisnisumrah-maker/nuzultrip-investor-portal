@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test'
 
+import { loginProductionAdmin } from './helpers/login'
+
 test.describe('Production Portal Publication Smoke Test', () => {
   test.setTimeout(240_000)
 
@@ -10,15 +12,6 @@ test.describe('Production Portal Publication Smoke Test', () => {
       const title = `E2E Public Smoke ${runId}`
       const slug = `e2e-public-smoke-${runId}`
       const publicRoute = `/${slug}`
-
-      const adminEmail = process.env.E2E_ADMIN_EMAIL
-      const adminPassword = process.env.E2E_ADMIN_PASSWORD
-
-      if (!adminEmail || !adminPassword) {
-        throw new Error(
-          'E2E_ADMIN_EMAIL dan E2E_ADMIN_PASSWORD wajib tersedia.',
-        )
-      }
 
       console.log(`RUN_ID=${runId}`)
 
@@ -31,28 +24,7 @@ test.describe('Production Portal Publication Smoke Test', () => {
       // LOGIN
       // =========================================================
 
-      await page.goto('/masuk', {
-        waitUntil: 'domcontentloaded',
-        timeout: 60_000,
-      })
-
-      await expect(
-        page.locator('input[name="email"]'),
-      ).toBeVisible()
-
-      await page.locator('input[name="email"]').fill(adminEmail)
-      await page.locator('input[name="password"]').fill(adminPassword)
-
-      await page.locator('input[name="email"]').press('Tab')
-      await page.waitForTimeout(750)
-
-      await Promise.all([
-        page.waitForURL(/\/admin(?:\/|$)/, {
-          timeout: 60_000,
-          waitUntil: 'commit',
-        }),
-        page.locator('button[type="submit"]').click(),
-      ])
+      await loginProductionAdmin(page)
 
       console.log('STEP=LOGIN_PASS')
 

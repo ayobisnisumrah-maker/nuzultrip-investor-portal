@@ -47,8 +47,10 @@ test.describe('Portal Page Action Discovery', () => {
 
     console.log('LIST_URL=' + page.url())
 
-    // Cari halaman E2E terbaru
-    const e2eText = page.getByText(/E2E Production/i).last()
+    // Cari halaman E2E terbaru.
+    // Production smoke saat ini membuat halaman dengan prefix:
+    // "E2E Public Smoke ..."
+    const e2eText = page.getByText(/E2E Public Smoke/i).last()
 
     await expect(e2eText).toBeVisible({
       timeout: 60_000,
@@ -58,25 +60,53 @@ test.describe('Portal Page Action Discovery', () => {
 
     console.log('E2E_PAGE_FOUND=' + title)
 
-    // Cari ancestor yang memiliki link ke detail page
-    const row = e2eText.locator(
-      'xpath=ancestor::*[self::tr or self:article or self:div][.//a[contains(@href,"/admin/portal/pages/")]][1]',
+    // Cari link detail halaman.
+    // Hindari XPath ancestor karena selector kompleks dapat bermasalah
+    // pada Playwright selector engine.
+    const detailLinks = page.locator(
+      'a[href^="/admin/portal/pages/"], a[href*="/admin/portal/pages/"]',
     )
 
-    const detailLink = row
-      .locator('a[href*="/admin/portal/pages/"]')
-      .first()
+    const matchingLinks = detailLinks.filter({
+      hasText: /E2E Public Smoke/i,
+    })
 
-    let href = await detailLink.getAttribute('href')
+    let href: string | null = null
 
-    // Fallback: cari link langsung dari seluruh halaman
+    const matchingCount = await matchingLinks.count()
+
+    if (matchingCount > 0) {
+      href = await matchingLinks
+        .nth(matchingCount - 1)
+        .getAttribute('href')
+    }
+
+    // Fallback:
+    // cari container yang memiliki title E2E Public Smoke,
+    // kemudian ambil semua link detail dari container tersebut.
     if (!href) {
-      const fallbackLink = page
-        .locator('a[href*="/admin/portal/pages/"]')
-        .filter({ hasText: /E2E Production/i })
-        .last()
+      const containers = page
+        .locator('tr, article, li, div')
+        .filter({
+          hasText: /E2E Public Smoke/i,
+        })
 
-      href = await fallbackLink.getAttribute('href')
+      const containerCount = await containers.count()
+
+      for (let i = containerCount - 1; i >= 0; i--) {
+        const candidate = containers.nth(i)
+        const candidateLink = candidate
+          .locator('a[href*="/admin/portal/pages/"]')
+          .last()
+
+        if (await candidateLink.count()) {
+          href = await candidateLink.getAttribute('href')
+
+          if (href) {
+            break
+          }
+        }
+      }
     }
 
     if (!href) {
@@ -96,7 +126,7 @@ test.describe('Portal Page Action Discovery', () => {
       )
 
       throw new Error(
-        'Tidak menemukan href detail untuk halaman E2E Production.',
+        'Tidak menemukan href detail untuk halaman E2E Public Smoke.',
       )
     }
 
