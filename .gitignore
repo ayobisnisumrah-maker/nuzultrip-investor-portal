@@ -111,3 +111,4 @@ assets/source/
 .cf-analysis
 .vercel
 .env*
+playwright-report-production/
