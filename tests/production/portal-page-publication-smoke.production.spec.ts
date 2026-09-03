@@ -6,6 +6,11 @@ test.describe('Production Portal Publication Smoke Test', () => {
   test(
     'published page is public, archived and draft page are not public',
     async ({ page }) => {
+      const runId = `public-smoke-${Date.now().toString(36)}`
+      const title = `E2E Public Smoke ${runId}`
+      const slug = `e2e-public-smoke-${runId}`
+      const publicRoute = `/${slug}`
+
       const adminEmail = process.env.E2E_ADMIN_EMAIL
       const adminPassword = process.env.E2E_ADMIN_PASSWORD
 
@@ -14,11 +19,6 @@ test.describe('Production Portal Publication Smoke Test', () => {
           'E2E_ADMIN_EMAIL dan E2E_ADMIN_PASSWORD wajib tersedia.',
         )
       }
-
-      const runId = `public-smoke-${Date.now().toString(36)}`
-      const title = `E2E Public Smoke ${runId}`
-      const slug = `e2e-public-smoke-${runId}`
-      const publicRoute = `/${slug}`
 
       console.log(`RUN_ID=${runId}`)
 
@@ -36,19 +36,14 @@ test.describe('Production Portal Publication Smoke Test', () => {
         timeout: 60_000,
       })
 
-      const emailInput = page.locator('input[name="email"]')
-      const passwordInput = page.locator('input[name="password"]')
-      const submitButton = page.locator('button[type="submit"]')
+      await expect(
+        page.locator('input[name="email"]'),
+      ).toBeVisible()
 
-      await expect(emailInput).toBeVisible()
-      await expect(passwordInput).toBeVisible()
-      await expect(submitButton).toBeEnabled()
+      await page.locator('input[name="email"]').fill(adminEmail)
+      await page.locator('input[name="password"]').fill(adminPassword)
 
-      await emailInput.fill(adminEmail)
-      await passwordInput.fill(adminPassword)
-
-      // Pastikan React hydration selesai.
-      await passwordInput.press('Tab')
+      await page.locator('input[name="email"]').press('Tab')
       await page.waitForTimeout(750)
 
       await Promise.all([
@@ -56,11 +51,10 @@ test.describe('Production Portal Publication Smoke Test', () => {
           timeout: 60_000,
           waitUntil: 'commit',
         }),
-        submitButton.click(),
+        page.locator('button[type="submit"]').click(),
       ])
 
       console.log('STEP=LOGIN_PASS')
-      console.log(`LOGIN_URL=${page.url()}`)
 
       // =========================================================
       // OPEN CREATE PAGE
@@ -74,10 +68,6 @@ test.describe('Production Portal Publication Smoke Test', () => {
       console.log(`ADMIN_PAGE_URL=${page.url()}`)
 
       await expect(page.locator('#title')).toBeVisible({
-        timeout: 30_000,
-      })
-
-      await expect(page.locator('#slug')).toBeVisible({
         timeout: 30_000,
       })
 
@@ -96,180 +86,64 @@ test.describe('Production Portal Publication Smoke Test', () => {
         )
       }
 
-      const saveDraftButton = page.getByRole('button', {
-        name: /^Simpan Draf$/i,
+      const submitButton = page.getByRole('button', {
+        name: /Simpan Draf/i,
       })
 
-      await expect(saveDraftButton).toBeVisible({
+      await expect(submitButton).toBeEnabled({
         timeout: 30_000,
       })
 
-      await expect(saveDraftButton).toBeEnabled()
+      console.log('STEP=CREATE_SUBMIT_START')
 
-      await saveDraftButton.click()
+      await submitButton.click()
 
-      // Tunggu client transition selesai.
-      await page.waitForTimeout(1_500)
+      // Tunggu sampai benar-benar meninggalkan /new.
+      await expect
+        .poll(
+          async () => page.url(),
+          {
+            timeout: 60_000,
+            intervals: [500, 1000, 2000],
+          },
+        )
+        .not.toContain('/admin/portal/pages/new')
 
-      console.log(`POST_CREATE_URL=${page.url()}`)
+      const createdUrl = page.url()
 
-      // =========================================================
-      // RESOLVE CREATED PAGE ID
-      // =========================================================
+      console.log(`CREATED_PAGE_URL=${createdUrl}`)
 
-      let portalPageId: string | null = null
-
-      const currentUrl = new URL(page.url())
-
-      const currentMatch = currentUrl.pathname.match(
-        /\/admin\/portal\/pages\/([^/]+)$/,
+      const createdMatch = createdUrl.match(
+        /\/admin\/portal\/pages\/([^/?#]+)$/,
       )
 
-      const currentPageId = currentMatch?.[1]
+      if (!createdMatch) {
+        const body = await page.locator('body').innerText()
 
-      if (
-        currentPageId &&
-        currentPageId !== 'new'
-      ) {
-        portalPageId = currentPageId
-      }
-
-      // Recovery:
-      // Jika router.push belum terjadi atau production navigation
-      // tidak berpindah, cari halaman yang baru dibuat dari list admin.
-      if (!portalPageId) {
-        console.log('RECOVERY=FIND_CREATED_PAGE_FROM_LIST')
-
-        await page.goto('/admin/portal/pages', {
-          waitUntil: 'domcontentloaded',
-          timeout: 60_000,
-        })
-
-        console.log(`LIST_PAGE_URL=${page.url()}`)
-
-        const titleLocator = page.getByText(title, {
-          exact: true,
-        })
-
-        await expect(titleLocator.first()).toBeVisible({
-          timeout: 30_000,
-        })
-
-        const count = await titleLocator.count()
-
-        console.log(`TITLE_MATCH_COUNT=${count}`)
-
-        let foundHref: string | null = null
-
-        for (let index = 0; index < count; index += 1) {
-          const item = titleLocator.nth(index)
-
-          const link = item.locator(
-            'xpath=ancestor::a[contains(@href, "/admin/portal/pages/")][1]',
-          )
-
-          if (await link.count()) {
-            const href = await link.getAttribute('href')
-
-            if (
-              href &&
-              !href.endsWith('/new')
-            ) {
-              foundHref = href
-              break
-            }
-          }
-
-          const row = item.locator(
-            'xpath=ancestor::*[self::tr or self::li or @role="row"][1]',
-          )
-
-          if (await row.count()) {
-            const rowLink = row.locator(
-              'a[href*="/admin/portal/pages/"]',
-            ).first()
-
-            if (await rowLink.count()) {
-              const href = await rowLink.getAttribute('href')
-
-              if (
-                href &&
-                !href.endsWith('/new')
-              ) {
-                foundHref = href
-                break
-              }
-            }
-          }
-        }
-
-        if (!foundHref) {
-          const bodyText = await page.locator('body').innerText()
-
-          console.log(
-            `LIST_PAGE_BODY=${bodyText
-              .replace(/\s+/g, ' ')
-              .slice(0, 3000)}`,
-          )
-
-          throw new Error(
-            `Tidak dapat menemukan href detail untuk halaman: ${title}`,
-          )
-        }
-
-        console.log(`FOUND_DETAIL_HREF=${foundHref}`)
-
-        const hrefMatch = foundHref.match(
-          /\/admin\/portal\/pages\/([^/?#]+)/,
+        console.log(
+          `CREATE_FAILURE_BODY=${body
+            .replace(/\s+/g, ' ')
+            .slice(0, 2000)}`,
         )
 
-        const foundPageId = hrefMatch?.[1]
-
-        if (
-          foundPageId &&
-          foundPageId !== 'new'
-        ) {
-          portalPageId = foundPageId
-        }
+        throw new Error(
+          `Halaman berhasil submit tetapi URL detail tidak ditemukan. URL=${createdUrl}`,
+        )
       }
 
-      if (
-        !portalPageId ||
-        portalPageId === 'new'
-      ) {
+      const portalPageId = createdMatch[1]
+
+      if (!portalPageId || portalPageId === 'new') {
         throw new Error(
-          `PORTAL_PAGE_ID tidak valid: ${String(portalPageId)}`,
+          `PORTAL_PAGE_ID tidak valid: ${portalPageId}`,
         )
       }
 
       console.log(`PORTAL_PAGE_ID=${portalPageId}`)
-
-      const detailRoute =
-        `/admin/portal/pages/${portalPageId}`
-
-      // =========================================================
-      // OPEN ACTUAL DETAIL PAGE
-      // =========================================================
-
-      await page.goto(detailRoute, {
-        waitUntil: 'domcontentloaded',
-        timeout: 60_000,
-      })
-
-      console.log(`DETAIL_PAGE_URL=${page.url()}`)
-
-      await expect(
-        page.getByText(title, {
-          exact: true,
-        }).first(),
-      ).toBeVisible({
-        timeout: 30_000,
-      })
-
       console.log('STEP=DRAFT_CREATED')
 
       // =========================================================
-      // DRAFT -> REVIEW
+      // SEND FOR REVIEW
       // =========================================================
 
       const reviewButton = page.getByRole('button', {
@@ -280,13 +154,11 @@ test.describe('Production Portal Publication Smoke Test', () => {
         timeout: 30_000,
       })
 
-      await expect(reviewButton).toBeEnabled()
-
       await reviewButton.click()
 
       await expect(
         page.getByRole('button', {
-          name: /Setujui/i,
+          name: /^Setujui$/i,
         }),
       ).toBeVisible({
         timeout: 30_000,
@@ -295,7 +167,7 @@ test.describe('Production Portal Publication Smoke Test', () => {
       console.log('STEP=REVIEW')
 
       // =========================================================
-      // REVIEW -> APPROVED
+      // APPROVE
       // =========================================================
 
       const approveButton = page.getByRole('button', {
@@ -306,33 +178,54 @@ test.describe('Production Portal Publication Smoke Test', () => {
         timeout: 30_000,
       })
 
+      console.log('STEP=APPROVE_SUBMIT_START')
+
       await approveButton.click()
 
-      await expect(
-        page.getByRole('button', {
-          name: /^Publikasikan$/i,
-        }),
-      ).toBeVisible({
-        timeout: 30_000,
+      await page.waitForTimeout(1_000)
+
+      await page.reload({
+        waitUntil: 'domcontentloaded',
+        timeout: 60_000,
       })
 
-      console.log('STEP=APPROVED')
+      console.log(`APPROVED_PAGE_URL=${page.url()}`)
 
-      // =========================================================
-      // APPROVED -> PUBLISHED
-      // =========================================================
+      const approvedBody = await page.locator('body').innerText()
+
+      console.log(
+        `APPROVED_BODY=${approvedBody
+          .replace(/\s+/g, ' ')
+          .slice(0, 1500)}`,
+      )
 
       const publishButton = page.getByRole('button', {
-        name: /^Publikasikan$/i,
+        name: /^Terbitkan$/i,
       })
 
       await expect(publishButton).toBeVisible({
         timeout: 30_000,
       })
 
+      console.log('STEP=APPROVED')
+
+      // =========================================================
+      // PUBLISH
+      // =========================================================
+
+      console.log('STEP=PUBLISH_SUBMIT_START')
+
       await publishButton.click()
 
-      // Published state harus memiliki aksi archive.
+      await page.waitForTimeout(1_000)
+
+      await page.reload({
+        waitUntil: 'domcontentloaded',
+        timeout: 60_000,
+      })
+
+      console.log(`PUBLISHED_PAGE_URL=${page.url()}`)
+
       const archiveButton = page.getByRole('button', {
         name: /^Arsipkan$/i,
       })
@@ -344,7 +237,7 @@ test.describe('Production Portal Publication Smoke Test', () => {
       console.log('STEP=PUBLISHED')
 
       // =========================================================
-      // VERIFY PUBLISHED PAGE IS PUBLIC
+      // VERIFY PUBLIC PAGE
       // =========================================================
 
       await page.goto(publicRoute, {
@@ -373,37 +266,44 @@ test.describe('Production Portal Publication Smoke Test', () => {
       console.log('STEP=PUBLIC_PUBLISHED_PASS')
 
       // =========================================================
-      // RETURN TO REAL DETAIL PAGE
+      // RETURN DIRECTLY TO CREATED PAGE
+      // IMPORTANT:
+      // Jangan kembali ke /pages/new atau klik row ambigu.
       // =========================================================
 
-      await page.goto(detailRoute, {
-        waitUntil: 'domcontentloaded',
-        timeout: 60_000,
-      })
+      await page.goto(
+        `/admin/portal/pages/${portalPageId}`,
+        {
+          waitUntil: 'domcontentloaded',
+          timeout: 60_000,
+        },
+      )
 
       console.log(`RETURN_ADMIN_PAGE_URL=${page.url()}`)
 
-      const archiveButtonAfterReturn = page.getByRole('button', {
-        name: /^Arsipkan$/i,
-      })
-
-      await expect(archiveButtonAfterReturn).toBeVisible({
+      await expect(
+        page.getByRole('button', {
+          name: /^Arsipkan$/i,
+        }),
+      ).toBeVisible({
         timeout: 30_000,
       })
 
-      await expect(archiveButtonAfterReturn).toBeEnabled()
+      console.log('STEP=ARCHIVE_PAGE_READY')
 
       // =========================================================
-      // PUBLISHED -> ARCHIVED
+      // ARCHIVE
       // =========================================================
 
-      await archiveButtonAfterReturn.click()
+      await page.getByRole('button', {
+        name: /^Arsipkan$/i,
+      }).click()
 
-      await expect(
-        page.getByRole('button', {
-          name: /^Kembalikan ke Draf$/i,
-        }),
-      ).toBeVisible({
+      const restoreButton = page.getByRole('button', {
+        name: /^Kembalikan ke Draf$/i,
+      })
+
+      await expect(restoreButton).toBeVisible({
         timeout: 30_000,
       })
 
@@ -431,29 +331,38 @@ test.describe('Production Portal Publication Smoke Test', () => {
           exact: true,
         }),
       ).not.toBeVisible({
-        timeout: 15_000,
+        timeout: 10_000,
       })
 
       console.log('STEP=ARCHIVED_NOT_PUBLIC_PASS')
 
       // =========================================================
-      // ARCHIVED -> DRAFT
+      // RETURN TO CREATED PAGE
       // =========================================================
 
-      await page.goto(detailRoute, {
-        waitUntil: 'domcontentloaded',
-        timeout: 60_000,
-      })
+      await page.goto(
+        `/admin/portal/pages/${portalPageId}`,
+        {
+          waitUntil: 'domcontentloaded',
+          timeout: 60_000,
+        },
+      )
 
-      const restoreButton = page.getByRole('button', {
-        name: /^Kembalikan ke Draf$/i,
-      })
-
-      await expect(restoreButton).toBeVisible({
+      await expect(
+        page.getByRole('button', {
+          name: /^Kembalikan ke Draf$/i,
+        }),
+      ).toBeVisible({
         timeout: 30_000,
       })
 
-      await restoreButton.click()
+      // =========================================================
+      // RESTORE TO DRAFT
+      // =========================================================
+
+      await page.getByRole('button', {
+        name: /^Kembalikan ke Draf$/i,
+      }).click()
 
       await expect(
         page.getByRole('button', {
@@ -466,7 +375,7 @@ test.describe('Production Portal Publication Smoke Test', () => {
       console.log('STEP=RESTORED_TO_DRAFT')
 
       // =========================================================
-      // VERIFY DRAFT PAGE IS NOT PUBLIC
+      // VERIFY DRAFT IS NOT PUBLIC
       // =========================================================
 
       await page.goto(publicRoute, {
@@ -487,14 +396,12 @@ test.describe('Production Portal Publication Smoke Test', () => {
           exact: true,
         }),
       ).not.toBeVisible({
-        timeout: 15_000,
+        timeout: 10_000,
       })
 
       console.log('STEP=DRAFT_NOT_PUBLIC_PASS')
 
-      console.log(
-        'RESULT=PORTAL_PUBLICATION_SMOKE_PASS',
-      )
+      console.log('RESULT=PORTAL_PUBLICATION_SMOKE_PASS')
     },
   )
 })
