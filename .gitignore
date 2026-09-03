@@ -112,3 +112,7 @@ assets/source/
 .vercel
 .env*
 playwright-report-production/
+
+# Local production administration scripts
+scripts/provision-production-admin.mjs
+scripts/reset-production-admin-password.mjs
