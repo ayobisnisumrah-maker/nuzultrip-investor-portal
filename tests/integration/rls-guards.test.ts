@@ -8,7 +8,7 @@
  * tested where they are actually enforced.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { as, cleanup, closeDb, db, expectRejected } from './helpers/db'
+import { as, asCommitted, cleanup, closeDb, db, expectRejected } from './helpers/db'
 import { createFixtures, destroyFixtures, type Fixtures } from './helpers/fixtures'
 
 let fixtures: Fixtures
@@ -47,17 +47,25 @@ beforeAll(async () => {
   `
   if (!published) throw new Error('Failed to create the version.')
 
-  for (const status of ['review', 'approved', 'published']) {
-    await sql`
-      update public.document_versions set status = ${status}::public.publication_status
-      where id = ${published.id}
-    `
-  }
-  await sql`
-    update public.documents
-    set status = 'published', published_version_id = ${published.id}, current_version_id = ${published.id}
-    where id = ${document.id}
-  `
+  await asCommitted({ kind: 'authenticated', userId: fixtures.superAdmin.userId }, async (tx) => {
+    for (const status of ['review', 'approved', 'published']) {
+      await tx`
+          update public.document_versions set status = ${status}::public.publication_status
+          where id = ${published.id}
+        `
+    }
+    for (const status of ['review', 'approved']) {
+      await tx`
+          update public.documents set status = ${status}::public.publication_status
+          where id = ${document.id}
+        `
+    }
+    await tx`
+        update public.documents
+        set status = 'published', published_version_id = ${published.id}, current_version_id = ${published.id}
+        where id = ${document.id}
+      `
+  })
 
   const [draft] = await sql<{ id: string }[]>`
     insert into public.document_versions (document_id, title, content, created_by)

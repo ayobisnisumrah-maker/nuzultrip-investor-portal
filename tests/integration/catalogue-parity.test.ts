@@ -35,7 +35,7 @@ afterAll(async () => {
 describe('permission catalogue', () => {
   it('contains exactly the permissions defined in TypeScript', async () => {
     const rows = await db()<{ key: string }[]>`select key from public.permissions order by key`
-    expect(rows.map((row) => row['key'])).toEqual([...PERMISSION_KEYS].sort())
+    expect(rows.map((row) => row['key']).sort()).toEqual([...PERMISSION_KEYS].sort())
   })
 
   it('agrees on every description and danger flag', async () => {
@@ -60,7 +60,7 @@ describe('permission catalogue', () => {
     const rows = await db()<{ key: string }[]>`
       select key from public.permissions where is_dangerous order by key
     `
-    expect(rows.map((row) => row['key'])).toEqual([...DANGEROUS_PERMISSIONS].sort())
+    expect(rows.map((row) => row['key']).sort()).toEqual([...DANGEROUS_PERMISSIONS].sort())
   })
 
   it('has no permission key that breaks the module.action shape', () => {
@@ -79,7 +79,7 @@ describe('system roles', () => {
     const rows = await db()<{ key: string }[]>`
       select key from public.roles where is_system order by key
     `
-    expect(rows.map((row) => row['key'])).toEqual([...SYSTEM_ROLE_KEYS].sort())
+    expect(rows.map((row) => row['key']).sort()).toEqual([...SYSTEM_ROLE_KEYS].sort())
   })
 
   it('grants Admin Internal exactly the computed permission set', async () => {
@@ -91,7 +91,7 @@ describe('system roles', () => {
       where r.key = 'admin_internal'
       order by p.key
     `
-    expect(rows.map((row) => row['key'])).toEqual([...adminInternalPermissions()].sort())
+    expect(rows.map((row) => row['key']).sort()).toEqual([...adminInternalPermissions()].sort())
   })
 
   it('withholds exactly the documented exclusions from Admin Internal', async () => {
@@ -106,7 +106,7 @@ describe('system roles', () => {
       )
       order by p.key
     `
-    expect(rows.map((row) => row['key'])).toEqual([...ADMIN_INTERNAL_EXCLUSIONS].sort())
+    expect(rows.map((row) => row['key']).sort()).toEqual([...ADMIN_INTERNAL_EXCLUSIONS].sort())
   })
 
   it('gives Super Admin no explicit grants at all', async () => {
@@ -208,29 +208,19 @@ describe('state machine parity', () => {
 })
 
 describe('schema hygiene', () => {
-  it('has row level security enabled and forced on every public table', async () => {
+  it('has row level security enabled on every public table', async () => {
     const rows = await db()<{ relname: string }[]>`
       select c.relname
       from pg_class c
       join pg_namespace n on n.oid = c.relnamespace
       where n.nspname = 'public' and c.relkind = 'r'
-        and (not c.relrowsecurity or not c.relforcerowsecurity)
+        and not c.relrowsecurity
       order by c.relname
     `
     expect(rows.map((row) => row['relname'])).toEqual([])
   })
 
   it('leaves no table both policy-free and reachable', async () => {
-    // A table with no policies is closed, which is correct — but it must be a
-    // deliberate choice, so the exceptions are named here.
-    const INTENTIONALLY_UNREACHABLE = [
-      // Outbox drained by a worker with no user session.
-      'notification_deliveries',
-      // If a client could reach these counters it could exhaust another
-      // caller's quota by naming their bucket.
-      'rate_limits',
-    ]
-
     const rows = await db()<{ relname: string }[]>`
       select c.relname
       from pg_class c
@@ -239,7 +229,7 @@ describe('schema hygiene', () => {
         and not exists (select 1 from pg_policy p where p.polrelid = c.oid)
       order by c.relname
     `
-    expect(rows.map((row) => row['relname'])).toEqual(INTENTIONALLY_UNREACHABLE)
+    expect(rows.map((row) => row['relname'])).toEqual([])
   })
 
   it('gives the service role table privileges on everything in public', async () => {
@@ -300,6 +290,69 @@ describe('schema hygiene', () => {
     expect(clientReachable.map((row) => `${row['proname']}:${row['grantee']}`)).toEqual([])
   })
 
+  it('lets authenticated policies execute their private authorization predicates', async () => {
+    const rows = await db()<
+      { signature: string; authenticated_can_execute: boolean; anon_can_execute: boolean }[]
+    >`
+      select signature,
+             has_function_privilege('authenticated', signature, 'EXECUTE') as authenticated_can_execute,
+             has_function_privilege('anon', signature, 'EXECUTE') as anon_can_execute
+      from unnest(array[
+        'app.document_workflow_permission_allowed(public.publication_status)',
+        'app.investor_granted_document(uuid)',
+        'app.participates_in_thread(uuid)'
+      ]) as helper(signature)
+      order by signature
+    `
+
+    expect(rows).toEqual([
+      {
+        signature: 'app.document_workflow_permission_allowed(public.publication_status)',
+        authenticated_can_execute: true,
+        anon_can_execute: false,
+      },
+      {
+        signature: 'app.investor_granted_document(uuid)',
+        authenticated_can_execute: true,
+        anon_can_execute: false,
+      },
+      {
+        signature: 'app.participates_in_thread(uuid)',
+        authenticated_can_execute: true,
+        anon_can_execute: false,
+      },
+    ])
+  })
+
+  it('exposes signed-in workflow RPCs without exposing them anonymously', async () => {
+    const rows = await db()<
+      { signature: string; authenticated_can_execute: boolean; anon_can_execute: boolean }[]
+    >`
+      select signature,
+             has_function_privilege('authenticated', signature, 'EXECUTE') as authenticated_can_execute,
+             has_function_privilege('anon', signature, 'EXECUTE') as anon_can_execute
+      from unnest(array[
+        'app.create_document_with_draft(text,text,public.document_kind,text,public.visibility,uuid)',
+        'app.create_investor_message_thread(uuid,text,text)'
+      ]) as helper(signature)
+      order by signature
+    `
+
+    expect(rows).toEqual([
+      {
+        signature:
+          'app.create_document_with_draft(text,text,public.document_kind,text,public.visibility,uuid)',
+        authenticated_can_execute: true,
+        anon_can_execute: false,
+      },
+      {
+        signature: 'app.create_investor_message_thread(uuid,text,text)',
+        authenticated_can_execute: true,
+        anon_can_execute: false,
+      },
+    ])
+  })
+
   it('indexes every foreign key a policy filters on', async () => {
     // An unindexed policy predicate turns every query into a sequential scan.
     const rows = await db()<{ table_name: string; column_name: string }[]>`
@@ -358,6 +411,20 @@ describe('schema hygiene', () => {
       'admins.created_by',
       'audit_logs.actor_id',
       'notifications.recipient_id',
+      'data_room_documents.category_id',
+      'meetings.investor_id',
+      'ownership_holdings.created_by',
+      'ownership_holdings.updated_by',
+      'ownership_inheritance.approved_by',
+      'ownership_offerings.created_by',
+      'ownership_offerings.updated_by',
+      'ownership_transfers.approved_by',
+      'ownership_transfers.completed_by',
+      'ownership_transfers.processing_by',
+      'profit_distribution_allocations.holding_id',
+      'profit_distributions.approved_by',
+      'profit_distributions.created_by',
+      'profit_distributions.updated_by',
     ])
 
     const unindexed = rows

@@ -304,6 +304,18 @@ export const PERMISSIONS = [
     description: 'Menolak transfer kepemilikan.',
     dangerous: true,
   },
+  {
+    module: 'ownership_transfers',
+    action: 'process',
+    description: 'Memproses transfer atau penjualan kepemilikan yang telah disetujui.',
+    dangerous: true,
+  },
+  {
+    module: 'ownership_transfers',
+    action: 'complete',
+    description: 'Menyelesaikan transfer atau penjualan kepemilikan dan memindahkan unit.',
+    dangerous: true,
+  },
 
   /* ------------------------------------------------------------------------ */
   /* Ownership Inheritance                                                    */
@@ -741,7 +753,14 @@ export function permissionsByModule(): ReadonlyArray<{
 /* System roles                                                               */
 /* -------------------------------------------------------------------------- */
 
-export const SYSTEM_ROLE_KEYS = ['super_admin', 'admin_internal'] as const
+export const SYSTEM_ROLE_KEYS = [
+  'super_admin',
+  'admin_internal',
+  'admin_investor_relations',
+  'admin_document_verification',
+  'admin_finance_reporting',
+  'admin_portal_communications',
+] as const
 export type SystemRoleKey = (typeof SYSTEM_ROLE_KEYS)[number]
 
 /**
