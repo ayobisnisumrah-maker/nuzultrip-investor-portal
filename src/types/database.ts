@@ -25,9 +25,21 @@ export type Database = {
     }
     Functions: {
       admin_role_key: { Args: never; Returns: string }
+      approve_ownership_sale: {
+        Args: { p_transfer_id: string }
+        Returns: undefined
+      }
       assert_role_assignable: {
         Args: { p_role_id: string }
         Returns: undefined
+      }
+      cancel_ownership_sale_request: {
+        Args: { p_transfer_id: string }
+        Returns: undefined
+      }
+      complete_ownership_sale: {
+        Args: { p_transfer_id: string }
+        Returns: string
       }
       create_document_with_draft: {
         Args: {
@@ -53,6 +65,15 @@ export type Database = {
       }
       create_investor_message_thread: {
         Args: { p_body: string; p_investor_id: string; p_subject: string }
+        Returns: string
+      }
+      create_ownership_sale_request: {
+        Args: {
+          p_holding_id: string
+          p_notes?: string
+          p_requested_unit_price: number
+          p_units: number
+        }
         Returns: string
       }
       current_actor_type: { Args: never; Returns: string }
@@ -87,9 +108,37 @@ export type Database = {
       }
       is_admin: { Args: never; Returns: boolean }
       is_investor: { Args: never; Returns: boolean }
+      list_admin_ownership_sales: {
+        Args: never
+        Returns: Database["public"]["Tables"]["ownership_transfers"]["Row"][]
+        SetofOptions: {
+          from: "*"
+          to: "ownership_transfers"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      list_my_ownership_sales: {
+        Args: never
+        Returns: Database["public"]["Tables"]["ownership_transfers"]["Row"][]
+        SetofOptions: {
+          from: "*"
+          to: "ownership_transfers"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       participates_in_thread: {
         Args: { p_thread_id: string }
         Returns: boolean
+      }
+      process_ownership_sale: {
+        Args: {
+          p_agreed_unit_price: number
+          p_to_investor_id: string
+          p_transfer_id: string
+        }
+        Returns: undefined
       }
       publication_transition_allowed: {
         Args: {
@@ -101,6 +150,10 @@ export type Database = {
       published_change_is_referential: {
         Args: { p_new: Json; p_old: Json }
         Returns: boolean
+      }
+      reject_ownership_sale: {
+        Args: { p_reason: string; p_transfer_id: string }
+        Returns: undefined
       }
       topic_admin: { Args: never; Returns: string }
       topic_all_investors: { Args: never; Returns: string }
@@ -2274,53 +2327,71 @@ export type Database = {
       }
       ownership_transfers: {
         Row: {
+          agreed_unit_price: number | null
           approved_at: string | null
           approved_by: string | null
           completed_at: string | null
+          completed_by: string | null
           created_at: string
           eligible_at: string
           from_investor_id: string
           holding_id: string
           id: string
           notes: string | null
+          processing_at: string | null
+          processing_by: string | null
           rejection_reason: string | null
           requested_at: string
+          requested_unit_price: number | null
           status: Database["public"]["Enums"]["ownership_transfer_status"]
           to_investor_id: string | null
+          transfer_kind: string
           units: number
           updated_at: string
         }
         Insert: {
+          agreed_unit_price?: number | null
           approved_at?: string | null
           approved_by?: string | null
           completed_at?: string | null
+          completed_by?: string | null
           created_at?: string
           eligible_at: string
           from_investor_id: string
           holding_id: string
           id?: string
           notes?: string | null
+          processing_at?: string | null
+          processing_by?: string | null
           rejection_reason?: string | null
           requested_at?: string
+          requested_unit_price?: number | null
           status?: Database["public"]["Enums"]["ownership_transfer_status"]
           to_investor_id?: string | null
+          transfer_kind?: string
           units: number
           updated_at?: string
         }
         Update: {
+          agreed_unit_price?: number | null
           approved_at?: string | null
           approved_by?: string | null
           completed_at?: string | null
+          completed_by?: string | null
           created_at?: string
           eligible_at?: string
           from_investor_id?: string
           holding_id?: string
           id?: string
           notes?: string | null
+          processing_at?: string | null
+          processing_by?: string | null
           rejection_reason?: string | null
           requested_at?: string
+          requested_unit_price?: number | null
           status?: Database["public"]["Enums"]["ownership_transfer_status"]
           to_investor_id?: string | null
+          transfer_kind?: string
           units?: number
           updated_at?: string
         }
@@ -2328,6 +2399,13 @@ export type Database = {
           {
             foreignKeyName: "ownership_transfers_approved_by_fkey"
             columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "admins"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ownership_transfers_completed_by_fkey"
+            columns: ["completed_by"]
             isOneToOne: false
             referencedRelation: "admins"
             referencedColumns: ["id"]
@@ -2344,6 +2422,13 @@ export type Database = {
             columns: ["holding_id"]
             isOneToOne: false
             referencedRelation: "ownership_holdings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ownership_transfers_processing_by_fkey"
+            columns: ["processing_by"]
+            isOneToOne: false
+            referencedRelation: "admins"
             referencedColumns: ["id"]
           },
           {
@@ -3500,6 +3585,7 @@ export type Database = {
       ownership_transfer_status:
         | "pending"
         | "approved"
+        | "processing"
         | "rejected"
         | "completed"
         | "cancelled"
@@ -3747,6 +3833,7 @@ export const Constants = {
       ownership_transfer_status: [
         "pending",
         "approved",
+        "processing",
         "rejected",
         "completed",
         "cancelled",
