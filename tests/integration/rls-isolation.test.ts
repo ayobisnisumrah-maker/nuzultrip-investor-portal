@@ -13,7 +13,7 @@
 import { randomUUID } from 'node:crypto'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import type { Sql } from 'postgres'
-import { as, cleanup, closeDb, db, expectRejected } from './helpers/db'
+import { as, asCommitted, cleanup, closeDb, db, expectRejected } from './helpers/db'
 import { createFixtures, destroyFixtures, type Fixtures } from './helpers/fixtures'
 
 let fixtures: Fixtures
@@ -54,19 +54,22 @@ async function createContent(sql: Sql, f: Fixtures): Promise<Content> {
     `
     if (!version) throw new Error('Failed to create the document version.')
 
-    // Walk the real publication path rather than inserting a published row.
-    for (const status of ['review', 'approved', 'published']) {
-      await sql`
-        update public.document_versions
-        set status = ${status}::public.publication_status
-        where id = ${version.id}
-      `
-    }
-    await sql`
-      update public.documents
-      set status = 'published', published_version_id = ${version.id}, current_version_id = ${version.id}
-      where id = ${document.id}
-    `
+    // Walk the real authenticated publication path rather than bypassing the
+    // permission-aware lifecycle trigger with the fixture connection.
+    await asCommitted({ kind: 'authenticated', userId: f.superAdmin.userId }, async (tx) => {
+      for (const status of ['review', 'approved', 'published']) {
+        await tx`
+            update public.document_versions
+            set status = ${status}::public.publication_status
+            where id = ${version.id}
+          `
+      }
+      await tx`
+          update public.documents
+          set status = 'published', published_version_id = ${version.id}, current_version_id = ${version.id}
+          where id = ${document.id}
+        `
+    })
     return { documentId: document.id, versionId: version.id }
   }
 

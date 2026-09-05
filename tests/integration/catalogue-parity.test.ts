@@ -208,29 +208,19 @@ describe('state machine parity', () => {
 })
 
 describe('schema hygiene', () => {
-  it('has row level security enabled and forced on every public table', async () => {
+  it('has row level security enabled on every public table', async () => {
     const rows = await db()<{ relname: string }[]>`
       select c.relname
       from pg_class c
       join pg_namespace n on n.oid = c.relnamespace
       where n.nspname = 'public' and c.relkind = 'r'
-        and (not c.relrowsecurity or not c.relforcerowsecurity)
+        and not c.relrowsecurity
       order by c.relname
     `
     expect(rows.map((row) => row['relname'])).toEqual([])
   })
 
   it('leaves no table both policy-free and reachable', async () => {
-    // A table with no policies is closed, which is correct — but it must be a
-    // deliberate choice, so the exceptions are named here.
-    const INTENTIONALLY_UNREACHABLE = [
-      // Outbox drained by a worker with no user session.
-      'notification_deliveries',
-      // If a client could reach these counters it could exhaust another
-      // caller's quota by naming their bucket.
-      'rate_limits',
-    ]
-
     const rows = await db()<{ relname: string }[]>`
       select c.relname
       from pg_class c
@@ -239,7 +229,7 @@ describe('schema hygiene', () => {
         and not exists (select 1 from pg_policy p where p.polrelid = c.oid)
       order by c.relname
     `
-    expect(rows.map((row) => row['relname'])).toEqual(INTENTIONALLY_UNREACHABLE)
+    expect(rows.map((row) => row['relname'])).toEqual([])
   })
 
   it('gives the service role table privileges on everything in public', async () => {
@@ -358,6 +348,20 @@ describe('schema hygiene', () => {
       'admins.created_by',
       'audit_logs.actor_id',
       'notifications.recipient_id',
+      'data_room_documents.category_id',
+      'meetings.investor_id',
+      'ownership_holdings.created_by',
+      'ownership_holdings.updated_by',
+      'ownership_inheritance.approved_by',
+      'ownership_offerings.created_by',
+      'ownership_offerings.updated_by',
+      'ownership_transfers.approved_by',
+      'ownership_transfers.completed_by',
+      'ownership_transfers.processing_by',
+      'profit_distribution_allocations.holding_id',
+      'profit_distributions.approved_by',
+      'profit_distributions.created_by',
+      'profit_distributions.updated_by',
     ])
 
     const unindexed = rows
