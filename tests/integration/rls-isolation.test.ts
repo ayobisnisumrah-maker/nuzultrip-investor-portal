@@ -64,6 +64,12 @@ async function createContent(sql: Sql, f: Fixtures): Promise<Content> {
             where id = ${version.id}
           `
       }
+      for (const status of ['review', 'approved']) {
+        await tx`
+            update public.documents set status = ${status}::public.publication_status
+            where id = ${document.id}
+          `
+      }
       await tx`
           update public.documents
           set status = 'published', published_version_id = ${version.id}, current_version_id = ${version.id}
