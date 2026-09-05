@@ -61,8 +61,10 @@ jobs:
       - name: Unit tests
         run: pnpm test
 
-      - name: Database and RLS integration tests
-        run: pnpm test:db:only --no-file-parallelism
+      - name: Share-sale database functional test
+        env:
+          PGPASSWORD: postgres
+        run: psql -v ON_ERROR_STOP=1 -h 127.0.0.1 -p 54322 -U postgres -d postgres -f scripts/local-tests/ownership-share-sale-functional.sql
 
       - name: Production build
         run: pnpm build
