@@ -40,6 +40,7 @@ export function PortalPageEditorLive({
   const router = useRouter()
   const [pending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
+  const editorCanUpdate = canUpdate && pageStatus === 'draft'
 
   function startRevision() {
     setError(null)
@@ -94,10 +95,21 @@ export function PortalPageEditorLive({
         </div>
       ) : null}
 
+      {pageStatus === 'review' || pageStatus === 'approved' ? (
+        <div className="border-border bg-muted/30 rounded-xl border p-4">
+          <p className="text-fg text-sm font-semibold">
+            Konten dikunci selama proses {pageStatus === 'review' ? 'peninjauan' : 'persetujuan'}
+          </p>
+          <p className="text-fg-muted mt-1 text-xs leading-5">
+            Kembalikan halaman ke Draf jika masih ada konten yang perlu diubah.
+          </p>
+        </div>
+      ) : null}
+
       <PortalPageEditor
         pageId={pageId}
         sections={sections}
-        canUpdate={canUpdate}
+        canUpdate={editorCanUpdate}
         canPublish={canPublish}
         pageStatus={pageStatus}
       />
