@@ -126,7 +126,7 @@ async function loadPublishedPortalPage(slug: string) {
     .select('id, section_kind, position, anchor_id, published_version_id')
     .eq('page_id', page.id)
     .eq('status', 'published')
-    .eq('published_is_visible', true)
+    .eq('is_visible', true)
     .order('position', { ascending: true })
 
   if (sectionError) {
