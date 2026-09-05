@@ -35,7 +35,7 @@ afterAll(async () => {
 describe('permission catalogue', () => {
   it('contains exactly the permissions defined in TypeScript', async () => {
     const rows = await db()<{ key: string }[]>`select key from public.permissions order by key`
-    expect(rows.map((row) => row['key'])).toEqual([...PERMISSION_KEYS].sort())
+    expect(rows.map((row) => row['key']).sort()).toEqual([...PERMISSION_KEYS].sort())
   })
 
   it('agrees on every description and danger flag', async () => {
@@ -60,7 +60,7 @@ describe('permission catalogue', () => {
     const rows = await db()<{ key: string }[]>`
       select key from public.permissions where is_dangerous order by key
     `
-    expect(rows.map((row) => row['key'])).toEqual([...DANGEROUS_PERMISSIONS].sort())
+    expect(rows.map((row) => row['key']).sort()).toEqual([...DANGEROUS_PERMISSIONS].sort())
   })
 
   it('has no permission key that breaks the module.action shape', () => {
@@ -79,7 +79,7 @@ describe('system roles', () => {
     const rows = await db()<{ key: string }[]>`
       select key from public.roles where is_system order by key
     `
-    expect(rows.map((row) => row['key'])).toEqual([...SYSTEM_ROLE_KEYS].sort())
+    expect(rows.map((row) => row['key']).sort()).toEqual([...SYSTEM_ROLE_KEYS].sort())
   })
 
   it('grants Admin Internal exactly the computed permission set', async () => {
@@ -91,7 +91,7 @@ describe('system roles', () => {
       where r.key = 'admin_internal'
       order by p.key
     `
-    expect(rows.map((row) => row['key'])).toEqual([...adminInternalPermissions()].sort())
+    expect(rows.map((row) => row['key']).sort()).toEqual([...adminInternalPermissions()].sort())
   })
 
   it('withholds exactly the documented exclusions from Admin Internal', async () => {
@@ -106,7 +106,7 @@ describe('system roles', () => {
       )
       order by p.key
     `
-    expect(rows.map((row) => row['key'])).toEqual([...ADMIN_INTERNAL_EXCLUSIONS].sort())
+    expect(rows.map((row) => row['key']).sort()).toEqual([...ADMIN_INTERNAL_EXCLUSIONS].sort())
   })
 
   it('gives Super Admin no explicit grants at all', async () => {
