@@ -3,6 +3,8 @@ import type { Metadata } from 'next'
 import { INVESTOR_STATUS_DESCRIPTIONS } from '@/core/investors/status'
 import { topics } from '@/core/realtime/events'
 import { RealtimeRefresher } from '@/features/realtime/realtime-refresher'
+import { InvestorFinancialDashboard } from '@/features/investor/investor-financial-dashboard'
+import { getPublishedFinancialDashboardData } from '@/server/dashboard/financial-dashboard-service'
 import { requireInvestorPage } from '@/server/auth/page-guards'
 import { getServerSupabase } from '@/server/supabase/server'
 import { formatDateTime } from '@/lib/format'
@@ -36,6 +38,7 @@ export default async function InvestorOverviewPage() {
   }> = []
   let documentCount = 0
   let financialReportCount = 0
+  let financialDashboard = null
 
   if (principal.hasDataAccess) {
     const [{ data: holdingRows }, { count: documentsCount }, { count: reportsCount }] =
@@ -59,6 +62,7 @@ export default async function InvestorOverviewPage() {
     holdings = holdingRows ?? []
     documentCount = documentsCount ?? 0
     financialReportCount = reportsCount ?? 0
+    financialDashboard = await getPublishedFinancialDashboardData(supabase)
   }
 
   const totalUnits = holdings.reduce((sum, holding) => sum + Number(holding.units), 0)
@@ -146,6 +150,34 @@ export default async function InvestorOverviewPage() {
           </Card>
         </div>
       )}
+
+      {principal.hasDataAccess && financialDashboard ? (
+        <section className="space-y-4">
+          <div>
+            <p className="text-caption text-fg-subtle font-medium">
+              Kinerja Perusahaan
+            </p>
+            <h2 className="font-display text-heading-md text-fg mt-1">
+              Ringkasan Keuangan
+            </h2>
+            <p className="text-body-sm text-fg-muted mt-1">
+              Data berdasarkan laporan keuangan terbaru yang telah
+              dipublikasikan kepada investor.
+            </p>
+          </div>
+
+          <InvestorFinancialDashboard data={financialDashboard} />
+
+          <div className="flex justify-end">
+            <Link
+              href="/investor/financials"
+              className="text-body-sm text-link font-medium hover:underline"
+            >
+              Lihat seluruh laporan keuangan →
+            </Link>
+          </div>
+        </section>
+      ) : null}
 
       <Card>
         <CardHeader>
