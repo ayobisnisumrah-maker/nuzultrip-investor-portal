@@ -33,7 +33,12 @@ function requireUuidResult(data: unknown, operation: string): string {
 }
 
 export type OwnershipTransferStatus =
-  Database['public']['Enums']['ownership_transfer_status']
+  | 'pending'
+  | 'approved'
+  | 'processing'
+  | 'rejected'
+  | 'completed'
+  | 'cancelled'
 
 export type OwnershipSaleTransfer = {
   id: string
