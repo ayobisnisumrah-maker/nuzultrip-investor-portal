@@ -324,6 +324,35 @@ describe('schema hygiene', () => {
     ])
   })
 
+  it('exposes signed-in workflow RPCs without exposing them anonymously', async () => {
+    const rows = await db()<
+      { signature: string; authenticated_can_execute: boolean; anon_can_execute: boolean }[]
+    >`
+      select signature,
+             has_function_privilege('authenticated', signature, 'EXECUTE') as authenticated_can_execute,
+             has_function_privilege('anon', signature, 'EXECUTE') as anon_can_execute
+      from unnest(array[
+        'app.create_document_with_draft(text,text,public.document_kind,text,public.visibility,uuid)',
+        'app.create_investor_message_thread(uuid,text,text)'
+      ]) as helper(signature)
+      order by signature
+    `
+
+    expect(rows).toEqual([
+      {
+        signature:
+          'app.create_document_with_draft(text,text,public.document_kind,text,public.visibility,uuid)',
+        authenticated_can_execute: true,
+        anon_can_execute: false,
+      },
+      {
+        signature: 'app.create_investor_message_thread(uuid,text,text)',
+        authenticated_can_execute: true,
+        anon_can_execute: false,
+      },
+    ])
+  })
+
   it('indexes every foreign key a policy filters on', async () => {
     // An unindexed policy predicate turns every query into a sequential scan.
     const rows = await db()<{ table_name: string; column_name: string }[]>`
