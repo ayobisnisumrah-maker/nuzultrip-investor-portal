@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 
+import type { Permission } from '@/core/rbac/permissions'
 import { defineAction } from '@/server/auth/guards'
 import {
   approveOwnershipSale,
@@ -132,7 +133,7 @@ export const rejectOwnershipSaleAction = defineAction({
 })
 
 export const processOwnershipSaleAction = defineAction({
-  access: { permission: 'ownership_transfers.process' },
+  access: { permission: 'ownership_transfers.process' as Permission },
   input: processSaleSchema,
   audit: {
     action: 'ownership_sale.process',
@@ -154,7 +155,7 @@ export const processOwnershipSaleAction = defineAction({
 })
 
 export const completeOwnershipSaleAction = defineAction({
-  access: { permission: 'ownership_transfers.complete' },
+  access: { permission: 'ownership_transfers.complete' as Permission },
   input: transferIdSchema,
   audit: {
     action: 'ownership_sale.complete',
