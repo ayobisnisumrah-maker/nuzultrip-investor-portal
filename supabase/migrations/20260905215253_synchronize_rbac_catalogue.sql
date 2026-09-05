@@ -155,3 +155,28 @@ grant execute on function app.investor_granted_document(uuid) to authenticated;
 grant execute on function app.participates_in_thread(uuid) to authenticated;
 grant execute on function app.document_workflow_permission_allowed(public.publication_status)
   to authenticated;
+
+-- These two signed-in workflow RPCs are called by permission-gated Server
+-- Actions. Their own SECURITY DEFINER bodies repeat authorization checks; anon
+-- remains denied. A remote schema snapshot accidentally removed these grants.
+revoke execute on function app.create_document_with_draft(
+  text,
+  text,
+  public.document_kind,
+  text,
+  public.visibility,
+  uuid
+) from public, anon;
+revoke execute on function app.create_investor_message_thread(uuid, text, text)
+  from public, anon;
+
+grant execute on function app.create_document_with_draft(
+  text,
+  text,
+  public.document_kind,
+  text,
+  public.visibility,
+  uuid
+) to authenticated;
+grant execute on function app.create_investor_message_thread(uuid, text, text)
+  to authenticated;
