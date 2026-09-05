@@ -1,4 +1,5 @@
 import { serviceClient } from './helpers/accounts'
+import { assertLocalSupabaseUrl } from './helpers/test-env'
 
 /**
  * Clears the rate-limit counters before the suite runs.
@@ -13,6 +14,9 @@ import { serviceClient } from './helpers/accounts'
  * the production value stays exactly as it is.
  */
 export default async function globalSetup(): Promise<void> {
+  // This setup deletes shared counters. Keep the guard immediately adjacent to
+  // the destructive operation, even though playwright.config validates too.
+  assertLocalSupabaseUrl(process.env.NEXT_PUBLIC_SUPABASE_URL)
   const supabase = serviceClient()
 
   const { error } = await supabase

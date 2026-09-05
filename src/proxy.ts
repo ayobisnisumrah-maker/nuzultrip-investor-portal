@@ -15,14 +15,20 @@ function createNonce(): string {
   return btoa(binary)
 }
 
-function buildCsp(nonce: string, isDev: boolean): string {
+function realtimeWebSocketOrigin(supabaseUrl: string): string {
+  const url = new URL(supabaseUrl)
+  url.protocol = url.protocol === 'http:' ? 'ws:' : 'wss:'
+  return url.origin
+}
+
+function buildCsp(nonce: string, isDev: boolean, supabaseUrl: string): string {
   return [
     `default-src 'self'`,
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ''}`,
     `style-src 'self' 'unsafe-inline'`,
     `img-src 'self' data: blob: https:`,
     `font-src 'self' data:`,
-    `connect-src 'self' https: wss:`,
+    `connect-src 'self' https: wss: ${realtimeWebSocketOrigin(supabaseUrl)}`,
     `worker-src 'self' blob:`,
     `media-src 'self' https:`,
     `object-src 'none'`,
@@ -40,7 +46,7 @@ export function proxy(request: NextRequest) {
   const environment = getClientEnv()
   const isDev = environment.NEXT_PUBLIC_APP_ENV === 'development'
 
-  const csp = buildCsp(nonce, isDev)
+  const csp = buildCsp(nonce, isDev, environment.NEXT_PUBLIC_SUPABASE_URL)
 
   const requestHeaders = new Headers(request.headers)
 

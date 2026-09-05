@@ -6,6 +6,7 @@ import {
 } from '../../../src/core/rate-limit/policy'
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { expect, type Page } from '@playwright/test'
+import { assertLocalSupabaseUrl } from './test-env'
 
 /**
  * Test account helpers.
@@ -27,6 +28,7 @@ export const TEST_PASSWORD = 'KataSandiUjiE2E2026'
 let client: SupabaseClient | null = null
 
 export function serviceClient(): SupabaseClient {
+  assertLocalSupabaseUrl(SUPABASE_URL)
   if (!SERVICE_KEY) {
     throw new Error(
       'SUPABASE_SERVICE_ROLE_KEY is not set. The E2E suite provisions its own accounts.',

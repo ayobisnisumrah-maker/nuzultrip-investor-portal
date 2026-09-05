@@ -116,3 +116,6 @@ playwright-report-production/
 # Local production administration scripts
 scripts/provision-production-admin.mjs
 scripts/reset-production-admin-password.mjs
+
+# Local E2E environment
+.env.test.local

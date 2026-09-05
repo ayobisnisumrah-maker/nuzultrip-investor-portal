@@ -1,4 +1,6 @@
-﻿import { adminWithPermission } from '@/server/auth/page-guards'
+import Link from 'next/link'
+
+import { adminWithPermission } from '@/server/auth/page-guards'
 
 export default async function FinancialsPage() {
   const principal = await adminWithPermission('financial_periods.view', '/admin/financials')
@@ -29,7 +31,7 @@ export default async function FinancialsPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <a
+        <Link
           href="/admin/financials/periods"
           className="border-border bg-surface hover:border-primary-solid rounded-xl border p-5 transition"
         >
@@ -39,9 +41,9 @@ export default async function FinancialsPage() {
             Kelola periode pelaporan, status periode, dan siklus pembukaan hingga penguncian
             periode.
           </p>
-        </a>
+        </Link>
 
-        <a
+        <Link
           href="/admin/financials/reports"
           className="border-border bg-surface hover:border-primary-solid rounded-xl border p-5 transition"
         >
@@ -50,7 +52,7 @@ export default async function FinancialsPage() {
           <p className="text-body-sm text-fg-muted mt-2">
             Kelola laporan keuangan, proses review, approval, dan publikasi kepada investor.
           </p>
-        </a>
+        </Link>
       </div>
     </div>
   )

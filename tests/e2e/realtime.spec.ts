@@ -49,6 +49,18 @@ async function openContext(page: Page): Promise<void> {
   await page.waitForLoadState('networkidle')
 }
 
+function captureReceivedWebSocketFrames(page: Page): string[] {
+  const frames: string[] = []
+  page.on('websocket', (socket) => {
+    socket.on('framereceived', (frame) => {
+      frames.push(
+        typeof frame.payload === 'string' ? frame.payload : frame.payload.toString('utf8'),
+      )
+    })
+  })
+  return frames
+}
+
 test.describe('realtime propagation between browsers', () => {
   test('an application submitted in one browser appears on the admin dashboard in another', async ({
     browser,
@@ -59,6 +71,7 @@ test.describe('realtime propagation between browsers', () => {
     // Browser A — an administrator watching the dashboard.
     const adminContext = await browser.newContext()
     const adminPage = await adminContext.newPage()
+    const adminFrames = captureReceivedWebSocketFrames(adminPage)
     await signIn(adminPage, admin, '/admin')
     await openContext(adminPage)
     await waitForRealtime(adminPage)
@@ -80,6 +93,18 @@ test.describe('realtime propagation between browsers', () => {
         timeout: 30_000,
       })
       .toBe(before + 1)
+    await expect
+      .poll(
+        () =>
+          adminFrames.some(
+            (frame) =>
+              frame.includes('admin:global') &&
+              frame.includes('investor.applied') &&
+              frame.includes(applicant.userId),
+          ),
+        { message: 'admin must receive the application through its private Realtime channel' },
+      )
+      .toBe(true)
 
     await visitorContext.close()
     await adminContext.close()
@@ -92,6 +117,7 @@ test.describe('realtime propagation between browsers', () => {
     // Browser A — the investor, waiting.
     const investorContext = await browser.newContext()
     const investorPage = await investorContext.newPage()
+    const investorFrames = captureReceivedWebSocketFrames(investorPage)
     await signIn(investorPage, investor, '/investor')
     await openContext(investorPage)
     await waitForRealtime(investorPage)
@@ -105,6 +131,18 @@ test.describe('realtime propagation between browsers', () => {
     // No reload, no navigation, no click.
     await expect(investorPage.locator('main')).toContainText('Aktif', { timeout: 30_000 })
     await expect(investorPage.locator('main')).toContainText('Riwayat status')
+    await expect
+      .poll(
+        () =>
+          investorFrames.some(
+            (frame) =>
+              frame.includes(`investor:${investor.userId}`) &&
+              frame.includes('investor.status_changed') &&
+              frame.includes(investor.userId),
+          ),
+        { message: 'investor must receive approval through its own private Realtime channel' },
+      )
+      .toBe(true)
 
     await investorContext.close()
   })
@@ -120,12 +158,7 @@ test.describe('realtime propagation between browsers', () => {
     const bystanderContext = await browser.newContext()
     const bystanderPage = await bystanderContext.newPage()
 
-    const frames: string[] = []
-    bystanderPage.on('websocket', (socket) => {
-      socket.on('framereceived', (frame) => {
-        if (typeof frame.payload === 'string') frames.push(frame.payload)
-      })
-    })
+    const frames = captureReceivedWebSocketFrames(bystanderPage)
 
     await signIn(bystanderPage, bystander, '/investor')
     await openContext(bystanderPage)

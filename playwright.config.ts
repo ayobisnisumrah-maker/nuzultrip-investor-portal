@@ -1,10 +1,11 @@
-import { existsSync } from 'node:fs'
 import { defineConfig, devices } from '@playwright/test'
+import { assertLocalSupabaseUrl, loadE2EEnv } from './tests/e2e/helpers/test-env'
 
-// The suite provisions its own accounts through the service role, so the test
-// process needs the same configuration the application has. Next loads
-// `.env.local` for the app; nothing loads it for Playwright.
-if (existsSync('.env.local')) process.loadEnvFile('.env.local')
+// Playwright and its web server must agree on one environment. Prefer the
+// gitignored local-E2E file and only fall back to the normal development file.
+// Never load both: NEXT_PUBLIC_* values are frozen into the production bundle.
+loadE2EEnv()
+assertLocalSupabaseUrl(process.env.NEXT_PUBLIC_SUPABASE_URL)
 
 const PORT = Number(process.env.PORT ?? 3000)
 const baseURL = process.env.E2E_BASE_URL ?? `http://localhost:${PORT}`
@@ -68,7 +69,9 @@ export default defineConfig({
      */
     command: 'pnpm start',
     url: baseURL,
-    reuseExistingServer: !process.env.CI,
+    // Reusing a developer server can silently connect the browser and server
+    // to a bundle built with `.env.local` (including production Supabase).
+    reuseExistingServer: false,
     timeout: 180_000,
   },
 })

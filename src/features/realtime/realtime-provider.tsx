@@ -74,6 +74,8 @@ export function RealtimeProvider({
   // never tears down and re-establishes the channel.
   const handlers = useRef(new Map<string, Set<EventHandler>>())
   const channels = useRef(new Map<string, RealtimeChannel>())
+  const subscribedTopics = useRef(new Set<string>())
+  const hasConnected = useRef(false)
   const attempt = useRef(0)
   const retryTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -105,6 +107,7 @@ export function RealtimeProvider({
     if (topics.length === 0) return
 
     const supabase = getBrowserSupabase()
+    const expectedTopicCount = new Set(topics).size
     let cancelled = false
 
     const openChannels = async () => {
@@ -120,27 +123,49 @@ export function RealtimeProvider({
         if (channels.current.has(topic)) continue
 
         const channel = supabase
-          .channel(topic, { config: { private: true } })
+          .channel(topic, {
+            config: { private: true, broadcast: { replication_ready: true } },
+          })
           // A single wildcard listener: the event kind is inside the payload,
           // so registering one handler per kind would only add bookkeeping.
           .on('broadcast', { event: '*' }, (message) => {
             dispatch(topic, message['payload'])
           })
+          .on('system', {}, (message) => {
+            if (cancelled || message['extension'] !== 'system') return
+
+            if (message['status'] === 'ok') {
+              const alreadySubscribed = subscribedTopics.current.has(topic)
+              subscribedTopics.current.add(topic)
+              if (!alreadySubscribed && subscribedTopics.current.size === expectedTopicCount) {
+                const isRecovery = hasConnected.current
+                hasConnected.current = true
+                setState('connected')
+                if (isRecovery) {
+                  // A socket that was down may have missed events, so recovery
+                  // is "assume stale" rather than "assume caught up".
+                  setResumeToken((token) => token + 1)
+                }
+              }
+            } else if (message['status'] === 'error') {
+              subscribedTopics.current.delete(topic)
+              setState('degraded')
+              scheduleRetry()
+            }
+          })
           .subscribe((status) => {
             if (cancelled) return
             if (status === REALTIME_SUBSCRIBE_STATES.SUBSCRIBED) {
               attempt.current = 0
-              setState('connected')
-              // A socket that was down may have missed events, so recovery is
-              // "assume stale" rather than "assume caught up".
-              setResumeToken((token) => token + 1)
             } else if (
               status === REALTIME_SUBSCRIBE_STATES.CHANNEL_ERROR ||
               status === REALTIME_SUBSCRIBE_STATES.TIMED_OUT
             ) {
+              subscribedTopics.current.delete(topic)
               setState('degraded')
               scheduleRetry()
             } else if (status === REALTIME_SUBSCRIBE_STATES.CLOSED) {
+              subscribedTopics.current.delete(topic)
               setState((current) => (current === 'connected' ? 'degraded' : current))
             }
           })
@@ -164,6 +189,7 @@ export function RealtimeProvider({
         void supabase.removeChannel(channel)
       }
       channels.current.clear()
+      subscribedTopics.current.clear()
     }
 
     void openChannels()
