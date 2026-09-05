@@ -2,10 +2,19 @@
 -- Portal live revision workflow
 --
 -- Allows a published page to remain publicly available while editors create a
--- new draft revision. Publication is still atomic: the currently published
--- versions remain public until the page progresses through review/approval and
--- the replacement current versions are published.
+-- new draft revision. Publication is atomic: the currently published content
+-- and visibility remain public until the replacement revision is published.
 -- =============================================================================
+
+alter table public.portal_sections
+  add column if not exists published_is_visible boolean not null default false;
+
+update public.portal_sections
+set published_is_visible = (published_version_id is not null and is_visible)
+where published_is_visible is distinct from (published_version_id is not null and is_visible);
+
+comment on column public.portal_sections.published_is_visible is
+  'Visibility of the last published snapshot. Draft visibility edits do not affect the public portal until publication.';
 
 create or replace function app.transition_portal_page(
   p_page_id uuid,
@@ -112,11 +121,11 @@ begin
   elsif p_to_status = 'draft' then
     if v_page.status = 'archived' then
       update public.portal_sections s
-      set status = 'draft', published_version_id = null
+      set status = 'draft', published_version_id = null, published_is_visible = false
       where s.page_id = v_page.id;
     else
-      -- Do not touch published_version_id. This keeps the live public page
-      -- intact while the new current version is edited.
+      -- Keep published_version_id and published_is_visible untouched. The
+      -- public snapshot remains live while current versions are edited.
       update public.portal_section_versions v
       set status = 'draft', approved_by = null, approved_at = null
       from public.portal_sections s
@@ -149,9 +158,15 @@ begin
       and s.current_version_id = v.id;
 
     update public.portal_sections s
-    set status = 'published', published_version_id = s.current_version_id
+    set
+      status = 'published',
+      published_version_id = case
+        when s.is_visible then s.current_version_id
+        else s.published_version_id
+      end,
+      published_is_visible = s.is_visible
     where s.page_id = v_page.id
-      and s.is_visible;
+      and (s.current_version_id is not null or s.published_version_id is not null);
 
   elsif p_to_status = 'archived' then
     update public.portal_sections s
@@ -163,8 +178,8 @@ begin
   update public.portal_pages
   set
     status = p_to_status,
-    -- Keep published_at while a published page is being revised as draft.
-    -- Clear only when the page is explicitly archived.
+    -- Keep published_at while a published page is being revised as draft,
+    -- reviewed, or approved. Clear only on explicit archive.
     published_at = case
       when p_to_status = 'published' then coalesce(published_at, now())
       when p_to_status = 'archived' then null
@@ -181,4 +196,4 @@ grant usage on schema app to authenticated;
 grant execute on function app.transition_portal_page(uuid, public.publication_status) to authenticated;
 
 comment on function app.transition_portal_page(uuid, public.publication_status)
-is 'Supports atomic live revisions: published pages may return to draft without replacing published_version_id until the next approved publication.';
+is 'Supports atomic live revisions: published content and visibility remain live until an approved replacement snapshot is published.';
