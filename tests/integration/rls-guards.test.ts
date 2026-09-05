@@ -54,6 +54,12 @@ beforeAll(async () => {
           where id = ${published.id}
         `
     }
+    for (const status of ['review', 'approved']) {
+      await tx`
+          update public.documents set status = ${status}::public.publication_status
+          where id = ${document.id}
+        `
+    }
     await tx`
         update public.documents
         set status = 'published', published_version_id = ${published.id}, current_version_id = ${published.id}
