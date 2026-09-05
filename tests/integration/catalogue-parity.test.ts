@@ -290,6 +290,40 @@ describe('schema hygiene', () => {
     expect(clientReachable.map((row) => `${row['proname']}:${row['grantee']}`)).toEqual([])
   })
 
+  it('lets authenticated policies execute their private authorization predicates', async () => {
+    const rows = await db()<
+      { signature: string; authenticated_can_execute: boolean; anon_can_execute: boolean }[]
+    >`
+      select signature,
+             has_function_privilege('authenticated', signature, 'EXECUTE') as authenticated_can_execute,
+             has_function_privilege('anon', signature, 'EXECUTE') as anon_can_execute
+      from unnest(array[
+        'app.document_workflow_permission_allowed(public.publication_status)',
+        'app.investor_granted_document(uuid)',
+        'app.participates_in_thread(uuid)'
+      ]) as helper(signature)
+      order by signature
+    `
+
+    expect(rows).toEqual([
+      {
+        signature: 'app.document_workflow_permission_allowed(public.publication_status)',
+        authenticated_can_execute: true,
+        anon_can_execute: false,
+      },
+      {
+        signature: 'app.investor_granted_document(uuid)',
+        authenticated_can_execute: true,
+        anon_can_execute: false,
+      },
+      {
+        signature: 'app.participates_in_thread(uuid)',
+        authenticated_can_execute: true,
+        anon_can_execute: false,
+      },
+    ])
+  })
+
   it('indexes every foreign key a policy filters on', async () => {
     // An unindexed policy predicate turns every query into a sequential scan.
     const rows = await db()<{ table_name: string; column_name: string }[]>`
