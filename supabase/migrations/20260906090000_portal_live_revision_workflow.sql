@@ -1,21 +1,152 @@
 -- =============================================================================
 -- Portal live revision workflow
 --
--- Allows a published page to remain publicly available while editors create a
--- new draft revision. Publication is atomic: the currently published content
--- and visibility remain public until the replacement revision is published.
+-- A previously published page may return to draft without going offline.
+-- `published_at`, section `published_version_id`, and section `is_visible` keep
+-- representing the public snapshot until the replacement revision is approved
+-- and published atomically.
 -- =============================================================================
 
-alter table public.portal_sections
-  add column if not exists published_is_visible boolean not null default false;
+-- -----------------------------------------------------------------------------
+-- Editing guard
+--
+-- New section versions are only valid while the owning page is in draft. This
+-- closes the old loophole where the UI could still save content in review or
+-- approved state.
+-- -----------------------------------------------------------------------------
+create or replace function app.guard_portal_section_version_insert()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_page_status public.publication_status;
+begin
+  select p.status
+  into v_page_status
+  from public.portal_sections s
+  join public.portal_pages p on p.id = s.page_id
+  where s.id = new.section_id;
 
-update public.portal_sections
-set published_is_visible = (published_version_id is not null and is_visible)
-where published_is_visible is distinct from (published_version_id is not null and is_visible);
+  if v_page_status is null then
+    raise exception 'Portal page for section not found.' using errcode = 'P0002';
+  end if;
 
-comment on column public.portal_sections.published_is_visible is
-  'Visibility of the last published snapshot. Draft visibility edits do not affect the public portal until publication.';
+  if v_page_status <> 'draft' then
+    raise exception 'Portal content can only be edited while the page is in Draft.'
+      using errcode = '23514';
+  end if;
 
+  return new;
+end;
+$$;
+
+drop trigger if exists portal_section_versions_page_editable on public.portal_section_versions;
+create trigger portal_section_versions_page_editable
+  before insert on public.portal_section_versions
+  for each row execute function app.guard_portal_section_version_insert();
+
+-- -----------------------------------------------------------------------------
+-- Visibility staging
+--
+-- `portal_sections.is_visible` remains the public snapshot during a live
+-- revision. A requested visibility change is staged inside a new draft version
+-- as `_is_visible`. The publication transaction applies it to the section row.
+-- This avoids draft edits leaking onto the live portal.
+-- -----------------------------------------------------------------------------
+create or replace function app.stage_portal_section_visibility()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_page_status public.publication_status;
+  v_published_at timestamptz;
+  v_content jsonb;
+  v_next_version integer;
+  v_version_id uuid;
+begin
+  if new.is_visible is not distinct from old.is_visible then
+    return new;
+  end if;
+
+  -- Publication itself deliberately applies the staged snapshot.
+  if current_setting('app.portal_apply_snapshot', true) = '1' then
+    return new;
+  end if;
+
+  if not app.has_permission('portal.update') then
+    raise exception 'Insufficient permission to change portal section visibility.'
+      using errcode = '42501';
+  end if;
+
+  select p.status, p.published_at
+  into v_page_status, v_published_at
+  from public.portal_pages p
+  where p.id = old.page_id;
+
+  if v_page_status <> 'draft' then
+    raise exception 'Portal visibility can only be edited while the page is in Draft.'
+      using errcode = '23514';
+  end if;
+
+  -- Before first publication there is no live snapshot to protect.
+  if v_published_at is null then
+    return new;
+  end if;
+
+  if old.current_version_id is null then
+    raise exception 'Portal section has no current version.' using errcode = '23514';
+  end if;
+
+  select v.content
+  into v_content
+  from public.portal_section_versions v
+  where v.id = old.current_version_id;
+
+  if v_content is null then
+    raise exception 'Current portal section version not found.' using errcode = 'P0002';
+  end if;
+
+  select coalesce(max(v.version_number), 0) + 1
+  into v_next_version
+  from public.portal_section_versions v
+  where v.section_id = old.id;
+
+  insert into public.portal_section_versions (
+    section_id,
+    version_number,
+    status,
+    content,
+    change_note
+  )
+  values (
+    old.id,
+    v_next_version,
+    'draft',
+    v_content || jsonb_build_object('_is_visible', new.is_visible),
+    case when new.is_visible then 'Menampilkan bagian pada publikasi berikutnya.'
+         else 'Menyembunyikan bagian pada publikasi berikutnya.' end
+  )
+  returning id into v_version_id;
+
+  new.current_version_id := v_version_id;
+  new.is_visible := old.is_visible;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists portal_sections_stage_visibility on public.portal_sections;
+create trigger portal_sections_stage_visibility
+  before update of is_visible on public.portal_sections
+  for each row execute function app.stage_portal_section_visibility();
+
+-- -----------------------------------------------------------------------------
+-- Publication lifecycle
+-- -----------------------------------------------------------------------------
 create or replace function app.transition_portal_page(
   p_page_id uuid,
   p_to_status public.publication_status
@@ -80,11 +211,10 @@ begin
     select count(*) into v_invalid_count
     from public.portal_sections s
     where s.page_id = v_page.id
-      and s.is_visible
       and s.current_version_id is null;
 
     if v_invalid_count > 0 then
-      raise exception 'Every visible portal section must have a current version before review.'
+      raise exception 'Every portal section must have a current version before review.'
         using errcode = '23514';
     end if;
 
@@ -93,7 +223,6 @@ begin
     from public.portal_sections s
     where s.id = v.section_id
       and s.page_id = v_page.id
-      and s.is_visible
       and s.current_version_id = v.id
       and v.status = 'draft';
 
@@ -102,11 +231,10 @@ begin
     from public.portal_sections s
     join public.portal_section_versions v on v.id = s.current_version_id
     where s.page_id = v_page.id
-      and s.is_visible
-      and v.status <> 'review';
+      and v.status not in ('review', 'published');
 
     if v_invalid_count > 0 then
-      raise exception 'Every visible current portal section must be in review before approval.'
+      raise exception 'Every changed portal section must be in review before approval.'
         using errcode = '23514';
     end if;
 
@@ -115,23 +243,24 @@ begin
     from public.portal_sections s
     where s.id = v.section_id
       and s.page_id = v_page.id
-      and s.is_visible
-      and s.current_version_id = v.id;
+      and s.current_version_id = v.id
+      and v.status = 'review';
 
   elsif p_to_status = 'draft' then
     if v_page.status = 'archived' then
+      -- Archived pages are offline. Preserve history, but make sections editable
+      -- again without claiming that a public snapshot is active.
       update public.portal_sections s
-      set status = 'draft', published_version_id = null, published_is_visible = false
+      set status = 'draft', published_version_id = null
       where s.page_id = v_page.id;
     else
-      -- Keep published_version_id and published_is_visible untouched. The
-      -- public snapshot remains live while current versions are edited.
+      -- Do not touch published_version_id or is_visible. They are the live
+      -- snapshot while the replacement current versions return to draft.
       update public.portal_section_versions v
       set status = 'draft', approved_by = null, approved_at = null
       from public.portal_sections s
       where s.id = v.section_id
         and s.page_id = v_page.id
-        and s.is_visible
         and s.current_version_id = v.id
         and v.status in ('review', 'approved');
     end if;
@@ -141,32 +270,43 @@ begin
     from public.portal_sections s
     join public.portal_section_versions v on v.id = s.current_version_id
     where s.page_id = v_page.id
-      and s.is_visible
-      and v.status <> 'approved';
+      and v.status not in ('approved', 'published');
 
     if v_invalid_count > 0 then
-      raise exception 'Every visible current portal section must be approved before publication.'
+      raise exception 'Every changed portal section must be approved before publication.'
         using errcode = '23514';
     end if;
 
-    update public.portal_section_versions v
-    set status = 'published', published_at = coalesce(v.published_at, now())
-    from public.portal_sections s
-    where s.id = v.section_id
-      and s.page_id = v_page.id
-      and s.is_visible
-      and s.current_version_id = v.id;
+    -- Allow the publication transaction to apply staged visibility without the
+    -- staging trigger turning it into another draft version.
+    perform set_config('app.portal_apply_snapshot', '1', true);
 
     update public.portal_sections s
     set
       status = 'published',
-      published_version_id = case
-        when s.is_visible then s.current_version_id
-        else s.published_version_id
-      end,
-      published_is_visible = s.is_visible
+      published_version_id = s.current_version_id,
+      is_visible = coalesce(
+        case
+          when (v.content ->> '_is_visible') in ('true', 'false')
+            then (v.content ->> '_is_visible')::boolean
+          else null
+        end,
+        s.is_visible
+      )
+    from public.portal_section_versions v
     where s.page_id = v_page.id
-      and (s.current_version_id is not null or s.published_version_id is not null);
+      and s.current_version_id = v.id;
+
+    update public.portal_section_versions v
+    set
+      content = v.content - '_is_visible',
+      status = 'published',
+      published_at = coalesce(v.published_at, now())
+    from public.portal_sections s
+    where s.id = v.section_id
+      and s.page_id = v_page.id
+      and s.current_version_id = v.id
+      and v.status = 'approved';
 
   elsif p_to_status = 'archived' then
     update public.portal_sections s
@@ -178,8 +318,8 @@ begin
   update public.portal_pages
   set
     status = p_to_status,
-    -- Keep published_at while a published page is being revised as draft,
-    -- reviewed, or approved. Clear only on explicit archive.
+    -- Keep published_at throughout live revision. The public query treats a
+    -- non-archived page with published_at as having a valid published snapshot.
     published_at = case
       when p_to_status = 'published' then coalesce(published_at, now())
       when p_to_status = 'archived' then null
@@ -196,4 +336,4 @@ grant usage on schema app to authenticated;
 grant execute on function app.transition_portal_page(uuid, public.publication_status) to authenticated;
 
 comment on function app.transition_portal_page(uuid, public.publication_status)
-is 'Supports atomic live revisions: published content and visibility remain live until an approved replacement snapshot is published.';
+is 'Atomic live revision workflow: published content and visibility remain live until an approved replacement snapshot is published.';
