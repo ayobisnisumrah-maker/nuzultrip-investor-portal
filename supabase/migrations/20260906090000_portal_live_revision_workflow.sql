@@ -9,10 +9,6 @@
 
 -- -----------------------------------------------------------------------------
 -- Editing guard
---
--- New section versions are only valid while the owning page is in draft. This
--- closes the old loophole where the UI could still save content in review or
--- approved state.
 -- -----------------------------------------------------------------------------
 create or replace function app.guard_portal_section_version_insert()
 returns trigger
@@ -52,8 +48,7 @@ create trigger portal_section_versions_page_editable
 --
 -- `portal_sections.is_visible` remains the public snapshot during a live
 -- revision. A requested visibility change is staged inside a new draft version
--- as `_is_visible`. The publication transaction applies it to the section row.
--- This avoids draft edits leaking onto the live portal.
+-- as `_is_visible`. Publication applies it atomically.
 -- -----------------------------------------------------------------------------
 create or replace function app.stage_portal_section_visibility()
 returns trigger
@@ -72,7 +67,6 @@ begin
     return new;
   end if;
 
-  -- Publication itself deliberately applies the staged snapshot.
   if current_setting('app.portal_apply_snapshot', true) = '1' then
     return new;
   end if;
@@ -248,14 +242,11 @@ begin
 
   elsif p_to_status = 'draft' then
     if v_page.status = 'archived' then
-      -- Archived pages are offline. Preserve history, but make sections editable
-      -- again without claiming that a public snapshot is active.
       update public.portal_sections s
       set status = 'draft', published_version_id = null
       where s.page_id = v_page.id;
     else
-      -- Do not touch published_version_id or is_visible. They are the live
-      -- snapshot while the replacement current versions return to draft.
+      -- The last published_version_id/is_visible snapshot remains untouched.
       update public.portal_section_versions v
       set status = 'draft', approved_by = null, approved_at = null
       from public.portal_sections s
@@ -277,8 +268,6 @@ begin
         using errcode = '23514';
     end if;
 
-    -- Allow the publication transaction to apply staged visibility without the
-    -- staging trigger turning it into another draft version.
     perform set_config('app.portal_apply_snapshot', '1', true);
 
     update public.portal_sections s
@@ -318,8 +307,6 @@ begin
   update public.portal_pages
   set
     status = p_to_status,
-    -- Keep published_at throughout live revision. The public query treats a
-    -- non-archived page with published_at as having a valid published snapshot.
     published_at = case
       when p_to_status = 'published' then coalesce(published_at, now())
       when p_to_status = 'archived' then null
@@ -337,3 +324,33 @@ grant execute on function app.transition_portal_page(uuid, public.publication_st
 
 comment on function app.transition_portal_page(uuid, public.publication_status)
 is 'Atomic live revision workflow: published content and visibility remain live until an approved replacement snapshot is published.';
+
+-- -----------------------------------------------------------------------------
+-- Public RLS for live revisions
+--
+-- The original policies keyed public visibility to status='published'. During a
+-- live revision the page status intentionally becomes draft/review/approved,
+-- while `published_at` and each section's published_version_id continue to
+-- identify the last approved public snapshot. Allow that snapshot to remain
+-- readable. Archived pages are explicitly offline because published_at is null.
+-- -----------------------------------------------------------------------------
+drop policy if exists portal_pages_select_published on public.portal_pages;
+create policy portal_pages_select_published
+  on public.portal_pages for select to anon, authenticated
+  using (published_at is not null and status <> 'archived');
+
+drop policy if exists portal_sections_select_published on public.portal_sections;
+create policy portal_sections_select_published
+  on public.portal_sections for select to anon, authenticated
+  using (
+    is_visible
+    and status = 'published'
+    and published_version_id is not null
+    and exists (
+      select 1
+      from public.portal_pages p
+      where p.id = page_id
+        and p.published_at is not null
+        and p.status <> 'archived'
+    )
+  );
