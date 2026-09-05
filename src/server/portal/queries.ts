@@ -99,10 +99,28 @@ export async function listPortalPageSections(pageId: string) {
     (versions ?? []).map((version) => [version.id, version]),
   )
 
-  return sections.map((section) => ({
-    ...section,
-    current_version: section.current_version_id
+  return sections.map((section) => {
+    const currentVersion = section.current_version_id
       ? (byId.get(section.current_version_id) ?? null)
-      : null,
-  }))
+      : null
+
+    const content =
+      currentVersion?.content &&
+      typeof currentVersion.content === 'object' &&
+      !Array.isArray(currentVersion.content)
+        ? (currentVersion.content as Record<string, unknown>)
+        : null
+
+    const stagedVisibility =
+      content && typeof content._is_visible === 'boolean'
+        ? content._is_visible
+        : null
+
+    return {
+      ...section,
+      published_is_visible: section.is_visible,
+      is_visible: stagedVisibility ?? section.is_visible,
+      current_version: currentVersion,
+    }
+  })
 }
