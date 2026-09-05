@@ -142,9 +142,16 @@ update public.roles as role
 set permission_version = role.permission_version + 1
 where role.id in (select role_id from touched_roles);
 
--- The investor document SELECT policy invokes this SECURITY DEFINER helper as
--- the signed-in caller. PostgreSQL therefore requires EXECUTE on the helper
--- even though its table reads run as the function owner. Keep it unavailable
--- to anonymous callers and expose only the boolean authorization predicate.
+-- RLS policies and the document workflow guard invoke these SECURITY DEFINER
+-- predicates as the signed-in caller. PostgreSQL therefore requires EXECUTE
+-- even though protected reads run as the function owner. Keep them unavailable
+-- to anonymous callers and expose only their boolean authorization results.
 revoke execute on function app.investor_granted_document(uuid) from public, anon;
+revoke execute on function app.participates_in_thread(uuid) from public, anon;
+revoke execute on function app.document_workflow_permission_allowed(public.publication_status)
+  from public, anon;
+
 grant execute on function app.investor_granted_document(uuid) to authenticated;
+grant execute on function app.participates_in_thread(uuid) to authenticated;
+grant execute on function app.document_workflow_permission_allowed(public.publication_status)
+  to authenticated;
