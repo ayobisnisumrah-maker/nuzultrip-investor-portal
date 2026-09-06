@@ -85,6 +85,31 @@ export async function as<T>(principal: Principal, run: (tx: Tx) => Promise<T>): 
   return result
 }
 
+/**
+ * Create committed fixtures through the same authenticated boundary exercised
+ * by production writes. Use this only during suite setup; assertions continue
+ * to use `as()`, which always rolls back.
+ */
+export async function asCommitted<T>(
+  principal: Principal,
+  run: (tx: Tx) => Promise<T>,
+): Promise<T> {
+  return db().begin(async (tx) => {
+    if (principal.kind === 'anon') {
+      await tx`select set_config('request.jwt.claims', ${JSON.stringify({ role: 'anon' })}, true)`
+      await tx`set local role anon`
+    } else {
+      await tx`select set_config('request.jwt.claims', ${JSON.stringify({
+        sub: principal.userId,
+        role: 'authenticated',
+      })}, true)`
+      await tx`set local role authenticated`
+    }
+
+    return run(tx)
+  }) as Promise<T>
+}
+
 class RollbackSignal extends Error {
   constructor() {
     super('rollback')
