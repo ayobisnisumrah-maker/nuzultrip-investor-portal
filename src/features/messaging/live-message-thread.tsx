@@ -63,6 +63,8 @@ export function LiveMessageThread({
   const bottomRef = useRef<HTMLDivElement | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
 
+  // Server refreshes intentionally replace the local snapshot; realtime updates remain callback-driven.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => setMessages(initialMessages), [initialMessages])
 
   useEffect(() => {
