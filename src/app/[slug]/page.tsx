@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 
-import { PublicPortal } from '@/features/portal/public-portal'
+import { PublicPortalReference } from '@/features/portal/public-portal-reference'
 import {
   getPublishedNavigation,
   getPublishedPortalPageBySlug,
@@ -77,7 +77,7 @@ export default async function PublicPortalPage({
   }
 
   return (
-    <PublicPortal
+    <PublicPortalReference
       page={{
         title: 'Nuzultrip',
         seo: portal.page.seo,
