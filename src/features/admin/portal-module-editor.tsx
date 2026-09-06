@@ -122,8 +122,12 @@ export function PortalModuleEditor({
     const next = [...items('items')]
     const target = index + direction
     if (target < 0 || target >= next.length) return
+
     const current = next[index]
-    next[index] = next[target]
+    const targetItem = next[target]
+    if (!current || !targetItem) return
+
+    next[index] = targetItem
     next[target] = current
     update({ items: next })
   }
