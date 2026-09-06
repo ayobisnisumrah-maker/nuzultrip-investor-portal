@@ -155,8 +155,6 @@ describe('enum parity', () => {
 
 describe('state machine parity', () => {
   it('agrees on every investor transition, in both directions', async () => {
-    // All 49 ordered pairs, not just the legal ones — a transition the database
-    // permits but TypeScript does not is just as much a bug as the reverse.
     const pairs = INVESTOR_STATUSES.flatMap((from) => INVESTOR_STATUSES.map((to) => ({ from, to })))
 
     const rows = await db()<{ from_status: string; to_status: string; allowed: boolean }[]>`
@@ -233,11 +231,6 @@ describe('schema hygiene', () => {
   })
 
   it('gives the service role table privileges on everything in public', async () => {
-    // `bypassrls` exempts the service role from *policies*, not from GRANTs.
-    // Without table privileges it is refused outright — which broke account
-    // provisioning and the setup page, and produced a confusing
-    // "permission denied for table" from a role that supposedly bypasses
-    // everything.
     const rows = await db()<{ relname: string; missing: string }[]>`
       select c.relname,
              concat_ws(
@@ -262,8 +255,6 @@ describe('schema hygiene', () => {
   })
 
   it('lets an anonymous caller resolve a null principal', async () => {
-    // Every page resolves a principal, including the sign-in page. If `anon`
-    // cannot call this, the whole unauthenticated surface returns 500.
     const [row] = await db()<{ can_execute: boolean }[]>`
       select has_function_privilege('anon', 'public.current_principal()', 'EXECUTE') as can_execute
     `
@@ -354,7 +345,6 @@ describe('schema hygiene', () => {
   })
 
   it('indexes every foreign key a policy filters on', async () => {
-    // An unindexed policy predicate turns every query into a sequential scan.
     const rows = await db()<{ table_name: string; column_name: string }[]>`
       select cl.relname as table_name, att.attname as column_name
       from pg_constraint con
@@ -372,8 +362,6 @@ describe('schema hygiene', () => {
       order by 1, 2
     `
 
-    // Columns that are genuinely not used as a lookup path. Each is listed
-    // deliberately rather than the assertion being weakened.
     const ACCEPTED = new Set([
       'company_profiles.current_version_id',
       'company_profiles.published_version_id',

@@ -2,9 +2,9 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { z } from 'zod'
 
+import { PortalPageEditorLive } from '@/features/admin/portal-page-editor-live'
 import { adminWithPermission } from '@/server/auth/page-guards'
-import { listPortalPageSections, getPortalPage } from '@/server/portal/queries'
-import { PortalPageEditor } from '@/features/admin/portal-page-editor'
+import { getPortalPage, listPortalPageSections } from '@/server/portal/queries'
 
 function statusLabel(status: string) {
   switch (status) {
@@ -85,15 +85,14 @@ export default async function PortalPageDetail({ params }: { params: Promise<{ i
       <section className="border-border bg-surface rounded-xl border p-6">
         <div className="mb-5 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h2 className="text-body text-fg font-semibold">Penyusun Section</h2>
+            <h2 className="text-body text-fg font-semibold">Penyusun Bagian</h2>
             <p className="text-caption text-fg-muted mt-1">
-              Susun konten terstruktur tanpa HTML mentah. Setiap penyimpanan membuat versi draf
-              baru.
+              Susun konten terstruktur tanpa HTML mentah. Setiap penyimpanan membuat versi draf baru.
             </p>
           </div>
-          <span className="text-caption text-fg-subtle">{sections.length} section</span>
+          <span className="text-caption text-fg-subtle">{sections.length} bagian</span>
         </div>
-        <PortalPageEditor
+        <PortalPageEditorLive
           pageId={page.id}
           sections={sections}
           canUpdate={canUpdate}
