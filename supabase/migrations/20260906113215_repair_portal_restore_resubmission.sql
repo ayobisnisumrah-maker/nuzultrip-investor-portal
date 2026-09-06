@@ -231,10 +231,10 @@ begin
       from copied_versions
       where section.id = copied_versions.section_id;
 
-      update public.portal_sections
+      update public.portal_sections as section
       set status = 'draft'
-      where page_id = v_page.id
-        and status = 'archived';
+      where section.page_id = v_page.id
+        and section.status = 'archived';
     else
       update public.portal_section_versions as version
       set
