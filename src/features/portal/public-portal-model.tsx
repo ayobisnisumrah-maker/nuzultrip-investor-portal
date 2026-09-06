@@ -58,6 +58,11 @@ function Hero({ section }: { section: PublicPortalSection }) {
         { title: 'Terukur', description: 'Arah pertumbuhan dapat dipantau.' },
         { title: 'Berkelanjutan', description: 'Fokus pada penciptaan nilai jangka panjang.' },
       ]
+  const heroTitle = text(c.title) ?? 'Membangun Nilai dan Kepemilikan Bersama Nuzultrip'
+  const heroTitleLines =
+    heroTitle === 'Membangun Nilai dan Kepemilikan Bersama Nuzultrip'
+      ? ['Membangun Nilai', 'dan Kepemilikan', 'Bersama Nuzultrip']
+      : [heroTitle]
 
   return (
     <>
@@ -67,7 +72,11 @@ function Hero({ section }: { section: PublicPortalSection }) {
           <div className={styles.heroCopy}>
             <span className={styles.eyebrow}>{text(c.eyebrow) ?? 'Nuzultrip Equity Relations'}</span>
             <h1 className={styles.headline}>
-              {text(c.title) ?? 'Membangun Nilai dan Kepemilikan Bersama Nuzultrip'}
+              {heroTitleLines.map((line) => (
+                <span key={line} style={{ display: 'block' }}>
+                  {line}
+                </span>
+              ))}
             </h1>
             <p className={styles.lede}>
               {text(c.description) ??
@@ -89,7 +98,27 @@ function Hero({ section }: { section: PublicPortalSection }) {
                 {text(c.secondary_cta_label) ?? 'Tentang Nuzultrip'}
               </Link>
             </div>
-            <p className={styles.heroFoot}>Informasi rinci diberikan sesuai kebutuhan dan hak akses.</p>
+            <p
+              className={styles.heroFoot}
+              style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+                style={{ flex: '0 0 auto' }}
+              >
+                <rect x="5" y="10" width="14" height="10" rx="2" />
+                <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+              </svg>
+              <span>Informasi disusun terstruktur dan diperbarui melalui portal resmi Nuzultrip.</span>
+            </p>
           </div>
 
           <div className={styles.heroArt} aria-hidden="true">
