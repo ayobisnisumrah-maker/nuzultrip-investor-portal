@@ -70,6 +70,13 @@ export function LiveMessageThread({
   useEffect(() => {
     const supabase = getBrowserSupabase()
     let active = true
+    let broadcastReady = false
+    let postgresReady = false
+
+    function updateConnectionState() {
+      if (!active) return
+      setConnected(broadcastReady || postgresReady)
+    }
 
     async function syncMessages() {
       const { data, error: syncError } = await supabase
@@ -87,17 +94,61 @@ export function LiveMessageThread({
     }
 
     const topic = actor === 'admin' ? 'admin:global' : `investor:${currentUserId}`
-    const channel = supabase
+    const broadcastChannel = supabase
       .channel(topic, { config: { private: true } })
       .on('broadcast', { event: 'message.received' }, () => {
         void syncMessages()
       })
-      .subscribe((status) => {
+
+    const postgresChannel = supabase
+      .channel(`message-thread-db:${threadId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+          filter: `thread_id=eq.${threadId}`,
+        },
+        () => {
+          void syncMessages()
+        },
+      )
+
+    async function connectRealtime() {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+
+      if (!active) return
+      if (session?.access_token) {
+        await supabase.realtime.setAuth(session.access_token)
+      }
+      if (!active) return
+
+      broadcastChannel.subscribe((status) => {
         if (!active) return
-        const isSubscribed = status === 'SUBSCRIBED'
-        setConnected(isSubscribed)
-        if (isSubscribed) void syncMessages()
+        broadcastReady = status === 'SUBSCRIBED'
+        updateConnectionState()
+        if (broadcastReady) void syncMessages()
       })
+
+      postgresChannel.subscribe((status) => {
+        if (!active) return
+        postgresReady = status === 'SUBSCRIBED'
+        updateConnectionState()
+        if (postgresReady) void syncMessages()
+      })
+    }
+
+    void connectRealtime()
+
+    const {
+      data: { subscription: authSubscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!active || !session?.access_token) return
+      void supabase.realtime.setAuth(session.access_token)
+    })
 
     function syncWhenVisible() {
       if (document.visibilityState === 'visible') void syncMessages()
@@ -112,9 +163,11 @@ export function LiveMessageThread({
 
     return () => {
       active = false
+      authSubscription.unsubscribe()
       document.removeEventListener('visibilitychange', syncWhenVisible)
       window.removeEventListener('online', syncWhenOnline)
-      void supabase.removeChannel(channel)
+      void supabase.removeChannel(broadcastChannel)
+      void supabase.removeChannel(postgresChannel)
     }
   }, [actor, currentUserId, threadId])
 
