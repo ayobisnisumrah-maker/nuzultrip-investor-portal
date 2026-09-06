@@ -11,7 +11,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
   if (!portal) {
     return {
-      title: 'Investor Portal',
+      title: 'Nuzultrip Equity Relations',
       robots: {
         index: false,
         follow: false,
@@ -64,16 +64,15 @@ export default async function Home() {
         className="mx-auto flex min-h-dvh max-w-3xl flex-col justify-center px-6 py-16"
       >
         <p className="text-primary text-xs font-semibold tracking-[0.16em] uppercase">
-          Investor Portal
+          Nuzultrip Equity Relations
         </p>
 
         <h1 className="font-display text-fg mt-3 text-4xl font-semibold">
-          Portal belum dipublikasikan
+          Portal belum diterbitkan
         </h1>
 
         <p className="text-fg-muted mt-4 max-w-2xl text-lg leading-8">
-          Halaman publik belum tersedia. Konten akan ditampilkan setelah
-          dipublikasikan melalui dashboard admin.
+          Halaman publik belum tersedia. Konten akan ditampilkan setelah diterbitkan melalui dasbor admin.
         </p>
       </main>
     )
@@ -82,7 +81,7 @@ export default async function Home() {
   return (
     <PublicPortal
       page={{
-        title: portal.page.title,
+        title: 'Nuzultrip',
         seo: portal.page.seo,
       }}
       sections={portal.sections}
