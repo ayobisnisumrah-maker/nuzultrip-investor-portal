@@ -57,10 +57,11 @@ create trigger portal_pages_guard_publication_marker
   before insert or update of status, published_at on public.portal_pages
   for each row execute function app.guard_portal_publication_marker();
 
--- Database-owner maintenance and migration fixtures must be able to construct a
--- valid historical lifecycle without impersonating an application principal.
--- This bypass is intentionally restricted to current_user=postgres. Tests that
--- SET ROLE authenticated still exercise every application guard normally.
+-- Direct database-owner migration/fixture sessions may construct historical
+-- state without impersonating an application principal. The exemption applies
+-- only when the session is postgres AND carries no request JWT claims. Supabase
+-- API traffic always carries claims, so application requests remain subject to
+-- the complete workflow and immutability guards.
 create or replace function app.guard_document_update()
 returns trigger
 language plpgsql
@@ -68,7 +69,8 @@ security invoker
 set search_path = ''
 as $$
 begin
-  if current_user = 'postgres' then
+  if current_user = 'postgres'
+     and nullif(current_setting('request.jwt.claims', true), '') is null then
     if new.status = 'archived' then
       new.archived_at := coalesce(new.archived_at, now());
     end if;
@@ -105,7 +107,8 @@ security invoker
 set search_path = ''
 as $$
 begin
-  if current_user = 'postgres' then
+  if current_user = 'postgres'
+     and nullif(current_setting('request.jwt.claims', true), '') is null then
     if new.status = 'published' then
       new.published_at := coalesce(new.published_at, now());
     end if;
@@ -141,6 +144,20 @@ begin
   return new;
 end;
 $$;
+
+-- Two SECURITY DEFINER helpers are intentionally callable by authenticated
+-- sessions because RLS policies invoke them while evaluating table access.
+-- Earlier blanket hardening revoked these grants and converted a normal RLS
+-- denial into a function-permission error.
+grant execute on function app.participates_in_thread(uuid) to authenticated;
+grant execute on function app.investor_granted_document(uuid) to authenticated;
+
+-- Legacy/private compatibility tables must never become anonymous read
+-- surfaces merely because a remote schema snapshot granted SELECT broadly.
+revoke all on table public.investor_tokens from anon;
+revoke all on table public.kv_store_b620c355 from anon;
+revoke all on table public.portal_content from anon;
+revoke all on table public.user_profiles from anon;
 
 -- Force RLS uniformly across the public schema. BYPASSRLS service roles are
 -- unaffected, while direct table owners no longer accidentally bypass policy
