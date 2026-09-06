@@ -74,12 +74,12 @@ beforeAll(async () => {
       ${sectionId},
       1,
       'draft',
-      ${JSON.stringify({
+      ${sql.json({
         kind: 'intro',
         eyebrow: 'Awal',
         title: 'Versi Publik 1',
         description: 'Konten awal.',
-      })}::jsonb,
+      })},
       ${fixtures.superAdmin.userId}
     )
     returning id
@@ -99,10 +99,12 @@ beforeAll(async () => {
 }, 60_000)
 
 afterAll(async () => {
-  await cleanup(async (tx) => {
-    await tx`delete from public.portal_pages where id = ${pageId}`
-  })
-  await destroyFixtures(fixtures)
+  if (pageId) {
+    await cleanup(async (tx) => {
+      await tx`delete from public.portal_pages where id = ${pageId}`
+    })
+  }
+  if (fixtures) await destroyFixtures(fixtures)
   await closeDb()
 })
 
@@ -144,12 +146,12 @@ describe('portal live revision lifecycle', () => {
           ${sectionId},
           2,
           'draft',
-          ${JSON.stringify({
+          ${tx.json({
             kind: 'intro',
             eyebrow: 'Revisi',
             title: 'Versi Publik 2',
             description: 'Konten revisi.',
-          })}::jsonb,
+          })},
           ${fixtures.superAdmin.userId}
         )
         returning id
@@ -208,9 +210,6 @@ describe('portal live revision lifecycle', () => {
     })
     expect(sectionDuringHiddenDraft?.id).toBe(sectionId)
 
-    // Cancel the staged hide. The actual DB visibility is still true because it
-    // represents the public snapshot, so the trigger must compare against the
-    // staged effective visibility rather than only OLD.is_visible.
     await asCommitted(fixtures.superAdmin.userId, async (tx) => {
       await tx`
         update public.portal_sections
@@ -233,7 +232,6 @@ describe('portal live revision lifecycle', () => {
     )
     expect(stagedBackToVisible).toBe(true)
 
-    // Stage hide again and publish it.
     await asCommitted(fixtures.superAdmin.userId, async (tx) => {
       await tx`
         update public.portal_sections
