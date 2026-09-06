@@ -16,7 +16,7 @@ header:has(nav[aria-label='Navigasi utama']) a[href='/masuk'] {
   padding-inline: 22px !important;
 }
 
-/* Keep the approved hero headline scale; enlarge every supporting element. */
+/* Hero type hierarchy: one predictable supporting-text size, with eyebrow as the only smaller label. */
 header:has(nav[aria-label='Navigasi utama']) + main > section:first-child .eyebrow,
 header:has(nav[aria-label='Navigasi utama']) + main > section:first-child [class*='eyebrow'] {
   font-size: 0.875rem !important;
@@ -30,7 +30,7 @@ header:has(nav[aria-label='Navigasi utama']) + main > section:first-child h1 + p
 }
 
 header:has(nav[aria-label='Navigasi utama']) + main > section:first-child h1 ~ div span {
-  font-size: 0.875rem !important;
+  font-size: 1rem !important;
 }
 
 header:has(nav[aria-label='Navigasi utama']) + main > section:first-child h1 ~ div a {
@@ -40,20 +40,49 @@ header:has(nav[aria-label='Navigasi utama']) + main > section:first-child h1 ~ d
 }
 
 header:has(nav[aria-label='Navigasi utama']) + main > section:first-child h1 ~ p:last-of-type {
-  font-size: 0.875rem !important;
+  font-size: 1rem !important;
   line-height: 1.6 !important;
 }
 
-header:has(nav[aria-label='Navigasi utama']) + main > section:first-child + div b {
-  font-size: 1rem !important;
-}
-
+header:has(nav[aria-label='Navigasi utama']) + main > section:first-child + div b,
 header:has(nav[aria-label='Navigasi utama']) + main > section:first-child + div small {
-  font-size: 0.875rem !important;
+  font-size: 1rem !important;
   line-height: 1.55 !important;
 }
 
-/* Body content never falls back to fine-print sizing. */
+/* Desktop hero composition: preserve the CMS-controlled three title lines and scale up the right illustration. */
+header:has(nav[aria-label='Navigasi utama']) + main > section:first-child > div:nth-child(2) {
+  grid-template-columns: minmax(0, 1.16fr) minmax(0, 0.84fr) !important;
+  gap: 28px !important;
+}
+
+header:has(nav[aria-label='Navigasi utama']) + main > section:first-child > div:nth-child(2) > div:first-child {
+  max-width: 46rem !important;
+}
+
+header:has(nav[aria-label='Navigasi utama']) + main > section:first-child h1 {
+  width: 100% !important;
+  max-width: 46rem !important;
+  font-size: clamp(4rem, 4.9vw, 5.15rem) !important;
+  line-height: 0.98 !important;
+  letter-spacing: -0.04em !important;
+}
+
+header:has(nav[aria-label='Navigasi utama']) + main > section:first-child h1 > span {
+  display: block !important;
+  white-space: nowrap !important;
+}
+
+header:has(nav[aria-label='Navigasi utama']) + main > section:first-child > div:nth-child(2) > div:last-child {
+  width: 122% !important;
+  max-width: 640px !important;
+  margin-left: -10% !important;
+  transform: scale(1.1) !important;
+  transform-origin: center center !important;
+}
+
+/* Global body typography contract.
+   Eyebrow 14px, body/UI 16px, card heading 20px, section heading responsive. */
 header:has(nav[aria-label='Navigasi utama']) + main > section:not(:first-child) {
   padding-top: 80px !important;
   padding-bottom: 80px !important;
@@ -77,17 +106,7 @@ header:has(nav[aria-label='Navigasi utama']) + main > section:not(:first-child) 
 }
 
 header:has(nav[aria-label='Navigasi utama']) + main > section:not(:first-child) p,
-header:has(nav[aria-label='Navigasi utama']) + main > section:not(:first-child) article p {
-  font-size: 1rem !important;
-  line-height: 1.7 !important;
-}
-
-header:has(nav[aria-label='Navigasi utama']) + main > section:not(:first-child) small,
-header:has(nav[aria-label='Navigasi utama']) + main > section:not(:first-child) article small {
-  font-size: 0.875rem !important;
-  line-height: 1.55 !important;
-}
-
+header:has(nav[aria-label='Navigasi utama']) + main > section:not(:first-child) article p,
 header:has(nav[aria-label='Navigasi utama']) + main > section:not(:first-child) b,
 header:has(nav[aria-label='Navigasi utama']) + main > section:not(:first-child) strong,
 header:has(nav[aria-label='Navigasi utama']) + main > section:not(:first-child) span,
@@ -99,6 +118,17 @@ header:has(nav[aria-label='Navigasi utama']) + main > section:not(:first-child) 
   font-size: 1rem !important;
 }
 
+header:has(nav[aria-label='Navigasi utama']) + main > section:not(:first-child) p,
+header:has(nav[aria-label='Navigasi utama']) + main > section:not(:first-child) article p {
+  line-height: 1.7 !important;
+}
+
+header:has(nav[aria-label='Navigasi utama']) + main > section:not(:first-child) small,
+header:has(nav[aria-label='Navigasi utama']) + main > section:not(:first-child) article small {
+  font-size: 0.875rem !important;
+  line-height: 1.55 !important;
+}
+
 header:has(nav[aria-label='Navigasi utama']) + main > section:not(:first-child) input {
   min-height: 48px !important;
 }
@@ -108,45 +138,255 @@ header:has(nav[aria-label='Navigasi utama']) + main > section:not(:first-child) 
   min-height: 48px !important;
 }
 
-/* A single, stable footer palette in light and dark system modes. */
+/* Equity-offering composition: long CMS-managed term table + participation card. */
+header:has(nav[aria-label='Navigasi utama']) + main > section:nth-of-type(2) {
+  background: #f7fbfa !important;
+}
+
+header:has(nav[aria-label='Navigasi utama']) + main > section:nth-of-type(2) > div {
+  max-width: 1180px !important;
+}
+
+header:has(nav[aria-label='Navigasi utama']) + main > section:nth-of-type(2) [class*='offerNotice'] {
+  margin-bottom: 20px !important;
+  border: 1px solid #efce89 !important;
+  border-radius: 10px !important;
+  background: #fff9e9 !important;
+  padding: 13px 16px !important;
+  color: #805b15 !important;
+  font-size: 1rem !important;
+  line-height: 1.65 !important;
+  box-shadow: none !important;
+}
+
+header:has(nav[aria-label='Navigasi utama']) + main > section:nth-of-type(2) [class*='offerGrid'] {
+  grid-template-columns: minmax(0, 1.34fr) minmax(330px, 0.96fr) !important;
+  gap: 24px !important;
+  align-items: start !important;
+}
+
+header:has(nav[aria-label='Navigasi utama']) + main > section:nth-of-type(2) [class*='offerTable'] {
+  border: 1px solid #dfe3eb !important;
+  border-radius: 16px !important;
+  overflow: hidden !important;
+  background: #fff !important;
+  box-shadow: 0 12px 28px -28px rgba(20, 24, 74, 0.4) !important;
+}
+
+header:has(nav[aria-label='Navigasi utama']) + main > section:nth-of-type(2) [class*='offerRow'] {
+  min-height: 58px !important;
+  grid-template-columns: minmax(240px, 0.92fr) minmax(0, 1.08fr) !important;
+  align-items: stretch !important;
+  border-bottom-color: #dfe3eb !important;
+}
+
+header:has(nav[aria-label='Navigasi utama']) + main > section:nth-of-type(2) [class*='offerRow'] > span,
+header:has(nav[aria-label='Navigasi utama']) + main > section:nth-of-type(2) [class*='offerRow'] > strong {
+  display: flex !important;
+  align-items: center !important;
+  padding: 14px 20px !important;
+  font-size: 1rem !important;
+  line-height: 1.55 !important;
+}
+
+header:has(nav[aria-label='Navigasi utama']) + main > section:nth-of-type(2) [class*='offerRow'] > span {
+  color: #14184a !important;
+  font-weight: 600 !important;
+  background: #fff !important;
+}
+
+header:has(nav[aria-label='Navigasi utama']) + main > section:nth-of-type(2) [class*='offerRow'] > strong {
+  color: #5e6282 !important;
+  font-weight: 500 !important;
+  background: #fff !important;
+  border-left: 1px solid #eef0f4 !important;
+}
+
+header:has(nav[aria-label='Navigasi utama']) + main > section:nth-of-type(2) [class*='offerRow']:nth-child(-n + 5) > strong {
+  color: #9a6700 !important;
+  font-weight: 700 !important;
+  background: #fffaf0 !important;
+}
+
+header:has(nav[aria-label='Navigasi utama']) + main > section:nth-of-type(2) [class*='processCard'] {
+  position: sticky !important;
+  top: 104px !important;
+  border: 1px solid #dfe3eb !important;
+  border-radius: 16px !important;
+  background: #fff !important;
+  padding: 26px !important;
+  box-shadow: 0 14px 34px -28px rgba(20, 24, 74, 0.45) !important;
+}
+
+header:has(nav[aria-label='Navigasi utama']) + main > section:nth-of-type(2) [class*='processCard'] h3 {
+  margin-bottom: 18px !important;
+  font-size: 1.5rem !important;
+  line-height: 1.25 !important;
+}
+
+header:has(nav[aria-label='Navigasi utama']) + main > section:nth-of-type(2) [class*='processCard'] ol {
+  gap: 14px !important;
+  margin: 0 0 20px !important;
+}
+
+header:has(nav[aria-label='Navigasi utama']) + main > section:nth-of-type(2) [class*='processCard'] li {
+  grid-template-columns: 24px minmax(0, 1fr) !important;
+  gap: 10px !important;
+  align-items: start !important;
+}
+
+header:has(nav[aria-label='Navigasi utama']) + main > section:nth-of-type(2) [class*='processCard'] li > span {
+  width: 22px !important;
+  height: 22px !important;
+  margin-top: 1px !important;
+  border-radius: 7px !important;
+  background: #e6f5f4 !important;
+  color: transparent !important;
+  font-size: 0 !important;
+}
+
+header:has(nav[aria-label='Navigasi utama']) + main > section:nth-of-type(2) [class*='processCard'] li > span::before {
+  content: '✓';
+  color: #0e9c9c !important;
+  font-size: 0.875rem !important;
+  font-weight: 800 !important;
+}
+
+header:has(nav[aria-label='Navigasi utama']) + main > section:nth-of-type(2) [class*='processCard'] b,
+header:has(nav[aria-label='Navigasi utama']) + main > section:nth-of-type(2) [class*='processCard'] p {
+  font-size: 1rem !important;
+}
+
+header:has(nav[aria-label='Navigasi utama']) + main > section:nth-of-type(2) [class*='processCard'] b {
+  margin-bottom: 2px !important;
+  color: #14184a !important;
+  font-weight: 700 !important;
+}
+
+header:has(nav[aria-label='Navigasi utama']) + main > section:nth-of-type(2) [class*='processCard'] p {
+  color: #5e6282 !important;
+  line-height: 1.65 !important;
+}
+
+header:has(nav[aria-label='Navigasi utama']) + main > section:nth-of-type(2) [class*='processCard'] a[class*='btnPrimary'] {
+  width: 100% !important;
+  min-height: 52px !important;
+  border-radius: 10px !important;
+  font-size: 1rem !important;
+  font-weight: 700 !important;
+}
+
+header:has(nav[aria-label='Navigasi utama']) + main > section:nth-of-type(2) [class*='offerFoot'] {
+  margin-top: 20px !important;
+  border: 1px solid #e4efee !important;
+  border-radius: 10px !important;
+  background: #eef7f6 !important;
+  padding: 13px 16px !important;
+  font-size: 1rem !important;
+  line-height: 1.65 !important;
+}
+
+/* Light footer aligned with the supplied portal reference and the same 16px body scale. */
 footer:has(img[src*='nuzultrip-logo-portal']) {
-  border-top-color: #263c70 !important;
-  background: #142657 !important;
-  color: #dce7ee !important;
-  padding-block: 48px 28px !important;
-  color-scheme: dark;
+  border-top: 1px solid #e7e6f0 !important;
+  background: #fbfbfd !important;
+  color: #635f7c !important;
+  padding-block: 68px 30px !important;
+  color-scheme: light;
+}
+
+footer:has(img[src*='nuzultrip-logo-portal']) > div {
+  max-width: 1240px !important;
 }
 
 footer:has(img[src*='nuzultrip-logo-portal']) img {
-  width: 162px !important;
+  width: 154px !important;
   height: auto !important;
-  border-radius: 10px;
-  background: #ffffff;
-  padding: 8px 12px;
+  max-height: none !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  padding: 0 !important;
 }
 
 footer:has(img[src*='nuzultrip-logo-portal']) h4 {
-  color: #ffffff !important;
-  font-size: 1rem !important;
+  margin-bottom: 14px !important;
+  color: #14184a !important;
+  font-size: 1.125rem !important;
+  line-height: 1.4 !important;
+  font-weight: 700 !important;
 }
 
 footer:has(img[src*='nuzultrip-logo-portal']) p,
 footer:has(img[src*='nuzultrip-logo-portal']) a,
 footer:has(img[src*='nuzultrip-logo-portal']) span {
-  color: #dce7ee !important;
-  font-size: 0.9375rem !important;
-  line-height: 1.65 !important;
+  color: #69657f !important;
+  font-size: 1rem !important;
+  line-height: 1.7 !important;
+}
+
+footer:has(img[src*='nuzultrip-logo-portal']) p {
+  max-width: 290px !important;
+}
+
+footer:has(img[src*='nuzultrip-logo-portal']) a {
+  transition: color 160ms ease;
 }
 
 footer:has(img[src*='nuzultrip-logo-portal']) a:hover {
-  color: #77d9d4 !important;
+  color: #0e8588 !important;
+}
+
+footer:has(img[src*='nuzultrip-logo-portal']) [class*='footerGrid'] {
+  align-items: start !important;
+  gap: clamp(42px, 6vw, 84px) !important;
 }
 
 footer:has(img[src*='nuzultrip-logo-portal']) [class*='legal'] {
-  border-top-color: #334a7d !important;
+  margin-top: 54px !important;
+  padding-top: 24px !important;
+  border-top: 1px solid #e7e6f0 !important;
+  color: #8985a0 !important;
+}
+
+footer:has(img[src*='nuzultrip-logo-portal']) [class*='legal'] span {
+  color: #8985a0 !important;
+  font-size: 0.875rem !important;
+}
+
+@media (max-width: 1100px) {
+  header:has(nav[aria-label='Navigasi utama']) + main > section:first-child > div:nth-child(2) {
+    grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr) !important;
+  }
+
+  header:has(nav[aria-label='Navigasi utama']) + main > section:first-child h1 {
+    font-size: clamp(3.3rem, 5.6vw, 4.5rem) !important;
+  }
+
+  header:has(nav[aria-label='Navigasi utama']) + main > section:first-child > div:nth-child(2) > div:last-child {
+    width: 112% !important;
+    max-width: 560px !important;
+    margin-left: -5% !important;
+    transform: scale(1.04) !important;
+  }
+
+  header:has(nav[aria-label='Navigasi utama']) + main > section:nth-of-type(2) [class*='offerGrid'] {
+    grid-template-columns: minmax(0, 1.2fr) minmax(310px, 0.8fr) !important;
+    gap: 18px !important;
+  }
 }
 
 @media (max-width: 900px) {
+  header:has(nav[aria-label='Navigasi utama']) + main > section:first-child > div:nth-child(2) {
+    grid-template-columns: 1fr !important;
+  }
+
+  header:has(nav[aria-label='Navigasi utama']) + main > section:first-child > div:nth-child(2) > div:last-child {
+    width: 100% !important;
+    max-width: 520px !important;
+    margin: 0 auto !important;
+    transform: none !important;
+  }
+
   header:has(nav[aria-label='Navigasi utama']) + main > section:not(:first-child) {
     padding-top: 64px !important;
     padding-bottom: 64px !important;
@@ -155,9 +395,25 @@ footer:has(img[src*='nuzultrip-logo-portal']) [class*='legal'] {
   header:has(nav[aria-label='Navigasi utama']) + main > section:not(:first-child) h2 {
     font-size: clamp(2rem, 6vw, 2.75rem) !important;
   }
+
+  header:has(nav[aria-label='Navigasi utama']) + main > section:nth-of-type(2) [class*='offerGrid'] {
+    grid-template-columns: 1fr !important;
+  }
+
+  header:has(nav[aria-label='Navigasi utama']) + main > section:nth-of-type(2) [class*='processCard'] {
+    position: static !important;
+  }
+
+  footer:has(img[src*='nuzultrip-logo-portal']) {
+    padding-block: 54px 28px !important;
+  }
 }
 
 @media (max-width: 640px) {
+  header:has(nav[aria-label='Navigasi utama']) + main > section:first-child h1 > span {
+    white-space: normal !important;
+  }
+
   header:has(nav[aria-label='Navigasi utama']) + main > section:first-child h1 + p {
     font-size: 1rem !important;
   }
@@ -171,7 +427,24 @@ footer:has(img[src*='nuzultrip-logo-portal']) [class*='legal'] {
     font-size: 2rem !important;
   }
 
+  header:has(nav[aria-label='Navigasi utama']) + main > section:nth-of-type(2) [class*='offerRow'] {
+    grid-template-columns: 1fr !important;
+  }
+
+  header:has(nav[aria-label='Navigasi utama']) + main > section:nth-of-type(2) [class*='offerRow'] > strong {
+    border-left: 0 !important;
+    border-top: 1px solid #eef0f4 !important;
+  }
+
+  header:has(nav[aria-label='Navigasi utama']) + main > section:nth-of-type(2) [class*='processCard'] {
+    padding: 20px !important;
+  }
+
   footer:has(img[src*='nuzultrip-logo-portal']) {
-    padding-block: 40px 24px !important;
+    padding-block: 44px 24px !important;
+  }
+
+  footer:has(img[src*='nuzultrip-logo-portal']) [class*='legal'] {
+    margin-top: 38px !important;
   }
 }
