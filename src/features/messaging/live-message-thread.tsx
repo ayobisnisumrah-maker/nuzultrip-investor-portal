@@ -31,6 +31,7 @@ type Props = {
 }
 
 const EMOJIS = ['😀', '😊', '🙏', '👍', '✅', '📌', '📈', '💬', '✨', '🤝', '❤️', '🎉'] as const
+const FALLBACK_SYNC_INTERVAL_MS = 2_000
 
 function formatMessageTime(value: string, timeZone: string): string {
   return new Intl.DateTimeFormat('id-ID', {
@@ -72,6 +73,7 @@ export function LiveMessageThread({
     let active = true
     let broadcastReady = false
     let postgresReady = false
+    let syncInFlight = false
 
     function updateConnectionState() {
       if (!active) return
@@ -79,12 +81,16 @@ export function LiveMessageThread({
     }
 
     async function syncMessages() {
+      if (!active || syncInFlight) return
+      syncInFlight = true
+
       const { data, error: syncError } = await supabase
         .from('messages')
         .select('id, body_text, sender_label, sender_id, sent_at')
         .eq('thread_id', threadId)
         .order('sent_at', { ascending: true })
 
+      syncInFlight = false
       if (!active || syncError || !data) return
 
       setMessages((current) => {
@@ -158,11 +164,18 @@ export function LiveMessageThread({
       void syncMessages()
     }
 
+    const fallbackSyncTimer = window.setInterval(() => {
+      if (document.visibilityState === 'visible' && navigator.onLine) {
+        void syncMessages()
+      }
+    }, FALLBACK_SYNC_INTERVAL_MS)
+
     document.addEventListener('visibilitychange', syncWhenVisible)
     window.addEventListener('online', syncWhenOnline)
 
     return () => {
       active = false
+      window.clearInterval(fallbackSyncTimer)
       authSubscription.unsubscribe()
       document.removeEventListener('visibilitychange', syncWhenVisible)
       window.removeEventListener('online', syncWhenOnline)
