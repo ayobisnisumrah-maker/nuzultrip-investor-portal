@@ -387,6 +387,7 @@ describe('the anonymous role', () => {
     'portal_section_versions',
     'portal_navigation',
     'portal_theme',
+    'portal_content',
     'site_settings',
     'documents',
     'document_versions',
