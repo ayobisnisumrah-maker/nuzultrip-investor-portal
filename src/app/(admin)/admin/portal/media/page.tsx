@@ -22,6 +22,7 @@ export default async function PortalMediaPage() {
     <PortalMediaManager
       assets={assets}
       canUpload={principal.permissions.has('media.upload')}
+      timezone={principal.timezone}
     />
   )
 }
