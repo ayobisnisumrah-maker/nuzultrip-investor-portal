@@ -58,6 +58,20 @@ jobs:
       - name: Start local Supabase
         run: supabase start
 
+      - name: Export local build environment
+        run: |
+          status_env="$(supabase status -o env)"
+          api_url="$(printf '%s\n' "$status_env" | sed -n 's/^API_URL="\(.*\)"$/\1/p')"
+          publishable_key="$(printf '%s\n' "$status_env" | sed -n 's/^PUBLISHABLE_KEY="\(.*\)"$/\1/p')"
+          test -n "$api_url"
+          test -n "$publishable_key"
+          {
+            echo "NEXT_PUBLIC_SUPABASE_URL=$api_url"
+            echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$publishable_key"
+            echo "NEXT_PUBLIC_SITE_URL=http://localhost:3000"
+            echo "NEXT_PUBLIC_APP_ENV=development"
+          } >> "$GITHUB_ENV"
+
       - name: Reset local schema from migrations
         run: supabase db reset
 
@@ -77,15 +91,4 @@ jobs:
         run: pnpm test:db:only --no-file-parallelism
 
       - name: Production build
-        shell: bash
-        run: |
-          set -euo pipefail
-          eval "$(supabase status -o env)"
-          export NEXT_PUBLIC_SUPABASE_URL="$API_URL"
-          export NEXT_PUBLIC_SUPABASE_ANON_KEY="${ANON_KEY:-${PUBLISHABLE_KEY:-ci-public-key-placeholder-1234567890}}"
-          export NEXT_PUBLIC_SITE_URL="http://localhost:3000"
-          export NEXT_PUBLIC_APP_ENV="staging"
-          export SUPABASE_SERVICE_ROLE_KEY="${SERVICE_ROLE_KEY:-${SECRET_KEY:-ci-service-role-placeholder-1234567890}}"
-          export AUDIT_IP_SALT="ci-audit-ip-salt-1234567890"
-          export IDENTITY_HASH_SALT="ci-identity-hash-salt-1234567890"
-          pnpm build
+        run: pnpm build
