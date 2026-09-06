@@ -1,9 +1,10 @@
 import type { Metadata } from 'next'
+
+import { InvestorProfileEditor } from '@/features/investor/investor-profile-editor'
 import { requireInvestorPage } from '@/server/auth/page-guards'
 import { getServerSupabase } from '@/server/supabase/server'
-import { PageHeader, Stack } from '@/ui/layout'
 import { Card, CardBody, CardHeader, CardTitle } from '@/ui/card'
-import { DetailList, DetailRow } from '@/ui/data'
+import { PageHeader, Stack } from '@/ui/layout'
 import { InvestorStatusPill } from '@/ui/status'
 
 export const metadata: Metadata = { title: 'Profil' }
@@ -12,7 +13,7 @@ export default async function InvestorProfilePage() {
   const principal = await requireInvestorPage()
   const supabase = await getServerSupabase()
 
-  const { data: investor } = await supabase
+  const { data: investor, error } = await supabase
     .from('investors')
     .select(
       'legal_name, investor_type, country, city, address, organization_name, organization_role, whatsapp_number, bank_name, bank_account_name, bank_account_number, ktp_original_file_name, ktp_uploaded_at',
@@ -20,51 +21,48 @@ export default async function InvestorProfilePage() {
     .eq('id', principal.investorId)
     .maybeSingle()
 
+  if (error || !investor) {
+    throw new Error('Profil investor tidak dapat dimuat.')
+  }
+
   return (
     <Stack gap={8}>
       <PageHeader
         eyebrow="Akun Investor"
         title="Profil"
-        description="Informasi identitas dan data rekening yang tersimpan pada akun investor Anda."
+        description="Kelola identitas, kontak, rekening pembayaran, dan dokumen identitas Anda."
+        actions={<InvestorStatusPill status={principal.status} />}
       />
+
       <Card>
         <CardHeader>
-          <CardTitle>Identitas</CardTitle>
+          <CardTitle>Data investor</CardTitle>
         </CardHeader>
         <CardBody>
-          <DetailList>
-            <DetailRow label="Nama legal">{investor?.legal_name ?? principal.legalName}</DetailRow>
-            <DetailRow label="Kode investor">
-              <span className="font-mono">{principal.referenceCode}</span>
-            </DetailRow>
-            <DetailRow label="Jenis investor">{investor?.investor_type ?? '—'}</DetailRow>
-            <DetailRow label="Surel">{principal.email}</DetailRow>
-            <DetailRow label="WhatsApp">{investor?.whatsapp_number ?? '—'}</DetailRow>
-            <DetailRow label="Negara/Kota">
-              {[investor?.country, investor?.city].filter(Boolean).join(' / ') || '—'}
-            </DetailRow>
-            <DetailRow label="Alamat">{investor?.address ?? '—'}</DetailRow>
-            <DetailRow label="Organisasi">{investor?.organization_name ?? '—'}</DetailRow>
-            <DetailRow label="Jabatan">{investor?.organization_role ?? '—'}</DetailRow>
-            <DetailRow label="Status">
-              <InvestorStatusPill status={principal.status} />
-            </DetailRow>
-          </DetailList>
-        </CardBody>
-      </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle>Rekening pembayaran</CardTitle>
-        </CardHeader>
-        <CardBody>
-          <DetailList>
-            <DetailRow label="Bank">{investor?.bank_name ?? '—'}</DetailRow>
-            <DetailRow label="Nama rekening">{investor?.bank_account_name ?? '—'}</DetailRow>
-            <DetailRow label="Nomor rekening">{investor?.bank_account_number ?? '—'}</DetailRow>
-            <DetailRow label="Identitas terunggah">
-              {investor?.ktp_original_file_name ?? 'Belum diunggah'}
-            </DetailRow>
-          </DetailList>
+          <div className="mb-6 grid gap-1 text-body-sm text-fg-muted sm:grid-cols-2">
+            <p>
+              Kode investor: <span className="font-mono text-fg">{principal.referenceCode}</span>
+            </p>
+            <p>
+              Surel: <span className="text-fg">{principal.email}</span>
+            </p>
+          </div>
+          <InvestorProfileEditor
+            investor={{
+              legalName: investor.legal_name,
+              whatsappNumber: investor.whatsapp_number,
+              country: investor.country,
+              city: investor.city,
+              address: investor.address,
+              organizationName: investor.organization_name,
+              organizationRole: investor.organization_role,
+              bankName: investor.bank_name,
+              bankAccountName: investor.bank_account_name,
+              bankAccountNumber: investor.bank_account_number,
+              identityFileName: investor.ktp_original_file_name,
+              identityUploadedAt: investor.ktp_uploaded_at,
+            }}
+          />
         </CardBody>
       </Card>
     </Stack>
