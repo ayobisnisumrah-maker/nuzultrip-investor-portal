@@ -1,137 +1,154 @@
+/*
+ * Tema portal publik Nuzultrip — mengacu pada referensi visual yang disepakati.
+ *
+ * PRINSIP: setiap aturan menempel pada MAKNA elemen, bukan pada posisinya.
+ *   - [data-section-kind="..."]  jenis seksi dari CMS (enum section_kind)
+ *   - [data-portal-el="..."]     peran elemen di dalam seksi
+ *
+ * Karena itu menambah, menghapus, atau menukar urutan seksi dari super admin
+ * dashboard TIDAK merusak tampilan. Jangan pernah menambahkan aturan baru yang
+ * bergantung pada :first-child / :last-child / :nth-of-type untuk struktur
+ * halaman — satu pengeditan konten akan membuatnya salah sasaran tanpa error.
+ */
+
 .theme {
-  --nuzul-navy: #1b2c6b;
+  --nuzul-navy: #14184a;
   --nuzul-teal: #0e9c9c;
   --nuzul-teal-bright: #25bdb6;
-  --nuzul-amber: #f2a93b;
+  --nuzul-amber: #f1a501;
   --nuzul-coral: #df6951;
-  --nuzul-ink: #1f2942;
-  --nuzul-muted: #65708a;
-  --nuzul-cream: #fdfbf6;
-  --nuzul-tint: #f7f8fc;
-  --nuzul-border: #e6e9f1;
+  --nuzul-ink: #14184a;
+  --nuzul-muted: #5e6282;
+  --nuzul-cream: #fff1da;
+  --nuzul-tint: #fafafd;
+  --nuzul-border: #e7e6f0;
+  --nuzul-shell: 1180px;
   background: var(--nuzul-cream);
   color: var(--nuzul-ink);
+  color-scheme: light;
+  font-family: 'Poppins', 'Segoe UI', Helvetica, Arial, sans-serif;
 }
 
 .theme :global(header) {
-  border-color: rgba(27, 44, 107, 0.08) !important;
-  background: rgba(253, 251, 246, 0.94) !important;
-  box-shadow: 0 1px 0 rgba(27, 44, 107, 0.03);
+  border-color: rgba(20, 24, 74, 0.08) !important;
+  background: rgba(255, 255, 255, 0.92) !important;
+  box-shadow: 0 1px 0 rgba(20, 24, 74, 0.03);
 }
 
 .theme :global(header > div) {
-  max-width: 1180px !important;
+  max-width: var(--nuzul-shell) !important;
   height: 78px !important;
 }
 
-.theme :global(header a[href="/"]) {
+.theme :global(header a[href='/']) {
   color: var(--nuzul-navy) !important;
-  font-family: Georgia, 'Times New Roman', serif;
+  font-family: 'Volkhov', 'Iowan Old Style', Georgia, serif;
   font-size: 1.42rem !important;
 }
 
-.theme :global(header a[href="/"] > span:first-child) {
+.theme :global(header a[href='/'] > span:first-child) {
   width: 38px !important;
   height: 38px !important;
   border-radius: 12px !important;
-  background: var(--nuzul-navy) !important;
+  background: linear-gradient(140deg, var(--nuzul-teal), #0b6f78) !important;
   color: #fff !important;
-  box-shadow: 0 8px 24px rgba(27, 44, 107, 0.18);
+  box-shadow: 0 8px 24px rgba(20, 24, 74, 0.18);
 }
 
 .theme :global(header nav a),
 .theme :global(header summary) {
-  color: #536078 !important;
+  color: #2b3164 !important;
 }
 
 .theme :global(header nav a:hover),
 .theme :global(header summary:hover) {
-  color: var(--nuzul-navy) !important;
+  color: var(--nuzul-coral) !important;
 }
 
-.theme :global(header a[href="/masuk"]) {
+.theme :global([data-portal-el='header-login']) {
   border-color: var(--nuzul-navy) !important;
   background: var(--nuzul-navy) !important;
   color: #fff !important;
-  border-radius: 999px !important;
+  border-radius: 8px !important;
   padding-inline: 1.2rem !important;
-  box-shadow: 0 8px 22px rgba(27, 44, 107, 0.15);
+  box-shadow: 0 8px 22px rgba(20, 24, 74, 0.15);
 }
 
-.theme :global(main > section:first-child) {
+.theme :global([data-section-kind='hero_3d']) {
   position: relative;
   min-height: 650px;
   overflow: hidden;
   border-bottom: 0 !important;
   background:
-    radial-gradient(circle at 90% 22%, rgba(37, 189, 182, 0.11), transparent 26%),
-    radial-gradient(circle at 73% 74%, rgba(242, 169, 59, 0.12), transparent 23%),
-    linear-gradient(180deg, #fffdf8 0%, #fdfbf6 100%);
+    radial-gradient(circle at 88% 20%, rgba(255, 241, 218, 0.96), transparent 36%),
+    radial-gradient(circle at 76% 78%, rgba(14, 156, 156, 0.08), transparent 24%),
+    linear-gradient(180deg, #ffffff 0%, #fffdf8 100%);
 }
 
-.theme :global(main > section:first-child > div:last-child) {
-  max-width: 1180px !important;
+.theme :global([data-portal-el='hero-body']) {
+  max-width: var(--nuzul-shell) !important;
   min-height: 650px !important;
-  padding-top: 88px !important;
-  padding-bottom: 88px !important;
+  padding-top: 72px !important;
+  padding-bottom: 84px !important;
   padding-right: min(48vw, 570px) !important;
 }
 
-.theme :global(main > section:first-child > div:last-child > div) {
+.theme :global([data-portal-el='hero-copy']) {
   max-width: 620px !important;
   position: relative;
   z-index: 2;
 }
 
-.theme :global(main > section:first-child p:first-child) {
-  color: var(--nuzul-teal) !important;
-  letter-spacing: 0.14em !important;
+.theme :global([data-portal-el='hero-eyebrow']) {
+  color: var(--nuzul-coral) !important;
+  letter-spacing: 0.2em !important;
 }
 
-.theme :global(main > section:first-child h1) {
+.theme :global([data-section-kind='hero_3d'] h1) {
   color: var(--nuzul-navy) !important;
-  font-family: Georgia, 'Times New Roman', serif;
-  font-size: clamp(3rem, 5.7vw, 5.4rem) !important;
-  line-height: 0.99 !important;
-  letter-spacing: -0.045em !important;
+  font-family: 'Volkhov', 'Iowan Old Style', Georgia, serif;
+  font-size: clamp(2.6rem, 4.8vw, 4.25rem) !important;
+  line-height: 1.06 !important;
+  letter-spacing: -0.03em !important;
   font-weight: 700 !important;
 }
 
-.theme :global(main > section:first-child h1::after) {
+.theme :global([data-section-kind='hero_3d'] h1::after) {
   content: '';
   display: block;
   width: 138px;
-  height: 7px;
+  height: 6px;
   margin-top: 18px;
   border-radius: 999px;
-  background: linear-gradient(90deg, var(--nuzul-amber), var(--nuzul-coral));
+  background: var(--nuzul-coral);
   transform: rotate(-2deg);
 }
 
-.theme :global(main > section:first-child h1 + p) {
+.theme :global([data-portal-el='hero-description']) {
   color: var(--nuzul-muted) !important;
   max-width: 590px !important;
-  font-size: 1.05rem !important;
-  line-height: 1.9 !important;
+  font-size: 0.98rem !important;
+  line-height: 1.85 !important;
 }
 
-.theme :global(main > section:first-child a) {
-  border-radius: 999px !important;
+.theme :global([data-portal-el='hero-cta-primary']),
+.theme :global([data-portal-el='hero-cta-secondary']) {
+  border-radius: 9px !important;
 }
 
-.theme :global(main > section:first-child a:first-child) {
-  background: var(--nuzul-navy) !important;
-  color: #fff !important;
-  box-shadow: 0 12px 28px rgba(27, 44, 107, 0.2);
+.theme :global([data-portal-el='hero-cta-primary']) {
+  background: var(--nuzul-amber) !important;
+  color: #24200f !important;
+  box-shadow: 0 14px 26px -16px rgba(241, 165, 1, 0.9);
 }
 
-.theme :global(main > section:first-child a:last-child) {
-  border-color: rgba(27, 44, 107, 0.25) !important;
+.theme :global([data-portal-el='hero-cta-secondary']) {
+  border-color: #d7d5e6 !important;
   color: var(--nuzul-navy) !important;
-  background: rgba(255, 255, 255, 0.68) !important;
+  background: #fff !important;
 }
 
-.theme :global(main > section:first-child::after) {
+.theme :global([data-section-kind='hero_3d']::after) {
   content: '';
   position: absolute;
   z-index: 1;
@@ -143,124 +160,123 @@
   background-repeat: no-repeat;
   background-position: center;
   background-size: contain;
-  filter: drop-shadow(0 26px 32px rgba(27, 44, 107, 0.16));
+  filter: drop-shadow(0 28px 46px rgba(20, 24, 74, 0.16));
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 560 470'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop stop-color='%231B2C6B'/%3E%3Cstop offset='1' stop-color='%230E9C9C'/%3E%3C/linearGradient%3E%3ClinearGradient id='d' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop stop-color='%23FDFBF6'/%3E%3Cstop offset='1' stop-color='%23E8DFC9'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='300' cy='224' r='184' fill='url(%23g)'/%3E%3Ccircle cx='300' cy='224' r='184' fill='none' stroke='white' stroke-opacity='.18' stroke-width='2'/%3E%3Ccircle cx='406' cy='118' r='21' fill='%23FFD98A'/%3E%3Ccircle cx='414' cy='111' r='20' fill='%231B2C6B'/%3E%3Cpath d='M232 248c0-44 30-70 68-92 38 22 68 48 68 92z' fill='url(%23d)'/%3E%3Crect x='222' y='248' width='156' height='82' rx='10' fill='%23FDFBF6'/%3E%3Crect x='196' y='194' width='20' height='136' rx='7' fill='url(%23d)'/%3E%3Cpath d='M206 166c9 10 13 17 13 23a13 13 0 01-26 0c0-6 4-13 13-23z' fill='%23F2DFB6'/%3E%3Crect x='384' y='194' width='20' height='136' rx='7' fill='url(%23d)'/%3E%3Cpath d='M394 166c9 10 13 17 13 23a13 13 0 01-26 0c0-6 4-13 13-23z' fill='%23F2DFB6'/%3E%3Cg fill='%231B2C6B' opacity='.82'%3E%3Cpath d='M248 330v-36a13 13 0 0126 0v36z'/%3E%3Cpath d='M287 330v-44a13 13 0 0126 0v44z'/%3E%3Cpath d='M326 330v-36a13 13 0 0126 0v36z'/%3E%3C/g%3E%3Crect x='182' y='328' width='236' height='16' rx='8' fill='%23EFE4CB'/%3E%3Cpath d='M72 177c70-58 164-58 226-16' fill='none' stroke='%2325BDB6' stroke-width='3' stroke-linecap='round' stroke-dasharray='7 9'/%3E%3Cpath d='M300 157l-24 8 9 5-2 11 8-9 14 3z' fill='%2325BDB6'/%3E%3Cg transform='translate(145 342)'%3E%3Crect width='94' height='68' rx='14' fill='%23DF6951'/%3E%3Crect x='25' width='12' height='68' fill='white' opacity='.32'/%3E%3Crect x='58' width='12' height='68' fill='white' opacity='.32'/%3E%3Ccircle cx='20' cy='76' r='7' fill='%231B2C6B'/%3E%3Ccircle cx='74' cy='76' r='7' fill='%231B2C6B'/%3E%3C/g%3E%3Cg transform='translate(390 348)'%3E%3Crect width='72' height='54' rx='9' fill='%2325BDB6'/%3E%3Cpath d='M15 17h42M15 28h30M15 39h36' stroke='white' stroke-width='5' stroke-linecap='round' opacity='.8'/%3E%3C/g%3E%3C/svg%3E");
 }
 
-.theme :global(main > section:not(:first-child)) {
+.theme :global([data-section-kind]:not([data-section-kind='hero_3d'])) {
   border-color: transparent !important;
-  padding-top: 92px !important;
-  padding-bottom: 92px !important;
+  padding-top: 84px !important;
+  padding-bottom: 84px !important;
+  background: #fff;
 }
 
-.theme :global(main > section:nth-of-type(even)) {
-  background: var(--nuzul-tint);
+.theme :global([data-section-kind='vision_mission']),
+.theme :global([data-section-kind='growth_story']),
+.theme :global([data-section-kind='investment_info']),
+.theme :global([data-section-kind='documents']),
+.theme :global([data-section-kind='logo_wall']),
+.theme :global([data-section-kind='faq']) {
+  background: var(--nuzul-tint) !important;
 }
 
-.theme :global(main > section:nth-of-type(odd):not(:first-child)) {
-  background: #fffdf9;
+.theme :global([data-portal-el='section-container']) {
+  max-width: var(--nuzul-shell) !important;
 }
 
-.theme :global(main > section:not(:first-child) > div) {
-  max-width: 1180px !important;
-}
-
-.theme :global(main section h2) {
+.theme :global([data-section-kind] h2) {
   color: var(--nuzul-navy) !important;
-  font-family: Georgia, 'Times New Roman', serif;
+  font-family: 'Volkhov', 'Iowan Old Style', Georgia, serif;
   letter-spacing: -0.025em !important;
 }
 
-.theme :global(main section h3) {
+.theme :global([data-section-kind] h3) {
   color: var(--nuzul-ink) !important;
 }
 
-.theme :global(main section p) {
+.theme :global([data-section-kind] p) {
   color: var(--nuzul-muted);
 }
 
-.theme :global(main section p[class*="uppercase"]) {
-  color: var(--nuzul-teal) !important;
+.theme :global([data-portal-el='section-eyebrow']) {
+  color: var(--nuzul-coral) !important;
 }
 
-.theme :global(main section article),
-.theme :global(main section details) {
+.theme :global([data-section-kind] article),
+.theme :global([data-section-kind] details) {
   border-color: var(--nuzul-border) !important;
-  background: rgba(255, 255, 255, 0.93) !important;
-  box-shadow: 0 12px 34px rgba(27, 44, 107, 0.06) !important;
+  background: rgba(255, 255, 255, 0.96) !important;
+  box-shadow: 0 8px 20px -14px rgba(20, 24, 74, 0.18) !important;
 }
 
-.theme :global(main section article) {
+.theme :global([data-section-kind] article) {
   transition: transform 180ms ease, box-shadow 180ms ease;
 }
 
-.theme :global(main section article:hover) {
+.theme :global([data-section-kind] article:hover) {
   transform: translateY(-4px);
-  box-shadow: 0 18px 42px rgba(27, 44, 107, 0.1) !important;
+  box-shadow: 0 16px 34px -22px rgba(20, 24, 74, 0.22) !important;
 }
 
-.theme :global(main section article:nth-child(4n + 1) > div:first-child),
-.theme :global(main section article:nth-child(4n + 1) > span:first-child) {
-  background: rgba(242, 169, 59, 0.16) !important;
-  color: #b66b13 !important;
+.theme :global([data-section-kind] article:nth-child(4n + 1) > div:first-child),
+.theme :global([data-section-kind] article:nth-child(4n + 1) > span:first-child) {
+  background: rgba(241, 165, 1, 0.16) !important;
+  color: #8a6a1e !important;
 }
 
-.theme :global(main section article:nth-child(4n + 2) > div:first-child),
-.theme :global(main section article:nth-child(4n + 2) > span:first-child) {
+.theme :global([data-section-kind] article:nth-child(4n + 2) > div:first-child),
+.theme :global([data-section-kind] article:nth-child(4n + 2) > span:first-child) {
   background: rgba(14, 156, 156, 0.13) !important;
   color: var(--nuzul-teal) !important;
 }
 
-.theme :global(main section article:nth-child(4n + 3) > div:first-child),
-.theme :global(main section article:nth-child(4n + 3) > span:first-child) {
+.theme :global([data-section-kind] article:nth-child(4n + 3) > div:first-child),
+.theme :global([data-section-kind] article:nth-child(4n + 3) > span:first-child) {
   background: rgba(75, 70, 168, 0.12) !important;
   color: #4b46a8 !important;
 }
 
-.theme :global(main section article:nth-child(4n + 4) > div:first-child),
-.theme :global(main section article:nth-child(4n + 4) > span:first-child) {
+.theme :global([data-section-kind] article:nth-child(4n + 4) > div:first-child),
+.theme :global([data-section-kind] article:nth-child(4n + 4) > span:first-child) {
   background: rgba(223, 105, 81, 0.13) !important;
   color: var(--nuzul-coral) !important;
 }
 
-.theme :global(main section div[class*="bg-primary"]) {
-  background: var(--nuzul-navy) !important;
-}
-
-.theme :global(main section a[class*="bg-primary"]) {
+.theme :global([data-section-kind] div[class*='bg-primary']),
+.theme :global([data-section-kind] a[class*='bg-primary']) {
   background: var(--nuzul-navy) !important;
 }
 
 .theme :global(footer) {
-  border-color: rgba(255, 255, 255, 0.1) !important;
-  background: #111d4f;
+  border-color: var(--nuzul-border) !important;
+  background: var(--nuzul-tint);
 }
 
 .theme :global(footer > div) {
-  max-width: 1180px !important;
+  max-width: var(--nuzul-shell) !important;
   padding-top: 42px !important;
   padding-bottom: 42px !important;
 }
 
 .theme :global(footer p),
 .theme :global(footer a) {
-  color: rgba(255, 255, 255, 0.72) !important;
+  color: var(--nuzul-muted) !important;
 }
 
-.theme :global(footer p:first-child) {
-  color: #fff !important;
+.theme :global([data-portal-el='footer-lede']) {
+  color: var(--nuzul-navy) !important;
 }
 
 .theme :global(footer a:hover) {
-  color: #fff !important;
+  color: var(--nuzul-coral) !important;
 }
 
 @media (max-width: 1023px) {
-  .theme :global(main > section:first-child > div:last-child) {
+  .theme :global([data-portal-el='hero-body']) {
     padding-right: 44vw !important;
   }
 
-  .theme :global(main > section:first-child::after) {
+  .theme :global([data-section-kind='hero_3d']::after) {
     right: -4vw;
     width: 46vw;
   }
@@ -271,18 +287,18 @@
     height: 68px !important;
   }
 
-  .theme :global(main > section:first-child) {
+  .theme :global([data-section-kind='hero_3d']) {
     min-height: auto;
   }
 
-  .theme :global(main > section:first-child > div:last-child) {
+  .theme :global([data-portal-el='hero-body']) {
     min-height: auto !important;
-    padding-top: 72px !important;
-    padding-bottom: 360px !important;
+    padding-top: 64px !important;
+    padding-bottom: 350px !important;
     padding-right: 24px !important;
   }
 
-  .theme :global(main > section:first-child::after) {
+  .theme :global([data-section-kind='hero_3d']::after) {
     top: auto;
     bottom: 12px;
     right: 50%;
@@ -290,12 +306,22 @@
     transform: translateX(50%);
   }
 
-  .theme :global(main > section:first-child h1) {
-    font-size: clamp(2.65rem, 13vw, 4.2rem) !important;
+  .theme :global([data-section-kind='hero_3d'] h1) {
+    font-size: clamp(2.35rem, 12vw, 3.8rem) !important;
   }
 
-  .theme :global(main > section:not(:first-child)) {
-    padding-top: 72px !important;
-    padding-bottom: 72px !important;
+  .theme :global([data-section-kind]:not([data-section-kind='hero_3d'])) {
+    padding-top: 64px !important;
+    padding-bottom: 64px !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .theme :global([data-section-kind] article) {
+    transition: none;
+  }
+
+  .theme :global([data-section-kind] article:hover) {
+    transform: none;
   }
 }
