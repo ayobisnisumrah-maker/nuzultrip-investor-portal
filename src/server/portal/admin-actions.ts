@@ -2,7 +2,7 @@
 
 import { z } from 'zod'
 
-import { ForbiddenError, NotFoundError } from '@/core/errors'
+import { ConflictError, ForbiddenError, NotFoundError } from '@/core/errors'
 import { defineAction } from '@/server/auth/guards'
 import type { Json } from '@/types/database'
 
@@ -105,9 +105,7 @@ export const createPortalPage = defineAction({
         title: input.title,
         slug: input.slug,
         page_kind: input.pageKind,
-        seo: input.seoDescription
-          ? { description: input.seoDescription }
-          : {},
+        seo: input.seoDescription ? { description: input.seoDescription } : {},
         status: 'draft',
         is_system: false,
       })
@@ -115,9 +113,7 @@ export const createPortalPage = defineAction({
       .single()
 
     if (error || !page) {
-      throw new Error(
-        `Gagal membuat halaman portal: ${error?.message ?? 'unknown error'}`,
-      )
+      throw new Error(`Gagal membuat halaman portal: ${error?.message ?? 'unknown error'}`)
     }
 
     audit({
@@ -321,9 +317,7 @@ export const deletePortalSection = defineAction({
      * yang boleh dihapus permanen.
      */
     if (section.status !== 'draft') {
-      throw new ForbiddenError(
-        'Hanya bagian berstatus Draf yang dapat dihapus permanen.',
-      )
+      throw new ForbiddenError('Hanya bagian berstatus Draf yang dapat dihapus permanen.')
     }
 
     const { data: page, error: pageError } = await supabase
@@ -347,9 +341,7 @@ export const deletePortalSection = defineAction({
       .eq('id', section.id)
 
     if (deleteError) {
-      throw new Error(
-        `Gagal menghapus bagian portal: ${deleteError.message}`,
-      )
+      throw new Error(`Gagal menghapus bagian portal: ${deleteError.message}`)
     }
 
     audit({
@@ -390,6 +382,22 @@ async function transitionPortalPage(
   )
 
   if (error) {
+    if (error.code === '42501') {
+      throw new ForbiddenError(`Portal transition denied: ${error.message}`)
+    }
+
+    if (error.code === 'P0002') {
+      throw new NotFoundError('Halaman portal')
+    }
+
+    if (error.code === '23514') {
+      const publicMessage = error.message.includes('Invalid portal publication transition')
+        ? 'Status halaman sudah berubah. Muat ulang halaman lalu coba kembali.'
+        : 'Konten halaman belum siap untuk tahap berikutnya. Pastikan setiap bagian yang tampil memiliki versi draf terbaru.'
+
+      throw new ConflictError(`Portal transition conflict: ${error.message}`, publicMessage)
+    }
+
     throw new Error(`Gagal mengubah status portal: ${error.message}`)
   }
 
@@ -449,7 +457,6 @@ export const returnPortalPageToDraft = definePortalTransitionAction(
   (title, from) => `Halaman portal ${title} dikembalikan dari ${from} menjadi draf.`,
 )
 
-
 export const deletePortalPage = defineAction({
   access: { permission: 'portal.update' },
   input: pageTransitionSchema,
@@ -475,9 +482,7 @@ export const deletePortalPage = defineAction({
      * yang memiliki permission portal.update.
      */
     if (page.is_system && principal.roleKey !== 'super_admin') {
-      throw new ForbiddenError(
-        'Hanya Super Admin yang dapat menghapus halaman sistem.',
-      )
+      throw new ForbiddenError('Hanya Super Admin yang dapat menghapus halaman sistem.')
     }
 
     /*
@@ -485,9 +490,7 @@ export const deletePortalPage = defineAction({
      * Halaman Terbit tidak boleh langsung dihapus.
      */
     if (page.status !== 'archived') {
-      throw new ForbiddenError(
-        'Hanya halaman yang sudah diarsipkan yang dapat dihapus permanen.',
-      )
+      throw new ForbiddenError('Hanya halaman yang sudah diarsipkan yang dapat dihapus permanen.')
     }
 
     const { error: deleteError } = await supabase
@@ -496,9 +499,7 @@ export const deletePortalPage = defineAction({
       .eq('id', input.pageId)
 
     if (deleteError) {
-      throw new Error(
-        `Gagal menghapus halaman portal: ${deleteError.message}`,
-      )
+      throw new Error(`Gagal menghapus halaman portal: ${deleteError.message}`)
     }
 
     audit({
