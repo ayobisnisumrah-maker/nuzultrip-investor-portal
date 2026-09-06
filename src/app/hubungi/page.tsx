@@ -12,12 +12,12 @@ export default async function ContactPage({
   return (
     <main className="min-h-dvh bg-[#f5faf9] px-6 py-14 text-[#142657] sm:py-20">
       <div className="mx-auto max-w-3xl">
-        <Link href="/" className="text-base font-medium text-[#397077] hover:text-[#0e7f80]">
+        <Link href="/" className="text-base font-medium text-[#397077] hover:text-[#0b7374]">
           ← Kembali ke Investor Relations
         </Link>
 
         <div className="mt-8">
-          <p className="text-sm font-bold tracking-[0.16em] text-[#0e7f80] uppercase">
+          <p className="text-sm font-bold tracking-[0.16em] text-[#0b7374] uppercase">
             Investor Relations
           </p>
           <h1 className="font-display text-display-lg mt-3 text-[#142657]">Hubungi Tim Kami</h1>
@@ -38,7 +38,7 @@ export default async function ContactPage({
             </p>
             <Link
               href="/"
-              className="mt-6 inline-flex text-base font-semibold text-[#0e7f80] hover:underline"
+              className="mt-6 inline-flex text-base font-semibold text-[#0b7374] hover:underline"
             >
               Kembali ke portal
             </Link>
@@ -67,7 +67,7 @@ export default async function ContactPage({
                   name="name"
                   required
                   maxLength={200}
-                  className="mt-2 h-12 w-full rounded-xl border border-[#bfd3d4] bg-white px-4 text-base text-[#142657] outline-none focus:border-[#0e9c9c] focus:ring-2 focus:ring-[#0e9c9c]/20"
+                  className="mt-2 h-12 w-full rounded-xl border border-[#799fa2] bg-white px-4 text-base text-[#142657] outline-none focus:border-[#0b7374] focus:ring-2 focus:ring-[#0b7374]/20"
                 />
               </div>
               <div>
@@ -80,7 +80,7 @@ export default async function ContactPage({
                   type="email"
                   required
                   maxLength={320}
-                  className="mt-2 h-12 w-full rounded-xl border border-[#bfd3d4] bg-white px-4 text-base text-[#142657] outline-none focus:border-[#0e9c9c] focus:ring-2 focus:ring-[#0e9c9c]/20"
+                  className="mt-2 h-12 w-full rounded-xl border border-[#799fa2] bg-white px-4 text-base text-[#142657] outline-none focus:border-[#0b7374] focus:ring-2 focus:ring-[#0b7374]/20"
                 />
               </div>
               <div>
@@ -91,7 +91,7 @@ export default async function ContactPage({
                   id="phone"
                   name="phone"
                   maxLength={50}
-                  className="mt-2 h-12 w-full rounded-xl border border-[#bfd3d4] bg-white px-4 text-base text-[#142657] outline-none focus:border-[#0e9c9c] focus:ring-2 focus:ring-[#0e9c9c]/20"
+                  className="mt-2 h-12 w-full rounded-xl border border-[#799fa2] bg-white px-4 text-base text-[#142657] outline-none focus:border-[#0b7374] focus:ring-2 focus:ring-[#0b7374]/20"
                 />
               </div>
               <div>
@@ -102,7 +102,7 @@ export default async function ContactPage({
                   id="organization"
                   name="organization"
                   maxLength={200}
-                  className="mt-2 h-12 w-full rounded-xl border border-[#bfd3d4] bg-white px-4 text-base text-[#142657] outline-none focus:border-[#0e9c9c] focus:ring-2 focus:ring-[#0e9c9c]/20"
+                  className="mt-2 h-12 w-full rounded-xl border border-[#799fa2] bg-white px-4 text-base text-[#142657] outline-none focus:border-[#0b7374] focus:ring-2 focus:ring-[#0b7374]/20"
                 />
               </div>
             </div>
@@ -117,7 +117,7 @@ export default async function ContactPage({
                 required
                 maxLength={5000}
                 rows={7}
-                className="mt-2 w-full rounded-xl border border-[#bfd3d4] bg-white px-4 py-3 text-base leading-7 text-[#142657] outline-none focus:border-[#0e9c9c] focus:ring-2 focus:ring-[#0e9c9c]/20"
+                className="mt-2 w-full rounded-xl border border-[#799fa2] bg-white px-4 py-3 text-base leading-7 text-[#142657] outline-none focus:border-[#0b7374] focus:ring-2 focus:ring-[#0b7374]/20"
               />
             </div>
 
@@ -127,7 +127,7 @@ export default async function ContactPage({
               </p>
               <button
                 type="submit"
-                className="inline-flex min-h-12 items-center justify-center rounded-xl bg-[#0e8b8c] px-6 text-base font-semibold text-white transition-colors hover:bg-[#0b7374]"
+                className="inline-flex min-h-12 items-center justify-center rounded-xl bg-[#0b7374] px-6 text-base font-semibold text-white transition-colors hover:bg-[#085e60]"
               >
                 Kirim Permintaan
               </button>
