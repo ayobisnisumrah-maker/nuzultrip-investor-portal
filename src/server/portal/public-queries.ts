@@ -31,7 +31,11 @@ function hasMeaningfulContent(sectionKind: string, content: Record<string, unkno
     return isNonEmptyString(content.vision) || isNonEmptyArray(content.mission)
   }
 
-  if (sectionKind === 'business_overview' || sectionKind === 'ecosystem' || sectionKind === 'investor_updates') {
+  if (
+    sectionKind === 'business_overview' ||
+    sectionKind === 'ecosystem' ||
+    sectionKind === 'investor_updates'
+  ) {
     return (
       isNonEmptyString(content.title) ||
       isNonEmptyString(content.description) ||
@@ -154,17 +158,12 @@ async function loadPublishedPortalPage(slug: string) {
   }
 
   const contentById = new Map(
-    (versions ?? []).map((version) => [
-      version.id,
-      version.content as Record<string, unknown>,
-    ]),
+    (versions ?? []).map((version) => [version.id, version.content as Record<string, unknown>]),
   )
 
   const publishedSections = (sections ?? [])
     .filter(
-      (section) =>
-        section.published_version_id &&
-        contentById.has(section.published_version_id),
+      (section) => section.published_version_id && contentById.has(section.published_version_id),
     )
     .map((section) => ({
       id: section.id,
@@ -231,5 +230,25 @@ export async function getActivePortalTheme() {
     throw new Error(`Failed to load active portal theme: ${error.message}`)
   }
 
-  return data
+  if (!data?.logo_asset_id) {
+    return data ? { ...data, logo_url: null, logo_asset: null } : null
+  }
+
+  const { data: logoAsset, error: logoError } = await supabase
+    .from('media_assets')
+    .select('id, bucket, path, original_filename, mime_type, byte_size')
+    .eq('id', data.logo_asset_id)
+    .eq('visibility', 'public')
+    .not('finalized_at', 'is', null)
+    .maybeSingle()
+
+  if (logoError) {
+    throw new Error(`Failed to load portal logo: ${logoError.message}`)
+  }
+
+  const logoUrl = logoAsset
+    ? supabase.storage.from(logoAsset.bucket).getPublicUrl(logoAsset.path).data.publicUrl
+    : null
+
+  return { ...data, logo_url: logoUrl, logo_asset: logoAsset }
 }
