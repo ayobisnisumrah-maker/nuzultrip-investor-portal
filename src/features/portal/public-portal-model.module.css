@@ -7,7 +7,7 @@
   --fs5: 1.25rem;
   --bg: #fff;
   --surface: #fff;
-  --tint: #f5faf9;
+  --tint: #fafafd;
   --ink: #14184a;
   --inkSoft: #2b3164;
   --muted: #5e6282;
@@ -15,9 +15,12 @@
   --line: #e7e6f0;
   --cream: #fff1da;
   --cream2: #ffe3bc;
-  --lav: #eef7f6;
-  --coral: #0e9c9c;
-  --coralText: #0b7374;
+  --lav: #f2f0fc;
+  /* #df6951 hanya untuk dekorasi: kontrasnya tidak cukup untuk teks.
+     Semua teks/tombol coral wajib memakai --coralText; teks teal memakai --tealText. */
+  --coral: #df6951;
+  --coralText: #b8452f;
+  --tealText: #0b7374;
   --amber: #f1a501;
   --teal: #0e9c9c;
   --maxw: 1160px;
@@ -31,6 +34,10 @@
 
 .page * {
   box-sizing: border-box;
+}
+
+.page section[id] {
+  scroll-margin-top: 104px;
 }
 
 .page a {
@@ -52,7 +59,7 @@
 }
 
 .page h1 {
-  font-size: clamp(4.35rem, 5.6vw, 6rem);
+  font-size: clamp(2.35rem, 3.9vw, 3.6rem);
   line-height: 0.96;
   letter-spacing: -0.045em;
 }
@@ -175,7 +182,7 @@
 }
 
 .heroCopy {
-  max-width: 31rem;
+  max-width: 36rem;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -194,7 +201,12 @@
 }
 
 .headline {
-  max-width: 10.8ch;
+  max-width: none;
+}
+
+.headline > span {
+  display: block;
+  white-space: nowrap;
 }
 
 .headline:after {
@@ -210,8 +222,8 @@
 
 .lede {
   max-width: 65ch;
-  font-size: var(--fs5);
-  line-height: 1.72;
+  font-size: var(--fs4);
+  line-height: 1.75;
   color: var(--muted);
 }
 
@@ -332,10 +344,6 @@
   border-right: 1px solid var(--line);
 }
 
-.pillar:first-child {
-  padding-left: 0;
-}
-
 .pillar:last-child {
   border-right: 0;
 }
@@ -347,7 +355,7 @@
   height: 26px;
   border-radius: 8px;
   background: var(--lav);
-  color: var(--teal);
+  color: var(--tealText);
   font-size: var(--fs5);
 }
 
@@ -384,6 +392,11 @@
   flex-direction: column;
   gap: 8px;
   margin-bottom: 26px;
+}
+
+.sectionHead h2 {
+  font-size: clamp(1.6rem, 2.6vw, 2.25rem);
+  line-height: 1.14;
 }
 
 .sectionHead .lede {
@@ -511,7 +524,7 @@
   height: 22px;
   border-radius: 6px;
   background: #e6f5f4;
-  color: var(--teal);
+  color: var(--tealText);
   font-size: var(--fs2);
   font-weight: 700;
 }
@@ -563,12 +576,12 @@
 
 .featureGrid article:nth-child(2) > span {
   background: #e4f4f2;
-  color: var(--teal);
+  color: var(--tealText);
 }
 
 .featureGrid article:nth-child(3) > span {
   background: var(--lav);
-  color: var(--teal);
+  color: var(--tealText);
 }
 
 .featureGrid article:nth-child(4) > span {
@@ -651,7 +664,7 @@
   height: 18px;
   border-radius: 6px;
   background: #e6f5f4;
-  color: var(--teal);
+  color: var(--tealText);
   font-size: var(--fs2);
 }
 
@@ -982,7 +995,7 @@
   height: 30px;
   border-radius: 8px;
   background: var(--lav);
-  color: var(--teal);
+  color: var(--tealText);
   font-size: var(--fs5);
 }
 
@@ -1058,7 +1071,7 @@
   height: 24px;
   border-radius: 7px;
   background: #f7f7fb;
-  color: var(--teal);
+  color: var(--tealText);
   font-size: var(--fs3);
 }
 
@@ -1116,7 +1129,7 @@
   font-size: var(--fs2);
 }
 
-.contactForm label:nth-of-type(5) {
+.contactForm label:has(textarea) {
   grid-column: 1/-1;
 }
 
@@ -1221,7 +1234,7 @@
 
 @media (max-width: 950px) {
   .page h1 {
-    font-size: clamp(3rem, 9vw, 4.5rem);
+    font-size: clamp(2.2rem, 5.6vw, 3rem);
     line-height: 1;
   }
   .navLinks {
@@ -1243,7 +1256,7 @@
     grid-template-columns: repeat(2, 1fr);
     row-gap: 18px;
   }
-  .pillar:nth-child(2) {
+  .pillar {
     border-right: 0;
   }
   .ecosystemGrid {
@@ -1261,8 +1274,11 @@
 }
 
 @media (max-width: 640px) {
+  .page section[id] {
+    scroll-margin-top: 88px;
+  }
   .page h1 {
-    font-size: clamp(2.65rem, 12vw, 3.5rem);
+    font-size: clamp(1.9rem, 8.6vw, 2.6rem);
   }
   .wrap {
     width: min(100% - 30px, var(--maxw));
@@ -1285,6 +1301,9 @@
   }
   .headline {
     max-width: none;
+  }
+  .headline > span {
+    white-space: normal;
   }
   .blob {
     right: -55%;
@@ -1319,7 +1338,7 @@
   .contactForm {
     grid-template-columns: 1fr;
   }
-  .contactForm label:nth-of-type(5),
+  .contactForm label:has(textarea),
   .contactForm button {
     grid-column: auto;
   }
