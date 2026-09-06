@@ -88,7 +88,7 @@ async function expectHealthyRoutes(page: Page, routes: readonly string[], area: 
 
 test.describe.configure({ mode: 'serial' })
 
-test.beforeEach(async (_fixtures, testInfo) => {
+test.beforeEach(async ({ browserName: _browserName }, testInfo) => {
   test.skip(
     !SURFACE_PROJECTS.has(testInfo.project.name),
     'Surface matrix: desktop, tablet, mobile.',
