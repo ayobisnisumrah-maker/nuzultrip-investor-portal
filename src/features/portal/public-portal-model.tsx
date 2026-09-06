@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import Link from 'next/link'
 
 import { submitPortalInquiry } from '@/server/portal/inquiry-actions'
@@ -468,7 +469,16 @@ export function PublicPortalModel({ page, sections, navigation }: { page: { titl
     <div className={styles.page}>
       <header className={styles.nav}>
         <div className={`${styles.wrap} ${styles.navIn}`}>
-          <Link className={styles.brand} href="/"><span>N</span>Nuzultrip</Link>
+          <Link className={styles.brand} href="/" aria-label="Nuzultrip">
+            <Image
+              src="/brand/nuzultrip-logo-portal.svg"
+              alt="Nuzultrip"
+              width={162}
+              height={50}
+              priority
+              style={{ width: '128px', height: 'auto' }}
+            />
+          </Link>
           <nav className={styles.navLinks} aria-label="Navigasi utama">{header.map((item) => <Link key={item.id} href={item.href}>{item.label}</Link>)}</nav>
           <Link className={styles.navCta} href="/masuk">Masuk</Link>
         </div>
@@ -479,7 +489,16 @@ export function PublicPortalModel({ page, sections, navigation }: { page: { titl
       <footer className={styles.footer}>
         <div className={styles.wrap}>
           <div className={styles.footerGrid}>
-            <div><b className={styles.footerBrand}>Nuzultrip</b><p>Hubungan Equity Nuzultrip — informasi perusahaan, perkembangan, dan dokumen dalam satu portal.</p></div>
+            <div>
+              <Image
+                src="/brand/nuzultrip-logo-portal.svg"
+                alt="Nuzultrip"
+                width={162}
+                height={50}
+                style={{ width: '138px', height: 'auto' }}
+              />
+              <p>Hubungan Equity Nuzultrip — informasi perusahaan, perkembangan, dan dokumen dalam satu portal.</p>
+            </div>
             <div><h4>Perusahaan</h4>{footer.slice(0, 4).map((item) => <Link key={item.id} href={item.href}>{item.label}</Link>)}</div>
             <div><h4>Informasi</h4>{footer.slice(4, 8).map((item) => <Link key={item.id} href={item.href}>{item.label}</Link>)}</div>
             <div><h4>Ikuti Nuzultrip</h4>{social.map((item) => <Link key={item.id} href={item.href}>{item.label}</Link>)}</div>
