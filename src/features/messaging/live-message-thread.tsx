@@ -63,40 +63,60 @@ export function LiveMessageThread({
   const bottomRef = useRef<HTMLDivElement | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
 
-  // Server refreshes intentionally replace the local snapshot; realtime updates remain callback-driven.
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => setMessages(initialMessages), [initialMessages])
-
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
   }, [messages.length])
 
   useEffect(() => {
     const supabase = getBrowserSupabase()
+    let active = true
+
+    async function syncMessages() {
+      const { data, error: syncError } = await supabase
+        .from('messages')
+        .select('id, body_text, sender_label, sender_id, sent_at')
+        .eq('thread_id', threadId)
+        .order('sent_at', { ascending: true })
+
+      if (!active || syncError || !data) return
+
+      setMessages((current) => {
+        const optimistic = current.filter((message) => message.id.startsWith('optimistic:'))
+        return [...data, ...optimistic]
+      })
+    }
+
+    const topic = actor === 'admin' ? 'admin:global' : `investor:${currentUserId}`
     const channel = supabase
-      .channel(`message-thread:${threadId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'messages',
-          filter: `thread_id=eq.${threadId}`,
-        },
-        (payload) => {
-          const incoming = payload.new as Message
-          setMessages((current) => {
-            if (current.some((message) => message.id === incoming.id)) return current
-            return [...current.filter((message) => !message.id.startsWith('optimistic:')), incoming]
-          })
-        },
-      )
-      .subscribe((status) => setConnected(status === 'SUBSCRIBED'))
+      .channel(topic, { config: { private: true } })
+      .on('broadcast', { event: 'message.received' }, () => {
+        void syncMessages()
+      })
+      .subscribe((status) => {
+        if (!active) return
+        const isSubscribed = status === 'SUBSCRIBED'
+        setConnected(isSubscribed)
+        if (isSubscribed) void syncMessages()
+      })
+
+    function syncWhenVisible() {
+      if (document.visibilityState === 'visible') void syncMessages()
+    }
+
+    function syncWhenOnline() {
+      void syncMessages()
+    }
+
+    document.addEventListener('visibilitychange', syncWhenVisible)
+    window.addEventListener('online', syncWhenOnline)
 
     return () => {
+      active = false
+      document.removeEventListener('visibilitychange', syncWhenVisible)
+      window.removeEventListener('online', syncWhenOnline)
       void supabase.removeChannel(channel)
     }
-  }, [threadId])
+  }, [actor, currentUserId, threadId])
 
   const sortedMessages = useMemo(
     () => [...messages].sort((a, b) => new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime()),
@@ -140,13 +160,16 @@ export function LiveMessageThread({
         return
       }
 
-      setMessages((current) =>
-        current.map((message) =>
-          message.id === optimisticId
-            ? { ...message, id: result.data.id, sent_at: result.data.sent_at }
-            : message,
-        ),
-      )
+      setMessages((current) => {
+        const withoutOptimistic = current.filter((message) => message.id !== optimisticId)
+        if (withoutOptimistic.some((message) => message.id === result.data.id)) {
+          return withoutOptimistic
+        }
+        return [
+          ...withoutOptimistic,
+          { ...optimistic, id: result.data.id, sent_at: result.data.sent_at },
+        ]
+      })
     })
   }
 
