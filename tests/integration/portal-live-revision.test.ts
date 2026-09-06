@@ -189,7 +189,7 @@ describe('portal live revision lifecycle', () => {
     expect(nowPublicV2).toBe(draftV2)
   })
 
-  it('stages visibility changes until publication and archive takes the page offline', async () => {
+  it('stages reversible visibility changes until publication and archive takes the page offline', async () => {
     await transition('draft')
 
     await asCommitted(fixtures.superAdmin.userId, async (tx) => {
@@ -200,13 +200,47 @@ describe('portal live revision lifecycle', () => {
       `
     })
 
-    const sectionDuringDraft = await as({ kind: 'anon' }, async (tx) => {
+    const sectionDuringHiddenDraft = await as({ kind: 'anon' }, async (tx) => {
       const rows = await tx<{ id: string }[]>`
         select id from public.portal_sections where id = ${sectionId}
       `
       return rows[0] ?? null
     })
-    expect(sectionDuringDraft?.id).toBe(sectionId)
+    expect(sectionDuringHiddenDraft?.id).toBe(sectionId)
+
+    // Cancel the staged hide. The actual DB visibility is still true because it
+    // represents the public snapshot, so the trigger must compare against the
+    // staged effective visibility rather than only OLD.is_visible.
+    await asCommitted(fixtures.superAdmin.userId, async (tx) => {
+      await tx`
+        update public.portal_sections
+        set is_visible = true
+        where id = ${sectionId}
+      `
+    })
+
+    const stagedBackToVisible = await as(
+      { kind: 'authenticated', userId: fixtures.superAdmin.userId },
+      async (tx) => {
+        const rows = await tx<{ content: { _is_visible?: boolean } }[]>`
+          select v.content
+          from public.portal_sections s
+          join public.portal_section_versions v on v.id = s.current_version_id
+          where s.id = ${sectionId}
+        `
+        return rows[0]?.content._is_visible
+      },
+    )
+    expect(stagedBackToVisible).toBe(true)
+
+    // Stage hide again and publish it.
+    await asCommitted(fixtures.superAdmin.userId, async (tx) => {
+      await tx`
+        update public.portal_sections
+        set is_visible = false
+        where id = ${sectionId}
+      `
+    })
 
     await transition('review')
     await transition('approved')
