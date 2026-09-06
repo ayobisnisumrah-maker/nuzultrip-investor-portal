@@ -16,7 +16,27 @@ env:
 jobs:
   browser-e2e:
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        include:
+          - project: chromium
+            browser: chromium
+          - project: firefox
+            browser: firefox
+          - project: webkit
+            browser: webkit
+          - project: edge
+            browser: msedge
+          - project: tablet-chrome
+            browser: chromium
+          - project: mobile-chrome
+            browser: chromium
+          - project: mobile-safari
+            browser: webkit
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -68,25 +88,17 @@ jobs:
       - name: Reset local schema from migrations
         run: supabase db reset
 
-      - name: Install Playwright browsers
-        run: pnpm exec playwright install --with-deps chromium firefox webkit msedge
+      - name: Install Playwright browser
+        run: pnpm exec playwright install --with-deps ${{ matrix.browser }}
 
       - name: Run browser acceptance suite
-        run: >-
-          pnpm test:e2e --
-          --project=chromium
-          --project=firefox
-          --project=webkit
-          --project=edge
-          --project=tablet-chrome
-          --project=mobile-chrome
-          --project=mobile-safari
+        run: pnpm test:e2e -- --project=${{ matrix.project }}
 
       - name: Upload Playwright report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-report
+          name: playwright-report-${{ matrix.project }}
           path: playwright-report/
           retention-days: 14
           if-no-files-found: ignore
