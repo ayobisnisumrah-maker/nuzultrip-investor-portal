@@ -51,6 +51,10 @@ export default defineConfig({
     { name: 'firefox', use: { ...devices['Desktop Firefox'] } },
     { name: 'webkit', use: { ...devices['Desktop Safari'] } },
     { name: 'edge', use: { ...devices['Desktop Edge'], channel: 'msedge' } },
+    {
+      name: 'tablet-chrome',
+      use: { ...devices['Desktop Chrome'], viewport: { width: 1024, height: 1366 } },
+    },
     { name: 'mobile-chrome', use: { ...devices['Pixel 7'] } },
     { name: 'mobile-safari', use: { ...devices['iPhone 14'] } },
   ],
