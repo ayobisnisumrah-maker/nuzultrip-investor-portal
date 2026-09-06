@@ -1,11 +1,11 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
+
+import { LiveMessageThread } from '@/features/messaging/live-message-thread'
 import { requireInvestorPage } from '@/server/auth/page-guards'
 import { getServerSupabase } from '@/server/supabase/server'
+import { Card } from '@/ui/card'
 import { PageHeader, Stack } from '@/ui/layout'
-import { Card, CardBody, CardHeader, CardTitle } from '@/ui/card'
-import { EmptyState } from '@/ui/states'
-import { formatDateTime } from '@/lib/format'
 
 export const metadata: Metadata = { title: 'Percakapan' }
 
@@ -34,42 +34,28 @@ export default async function InvestorMessageThreadPage({
     .order('sent_at', { ascending: true })
 
   return (
-    <Stack gap={8}>
+    <Stack gap={6}>
       <PageHeader
-        eyebrow="Messages"
+        eyebrow="Pesan"
         title={thread.subject}
         description={
-          thread.is_closed ? 'Percakapan ditutup.' : 'Percakapan aktif dengan tim Nuzultrip.'
+          thread.is_closed
+            ? 'Percakapan ini telah ditutup.'
+            : 'Percakapan aktif dengan tim Nuzultrip.'
         }
       />
-      <Card>
-        <CardHeader>
-          <CardTitle>Riwayat percakapan</CardTitle>
-        </CardHeader>
-        <CardBody>
-          {!messages?.length ? (
-            <EmptyState title="Belum ada pesan" description="Percakapan belum memiliki pesan." />
-          ) : (
-            <ol className="flex flex-col gap-4">
-              {messages.map((message) => (
-                <li key={message.id} className="border-border-subtle rounded-xl border p-4">
-                  <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                    <span className="text-body-sm font-medium">
-                      {message.sender_label ||
-                        (message.sender_id === principal.userId ? 'Anda' : 'Tim Nuzultrip')}
-                    </span>
-                    <time className="text-caption text-fg-subtle">
-                      {formatDateTime(message.sent_at, { timeZone: principal.timezone })}
-                    </time>
-                  </div>
-                  <p className="text-body-sm text-fg-muted whitespace-pre-wrap">
-                    {message.body_text}
-                  </p>
-                </li>
-              ))}
-            </ol>
-          )}
-        </CardBody>
+
+      <Card className="overflow-hidden p-0">
+        <LiveMessageThread
+          threadId={thread.id}
+          initialMessages={messages ?? []}
+          currentUserId={principal.userId}
+          actor="investor"
+          timezone={principal.timezone}
+          canSend
+          isClosed={thread.is_closed}
+          counterpartLabel="Tim Nuzultrip"
+        />
       </Card>
     </Stack>
   )
