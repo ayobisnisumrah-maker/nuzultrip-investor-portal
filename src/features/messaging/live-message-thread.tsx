@@ -31,6 +31,7 @@ type Props = {
 }
 
 const EMOJIS = ['😀', '😊', '🙏', '👍', '✅', '📌', '📈', '💬', '✨', '🤝', '❤️', '🎉'] as const
+const FALLBACK_SYNC_INTERVAL_MS = 2_000
 
 function formatMessageTime(value: string, timeZone: string): string {
   return new Intl.DateTimeFormat('id-ID', {
@@ -63,16 +64,50 @@ export function LiveMessageThread({
   const bottomRef = useRef<HTMLDivElement | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
 
-  useEffect(() => setMessages(initialMessages), [initialMessages])
-
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
   }, [messages.length])
 
   useEffect(() => {
     const supabase = getBrowserSupabase()
-    const channel = supabase
-      .channel(`message-thread:${threadId}`)
+    let active = true
+    let broadcastReady = false
+    let postgresReady = false
+    let syncInFlight = false
+
+    function updateConnectionState() {
+      if (!active) return
+      setConnected(broadcastReady || postgresReady)
+    }
+
+    async function syncMessages() {
+      if (!active || syncInFlight) return
+      syncInFlight = true
+
+      const { data, error: syncError } = await supabase
+        .from('messages')
+        .select('id, body_text, sender_label, sender_id, sent_at')
+        .eq('thread_id', threadId)
+        .order('sent_at', { ascending: true })
+
+      syncInFlight = false
+      if (!active || syncError || !data) return
+
+      setMessages((current) => {
+        const optimistic = current.filter((message) => message.id.startsWith('optimistic:'))
+        return [...data, ...optimistic]
+      })
+    }
+
+    const topic = actor === 'admin' ? 'admin:global' : `investor:${currentUserId}`
+    const broadcastChannel = supabase
+      .channel(topic, { config: { private: true } })
+      .on('broadcast', { event: 'message.received' }, () => {
+        void syncMessages()
+      })
+
+    const postgresChannel = supabase
+      .channel(`message-thread-db:${threadId}`)
       .on(
         'postgres_changes',
         {
@@ -81,20 +116,73 @@ export function LiveMessageThread({
           table: 'messages',
           filter: `thread_id=eq.${threadId}`,
         },
-        (payload) => {
-          const incoming = payload.new as Message
-          setMessages((current) => {
-            if (current.some((message) => message.id === incoming.id)) return current
-            return [...current.filter((message) => !message.id.startsWith('optimistic:')), incoming]
-          })
+        () => {
+          void syncMessages()
         },
       )
-      .subscribe((status) => setConnected(status === 'SUBSCRIBED'))
+
+    async function connectRealtime() {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+
+      if (!active) return
+      if (session?.access_token) {
+        await supabase.realtime.setAuth(session.access_token)
+      }
+      if (!active) return
+
+      broadcastChannel.subscribe((status) => {
+        if (!active) return
+        broadcastReady = status === 'SUBSCRIBED'
+        updateConnectionState()
+        if (broadcastReady) void syncMessages()
+      })
+
+      postgresChannel.subscribe((status) => {
+        if (!active) return
+        postgresReady = status === 'SUBSCRIBED'
+        updateConnectionState()
+        if (postgresReady) void syncMessages()
+      })
+    }
+
+    void connectRealtime()
+
+    const {
+      data: { subscription: authSubscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!active || !session?.access_token) return
+      void supabase.realtime.setAuth(session.access_token)
+    })
+
+    function syncWhenVisible() {
+      if (document.visibilityState === 'visible') void syncMessages()
+    }
+
+    function syncWhenOnline() {
+      void syncMessages()
+    }
+
+    const fallbackSyncTimer = window.setInterval(() => {
+      if (document.visibilityState === 'visible' && navigator.onLine) {
+        void syncMessages()
+      }
+    }, FALLBACK_SYNC_INTERVAL_MS)
+
+    document.addEventListener('visibilitychange', syncWhenVisible)
+    window.addEventListener('online', syncWhenOnline)
 
     return () => {
-      void supabase.removeChannel(channel)
+      active = false
+      window.clearInterval(fallbackSyncTimer)
+      authSubscription.unsubscribe()
+      document.removeEventListener('visibilitychange', syncWhenVisible)
+      window.removeEventListener('online', syncWhenOnline)
+      void supabase.removeChannel(broadcastChannel)
+      void supabase.removeChannel(postgresChannel)
     }
-  }, [threadId])
+  }, [actor, currentUserId, threadId])
 
   const sortedMessages = useMemo(
     () => [...messages].sort((a, b) => new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime()),
@@ -138,13 +226,16 @@ export function LiveMessageThread({
         return
       }
 
-      setMessages((current) =>
-        current.map((message) =>
-          message.id === optimisticId
-            ? { ...message, id: result.data.id, sent_at: result.data.sent_at }
-            : message,
-        ),
-      )
+      setMessages((current) => {
+        const withoutOptimistic = current.filter((message) => message.id !== optimisticId)
+        if (withoutOptimistic.some((message) => message.id === result.data.id)) {
+          return withoutOptimistic
+        }
+        return [
+          ...withoutOptimistic,
+          { ...optimistic, id: result.data.id, sent_at: result.data.sent_at },
+        ]
+      })
     })
   }
 

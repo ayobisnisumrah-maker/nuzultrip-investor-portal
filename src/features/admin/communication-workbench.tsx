@@ -216,6 +216,7 @@ export function CommunicationWorkbench({
               </p>
             </div>
             <LiveMessageThread
+              key={selectedThread.id}
               threadId={selectedThread.id}
               initialMessages={messages}
               currentUserId={currentUserId}
