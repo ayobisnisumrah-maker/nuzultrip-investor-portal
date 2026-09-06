@@ -1,16 +1,9 @@
 import type { ComponentProps } from 'react'
 
-import { PublicPortal } from '@/features/portal/public-portal'
+import { PublicPortalModel } from '@/features/portal/public-portal-model'
 
-import compatStyles from './public-portal-reference-theme-compat.module.css'
-import styles from './public-portal-reference-theme.module.css'
-
-type PublicPortalProps = ComponentProps<typeof PublicPortal>
+type PublicPortalProps = ComponentProps<typeof PublicPortalModel>
 
 export function PublicPortalReference(props: PublicPortalProps) {
-  return (
-    <div className={`${styles.theme} ${compatStyles.theme}`}>
-      <PublicPortal {...props} />
-    </div>
-  )
+  return <PublicPortalModel {...props} />
 }
