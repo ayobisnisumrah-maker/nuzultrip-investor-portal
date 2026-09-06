@@ -1,0 +1,81 @@
+/* Final public hero composition lock.
+   Keeps the production hero aligned with the approved reference at desktop sizes.
+   This file is loaded after the global portal overrides. */
+
+header:has(nav[aria-label='Navigasi utama']) + main > section:first-child [class*='heroGrid'] {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+  gap: 48px !important;
+  align-items: center !important;
+}
+
+header:has(nav[aria-label='Navigasi utama']) + main > section:first-child [class*='heroCopy'] {
+  width: 100% !important;
+  max-width: 36rem !important;
+}
+
+header:has(nav[aria-label='Navigasi utama']) + main > section:first-child h1 {
+  width: 100% !important;
+  max-width: 36rem !important;
+  font-size: clamp(3.25rem, 3.3vw, 3.75rem) !important;
+  line-height: 1.08 !important;
+  letter-spacing: -0.035em !important;
+}
+
+header:has(nav[aria-label='Navigasi utama']) + main > section:first-child h1 > span {
+  display: block !important;
+  white-space: nowrap !important;
+}
+
+header:has(nav[aria-label='Navigasi utama']) + main > section:first-child [class*='heroArt'] {
+  width: 100% !important;
+  max-width: 500px !important;
+  margin-left: auto !important;
+  margin-right: 0 !important;
+  transform: none !important;
+}
+
+header:has(nav[aria-label='Navigasi utama']) + main > section:first-child [class*='scene'] {
+  width: 100% !important;
+  height: auto !important;
+}
+
+@media (max-width: 1100px) {
+  header:has(nav[aria-label='Navigasi utama']) + main > section:first-child [class*='heroGrid'] {
+    grid-template-columns: minmax(0, 1.04fr) minmax(0, 0.96fr) !important;
+    gap: 32px !important;
+  }
+
+  header:has(nav[aria-label='Navigasi utama']) + main > section:first-child h1 {
+    font-size: clamp(3rem, 5vw, 3.5rem) !important;
+  }
+
+  header:has(nav[aria-label='Navigasi utama']) + main > section:first-child [class*='heroArt'] {
+    max-width: 460px !important;
+  }
+}
+
+@media (max-width: 900px) {
+  header:has(nav[aria-label='Navigasi utama']) + main > section:first-child [class*='heroGrid'] {
+    grid-template-columns: 1fr !important;
+  }
+
+  header:has(nav[aria-label='Navigasi utama']) + main > section:first-child [class*='heroCopy'] {
+    max-width: 42rem !important;
+  }
+
+  header:has(nav[aria-label='Navigasi utama']) + main > section:first-child [class*='heroArt'] {
+    max-width: 520px !important;
+    margin-inline: auto !important;
+  }
+}
+
+@media (max-width: 640px) {
+  header:has(nav[aria-label='Navigasi utama']) + main > section:first-child h1 {
+    font-size: clamp(2.5rem, 11vw, 3.2rem) !important;
+    line-height: 1.04 !important;
+  }
+
+  header:has(nav[aria-label='Navigasi utama']) + main > section:first-child h1 > span {
+    white-space: normal !important;
+  }
+}
