@@ -180,3 +180,11 @@ grant execute on function app.create_document_with_draft(
 ) to authenticated;
 grant execute on function app.create_investor_message_thread(uuid, text, text)
   to authenticated;
+
+-- Legacy private tables carry deny-all policies but were still queryable as
+-- empty relations because broad table grants survived the old schema import.
+-- They are unused by the current application; remove the client-facing surface
+-- entirely while retaining service-role access for controlled maintenance.
+revoke all on table public.investor_tokens from anon, authenticated;
+revoke all on table public.kv_store_b620c355 from anon, authenticated;
+revoke all on table public.user_profiles from anon, authenticated;
