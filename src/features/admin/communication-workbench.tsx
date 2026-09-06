@@ -3,15 +3,15 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 
+import { LiveMessageThread } from '@/features/messaging/live-message-thread'
 import {
   createInvestorMessageThread,
   convertInquiryToThread,
-  sendAdminMessage,
   updateInquiryStatus,
 } from '@/server/messaging/admin-actions'
 import type { ActionResult } from '@/server/auth/guards'
-import { Button } from '@/ui/button'
 import { Alert } from '@/ui/alert'
+import { Button } from '@/ui/button'
 import { useToast } from '@/ui/toast'
 
 type Thread = {
@@ -60,6 +60,8 @@ export function CommunicationWorkbench({
   investors,
   canSend,
   canHandle,
+  currentUserId,
+  timezone,
 }: {
   threads: Thread[]
   selectedThread: Thread | null
@@ -68,15 +70,18 @@ export function CommunicationWorkbench({
   investors?: Investor[]
   canSend: boolean
   canHandle: boolean
+  currentUserId: string
+  timezone: string
 }) {
   const router = useRouter()
   const { push } = useToast()
   const [pending, startTransition] = useTransition()
-  const [body, setBody] = useState('')
   const [investorId, setInvestorId] = useState(investors?.[0]?.id ?? '')
   const [subject, setSubject] = useState('')
   const [firstMessage, setFirstMessage] = useState('')
   const [error, setError] = useState<string | null>(null)
+
+  const selectedInvestor = investors?.find((investor) => investor.id === selectedThread?.investor_id)
 
   function run(action: () => Promise<ActionResult<unknown>>, success: string) {
     setError(null)
@@ -92,43 +97,65 @@ export function CommunicationWorkbench({
   }
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[22rem_minmax(0,1fr)]">
-      <div className="space-y-4">
-        <div className="border-border bg-surface rounded-xl border p-4">
-          <h2 className="text-body text-fg font-semibold">Percakapan</h2>
-          <p className="text-caption text-fg-muted mt-1">
-            Thread tersimpan di database dan mengikuti RLS.
-          </p>
-          <div className="mt-4 space-y-2">
+    <div className="grid min-w-0 gap-4 lg:grid-cols-[19rem_minmax(0,1fr)] xl:grid-cols-[22rem_minmax(0,1fr)] xl:gap-6">
+      <aside className="min-w-0 space-y-4">
+        <div className="border-border bg-surface rounded-xl border p-3 sm:p-4">
+          <div className="flex items-end justify-between gap-3">
+            <div>
+              <h2 className="text-body text-fg font-semibold">Percakapan</h2>
+              <p className="text-caption text-fg-muted mt-1">Pilih investor untuk membuka chat.</p>
+            </div>
+            <span className="text-caption text-fg-subtle shrink-0">{threads.length}</span>
+          </div>
+
+          <div className="mt-4 flex max-h-[26rem] gap-2 overflow-x-auto pb-1 lg:max-h-[34rem] lg:flex-col lg:overflow-x-visible lg:overflow-y-auto lg:pb-0">
             {threads.length ? (
-              threads.map((thread) => (
-                <button
-                  key={thread.id}
-                  type="button"
-                  onClick={() => router.push(`/admin/messages?thread=${thread.id}`)}
-                  className={`hover:bg-surface-muted w-full rounded-lg border p-3 text-left transition ${selectedThread?.id === thread.id ? 'border-accent-solid bg-surface-muted' : 'border-border'}`}
-                >
-                  <p className="text-body-sm text-fg truncate font-medium">{thread.subject}</p>
-                  <p className="text-fg-subtle mt-1 font-mono text-[11px]">
-                    {thread.investor_id ?? thread.thread_kind}
-                  </p>
-                  <p className="text-caption text-fg-subtle mt-1">
-                    {thread.last_message_at
-                      ? new Date(thread.last_message_at).toLocaleString('id-ID')
-                      : 'Belum ada pesan'}
-                  </p>
-                </button>
-              ))
+              threads.map((thread) => {
+                const investor = investors?.find((item) => item.id === thread.investor_id)
+                return (
+                  <button
+                    key={thread.id}
+                    type="button"
+                    onClick={() => router.push(`/admin/messages?thread=${thread.id}`)}
+                    className={`hover:bg-surface-muted min-w-[16rem] rounded-lg border p-3 text-left transition lg:min-w-0 lg:w-full ${
+                      selectedThread?.id === thread.id
+                        ? 'border-accent-solid bg-surface-muted'
+                        : 'border-border'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-body-sm text-fg truncate font-medium">{thread.subject}</p>
+                      {thread.is_closed ? (
+                        <span className="text-caption text-fg-subtle shrink-0">Ditutup</span>
+                      ) : null}
+                    </div>
+                    <p className="text-caption text-fg-muted mt-1 truncate">
+                      {investor?.legal_name ?? 'Investor'}
+                    </p>
+                    <p className="text-caption text-fg-subtle mt-1">
+                      {thread.last_message_at
+                        ? new Intl.DateTimeFormat('id-ID', {
+                            timeZone: timezone,
+                            day: '2-digit',
+                            month: 'short',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          }).format(new Date(thread.last_message_at))
+                        : 'Belum ada pesan'}
+                    </p>
+                  </button>
+                )
+              })
             ) : (
-              <p className="text-body-sm text-fg-muted">Belum ada percakapan.</p>
+              <p className="text-body-sm text-fg-muted py-4">Belum ada percakapan.</p>
             )}
           </div>
         </div>
 
         {canSend ? (
-          <div className="border-border bg-surface rounded-xl border p-4">
-            <h2 className="text-body text-fg font-semibold">Buat percakapan</h2>
-            <div className="mt-3 space-y-3">
+          <details className="border-border bg-surface rounded-xl border p-3 sm:p-4">
+            <summary className="text-body-sm text-fg cursor-pointer font-semibold">Buat percakapan baru</summary>
+            <div className="mt-4 space-y-3">
               {investors?.length ? (
                 <select
                   value={investorId}
@@ -143,9 +170,7 @@ export function CommunicationWorkbench({
                   ))}
                 </select>
               ) : (
-                <p className="text-caption text-fg-subtle">
-                  Belum ada investor yang dapat dipilih.
-                </p>
+                <p className="text-caption text-fg-subtle">Belum ada investor yang dapat dipilih.</p>
               )}
               <input
                 value={subject}
@@ -174,108 +199,56 @@ export function CommunicationWorkbench({
                 Buat & Kirim
               </Button>
             </div>
-          </div>
+          </details>
         ) : null}
-      </div>
+      </aside>
 
-      <div className="border-border bg-surface rounded-xl border p-5">
+      <section className="border-border bg-surface min-w-0 overflow-hidden rounded-xl border">
         {selectedThread ? (
           <>
-            <div className="border-border border-b pb-4">
-              <p className="text-caption text-fg-subtle font-medium tracking-[0.14em] uppercase">
-                Percakapan
+            <div className="border-border border-b px-4 py-3 sm:px-5 sm:py-4">
+              <p className="text-caption text-fg-subtle font-medium tracking-[0.14em] uppercase">Percakapan</p>
+              <h2 className="text-heading-md text-fg mt-1 truncate font-semibold">{selectedThread.subject}</h2>
+              <p className="text-caption text-fg-muted mt-1 truncate">
+                {selectedInvestor
+                  ? `${selectedInvestor.legal_name} · ${selectedInvestor.reference_code}`
+                  : 'Investor'}
               </p>
-              <h2 className="text-heading-md text-fg mt-1 font-semibold">
-                {selectedThread.subject}
-              </h2>
-              <p className="text-caption text-fg-subtle mt-1 font-mono">{selectedThread.id}</p>
             </div>
-            <div className="max-h-[55vh] space-y-3 overflow-y-auto py-5">
-              {messages.length ? (
-                messages.map((message) => (
-                  <div
-                    key={message.id}
-                    className="border-border bg-surface-muted rounded-lg border p-3"
-                  >
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="text-body-sm text-fg font-medium">
-                        {message.sender_label ?? (message.sender_id ? 'Admin' : 'Pengirim')}
-                      </span>
-                      <span className="text-caption text-fg-subtle">
-                        {new Date(message.sent_at).toLocaleString('id-ID')}
-                      </span>
-                    </div>
-                    <p className="text-body-sm text-fg-muted mt-2 whitespace-pre-wrap">
-                      {message.body_text}
-                    </p>
-                  </div>
-                ))
-              ) : (
-                <p className="text-body-sm text-fg-muted">Belum ada pesan.</p>
-              )}
-            </div>
-            {selectedThread.is_closed ? (
-              <Alert tone="info" title="Percakapan ditutup">
-                Percakapan ini tidak menerima balasan baru.
-              </Alert>
-            ) : canSend ? (
-              <div className="border-border border-t pt-4">
-                <textarea
-                  value={body}
-                  onChange={(event) => setBody(event.target.value)}
-                  placeholder="Tulis balasan..."
-                  rows={5}
-                  maxLength={20000}
-                  className="border-border bg-canvas text-body-sm w-full rounded-lg border px-3 py-2"
-                />
-                <div className="mt-3 flex justify-end">
-                  <Button
-                    disabled={pending || !body.trim()}
-                    onClick={() =>
-                      run(
-                        () => sendAdminMessage({ threadId: selectedThread.id, body }),
-                        'Pesan terkirim.',
-                      )
-                    }
-                  >
-                    Kirim
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <Alert tone="info" title="Mode baca">
-                Peran Anda dapat membaca percakapan tetapi tidak memiliki izin untuk mengirim pesan.
-              </Alert>
-            )}
+            <LiveMessageThread
+              threadId={selectedThread.id}
+              initialMessages={messages}
+              currentUserId={currentUserId}
+              actor="admin"
+              timezone={timezone}
+              canSend={canSend}
+              isClosed={selectedThread.is_closed}
+              counterpartLabel={selectedInvestor?.legal_name ?? 'Investor'}
+            />
           </>
         ) : (
-          <div className="flex min-h-[32rem] items-center justify-center text-center">
+          <div className="flex min-h-[34rem] items-center justify-center p-6 text-center">
             <div>
               <h2 className="text-body text-fg font-semibold">Pilih percakapan</h2>
-              <p className="text-body-sm text-fg-muted mt-1">
-                Pilih thread untuk membaca dan membalas pesan.
-              </p>
+              <p className="text-body-sm text-fg-muted mt-1">Pilih thread investor untuk membaca dan membalas pesan.</p>
             </div>
           </div>
         )}
-      </div>
+      </section>
 
       {inquiries ? (
-        <div className="border-border bg-surface rounded-xl border p-5 xl:col-span-2">
+        <div className="border-border bg-surface rounded-xl border p-4 lg:col-span-2 sm:p-5">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
               <h2 className="text-body text-fg font-semibold">Permintaan masuk</h2>
-              <p className="text-caption text-fg-muted mt-1">
-                Setiap inquiry dapat ditindaklanjuti, dikonversi menjadi thread, lalu dibuka
-                langsung dari inbox.
-              </p>
+              <p className="text-caption text-fg-muted mt-1">Tindak lanjuti inquiry dan konversi menjadi percakapan.</p>
             </div>
             <span className="border-border text-caption text-fg-subtle rounded-full border px-2.5 py-1">
               {inquiries.length} permintaan
             </span>
           </div>
           <div className="border-border mt-4 overflow-x-auto rounded-lg border">
-            <table className="w-full min-w-[980px] text-left">
+            <table className="w-full min-w-[920px] text-left">
               <thead className="border-border bg-surface-muted border-b">
                 <tr className="text-caption text-fg-subtle">
                   <th className="px-4 py-3">Pengirim</th>
@@ -291,49 +264,30 @@ export function CommunicationWorkbench({
                     <tr key={inquiry.id}>
                       <td className="px-4 py-4">
                         <p className="text-body-sm text-fg font-medium">{inquiry.name}</p>
-                        <p className="text-caption text-fg-muted">
-                          {inquiry.email}
-                          {inquiry.organization ? ` · ${inquiry.organization}` : ''}
-                        </p>
+                        <p className="text-caption text-fg-muted">{inquiry.email}{inquiry.organization ? ` · ${inquiry.organization}` : ''}</p>
                       </td>
-                      <td className="text-body-sm text-fg-muted max-w-md px-4 py-4">
-                        <p className="line-clamp-2">{inquiry.message}</p>
-                      </td>
-                      <td className="px-4 py-4">
-                        <span className="border-border text-caption text-fg rounded-full border px-2.5 py-1">
-                          {inquiry.status}
-                        </span>
-                      </td>
+                      <td className="text-body-sm text-fg-muted max-w-md px-4 py-4"><p className="line-clamp-2">{inquiry.message}</p></td>
+                      <td className="px-4 py-4"><span className="border-border text-caption text-fg rounded-full border px-2.5 py-1">{inquiry.status}</span></td>
                       <td className="text-caption text-fg-muted px-4 py-4">
-                        {new Date(inquiry.created_at).toLocaleString('id-ID')}
+                        {new Intl.DateTimeFormat('id-ID', { timeZone: timezone, dateStyle: 'medium', timeStyle: 'short' }).format(new Date(inquiry.created_at))}
                       </td>
                       <td className="px-4 py-4 text-right">
                         {canHandle ? (
                           <div className="flex justify-end gap-2">
-                            {inquiry.thread_id ? (
-                              <Button
-                                variant="secondary"
-                                disabled={pending}
-                                onClick={() =>
-                                  router.push(`/admin/messages?thread=${inquiry.thread_id}`)
-                                }
-                              >
-                                Buka Percakapan
-                              </Button>
-                            ) : (
-                              <Button
-                                variant="secondary"
-                                disabled={pending}
-                                onClick={() =>
-                                  run(
-                                    () => convertInquiryToThread({ inquiryId: inquiry.id }),
-                                    'Permintaan dikonversi menjadi percakapan.',
-                                  )
-                                }
-                              >
-                                Buka Percakapan
-                              </Button>
-                            )}
+                            <Button
+                              variant="secondary"
+                              disabled={pending}
+                              onClick={() =>
+                                inquiry.thread_id
+                                  ? router.push(`/admin/messages?thread=${inquiry.thread_id}`)
+                                  : run(
+                                      () => convertInquiryToThread({ inquiryId: inquiry.id }),
+                                      'Permintaan dikonversi menjadi percakapan.',
+                                    )
+                              }
+                            >
+                              Buka Percakapan
+                            </Button>
                             <select
                               value={inquiry.status}
                               disabled={pending}
@@ -362,11 +316,7 @@ export function CommunicationWorkbench({
                     </tr>
                   ))
                 ) : (
-                  <tr>
-                    <td colSpan={5} className="text-body-sm text-fg-muted px-4 py-10 text-center">
-                      Belum ada permintaan masuk.
-                    </td>
-                  </tr>
+                  <tr><td colSpan={5} className="text-body-sm text-fg-muted px-4 py-10 text-center">Belum ada permintaan masuk.</td></tr>
                 )}
               </tbody>
             </table>
@@ -375,10 +325,8 @@ export function CommunicationWorkbench({
       ) : null}
 
       {error ? (
-        <div className="xl:col-span-2">
-          <Alert tone="danger" title="Operasi gagal">
-            {error}
-          </Alert>
+        <div className="lg:col-span-2">
+          <Alert tone="danger" title="Operasi gagal">{error}</Alert>
         </div>
       ) : null}
     </div>
