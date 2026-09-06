@@ -91,8 +91,10 @@ export async function POST(request: Request) {
     entityId: principal.investorId,
     summary: `Investor ${principal.referenceCode} mengunggah dokumen identitas.`,
     changes: {
-      before: { fileName: previous?.ktp_original_file_name ?? null },
-      after: { fileName: file.name, uploadedAt },
+      identityDocument: {
+        before: { fileName: previous?.ktp_original_file_name ?? null },
+        after: { fileName: file.name, uploadedAt },
+      },
     },
   })
 
