@@ -328,11 +328,14 @@ describe('published artefacts are immutable', () => {
   })
 
   it('permits editing a draft version of the same document', async () => {
-    const rows = await db()`
-      update public.document_versions set title = 'Versi 2 diperbarui'
-      where id = ${ids.draftVersionId}
-      returning id
-    `
+    const rows = await as(
+      { kind: 'authenticated', userId: fixtures.internalAdmin.userId },
+      (tx) => tx`
+        update public.document_versions set title = 'Versi 2 diperbarui'
+        where id = ${ids.draftVersionId}
+        returning id
+      `,
+    )
     expect(rows).toHaveLength(1)
   })
 
