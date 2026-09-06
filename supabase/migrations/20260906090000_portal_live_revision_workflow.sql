@@ -48,7 +48,9 @@ create trigger portal_section_versions_page_editable
 --
 -- `portal_sections.is_visible` remains the public snapshot during a live
 -- revision. A requested visibility change is staged inside a new draft version
--- as `_is_visible`. Publication applies it atomically.
+-- as `_is_visible`. Publication applies it atomically. Reversing a staged
+-- visibility change also creates a new draft version, preserving append-only
+-- revision history.
 -- -----------------------------------------------------------------------------
 create or replace function app.stage_portal_section_visibility()
 returns trigger
@@ -60,13 +62,12 @@ declare
   v_page_status public.publication_status;
   v_published_at timestamptz;
   v_content jsonb;
+  v_effective_visibility boolean;
   v_next_version integer;
   v_version_id uuid;
+  v_actor uuid := app.current_user_id();
 begin
-  if new.is_visible is not distinct from old.is_visible then
-    return new;
-  end if;
-
+  -- Publication itself deliberately applies the staged snapshot.
   if current_setting('app.portal_apply_snapshot', true) = '1' then
     return new;
   end if;
@@ -86,7 +87,8 @@ begin
       using errcode = '23514';
   end if;
 
-  -- Before first publication there is no live snapshot to protect.
+  -- Before first publication there is no live snapshot to protect, so the row
+  -- itself can represent draft visibility.
   if v_published_at is null then
     return new;
   end if;
@@ -104,6 +106,19 @@ begin
     raise exception 'Current portal section version not found.' using errcode = 'P0002';
   end if;
 
+  v_effective_visibility := case
+    when (v_content ->> '_is_visible') in ('true', 'false')
+      then (v_content ->> '_is_visible')::boolean
+    else old.is_visible
+  end;
+
+  -- No effective change requested. This also prevents duplicate versions when
+  -- a user clicks the same visibility state repeatedly.
+  if new.is_visible is not distinct from v_effective_visibility then
+    new.is_visible := old.is_visible;
+    return new;
+  end if;
+
   select coalesce(max(v.version_number), 0) + 1
   into v_next_version
   from public.portal_section_versions v
@@ -114,7 +129,8 @@ begin
     version_number,
     status,
     content,
-    change_note
+    change_note,
+    created_by
   )
   values (
     old.id,
@@ -122,11 +138,13 @@ begin
     'draft',
     v_content || jsonb_build_object('_is_visible', new.is_visible),
     case when new.is_visible then 'Menampilkan bagian pada publikasi berikutnya.'
-         else 'Menyembunyikan bagian pada publikasi berikutnya.' end
+         else 'Menyembunyikan bagian pada publikasi berikutnya.' end,
+    v_actor
   )
   returning id into v_version_id;
 
   new.current_version_id := v_version_id;
+  -- Keep the actual row value equal to the last public snapshot.
   new.is_visible := old.is_visible;
 
   return new;
@@ -327,12 +345,6 @@ is 'Atomic live revision workflow: published content and visibility remain live 
 
 -- -----------------------------------------------------------------------------
 -- Public RLS for live revisions
---
--- The original policies keyed public visibility to status='published'. During a
--- live revision the page status intentionally becomes draft/review/approved,
--- while `published_at` and each section's published_version_id continue to
--- identify the last approved public snapshot. Allow that snapshot to remain
--- readable. Archived pages are explicitly offline because published_at is null.
 -- -----------------------------------------------------------------------------
 drop policy if exists portal_pages_select_published on public.portal_pages;
 create policy portal_pages_select_published
