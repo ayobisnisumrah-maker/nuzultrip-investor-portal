@@ -57,7 +57,7 @@ export default async function PortalPage() {
   const publishedPages = pages.filter((page) => page.status === 'published').length
   const draftPages = pages.filter((page) => page.status === 'draft').length
   const reviewPages = pages.filter((page) => page.status === 'review').length
-  const activeNavigation = navigation.filter((item) => item.is_enabled).length
+  const activeNavigation = navigation.filter((item) => item.is_visible).length
 
   return (
     <div className="space-y-6">
