@@ -79,7 +79,7 @@ export default async function PublicPortalPage({
   return (
     <PublicPortal
       page={{
-        title: portal.page.title,
+        title: 'Nuzultrip',
         seo: portal.page.seo,
       }}
       sections={portal.sections}
