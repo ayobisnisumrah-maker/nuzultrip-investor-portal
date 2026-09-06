@@ -84,12 +84,7 @@ function IntroSection({ section }: { section: PublicPortalSection }) {
   const description = text(content.description)
 
   return (
-    <SectionShell
-      section={section}
-      eyebrow={text(content.eyebrow)}
-      title={title}
-      description={description}
-    >
+    <SectionShell section={section} eyebrow={text(content.eyebrow)} title={title}>
       {description ? (
         <div className="mt-10 max-w-4xl">
           <div className="border-primary/20 bg-primary/5 rounded-3xl border p-7 sm:p-10">
@@ -164,7 +159,6 @@ function CardItemsSection({
         <div className="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
           {items.map((item, index) => {
             const itemTitle = text(item.title) ?? text(item.label) ?? `Item ${index + 1}`
-
             const itemBody = text(item.description) ?? text(item.body) ?? text(item.value)
 
             return (
@@ -212,9 +206,7 @@ function GrowthSection({ section }: { section: PublicPortalSection }) {
           <div className="space-y-7">
             {milestones.map((item, index) => {
               const year = text(item.year) ?? text(item.date) ?? text(item.period)
-
-              const itemTitle = text(item.title) ?? text(item.label) ?? `Milestone ${index + 1}`
-
+              const itemTitle = text(item.title) ?? text(item.label) ?? `Tahap ${index + 1}`
               const body = text(item.description) ?? text(item.body)
 
               return (
@@ -322,10 +314,8 @@ function MetricsSection({ section }: { section: PublicPortalSection }) {
       {metrics.length > 0 ? (
         <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {metrics.map((metric, index) => {
-            const label = text(metric.label) ?? text(metric.title) ?? `Metric ${index + 1}`
-
+            const label = text(metric.label) ?? text(metric.title) ?? `Metrik ${index + 1}`
             const value = text(metric.value) ?? text(metric.amount) ?? text(metric.number) ?? '—'
-
             const detail = text(metric.description) ?? text(metric.subtitle)
 
             return (
@@ -446,7 +436,6 @@ function DocumentsSection({ section }: { section: PublicPortalSection }) {
         <div className="mt-12 grid gap-4 md:grid-cols-2">
           {items.map((item, index) => {
             const label = text(item.title) ?? text(item.label) ?? `Dokumen ${index + 1}`
-
             const href = text(item.href) ?? text(item.url)
 
             return (
@@ -558,9 +547,7 @@ function LogoWallSection({ section }: { section: PublicPortalSection }) {
       {logos.length > 0 ? (
         <div className="mt-12 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
           {logos.map((logo, index) => {
-            const label =
-              text(logo.name) ?? text(logo.title) ?? text(logo.label) ?? `Partner ${index + 1}`
-
+            const label = text(logo.name) ?? text(logo.title) ?? text(logo.label) ?? `Logo ${index + 1}`
             const href = text(logo.href) ?? text(logo.url)
 
             const contentNode = (
@@ -615,7 +602,6 @@ function FaqSection({ section }: { section: PublicPortalSection }) {
               text(item.title) ??
               text(item.label) ??
               `Pertanyaan ${index + 1}`
-
             const answer = text(item.answer) ?? text(item.description) ?? text(item.body)
 
             return (
@@ -647,58 +633,40 @@ function SectionContent({ section }: { section: PublicPortalSection }) {
   switch (section.section_kind) {
     case 'hero_3d':
       return null
-
     case 'intro':
       return <IntroSection section={section} />
-
     case 'vision_mission':
       return <VisionMissionSection section={section} />
-
     case 'business_overview':
       return <CardItemsSection section={section} />
-
     case 'growth_story':
       return <GrowthSection section={section} />
-
     case 'ecosystem':
       return <CardItemsSection section={section} />
-
     case 'investment_info':
       return <CapitalRequirementSection section={section} />
-
     case 'milestones':
       return <MilestonesSection section={section} />
-
     case 'strategic_direction':
       return <StrategicDirectionSection section={section} />
-
     case 'financial_highlights':
       return <MetricsSection section={section} />
-
     case 'investor_updates':
       return <CardItemsSection section={section} />
-
     case 'documents':
       return <DocumentsSection section={section} />
-
     case 'contact_cta':
       return <ContactCtaSection section={section} />
-
     case 'legal_notice':
       return <LegalSection section={section} />
-
     case 'rich_content':
       return <RichContentSection section={section} />
-
     case 'stat_grid':
       return <MetricsSection section={section} />
-
     case 'logo_wall':
       return <LogoWallSection section={section} />
-
     case 'faq':
       return <FaqSection section={section} />
-
     default:
       return null
   }
@@ -748,9 +716,7 @@ export function PublicPortal({
   }
 
   const pageTitle = text(page.title)
-
   const heroSection = sections.find((section) => section.section_kind === 'hero_3d')
-
   const regularSections = sections.filter(
     (section) => section.section_kind !== 'hero_3d' && section.section_kind !== 'contact_cta',
   )
@@ -777,7 +743,6 @@ export function PublicPortal({
             <span className="bg-primary text-primary-foreground flex h-9 w-9 items-center justify-center rounded-xl text-sm">
               N
             </span>
-
             {pageTitle ? <span>{pageTitle}</span> : null}
           </Link>
 
@@ -803,7 +768,6 @@ export function PublicPortal({
                 <details key={item.id} className="group relative">
                   <summary className="text-fg-muted hover:text-fg flex cursor-pointer list-none items-center gap-1.5 text-sm font-medium transition-colors [&::-webkit-details-marker]:hidden">
                     <span>{item.label}</span>
-
                     <svg
                       viewBox="0 0 20 20"
                       fill="none"
@@ -822,7 +786,6 @@ export function PublicPortal({
 
                   <div className="border-border bg-background absolute top-full left-1/2 z-50 mt-3 w-56 -translate-x-1/2 overflow-hidden rounded-xl border p-1.5 shadow-xl">
                     <div className="absolute -top-3 left-0 h-3 w-full" />
-
                     {children.map((child) => (
                       <Link
                         key={child.id}
@@ -991,7 +954,6 @@ export function PublicPortal({
             <p className="text-fg-subtle text-xs">
               © {new Date().getFullYear()} {pageTitle}
             </p>
-
             <p className="text-fg-subtle text-xs">Nuzultrip Equity Relations</p>
           </div>
         </div>
