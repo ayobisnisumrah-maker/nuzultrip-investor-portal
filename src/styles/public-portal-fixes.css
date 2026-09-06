@@ -1,4 +1,4 @@
-/* Public portal visual corrections scoped to the public header + hero. */
+/* Public portal visual corrections. Content remains CMS-driven; this file controls presentation only. */
 header:has(a[href="/masuk"]) > div {
   min-height: 76px !important;
   height: 76px !important;
@@ -32,8 +32,8 @@ header:has(a[href="/masuk"]) a[href="/masuk"] {
 }
 
 header:has(a[href="/masuk"]) + main > section:first-child {
-  padding-top: 62px !important;
-  padding-bottom: 62px !important;
+  padding-top: 58px !important;
+  padding-bottom: 58px !important;
 }
 
 header:has(a[href="/masuk"]) + main > section:first-child > div:nth-child(2) > div:first-child {
@@ -42,13 +42,13 @@ header:has(a[href="/masuk"]) + main > section:first-child > div:nth-child(2) > d
 
 header:has(a[href="/masuk"]) + main > section:first-child .eyebrow,
 header:has(a[href="/masuk"]) + main > section:first-child [class*="eyebrow"] {
-  font-size: 0.78rem !important;
+  font-size: 0.82rem !important;
   letter-spacing: 0.18em !important;
 }
 
 header:has(a[href="/masuk"]) + main > section:first-child h1 {
   max-width: none !important;
-  font-size: clamp(4rem, 5.6vw, 5.6rem) !important;
+  font-size: clamp(4rem, 5.5vw, 5.35rem) !important;
   line-height: 0.98 !important;
   letter-spacing: -0.04em !important;
 }
@@ -59,13 +59,13 @@ header:has(a[href="/masuk"]) + main > section:first-child h1 > span {
 }
 
 header:has(a[href="/masuk"]) + main > section:first-child h1 + p {
-  max-width: 42rem !important;
-  font-size: 1.12rem !important;
-  line-height: 1.78 !important;
+  max-width: 43rem !important;
+  font-size: 1.08rem !important;
+  line-height: 1.72 !important;
 }
 
 header:has(a[href="/masuk"]) + main > section:first-child h1 ~ div span {
-  font-size: 0.88rem !important;
+  font-size: 0.86rem !important;
 }
 
 header:has(a[href="/masuk"]) + main > section:first-child h1 ~ div a {
@@ -75,7 +75,7 @@ header:has(a[href="/masuk"]) + main > section:first-child h1 ~ div a {
 }
 
 header:has(a[href="/masuk"]) + main > section:first-child h1 ~ p:last-of-type {
-  font-size: 0.86rem !important;
+  font-size: 0.84rem !important;
   line-height: 1.55 !important;
 }
 
@@ -85,21 +85,110 @@ header:has(a[href="/masuk"]) + main > section:first-child h1 ~ p:last-of-type sv
 }
 
 header:has(a[href="/masuk"]) + main > section:first-child + div b {
-  font-size: 0.94rem !important;
+  font-size: 0.92rem !important;
 }
 
 header:has(a[href="/masuk"]) + main > section:first-child + div small {
-  font-size: 0.82rem !important;
+  font-size: 0.78rem !important;
+  line-height: 1.45 !important;
+}
+
+/* Reference-like typography across the rest of the CMS-rendered portal. */
+header:has(a[href="/masuk"]) + main > section:not(:first-child) {
+  padding-top: 72px !important;
+  padding-bottom: 72px !important;
+}
+
+header:has(a[href="/masuk"]) + main > section:not(:first-child) [class*="eyebrow"] {
+  font-size: 0.76rem !important;
+  letter-spacing: 0.17em !important;
+  line-height: 1.4 !important;
+}
+
+header:has(a[href="/masuk"]) + main > section:not(:first-child) h2 {
+  font-size: clamp(2rem, 2.6vw, 2.7rem) !important;
+  line-height: 1.12 !important;
+  letter-spacing: -0.025em !important;
+}
+
+header:has(a[href="/masuk"]) + main > section:not(:first-child) h3 {
+  font-size: 1rem !important;
+  line-height: 1.35 !important;
+}
+
+header:has(a[href="/masuk"]) + main > section:not(:first-child) p {
+  font-size: 0.9rem !important;
+  line-height: 1.62 !important;
+}
+
+header:has(a[href="/masuk"]) + main > section:not(:first-child) small {
+  font-size: 0.76rem !important;
+  line-height: 1.45 !important;
+}
+
+header:has(a[href="/masuk"]) + main > section:not(:first-child) b,
+header:has(a[href="/masuk"]) + main > section:not(:first-child) strong {
+  font-size: 0.9rem !important;
+  line-height: 1.4 !important;
+}
+
+header:has(a[href="/masuk"]) + main > section:not(:first-child) a,
+header:has(a[href="/masuk"]) + main > section:not(:first-child) button,
+header:has(a[href="/masuk"]) + main > section:not(:first-child) label,
+header:has(a[href="/masuk"]) + main > section:not(:first-child) input,
+header:has(a[href="/masuk"]) + main > section:not(:first-child) textarea {
+  font-size: 0.86rem !important;
+}
+
+header:has(a[href="/masuk"]) + main > section:not(:first-child) input,
+header:has(a[href="/masuk"]) + main > section:not(:first-child) textarea {
   line-height: 1.5 !important;
+}
+
+/* Offering table and process panel need denser but still readable text. */
+header:has(a[href="/masuk"]) + main > section:not(:first-child) [class*="offer"] span,
+header:has(a[href="/masuk"]) + main > section:not(:first-child) [class*="offer"] strong,
+header:has(a[href="/masuk"]) + main > section:not(:first-child) [class*="process"] b,
+header:has(a[href="/masuk"]) + main > section:not(:first-child) [class*="process"] p {
+  font-size: 0.84rem !important;
+}
+
+/* Cards in business, ecosystem, governance, risk, documents and funds. */
+header:has(a[href="/masuk"]) + main > section:not(:first-child) article h3 {
+  font-size: 0.96rem !important;
+}
+
+header:has(a[href="/masuk"]) + main > section:not(:first-child) article p {
+  font-size: 0.82rem !important;
+  line-height: 1.55 !important;
+}
+
+header:has(a[href="/masuk"]) + main > section:not(:first-child) article small {
+  font-size: 0.72rem !important;
+}
+
+/* Contact panel should feel like the reference, not like fine print. */
+header:has(a[href="/masuk"]) + main > section:not(:first-child) form label {
+  font-size: 0.82rem !important;
+  font-weight: 600 !important;
+}
+
+header:has(a[href="/masuk"]) + main > section:not(:first-child) form input,
+header:has(a[href="/masuk"]) + main > section:not(:first-child) form textarea {
+  font-size: 0.86rem !important;
 }
 
 @media (max-width: 1100px) {
   header:has(a[href="/masuk"]) + main > section:first-child h1 {
-    font-size: clamp(3.5rem, 6vw, 4.8rem) !important;
+    font-size: clamp(3.5rem, 6vw, 4.7rem) !important;
   }
 
   header:has(a[href="/masuk"]) + main > section:first-child h1 + p {
     font-size: 1rem !important;
+  }
+
+  header:has(a[href="/masuk"]) + main > section:not(:first-child) h2 {
+    font-size: clamp(1.8rem, 3vw, 2.35rem) !important;
   }
 }
 
@@ -126,6 +215,15 @@ header:has(a[href="/masuk"]) + main > section:first-child + div small {
   header:has(a[href="/masuk"]) + main > section:first-child h1 + p {
     font-size: 0.98rem !important;
   }
+
+  header:has(a[href="/masuk"]) + main > section:not(:first-child) {
+    padding-top: 56px !important;
+    padding-bottom: 56px !important;
+  }
+
+  header:has(a[href="/masuk"]) + main > section:not(:first-child) h2 {
+    font-size: 1.85rem !important;
+  }
 }
 
 @media (max-width: 640px) {
@@ -150,5 +248,19 @@ header:has(a[href="/masuk"]) + main > section:first-child + div small {
   header:has(a[href="/masuk"]) + main > section:first-child h1 ~ div span,
   header:has(a[href="/masuk"]) + main > section:first-child h1 ~ p:last-of-type {
     font-size: 0.78rem !important;
+  }
+
+  header:has(a[href="/masuk"]) + main > section:not(:first-child) {
+    padding-top: 46px !important;
+    padding-bottom: 46px !important;
+  }
+
+  header:has(a[href="/masuk"]) + main > section:not(:first-child) h2 {
+    font-size: 1.55rem !important;
+  }
+
+  header:has(a[href="/masuk"]) + main > section:not(:first-child) p,
+  header:has(a[href="/masuk"]) + main > section:not(:first-child) article p {
+    font-size: 0.8rem !important;
   }
 }
