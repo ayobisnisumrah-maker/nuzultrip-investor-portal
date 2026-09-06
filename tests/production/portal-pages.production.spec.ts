@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/test'
 
+import { deleteProductionPortalFixture } from './helpers/portal-fixtures'
+
 /**
  * REAL PRODUCTION CMS SMOKE TEST
  *
@@ -19,10 +21,17 @@ const adminEmail = process.env.E2E_ADMIN_EMAIL
 const adminPassword = process.env.E2E_ADMIN_PASSWORD
 
 test.describe('Production Portal CMS', () => {
+  let portalPageId: string | null = null
+
   test.skip(
     !adminEmail || !adminPassword,
     'Set E2E_ADMIN_EMAIL dan E2E_ADMIN_PASSWORD sebelum menjalankan production smoke test.',
   )
+
+  test.afterEach(async ({ page }) => {
+    await deleteProductionPortalFixture(page, portalPageId)
+    portalPageId = null
+  })
 
   test('admin can login and create portal page draft', async ({ page }) => {
     const runId = `e2e-${Date.now().toString(36)}`
@@ -64,24 +73,29 @@ test.describe('Production Portal CMS', () => {
       await page.locator('#title').fill(title)
       await page.locator('#slug').fill(slug)
 
-      await page
-        .locator('#seo_description')
-        .fill(`Real production smoke test ${runId}`)
+      await page.locator('#seo_description').fill(`Real production smoke test ${runId}`)
 
-      await page.getByRole('button', {
-        name: /Simpan Draf/i,
-      }).click()
+      await page
+        .getByRole('button', {
+          name: /Simpan Draf/i,
+        })
+        .click()
 
       await page.waitForURL(/\/admin\/portal\/pages\/[^/]+$/, {
         timeout: 60_000,
       })
 
-      await expect(
-        page.getByRole('heading', { name: title }),
-      ).toBeVisible()
+      portalPageId = page.url().match(/\/admin\/portal\/pages\/([^/?#]+)$/)?.[1] ?? null
+
+      expect(portalPageId).not.toBeNull()
+
+      await expect(page.getByRole('heading', { name: title })).toBeVisible()
 
       await expect(
-        page.locator('span').filter({ hasText: /^Draf$/ }).first(),
+        page
+          .locator('span')
+          .filter({ hasText: /^Draf$/ })
+          .first(),
       ).toBeVisible()
     })
 
