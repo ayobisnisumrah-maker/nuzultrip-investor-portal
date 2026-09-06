@@ -39,9 +39,11 @@ function visibilityLabel(value: string) {
 export function PortalMediaManager({
   assets,
   canUpload,
+  timezone,
 }: {
   assets: Asset[]
   canUpload: boolean
+  timezone: string
 }) {
   const router = useRouter()
   const fileRef = useRef<HTMLInputElement>(null)
@@ -97,7 +99,8 @@ export function PortalMediaManager({
         </p>
         <h1 className="font-display text-heading-lg text-fg mt-1">Media</h1>
         <p className="text-body-sm text-fg-muted mt-2 max-w-2xl">
-          Kelola aset yang digunakan untuk konten portal. File tersimpan di Supabase Storage dan metadata dicatat di basis data.
+          Kelola aset yang digunakan untuk konten portal. File tersimpan di Supabase Storage dan
+          metadata dicatat di basis data.
         </p>
       </div>
 
@@ -175,14 +178,25 @@ export function PortalMediaManager({
                         {asset.original_filename}
                       </span>
                     </td>
-                    <td className="text-fg-muted whitespace-nowrap px-5 py-3">{asset.mime_type}</td>
-                    <td className="text-fg-muted whitespace-nowrap px-5 py-3">{formatBytes(asset.byte_size)}</td>
-                    <td className="text-fg-muted whitespace-nowrap px-5 py-3">{visibilityLabel(asset.visibility)}</td>
-                    <td className="text-fg-muted whitespace-nowrap px-5 py-3">
+                    <td className="text-fg-muted px-5 py-3 whitespace-nowrap">{asset.mime_type}</td>
+                    <td className="text-fg-muted px-5 py-3 whitespace-nowrap">
+                      {formatBytes(asset.byte_size)}
+                    </td>
+                    <td className="text-fg-muted px-5 py-3 whitespace-nowrap">
+                      {visibilityLabel(asset.visibility)}
+                    </td>
+                    <td className="text-fg-muted px-5 py-3 whitespace-nowrap">
                       {asset.width && asset.height ? `${asset.width} × ${asset.height}` : '—'}
                     </td>
-                    <td className="text-fg-muted whitespace-nowrap px-5 py-3">
-                      {new Date(asset.created_at).toLocaleString('id-ID')}
+                    <td
+                      className="text-fg-muted px-5 py-3 whitespace-nowrap"
+                      suppressHydrationWarning
+                    >
+                      {new Intl.DateTimeFormat('id-ID', {
+                        timeZone: timezone,
+                        dateStyle: 'medium',
+                        timeStyle: 'short',
+                      }).format(new Date(asset.created_at))}
                     </td>
                   </tr>
                 ))}
