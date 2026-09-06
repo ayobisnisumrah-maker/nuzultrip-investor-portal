@@ -64,6 +64,12 @@ const nextConfig: NextConfig = {
   experimental: {
     // Avoids shipping the full Lucide icon barrel when only individual icons are used.
     optimizePackageImports: ['lucide-react'],
+    serverActions: {
+      // Cloudflare terminates TLS for both production hostnames and forwards
+      // requests to this Vercel deployment. Keep the allow-list explicit so
+      // Server Action origin validation remains strict behind that proxy.
+      allowedOrigins: ['investor.nuzultrip.com', 'admin.nuzultrip.com'],
+    },
   },
 
   // Next's config type requires this to be async even though it resolves
