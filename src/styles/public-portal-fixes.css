@@ -16,7 +16,7 @@ header:has(nav[aria-label='Navigasi utama']) a[href='/masuk'] {
   padding-inline: 22px !important;
 }
 
-/* Keep the approved hero headline scale; enlarge every supporting element. */
+/* Hero type hierarchy: one predictable supporting-text size, with eyebrow as the only smaller label. */
 header:has(nav[aria-label='Navigasi utama']) + main > section:first-child .eyebrow,
 header:has(nav[aria-label='Navigasi utama']) + main > section:first-child [class*='eyebrow'] {
   font-size: 0.875rem !important;
@@ -30,7 +30,7 @@ header:has(nav[aria-label='Navigasi utama']) + main > section:first-child h1 + p
 }
 
 header:has(nav[aria-label='Navigasi utama']) + main > section:first-child h1 ~ div span {
-  font-size: 0.875rem !important;
+  font-size: 1rem !important;
 }
 
 header:has(nav[aria-label='Navigasi utama']) + main > section:first-child h1 ~ div a {
@@ -40,16 +40,13 @@ header:has(nav[aria-label='Navigasi utama']) + main > section:first-child h1 ~ d
 }
 
 header:has(nav[aria-label='Navigasi utama']) + main > section:first-child h1 ~ p:last-of-type {
-  font-size: 0.875rem !important;
+  font-size: 1rem !important;
   line-height: 1.6 !important;
 }
 
-header:has(nav[aria-label='Navigasi utama']) + main > section:first-child + div b {
-  font-size: 1rem !important;
-}
-
+header:has(nav[aria-label='Navigasi utama']) + main > section:first-child + div b,
 header:has(nav[aria-label='Navigasi utama']) + main > section:first-child + div small {
-  font-size: 0.875rem !important;
+  font-size: 1rem !important;
   line-height: 1.55 !important;
 }
 
@@ -84,7 +81,8 @@ header:has(nav[aria-label='Navigasi utama']) + main > section:first-child > div:
   transform-origin: center center !important;
 }
 
-/* Body content never falls back to fine-print sizing. */
+/* Global body typography contract.
+   Eyebrow 14px, body/UI 16px, card heading 20px, section heading responsive. */
 header:has(nav[aria-label='Navigasi utama']) + main > section:not(:first-child) {
   padding-top: 80px !important;
   padding-bottom: 80px !important;
@@ -108,17 +106,7 @@ header:has(nav[aria-label='Navigasi utama']) + main > section:not(:first-child) 
 }
 
 header:has(nav[aria-label='Navigasi utama']) + main > section:not(:first-child) p,
-header:has(nav[aria-label='Navigasi utama']) + main > section:not(:first-child) article p {
-  font-size: 1rem !important;
-  line-height: 1.7 !important;
-}
-
-header:has(nav[aria-label='Navigasi utama']) + main > section:not(:first-child) small,
-header:has(nav[aria-label='Navigasi utama']) + main > section:not(:first-child) article small {
-  font-size: 0.875rem !important;
-  line-height: 1.55 !important;
-}
-
+header:has(nav[aria-label='Navigasi utama']) + main > section:not(:first-child) article p,
 header:has(nav[aria-label='Navigasi utama']) + main > section:not(:first-child) b,
 header:has(nav[aria-label='Navigasi utama']) + main > section:not(:first-child) strong,
 header:has(nav[aria-label='Navigasi utama']) + main > section:not(:first-child) span,
@@ -128,6 +116,17 @@ header:has(nav[aria-label='Navigasi utama']) + main > section:not(:first-child) 
 header:has(nav[aria-label='Navigasi utama']) + main > section:not(:first-child) input,
 header:has(nav[aria-label='Navigasi utama']) + main > section:not(:first-child) textarea {
   font-size: 1rem !important;
+}
+
+header:has(nav[aria-label='Navigasi utama']) + main > section:not(:first-child) p,
+header:has(nav[aria-label='Navigasi utama']) + main > section:not(:first-child) article p {
+  line-height: 1.7 !important;
+}
+
+header:has(nav[aria-label='Navigasi utama']) + main > section:not(:first-child) small,
+header:has(nav[aria-label='Navigasi utama']) + main > section:not(:first-child) article small {
+  font-size: 0.875rem !important;
+  line-height: 1.55 !important;
 }
 
 header:has(nav[aria-label='Navigasi utama']) + main > section:not(:first-child) input {
@@ -155,6 +154,8 @@ header:has(nav[aria-label='Navigasi utama']) + main > section:nth-of-type(2) [cl
   background: #fff9e9 !important;
   padding: 13px 16px !important;
   color: #805b15 !important;
+  font-size: 1rem !important;
+  line-height: 1.65 !important;
   box-shadow: none !important;
 }
 
@@ -184,6 +185,7 @@ header:has(nav[aria-label='Navigasi utama']) + main > section:nth-of-type(2) [cl
   display: flex !important;
   align-items: center !important;
   padding: 14px 20px !important;
+  font-size: 1rem !important;
   line-height: 1.55 !important;
 }
 
@@ -218,8 +220,8 @@ header:has(nav[aria-label='Navigasi utama']) + main > section:nth-of-type(2) [cl
 
 header:has(nav[aria-label='Navigasi utama']) + main > section:nth-of-type(2) [class*='processCard'] h3 {
   margin-bottom: 18px !important;
-  font-size: 1.55rem !important;
-  line-height: 1.2 !important;
+  font-size: 1.5rem !important;
+  line-height: 1.25 !important;
 }
 
 header:has(nav[aria-label='Navigasi utama']) + main > section:nth-of-type(2) [class*='processCard'] ol {
@@ -246,21 +248,24 @@ header:has(nav[aria-label='Navigasi utama']) + main > section:nth-of-type(2) [cl
 header:has(nav[aria-label='Navigasi utama']) + main > section:nth-of-type(2) [class*='processCard'] li > span::before {
   content: '✓';
   color: #0e9c9c !important;
-  font-size: 0.86rem !important;
+  font-size: 0.875rem !important;
   font-weight: 800 !important;
+}
+
+header:has(nav[aria-label='Navigasi utama']) + main > section:nth-of-type(2) [class*='processCard'] b,
+header:has(nav[aria-label='Navigasi utama']) + main > section:nth-of-type(2) [class*='processCard'] p {
+  font-size: 1rem !important;
 }
 
 header:has(nav[aria-label='Navigasi utama']) + main > section:nth-of-type(2) [class*='processCard'] b {
   margin-bottom: 2px !important;
   color: #14184a !important;
-  font-size: 1rem !important;
   font-weight: 700 !important;
 }
 
 header:has(nav[aria-label='Navigasi utama']) + main > section:nth-of-type(2) [class*='processCard'] p {
   color: #5e6282 !important;
-  font-size: 0.95rem !important;
-  line-height: 1.55 !important;
+  line-height: 1.65 !important;
 }
 
 header:has(nav[aria-label='Navigasi utama']) + main > section:nth-of-type(2) [class*='processCard'] a[class*='btnPrimary'] {
@@ -277,9 +282,11 @@ header:has(nav[aria-label='Navigasi utama']) + main > section:nth-of-type(2) [cl
   border-radius: 10px !important;
   background: #eef7f6 !important;
   padding: 13px 16px !important;
+  font-size: 1rem !important;
+  line-height: 1.65 !important;
 }
 
-/* Light footer aligned with the supplied portal reference. */
+/* Light footer aligned with the supplied portal reference and the same 16px body scale. */
 footer:has(img[src*='nuzultrip-logo-portal']) {
   border-top: 1px solid #e7e6f0 !important;
   background: #fbfbfd !important;
@@ -304,7 +311,8 @@ footer:has(img[src*='nuzultrip-logo-portal']) img {
 footer:has(img[src*='nuzultrip-logo-portal']) h4 {
   margin-bottom: 14px !important;
   color: #14184a !important;
-  font-size: 1.02rem !important;
+  font-size: 1.125rem !important;
+  line-height: 1.4 !important;
   font-weight: 700 !important;
 }
 
@@ -312,8 +320,8 @@ footer:has(img[src*='nuzultrip-logo-portal']) p,
 footer:has(img[src*='nuzultrip-logo-portal']) a,
 footer:has(img[src*='nuzultrip-logo-portal']) span {
   color: #69657f !important;
-  font-size: 0.95rem !important;
-  line-height: 1.72 !important;
+  font-size: 1rem !important;
+  line-height: 1.7 !important;
 }
 
 footer:has(img[src*='nuzultrip-logo-portal']) p {
@@ -342,7 +350,7 @@ footer:has(img[src*='nuzultrip-logo-portal']) [class*='legal'] {
 
 footer:has(img[src*='nuzultrip-logo-portal']) [class*='legal'] span {
   color: #8985a0 !important;
-  font-size: 0.86rem !important;
+  font-size: 0.875rem !important;
 }
 
 @media (max-width: 1100px) {
