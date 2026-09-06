@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { cookies } from 'next/headers'
 
 import '@/styles/globals.css'
+import '@/styles/public-portal-hero-reference.css'
 
 import { getClientEnv } from '@/lib/env'
 import { fontVariables } from '@/ui/fonts'

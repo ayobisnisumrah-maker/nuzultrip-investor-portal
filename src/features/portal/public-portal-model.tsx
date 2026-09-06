@@ -50,13 +50,9 @@ function SectionHeader({
 
 function Hero({ section }: { section: PublicPortalSection }) {
   const c = section.content
-  // Seluruh isi hero berasal dari CMS. Tidak ada teks cadangan yang
-  // ditulis di kode: kalau sebuah field kosong, elemennya tidak dirender.
-  // Alasannya, halaman ini dibaca calon investor — teks yang tampak seperti
-  // pernyataan perusahaan tapi sebenarnya berasal dari kode adalah risiko.
   const heroHighlights = list(c.highlights)
+  const heroFloatCards = list(c.float_cards)
   const heroTitle = text(c.title)
-  // Penulis konten mengatur pemenggalan baris judul dengan tanda "|".
   const heroTitleLines = heroTitle
     ? heroTitle
         .split('|')
@@ -66,6 +62,11 @@ function Hero({ section }: { section: PublicPortalSection }) {
   const heroTags = Array.isArray(c.tags)
     ? c.tags.filter((x): x is string => typeof x === 'string' && Boolean(x.trim()))
     : []
+  const primaryLabel = text(c.primary_cta_label)
+  const primaryHref = text(c.primary_cta_href)
+  const secondaryLabel = text(c.secondary_cta_label)
+  const secondaryHref = text(c.secondary_cta_href)
+  const footnote = text(c.footnote)
 
   return (
     <>
@@ -93,43 +94,44 @@ function Hero({ section }: { section: PublicPortalSection }) {
               </div>
             ) : null}
 
-            <div className={styles.heroActions}>
-              <Link
-                className={styles.btnPrimary}
-                href={text(c.primary_cta_href) ?? '#kebutuhan-modal'}
+            {primaryLabel && primaryHref || secondaryLabel && secondaryHref ? (
+              <div className={styles.heroActions}>
+                {primaryLabel && primaryHref ? (
+                  <Link className={styles.btnPrimary} href={primaryHref}>
+                    {primaryLabel}
+                  </Link>
+                ) : null}
+                {secondaryLabel && secondaryHref ? (
+                  <Link className={styles.btnOutline} href={secondaryHref}>
+                    {secondaryLabel}
+                  </Link>
+                ) : null}
+              </div>
+            ) : null}
+
+            {footnote ? (
+              <p
+                className={styles.heroFoot}
+                style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
               >
-                {text(c.primary_cta_label) ?? 'Pelajari Equity Offering'}
-              </Link>
-              <Link
-                className={styles.btnOutline}
-                href={text(c.secondary_cta_href) ?? '#tentang-nuzultrip'}
-              >
-                {text(c.secondary_cta_label) ?? 'Tentang Nuzultrip'}
-              </Link>
-            </div>
-            <p
-              className={styles.heroFoot}
-              style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
-            >
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-                style={{ flex: '0 0 auto' }}
-              >
-                <rect x="5" y="10" width="14" height="10" rx="2" />
-                <path d="M8 10V7a4 4 0 0 1 8 0v3" />
-              </svg>
-              <span>
-                Informasi disusun terstruktur dan diperbarui melalui portal resmi Nuzultrip.
-              </span>
-            </p>
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                  style={{ flex: '0 0 auto' }}
+                >
+                  <rect x="5" y="10" width="14" height="10" rx="2" />
+                  <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+                </svg>
+                <span>{footnote}</span>
+              </p>
+            ) : null}
           </div>
 
           <div className={styles.heroArt} aria-hidden="true">
@@ -183,14 +185,18 @@ function Hero({ section }: { section: PublicPortalSection }) {
               </g>
               <path d="M412 104a22 22 0 100 44 27 27 0 110-44z" fill="#FFD98A" />
             </svg>
-            <div className={`${styles.floatCard} ${styles.floatOne}`}>
-              <b>Perkembangan bisnis</b>
-              <span>Layanan, jaringan, dan sistem</span>
-            </div>
-            <div className={`${styles.floatCard} ${styles.floatTwo}`}>
-              <b>Dokumen uji tuntas</b>
-              <span>Tersedia sesuai akses</span>
-            </div>
+            {heroFloatCards[0] ? (
+              <div className={`${styles.floatCard} ${styles.floatOne}`}>
+                <b>{text(heroFloatCards[0].title)}</b>
+                <span>{text(heroFloatCards[0].description)}</span>
+              </div>
+            ) : null}
+            {heroFloatCards[1] ? (
+              <div className={`${styles.floatCard} ${styles.floatTwo}`}>
+                <b>{text(heroFloatCards[1].title)}</b>
+                <span>{text(heroFloatCards[1].description)}</span>
+              </div>
+            ) : null}
           </div>
         </div>
       </section>
@@ -201,7 +207,7 @@ function Hero({ section }: { section: PublicPortalSection }) {
             <div key={`hero-highlight-${index}`} className={styles.pillar}>
               <span className={styles.pillarIcon}>{['✓', '◫', '◎', '↗'][index] ?? '•'}</span>
               <div>
-                <b>{text(item.title) ?? `Pilar ${index + 1}`}</b>
+                <b>{text(item.title)}</b>
                 <small>{text(item.description)}</small>
               </div>
             </div>
@@ -214,20 +220,15 @@ function Hero({ section }: { section: PublicPortalSection }) {
 
 function Offering({ section }: { section: PublicPortalSection }) {
   const c = section.content
-  // ATURAN KERAS: ketentuan penawaran TIDAK BOLEH punya nilai cadangan di
-  // kode. Angka penawaran yang tampil harus berasal dari dokumen resmi lewat
-  // CMS. Angka karangan di halaman investor adalah masalah hukum, bukan
-  // masalah tampilan. Kalau CMS kosong, tabel tidak dirender sama sekali.
-  //
-  // Nama field mengikuti apa yang DITULIS editor admin. `terms` dan
-  // `process_steps` dipakai kalau ada; `funding_*` dan `use_of_funds` adalah
-  // nama yang dipakai createDefaultContent() di editor admin, sehingga
-  // keduanya didukung dan isian admin tidak pernah hilang.
   const rows = list(c.terms).length ? list(c.terms) : list(c.use_of_funds)
   const steps = list(c.process_steps)
   const fundingLabel = text(c.funding_label)
   const fundingTarget = text(c.funding_target)
-  const fundingCurrency = text(c.funding_currency) ?? 'IDR'
+  const fundingCurrency = text(c.funding_currency)
+  const notice = text(c.notice)
+  const processCtaLabel = text(c.process_cta_label)
+  const processCtaHref = text(c.process_cta_href)
+  const riskNote = text(c.risk_note)
 
   return (
     <section id={section.anchor_id ?? section.id} className={`${styles.section} ${styles.tinted}`}>
@@ -239,23 +240,20 @@ function Offering({ section }: { section: PublicPortalSection }) {
         />
         {fundingTarget ? (
           <div className={styles.fundingTarget}>
-            <span>{fundingLabel ?? 'Kebutuhan modal'}</span>
+            {fundingLabel ? <span>{fundingLabel}</span> : null}
             <strong>
-              {fundingCurrency} {fundingTarget}
+              {fundingCurrency ? `${fundingCurrency} ` : ''}{fundingTarget}
             </strong>
           </div>
         ) : null}
-        <div className={styles.offerNotice}>
-          Informasi pada bagian ini merupakan ringkasan. Dokumen rinci diberikan melalui proses
-          verifikasi dan tidak menggantikan dokumen resmi perusahaan.
-        </div>
+        {notice ? <div className={styles.offerNotice}>{notice}</div> : null}
         <div className={styles.offerGrid}>
           {rows.length ? (
             <div className={styles.offerTable}>
               {rows.map((row, index) => (
                 <div className={styles.offerRow} key={`${section.id}-term-${index}`}>
-                  <span>{text(row.label) ?? text(row.title) ?? `Ketentuan ${index + 1}`}</span>
-                  <strong>{text(row.value) ?? text(row.description) ?? '—'}</strong>
+                  <span>{text(row.label) ?? text(row.title)}</span>
+                  <strong>{text(row.value) ?? text(row.description)}</strong>
                 </div>
               ))}
             </div>
@@ -274,16 +272,15 @@ function Offering({ section }: { section: PublicPortalSection }) {
                   </li>
                 ))}
               </ol>
-              <Link href="/hubungi" className={styles.btnPrimary}>
-                Minta informasi
-              </Link>
+              {processCtaLabel && processCtaHref ? (
+                <Link href={processCtaHref} className={styles.btnPrimary}>
+                  {processCtaLabel}
+                </Link>
+              ) : null}
             </aside>
           ) : null}
         </div>
-        <div className={styles.offerFoot}>
-          Equity memiliki risiko. Calon pemegang ekuitas perlu memahami informasi perusahaan,
-          ketentuan kepemilikan, dan dokumen terkait sebelum mengambil keputusan.
-        </div>
+        {riskNote ? <div className={styles.offerFoot}>{riskNote}</div> : null}
       </div>
     </section>
   )
@@ -291,7 +288,6 @@ function Offering({ section }: { section: PublicPortalSection }) {
 
 function Intro({ section }: { section: PublicPortalSection }) {
   const c = section.content
-  // Tanpa nilai cadangan: kartu hanya muncul kalau diisi dari admin.
   const items = list(c.features)
   return (
     <section id={section.anchor_id ?? section.id} className={styles.section}>
@@ -327,17 +323,15 @@ function VisionMission({ section }: { section: PublicPortalSection }) {
       className={`${styles.sectionCompact} ${styles.aboutContinuation}`}
     >
       <div className={styles.wrap}>
-        {/* eyebrow dan title memang ditulis editor admin, jadi dibaca di sini
-            supaya isian admin tidak terbuang. */}
         <SectionHeader eyebrow={text(c.eyebrow)} title={text(c.title)} />
       </div>
       <div className={`${styles.wrap} ${styles.vm}`}>
         <blockquote className={styles.quoteBox}>
-          <span>{text(c.vision_label) ?? 'Visi'}</span>
+          {text(c.vision_label) ? <span>{text(c.vision_label)}</span> : null}
           <p>{text(c.vision)}</p>
         </blockquote>
         <div className={styles.missionBox}>
-          <span className={styles.eyebrow}>{text(c.mission_label) ?? 'Misi'}</span>
+          {text(c.mission_label) ? <span className={styles.eyebrow}>{text(c.mission_label)}</span> : null}
           <ul>
             {mission.map((item, index) => (
               <li key={`${section.id}-m-${index}`}>
@@ -358,11 +352,7 @@ function Revenue({ section }: { section: PublicPortalSection }) {
   return (
     <section id={section.anchor_id ?? section.id} className={`${styles.section} ${styles.tinted}`}>
       <div className={styles.wrap}>
-        <SectionHeader
-          eyebrow={text(c.eyebrow) ?? 'Model Bisnis'}
-          title={text(c.title) ?? 'Dari Mana Pendapatan Nuzultrip Berasal'}
-          description={text(c.description)}
-        />
+        <SectionHeader eyebrow={text(c.eyebrow)} title={text(c.title)} description={text(c.description)} />
         <div className={styles.revenueGrid}>
           {items.slice(0, 4).map((item, index) => (
             <article key={`${section.id}-revenue-${index}`}>
@@ -386,12 +376,13 @@ function Revenue({ section }: { section: PublicPortalSection }) {
 function Ecosystem({ section }: { section: PublicPortalSection }) {
   const c = section.content
   const items = list(c.items)
+  const itemCaption = text(c.item_caption)
   return (
     <section id={section.anchor_id ?? section.id} className={styles.section}>
       <div className={styles.wrap}>
         <SectionHeader
-          eyebrow={text(c.eyebrow) ?? 'Ekosistem Bisnis'}
-          title={text(c.title) ?? 'Enam Fungsi yang Saling Terintegrasi'}
+          eyebrow={text(c.eyebrow)}
+          title={text(c.title)}
           description={text(c.description)}
           center
         />
@@ -404,7 +395,7 @@ function Ecosystem({ section }: { section: PublicPortalSection }) {
               <span className={styles.ecoIcon}>{['♙', '▤', '◎', '⌘', '▣', '✧'][index]}</span>
               <h3>{text(item.title)}</h3>
               <p>{text(item.description)}</p>
-              <small>Informasi Nuzultrip</small>
+              {text(item.caption) || itemCaption ? <small>{text(item.caption) ?? itemCaption}</small> : null}
             </article>
           ))}
         </div>
@@ -420,11 +411,7 @@ function Growth({ section }: { section: PublicPortalSection }) {
     <section id={section.anchor_id ?? section.id} className={`${styles.section} ${styles.tinted}`}>
       <div className={`${styles.wrap} ${styles.growthGrid}`}>
         <div>
-          <SectionHeader
-            eyebrow={text(c.eyebrow) ?? 'Perkembangan Nuzultrip'}
-            title={text(c.title)}
-            description={text(c.description)}
-          />
+          <SectionHeader eyebrow={text(c.eyebrow)} title={text(c.title)} description={text(c.description)} />
           <div className={styles.growthSteps}>
             {milestones.slice(0, 4).map((item, index) => (
               <div className={styles.growthStep} key={`${section.id}-growth-${index}`}>
@@ -441,26 +428,29 @@ function Growth({ section }: { section: PublicPortalSection }) {
             ))}
           </div>
         </div>
-        <div className={styles.progressMock}>
-          <div className={styles.progressTop}>Nuzultrip</div>
-          <div className={styles.progressBody}>
-            <small>Prioritas pengembangan</small>
-            {milestones.slice(0, 4).map((item, index) => {
-              const width = [34, 56, 76, 88][index] ?? 60
-              return (
-                <div className={styles.progressRow} key={`${section.id}-progress-${index}`}>
-                  <div>
-                    <b>{text(item.title) ?? `Prioritas ${index + 1}`}</b>
-                    <span>{width}%</span>
+        {text(c.progress_title) || text(c.progress_label) ? (
+          <div className={styles.progressMock}>
+            {text(c.progress_title) ? <div className={styles.progressTop}>{text(c.progress_title)}</div> : null}
+            <div className={styles.progressBody}>
+              {text(c.progress_label) ? <small>{text(c.progress_label)}</small> : null}
+              {milestones.slice(0, 4).map((item, index) => {
+                const raw = Number(item.progress_percent)
+                const width = Number.isFinite(raw) ? Math.min(100, Math.max(0, raw)) : 0
+                return (
+                  <div className={styles.progressRow} key={`${section.id}-progress-${index}`}>
+                    <div>
+                      <b>{text(item.title)}</b>
+                      <span>{width}%</span>
+                    </div>
+                    <i>
+                      <em style={{ width: `${width}%` }} />
+                    </i>
                   </div>
-                  <i>
-                    <em style={{ width: `${width}%` }} />
-                  </i>
-                </div>
-              )
-            })}
+                )
+              })}
+            </div>
           </div>
-        </div>
+        ) : null}
       </div>
     </section>
   )
@@ -469,30 +459,24 @@ function Growth({ section }: { section: PublicPortalSection }) {
 function UseFunds({ section }: { section: PublicPortalSection }) {
   const c = section.content
   const items = list(c.pillars).length ? list(c.pillars) : list(c.items)
+  const priorityLabel = text(c.priority_label)
   return (
     <section id={section.anchor_id ?? section.id} className={styles.section}>
       <div className={styles.wrap}>
-        <SectionHeader
-          eyebrow={text(c.eyebrow) ?? 'Penggunaan Dana'}
-          title={text(c.title) ?? 'Empat Prioritas Penggunaan Modal'}
-          description={text(c.description)}
-        />
+        <SectionHeader eyebrow={text(c.eyebrow)} title={text(c.title)} description={text(c.description)} />
         <div className={styles.fundsGrid}>
           {items.slice(0, 4).map((item, index) => (
             <article key={`${section.id}-fund-${index}`}>
               <span>{String(index + 1).padStart(2, '0')}</span>
               <div>
-                <small>Prioritas {index + 1}</small>
+                {priorityLabel ? <small>{priorityLabel} {index + 1}</small> : null}
                 <h3>{text(item.title)}</h3>
                 <p>{text(item.description)}</p>
               </div>
             </article>
           ))}
         </div>
-        <div className={styles.softNote}>
-          Alokasi dapat disesuaikan berdasarkan kebutuhan operasional, kondisi bisnis, dan keputusan
-          perusahaan sesuai tata kelola yang berlaku.
-        </div>
+        {text(c.note) ? <div className={styles.softNote}>{text(c.note)}</div> : null}
       </div>
     </section>
   )
@@ -505,8 +489,8 @@ function Governance({ section }: { section: PublicPortalSection }) {
     <section id={section.anchor_id ?? section.id} className={`${styles.section} ${styles.tinted}`}>
       <div className={styles.wrap}>
         <SectionHeader
-          eyebrow={text(c.eyebrow) ?? 'Governance'}
-          title={text(c.title) ?? 'Kerangka yang Dijalankan terhadap Pemegang Equity'}
+          eyebrow={text(c.eyebrow)}
+          title={text(c.title)}
           description={text(c.description)}
           center
         />
@@ -527,8 +511,6 @@ function Governance({ section }: { section: PublicPortalSection }) {
 function Risks({ section }: { section: PublicPortalSection }) {
   const c = section.content
   const items = list(c.items).length ? list(c.items) : list(c.pillars)
-  // Editor admin untuk legal_notice menulis field `content`; dibaca sebagai
-  // deskripsi supaya isian admin tampil.
   const body = text(c.description) ?? text(c.content)
   return (
     <section id={section.anchor_id ?? section.id} className={styles.section}>
@@ -556,18 +538,14 @@ function Documents({ section }: { section: PublicPortalSection }) {
   return (
     <section id={section.anchor_id ?? section.id} className={`${styles.section} ${styles.tinted}`}>
       <div className={styles.wrap}>
-        <SectionHeader
-          eyebrow={text(c.eyebrow) ?? 'Dokumen Investor'}
-          title={text(c.title) ?? 'Yang Kami Siapkan untuk Calon Investor'}
-          description={text(c.description)}
-        />
+        <SectionHeader eyebrow={text(c.eyebrow)} title={text(c.title)} description={text(c.description)} />
         <div className={styles.docsGrid}>
           {items.slice(0, 6).map((item, index) => {
             const href = text(item.href) ?? text(item.url)
             const node = (
               <>
                 <span>{['✓', '⌁', '▤', '◇', '▣', '◫'][index]}</span>
-                <b>{text(item.title) ?? text(item.label) ?? `Dokumen ${index + 1}`}</b>
+                <b>{text(item.title) ?? text(item.label)}</b>
               </>
             )
             return href ? (
@@ -586,6 +564,14 @@ function Documents({ section }: { section: PublicPortalSection }) {
 
 function Contact({ section }: { section: PublicPortalSection }) {
   const c = section.content
+  const accountNote = text(c.account_note)
+  const nameLabel = text(c.name_label) ?? 'Nama'
+  const emailLabel = text(c.email_label) ?? 'Email'
+  const phoneLabel = text(c.phone_label) ?? 'Nomor telepon'
+  const organizationLabel = text(c.organization_label) ?? 'Perusahaan / organisasi'
+  const messageLabel = text(c.message_label) ?? 'Pesan'
+  const submitLabel = text(c.submit_label) ?? 'Kirim permintaan'
+
   return (
     <section id={section.anchor_id ?? section.id} className={styles.contactSection}>
       <div className={`${styles.wrap} ${styles.contactPanel}`}>
@@ -593,36 +579,35 @@ function Contact({ section }: { section: PublicPortalSection }) {
           {text(c.eyebrow) ? <span className={styles.eyebrow}>{text(c.eyebrow)}</span> : null}
           {text(c.title) ? <h2>{text(c.title)}</h2> : null}
           {text(c.description) ? <p>{text(c.description)}</p> : null}
-          {/* CTA di contact_cta ditulis editor admin; sebelumnya diabaikan. */}
           {text(c.primary_cta_label) && text(c.primary_cta_href) ? (
             <Link className={styles.btnPrimary} href={text(c.primary_cta_href) as string}>
               {text(c.primary_cta_label)}
             </Link>
           ) : null}
-          <small>Akun investor hanya dibuat dan diberikan oleh admin Nuzultrip.</small>
+          {accountNote ? <small>{accountNote}</small> : null}
         </div>
         <form action={submitPortalInquiry} className={styles.contactForm}>
           <label>
-            Nama
+            {nameLabel}
             <input name="name" required maxLength={200} />
           </label>
           <label>
-            Email
+            {emailLabel}
             <input name="email" type="email" required maxLength={320} />
           </label>
           <label>
-            Nomor telepon
+            {phoneLabel}
             <input name="phone" maxLength={50} />
           </label>
           <label>
-            Perusahaan / organisasi
+            {organizationLabel}
             <input name="organization" maxLength={200} />
           </label>
           <label>
-            Pesan
+            {messageLabel}
             <textarea name="message" required maxLength={5000} rows={4} />
           </label>
-          <button type="submit">Kirim permintaan</button>
+          <button type="submit">{submitLabel}</button>
         </form>
       </div>
     </section>
@@ -780,7 +765,7 @@ export function PublicPortalModel({
             <div>
               <h4>Ikuti Nuzultrip</h4>
               {social.map((item) => (
-                <Link key={item.id} href={item.href}>
+                <Link key={item.id} href={item.href} target={item.target} rel={item.target === '_blank' ? 'noreferrer' : undefined}>
                   {item.label}
                 </Link>
               ))}
