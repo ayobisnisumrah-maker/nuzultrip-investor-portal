@@ -1,8 +1,11 @@
-import { openPortalContentEditor } from '@/features/admin/portal-content-shortcut'
+import { PortalModulePage } from '@/features/admin/portal-module-page'
 
 export default async function PortalDocumentsPage() {
-  return openPortalContentEditor({
-    permission: 'portal.view',
+  return PortalModulePage({
+    kind: 'documents',
+    title: 'Dokumen Portal',
+    description: 'Kelola daftar dokumen publik beserta nama, deskripsi, dan tautan dokumennya.',
+    permission: 'portal.update',
     returnPath: '/admin/portal/documents',
   })
 }
