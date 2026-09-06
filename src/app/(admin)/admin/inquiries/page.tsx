@@ -50,6 +50,8 @@ export default async function InquiriesPage() {
         inquiries={inquiries ?? []}
         canSend={false}
         canHandle={principal.permissions.has('inquiries.handle')}
+        currentUserId={principal.userId}
+        timezone={principal.timezone}
       />
     </div>
   )
