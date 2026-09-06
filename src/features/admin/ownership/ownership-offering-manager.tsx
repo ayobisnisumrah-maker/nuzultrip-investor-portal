@@ -21,6 +21,7 @@ type Offering = {
 
 type Props = {
   offerings: Offering[]
+  timezone: string
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -47,10 +48,11 @@ function formatPercentageBps(value: number) {
   return `${(value / 100).toFixed(2)}%`
 }
 
-function formatDate(value: string | null) {
+function formatDate(value: string | null, timeZone: string) {
   if (!value) return '-'
 
   return new Intl.DateTimeFormat('id-ID', {
+    timeZone,
     day: '2-digit',
     month: 'short',
     year: 'numeric',
@@ -72,7 +74,7 @@ function statusClass(status: string) {
   }
 }
 
-export function OwnershipOfferingManager({ offerings }: Props) {
+export function OwnershipOfferingManager({ offerings, timezone }: Props) {
   const [query, setQuery] = useState('')
   const [status, setStatus] = useState('')
 
@@ -218,22 +220,24 @@ export function OwnershipOfferingManager({ offerings }: Props) {
                       </span>
                     </td>
 
-                    <td className="text-fg px-5 py-4 text-right text-sm">
+                    <td className="text-fg px-5 py-4 text-right text-sm" suppressHydrationWarning>
                       {formatNumber(Number(offering.total_units))}
                     </td>
 
-                    <td className="text-fg px-5 py-4 text-right text-sm">
+                    <td className="text-fg px-5 py-4 text-right text-sm" suppressHydrationWarning>
                       {formatRupiah(Number(offering.unit_price))}
                     </td>
 
-                    <td className="text-fg px-5 py-4 text-right text-sm">
+                    <td className="text-fg px-5 py-4 text-right text-sm" suppressHydrationWarning>
                       {formatPercentageBps(Number(offering.total_offered_bps))}
                     </td>
 
-                    <td className="text-fg-muted px-5 py-4 text-sm">
-                      <div>{formatDate(offering.effective_from)}</div>
+                    <td className="text-fg-muted px-5 py-4 text-sm" suppressHydrationWarning>
+                      <div>{formatDate(offering.effective_from, timezone)}</div>
 
-                      <div className="mt-1 text-xs">s/d {formatDate(offering.effective_until)}</div>
+                      <div className="mt-1 text-xs">
+                        s/d {formatDate(offering.effective_until, timezone)}
+                      </div>
                     </td>
 
                     <td className="px-5 py-4 text-right">
