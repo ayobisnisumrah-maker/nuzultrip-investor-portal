@@ -46,6 +46,22 @@ const transitionSchema = z.object({
   toStatus: z.enum(['draft', 'review', 'approved', 'published']),
 })
 
+async function nextVersionNumber(
+  supabase: Parameters<Parameters<typeof defineAction>[0]['handler']>[0]['supabase'],
+  profileId: string,
+) {
+  const { data, error } = await supabase
+    .from('company_profile_versions')
+    .select('version_number')
+    .eq('company_profile_id', profileId)
+    .order('version_number', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (error) throw new Error(`Gagal menentukan nomor versi profil: ${error.message}`)
+  return (data?.version_number ?? 0) + 1
+}
+
 export const initializeCompanyProfile = defineAction({
   access: { permission: 'company_profile.update' },
   input: initializeSchema,
@@ -79,6 +95,7 @@ export const initializeCompanyProfile = defineAction({
       .from('company_profile_versions')
       .insert({
         company_profile_id: profile.id,
+        version_number: 1,
         status: 'draft',
         identity: empty,
         legal_information: empty,
@@ -129,10 +146,12 @@ export const saveCompanyProfileDraft = defineAction({
     if (profileError || !profile) throw new NotFoundError('Profil perusahaan')
     if (profile.status !== 'draft') throw new ForbiddenError('Profil hanya dapat diedit saat berstatus Draf.')
 
+    const versionNumber = await nextVersionNumber(supabase, profile.id)
     const { data: version, error: versionError } = await supabase
       .from('company_profile_versions')
       .insert({
         company_profile_id: profile.id,
+        version_number: versionNumber,
         status: 'draft',
         identity: input.blocks.identity as Json,
         legal_information: input.blocks.legal_information as Json,
@@ -196,10 +215,12 @@ export const transitionCompanyProfile = defineAction({
 
       if (sourceError || !source) throw new Error('Snapshot profil terbit tidak ditemukan.')
 
+      const versionNumber = await nextVersionNumber(supabase, profile.id)
       const { data: draft, error: draftError } = await supabase
         .from('company_profile_versions')
         .insert({
           company_profile_id: profile.id,
+          version_number: versionNumber,
           status: 'draft',
           identity: source.identity,
           legal_information: source.legal_information,
@@ -239,24 +260,33 @@ export const transitionCompanyProfile = defineAction({
 
     if (!allowed) throw new Error(`Transisi profil tidak valid: ${profile.status} → ${input.toStatus}.`)
 
-    const versionStatus = input.toStatus
-    const versionPatch: Record<string, unknown> = { status: versionStatus }
-    if (versionStatus === 'approved') versionPatch.approved_at = new Date().toISOString()
-
-    const { error: versionError } = await supabase
-      .from('company_profile_versions')
-      .update(versionPatch)
-      .eq('id', profile.current_version_id)
+    const approvedAt = input.toStatus === 'approved' ? new Date().toISOString() : null
+    const { error: versionError } = input.toStatus === 'approved'
+      ? await supabase
+          .from('company_profile_versions')
+          .update({ status: 'approved', approved_at: approvedAt })
+          .eq('id', profile.current_version_id)
+      : input.toStatus === 'published'
+        ? await supabase
+            .from('company_profile_versions')
+            .update({ status: 'published', published_at: new Date().toISOString() })
+            .eq('id', profile.current_version_id)
+        : await supabase
+            .from('company_profile_versions')
+            .update({ status: input.toStatus })
+            .eq('id', profile.current_version_id)
 
     if (versionError) throw new Error(`Gagal mengubah status versi profil: ${versionError.message}`)
 
-    const profilePatch: Record<string, unknown> = { status: input.toStatus }
-    if (input.toStatus === 'published') profilePatch.published_version_id = profile.current_version_id
-
-    const { error: profileUpdateError } = await supabase
-      .from('company_profiles')
-      .update(profilePatch)
-      .eq('id', profile.id)
+    const { error: profileUpdateError } = input.toStatus === 'published'
+      ? await supabase
+          .from('company_profiles')
+          .update({ status: 'published', published_version_id: profile.current_version_id })
+          .eq('id', profile.id)
+      : await supabase
+          .from('company_profiles')
+          .update({ status: input.toStatus })
+          .eq('id', profile.id)
 
     if (profileUpdateError) throw new Error(`Gagal mengubah status profil: ${profileUpdateError.message}`)
 
