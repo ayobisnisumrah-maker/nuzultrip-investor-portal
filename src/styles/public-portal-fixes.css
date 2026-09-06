@@ -1,266 +1,177 @@
-/* Public portal visual corrections. Content remains CMS-driven; this file controls presentation only. */
-header:has(a[href="/masuk"]) > div {
-  min-height: 76px !important;
-  height: 76px !important;
+/* Public portal legibility and brand consistency.
+   Loaded after portal-public-overrides.css so these accessibility floors win. */
+
+header:has(nav[aria-label='Navigasi utama']) > div {
+  min-height: 82px !important;
 }
 
-header:has(a[href="/masuk"]) a[href="/"] {
-  display: flex !important;
-  align-items: center !important;
-  min-width: 188px;
-  overflow: visible !important;
-}
-
-header:has(a[href="/masuk"]) a[href="/"] img[src*="nuzultrip-logo-portal"] {
-  display: block !important;
-  width: 178px !important;
-  height: 52px !important;
-  max-height: 52px !important;
-  object-fit: contain !important;
-  object-position: left center !important;
-  overflow: visible !important;
-}
-
-header:has(a[href="/masuk"]) nav {
-  font-size: 0.9rem !important;
-  gap: 28px !important;
-}
-
-header:has(a[href="/masuk"]) a[href="/masuk"] {
-  font-size: 0.9rem !important;
-  padding: 10px 20px !important;
-}
-
-header:has(a[href="/masuk"]) + main > section:first-child {
-  padding-top: 58px !important;
-  padding-bottom: 58px !important;
-}
-
-header:has(a[href="/masuk"]) + main > section:first-child > div:nth-child(2) > div:first-child {
-  transform: translateY(-14px);
-}
-
-header:has(a[href="/masuk"]) + main > section:first-child .eyebrow,
-header:has(a[href="/masuk"]) + main > section:first-child [class*="eyebrow"] {
-  font-size: 0.82rem !important;
-  letter-spacing: 0.18em !important;
-}
-
-header:has(a[href="/masuk"]) + main > section:first-child h1 {
-  max-width: none !important;
-  font-size: clamp(4rem, 5.5vw, 5.35rem) !important;
-  line-height: 0.98 !important;
-  letter-spacing: -0.04em !important;
-}
-
-header:has(a[href="/masuk"]) + main > section:first-child h1 > span {
-  display: block !important;
-  white-space: nowrap !important;
-}
-
-header:has(a[href="/masuk"]) + main > section:first-child h1 + p {
-  max-width: 43rem !important;
-  font-size: 1.08rem !important;
-  line-height: 1.72 !important;
-}
-
-header:has(a[href="/masuk"]) + main > section:first-child h1 ~ div span {
-  font-size: 0.86rem !important;
-}
-
-header:has(a[href="/masuk"]) + main > section:first-child h1 ~ div a {
-  font-size: 0.92rem !important;
-  min-height: 44px !important;
-  padding-inline: 20px !important;
-}
-
-header:has(a[href="/masuk"]) + main > section:first-child h1 ~ p:last-of-type {
-  font-size: 0.84rem !important;
-  line-height: 1.55 !important;
-}
-
-header:has(a[href="/masuk"]) + main > section:first-child h1 ~ p:last-of-type svg {
-  width: 16px !important;
-  height: 16px !important;
-}
-
-header:has(a[href="/masuk"]) + main > section:first-child + div b {
-  font-size: 0.92rem !important;
-}
-
-header:has(a[href="/masuk"]) + main > section:first-child + div small {
-  font-size: 0.78rem !important;
-  line-height: 1.45 !important;
-}
-
-/* Reference-like typography across the rest of the CMS-rendered portal. */
-header:has(a[href="/masuk"]) + main > section:not(:first-child) {
-  padding-top: 72px !important;
-  padding-bottom: 72px !important;
-}
-
-header:has(a[href="/masuk"]) + main > section:not(:first-child) [class*="eyebrow"] {
-  font-size: 0.76rem !important;
-  letter-spacing: 0.17em !important;
-  line-height: 1.4 !important;
-}
-
-header:has(a[href="/masuk"]) + main > section:not(:first-child) h2 {
-  font-size: clamp(2rem, 2.6vw, 2.7rem) !important;
-  line-height: 1.12 !important;
-  letter-spacing: -0.025em !important;
-}
-
-header:has(a[href="/masuk"]) + main > section:not(:first-child) h3 {
+header:has(nav[aria-label='Navigasi utama']) nav,
+header:has(nav[aria-label='Navigasi utama']) nav a,
+header:has(nav[aria-label='Navigasi utama']) a[href='/masuk'] {
   font-size: 1rem !important;
-  line-height: 1.35 !important;
 }
 
-header:has(a[href="/masuk"]) + main > section:not(:first-child) p {
-  font-size: 0.9rem !important;
-  line-height: 1.62 !important;
+header:has(nav[aria-label='Navigasi utama']) a[href='/masuk'] {
+  min-height: 44px !important;
+  padding-inline: 22px !important;
 }
 
-header:has(a[href="/masuk"]) + main > section:not(:first-child) small {
-  font-size: 0.76rem !important;
-  line-height: 1.45 !important;
-}
-
-header:has(a[href="/masuk"]) + main > section:not(:first-child) b,
-header:has(a[href="/masuk"]) + main > section:not(:first-child) strong {
-  font-size: 0.9rem !important;
+/* Keep the approved hero headline scale; enlarge every supporting element. */
+header:has(nav[aria-label='Navigasi utama']) + main > section:first-child .eyebrow,
+header:has(nav[aria-label='Navigasi utama']) + main > section:first-child [class*='eyebrow'] {
+  font-size: 0.875rem !important;
   line-height: 1.4 !important;
 }
 
-header:has(a[href="/masuk"]) + main > section:not(:first-child) a,
-header:has(a[href="/masuk"]) + main > section:not(:first-child) button,
-header:has(a[href="/masuk"]) + main > section:not(:first-child) label,
-header:has(a[href="/masuk"]) + main > section:not(:first-child) input,
-header:has(a[href="/masuk"]) + main > section:not(:first-child) textarea {
-  font-size: 0.86rem !important;
+header:has(nav[aria-label='Navigasi utama']) + main > section:first-child h1 + p {
+  max-width: 43rem !important;
+  font-size: 1.125rem !important;
+  line-height: 1.75 !important;
 }
 
-header:has(a[href="/masuk"]) + main > section:not(:first-child) input,
-header:has(a[href="/masuk"]) + main > section:not(:first-child) textarea {
-  line-height: 1.5 !important;
+header:has(nav[aria-label='Navigasi utama']) + main > section:first-child h1 ~ div span {
+  font-size: 0.875rem !important;
 }
 
-/* Offering table and process panel need denser but still readable text. */
-header:has(a[href="/masuk"]) + main > section:not(:first-child) [class*="offer"] span,
-header:has(a[href="/masuk"]) + main > section:not(:first-child) [class*="offer"] strong,
-header:has(a[href="/masuk"]) + main > section:not(:first-child) [class*="process"] b,
-header:has(a[href="/masuk"]) + main > section:not(:first-child) [class*="process"] p {
-  font-size: 0.84rem !important;
+header:has(nav[aria-label='Navigasi utama']) + main > section:first-child h1 ~ div a {
+  min-height: 48px !important;
+  padding-inline: 22px !important;
+  font-size: 1rem !important;
 }
 
-/* Cards in business, ecosystem, governance, risk, documents and funds. */
-header:has(a[href="/masuk"]) + main > section:not(:first-child) article h3 {
-  font-size: 0.96rem !important;
+header:has(nav[aria-label='Navigasi utama']) + main > section:first-child h1 ~ p:last-of-type {
+  font-size: 0.875rem !important;
+  line-height: 1.6 !important;
 }
 
-header:has(a[href="/masuk"]) + main > section:not(:first-child) article p {
-  font-size: 0.82rem !important;
+header:has(nav[aria-label='Navigasi utama']) + main > section:first-child + div b {
+  font-size: 1rem !important;
+}
+
+header:has(nav[aria-label='Navigasi utama']) + main > section:first-child + div small {
+  font-size: 0.875rem !important;
   line-height: 1.55 !important;
 }
 
-header:has(a[href="/masuk"]) + main > section:not(:first-child) article small {
-  font-size: 0.72rem !important;
+/* Body content never falls back to fine-print sizing. */
+header:has(nav[aria-label='Navigasi utama']) + main > section:not(:first-child) {
+  padding-top: 80px !important;
+  padding-bottom: 80px !important;
 }
 
-/* Contact panel should feel like the reference, not like fine print. */
-header:has(a[href="/masuk"]) + main > section:not(:first-child) form label {
-  font-size: 0.82rem !important;
-  font-weight: 600 !important;
+header:has(nav[aria-label='Navigasi utama']) + main > section:not(:first-child) [class*='eyebrow'] {
+  font-size: 0.875rem !important;
+  line-height: 1.45 !important;
+  letter-spacing: 0.16em !important;
 }
 
-header:has(a[href="/masuk"]) + main > section:not(:first-child) form input,
-header:has(a[href="/masuk"]) + main > section:not(:first-child) form textarea {
-  font-size: 0.86rem !important;
+header:has(nav[aria-label='Navigasi utama']) + main > section:not(:first-child) h2 {
+  font-size: clamp(2.25rem, 3vw, 3.25rem) !important;
+  line-height: 1.12 !important;
 }
 
-@media (max-width: 1100px) {
-  header:has(a[href="/masuk"]) + main > section:first-child h1 {
-    font-size: clamp(3.5rem, 6vw, 4.7rem) !important;
-  }
+header:has(nav[aria-label='Navigasi utama']) + main > section:not(:first-child) h3,
+header:has(nav[aria-label='Navigasi utama']) + main > section:not(:first-child) article h3 {
+  font-size: 1.25rem !important;
+  line-height: 1.4 !important;
+}
 
-  header:has(a[href="/masuk"]) + main > section:first-child h1 + p {
-    font-size: 1rem !important;
-  }
+header:has(nav[aria-label='Navigasi utama']) + main > section:not(:first-child) p,
+header:has(nav[aria-label='Navigasi utama']) + main > section:not(:first-child) article p {
+  font-size: 1rem !important;
+  line-height: 1.7 !important;
+}
 
-  header:has(a[href="/masuk"]) + main > section:not(:first-child) h2 {
-    font-size: clamp(1.8rem, 3vw, 2.35rem) !important;
-  }
+header:has(nav[aria-label='Navigasi utama']) + main > section:not(:first-child) small,
+header:has(nav[aria-label='Navigasi utama']) + main > section:not(:first-child) article small {
+  font-size: 0.875rem !important;
+  line-height: 1.55 !important;
+}
+
+header:has(nav[aria-label='Navigasi utama']) + main > section:not(:first-child) b,
+header:has(nav[aria-label='Navigasi utama']) + main > section:not(:first-child) strong,
+header:has(nav[aria-label='Navigasi utama']) + main > section:not(:first-child) span,
+header:has(nav[aria-label='Navigasi utama']) + main > section:not(:first-child) a,
+header:has(nav[aria-label='Navigasi utama']) + main > section:not(:first-child) button,
+header:has(nav[aria-label='Navigasi utama']) + main > section:not(:first-child) label,
+header:has(nav[aria-label='Navigasi utama']) + main > section:not(:first-child) input,
+header:has(nav[aria-label='Navigasi utama']) + main > section:not(:first-child) textarea {
+  font-size: 1rem !important;
+}
+
+header:has(nav[aria-label='Navigasi utama']) + main > section:not(:first-child) input {
+  min-height: 48px !important;
+}
+
+header:has(nav[aria-label='Navigasi utama']) + main > section:not(:first-child) button,
+header:has(nav[aria-label='Navigasi utama']) + main > section:not(:first-child) a[class*='btn'] {
+  min-height: 48px !important;
+}
+
+/* A single, stable footer palette in light and dark system modes. */
+footer:has(img[src*='nuzultrip-logo-portal']) {
+  border-top-color: #263c70 !important;
+  background: #142657 !important;
+  color: #dce7ee !important;
+  padding-block: 48px 28px !important;
+  color-scheme: dark;
+}
+
+footer:has(img[src*='nuzultrip-logo-portal']) img {
+  width: 162px !important;
+  height: auto !important;
+  border-radius: 10px;
+  background: #ffffff;
+  padding: 8px 12px;
+}
+
+footer:has(img[src*='nuzultrip-logo-portal']) h4 {
+  color: #ffffff !important;
+  font-size: 1rem !important;
+}
+
+footer:has(img[src*='nuzultrip-logo-portal']) p,
+footer:has(img[src*='nuzultrip-logo-portal']) a,
+footer:has(img[src*='nuzultrip-logo-portal']) span {
+  color: #dce7ee !important;
+  font-size: 0.9375rem !important;
+  line-height: 1.65 !important;
+}
+
+footer:has(img[src*='nuzultrip-logo-portal']) a:hover {
+  color: #77d9d4 !important;
+}
+
+footer:has(img[src*='nuzultrip-logo-portal']) [class*='legal'] {
+  border-top-color: #334a7d !important;
 }
 
 @media (max-width: 900px) {
-  header:has(a[href="/masuk"]) > div {
-    min-height: 68px !important;
-    height: 68px !important;
+  header:has(nav[aria-label='Navigasi utama']) + main > section:not(:first-child) {
+    padding-top: 64px !important;
+    padding-bottom: 64px !important;
   }
 
-  header:has(a[href="/masuk"]) a[href="/"] img[src*="nuzultrip-logo-portal"] {
-    width: 148px !important;
-    height: 46px !important;
-    max-height: 46px !important;
-  }
-
-  header:has(a[href="/masuk"]) + main > section:first-child > div:nth-child(2) > div:first-child {
-    transform: none;
-  }
-
-  header:has(a[href="/masuk"]) + main > section:first-child h1 {
-    font-size: clamp(2.9rem, 9.5vw, 4rem) !important;
-  }
-
-  header:has(a[href="/masuk"]) + main > section:first-child h1 + p {
-    font-size: 0.98rem !important;
-  }
-
-  header:has(a[href="/masuk"]) + main > section:not(:first-child) {
-    padding-top: 56px !important;
-    padding-bottom: 56px !important;
-  }
-
-  header:has(a[href="/masuk"]) + main > section:not(:first-child) h2 {
-    font-size: 1.85rem !important;
+  header:has(nav[aria-label='Navigasi utama']) + main > section:not(:first-child) h2 {
+    font-size: clamp(2rem, 6vw, 2.75rem) !important;
   }
 }
 
 @media (max-width: 640px) {
-  header:has(a[href="/masuk"]) a[href="/"] {
-    min-width: 0;
+  header:has(nav[aria-label='Navigasi utama']) + main > section:first-child h1 + p {
+    font-size: 1rem !important;
   }
 
-  header:has(a[href="/masuk"]) a[href="/"] img[src*="nuzultrip-logo-portal"] {
-    width: 132px !important;
-    height: 42px !important;
-    max-height: 42px !important;
+  header:has(nav[aria-label='Navigasi utama']) + main > section:not(:first-child) {
+    padding-top: 52px !important;
+    padding-bottom: 52px !important;
   }
 
-  header:has(a[href="/masuk"]) + main > section:first-child h1 > span {
-    white-space: normal !important;
+  header:has(nav[aria-label='Navigasi utama']) + main > section:not(:first-child) h2 {
+    font-size: 2rem !important;
   }
 
-  header:has(a[href="/masuk"]) + main > section:first-child h1 + p {
-    font-size: 0.94rem !important;
-  }
-
-  header:has(a[href="/masuk"]) + main > section:first-child h1 ~ div span,
-  header:has(a[href="/masuk"]) + main > section:first-child h1 ~ p:last-of-type {
-    font-size: 0.78rem !important;
-  }
-
-  header:has(a[href="/masuk"]) + main > section:not(:first-child) {
-    padding-top: 46px !important;
-    padding-bottom: 46px !important;
-  }
-
-  header:has(a[href="/masuk"]) + main > section:not(:first-child) h2 {
-    font-size: 1.55rem !important;
-  }
-
-  header:has(a[href="/masuk"]) + main > section:not(:first-child) p,
-  header:has(a[href="/masuk"]) + main > section:not(:first-child) article p {
-    font-size: 0.8rem !important;
+  footer:has(img[src*='nuzultrip-logo-portal']) {
+    padding-block: 40px 24px !important;
   }
 }
