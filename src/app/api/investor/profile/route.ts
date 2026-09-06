@@ -93,7 +93,9 @@ export async function PATCH(request: Request) {
     entityType: 'investor',
     entityId: principal.investorId,
     summary: `Investor ${principal.referenceCode} memperbarui profil dan/atau rekening.`,
-    changes: { before, after: next },
+    changes: {
+      profile: { before, after: next },
+    },
   })
 
   return NextResponse.json({ ok: true })
