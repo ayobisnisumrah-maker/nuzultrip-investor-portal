@@ -1,5 +1,4 @@
 // @vitest-environment node
-import { randomUUID } from 'node:crypto'
 import type { TransactionSql } from 'postgres'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
@@ -75,7 +74,12 @@ beforeAll(async () => {
       ${sectionId},
       1,
       'draft',
-      ${sql.json({ kind: 'intro', eyebrow: 'Awal', title: 'Versi Publik 1', description: 'Konten awal.' })},
+      ${JSON.stringify({
+        kind: 'intro',
+        eyebrow: 'Awal',
+        title: 'Versi Publik 1',
+        description: 'Konten awal.',
+      })}::jsonb,
       ${fixtures.superAdmin.userId}
     )
     returning id
@@ -140,7 +144,12 @@ describe('portal live revision lifecycle', () => {
           ${sectionId},
           2,
           'draft',
-          ${tx.json({ kind: 'intro', eyebrow: 'Revisi', title: 'Versi Publik 2', description: 'Konten revisi.' })},
+          ${JSON.stringify({
+            kind: 'intro',
+            eyebrow: 'Revisi',
+            title: 'Versi Publik 2',
+            description: 'Konten revisi.',
+          })}::jsonb,
           ${fixtures.superAdmin.userId}
         )
         returning id
