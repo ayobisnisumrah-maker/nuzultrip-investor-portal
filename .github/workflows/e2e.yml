@@ -92,7 +92,7 @@ jobs:
         run: pnpm exec playwright install --with-deps ${{ matrix.browser }}
 
       - name: Run browser acceptance suite
-        run: pnpm test:e2e -- --project=${{ matrix.project }}
+        run: pnpm test:e2e --project=${{ matrix.project }}
 
       - name: Upload Playwright report
         if: always()
