@@ -139,6 +139,146 @@ header:has(nav[aria-label='Navigasi utama']) + main > section:not(:first-child) 
   min-height: 48px !important;
 }
 
+/* Equity-offering composition: long CMS-managed term table + participation card. */
+header:has(nav[aria-label='Navigasi utama']) + main > section:nth-of-type(2) {
+  background: #f7fbfa !important;
+}
+
+header:has(nav[aria-label='Navigasi utama']) + main > section:nth-of-type(2) > div {
+  max-width: 1180px !important;
+}
+
+header:has(nav[aria-label='Navigasi utama']) + main > section:nth-of-type(2) [class*='offerNotice'] {
+  margin-bottom: 20px !important;
+  border: 1px solid #efce89 !important;
+  border-radius: 10px !important;
+  background: #fff9e9 !important;
+  padding: 13px 16px !important;
+  color: #805b15 !important;
+  box-shadow: none !important;
+}
+
+header:has(nav[aria-label='Navigasi utama']) + main > section:nth-of-type(2) [class*='offerGrid'] {
+  grid-template-columns: minmax(0, 1.34fr) minmax(330px, 0.96fr) !important;
+  gap: 24px !important;
+  align-items: start !important;
+}
+
+header:has(nav[aria-label='Navigasi utama']) + main > section:nth-of-type(2) [class*='offerTable'] {
+  border: 1px solid #dfe3eb !important;
+  border-radius: 16px !important;
+  overflow: hidden !important;
+  background: #fff !important;
+  box-shadow: 0 12px 28px -28px rgba(20, 24, 74, 0.4) !important;
+}
+
+header:has(nav[aria-label='Navigasi utama']) + main > section:nth-of-type(2) [class*='offerRow'] {
+  min-height: 58px !important;
+  grid-template-columns: minmax(240px, 0.92fr) minmax(0, 1.08fr) !important;
+  align-items: stretch !important;
+  border-bottom-color: #dfe3eb !important;
+}
+
+header:has(nav[aria-label='Navigasi utama']) + main > section:nth-of-type(2) [class*='offerRow'] > span,
+header:has(nav[aria-label='Navigasi utama']) + main > section:nth-of-type(2) [class*='offerRow'] > strong {
+  display: flex !important;
+  align-items: center !important;
+  padding: 14px 20px !important;
+  line-height: 1.55 !important;
+}
+
+header:has(nav[aria-label='Navigasi utama']) + main > section:nth-of-type(2) [class*='offerRow'] > span {
+  color: #14184a !important;
+  font-weight: 600 !important;
+  background: #fff !important;
+}
+
+header:has(nav[aria-label='Navigasi utama']) + main > section:nth-of-type(2) [class*='offerRow'] > strong {
+  color: #5e6282 !important;
+  font-weight: 500 !important;
+  background: #fff !important;
+  border-left: 1px solid #eef0f4 !important;
+}
+
+header:has(nav[aria-label='Navigasi utama']) + main > section:nth-of-type(2) [class*='offerRow']:nth-child(-n + 5) > strong {
+  color: #9a6700 !important;
+  font-weight: 700 !important;
+  background: #fffaf0 !important;
+}
+
+header:has(nav[aria-label='Navigasi utama']) + main > section:nth-of-type(2) [class*='processCard'] {
+  position: sticky !important;
+  top: 104px !important;
+  border: 1px solid #dfe3eb !important;
+  border-radius: 16px !important;
+  background: #fff !important;
+  padding: 26px !important;
+  box-shadow: 0 14px 34px -28px rgba(20, 24, 74, 0.45) !important;
+}
+
+header:has(nav[aria-label='Navigasi utama']) + main > section:nth-of-type(2) [class*='processCard'] h3 {
+  margin-bottom: 18px !important;
+  font-size: 1.55rem !important;
+  line-height: 1.2 !important;
+}
+
+header:has(nav[aria-label='Navigasi utama']) + main > section:nth-of-type(2) [class*='processCard'] ol {
+  gap: 14px !important;
+  margin: 0 0 20px !important;
+}
+
+header:has(nav[aria-label='Navigasi utama']) + main > section:nth-of-type(2) [class*='processCard'] li {
+  grid-template-columns: 24px minmax(0, 1fr) !important;
+  gap: 10px !important;
+  align-items: start !important;
+}
+
+header:has(nav[aria-label='Navigasi utama']) + main > section:nth-of-type(2) [class*='processCard'] li > span {
+  width: 22px !important;
+  height: 22px !important;
+  margin-top: 1px !important;
+  border-radius: 7px !important;
+  background: #e6f5f4 !important;
+  color: transparent !important;
+  font-size: 0 !important;
+}
+
+header:has(nav[aria-label='Navigasi utama']) + main > section:nth-of-type(2) [class*='processCard'] li > span::before {
+  content: '✓';
+  color: #0e9c9c !important;
+  font-size: 0.86rem !important;
+  font-weight: 800 !important;
+}
+
+header:has(nav[aria-label='Navigasi utama']) + main > section:nth-of-type(2) [class*='processCard'] b {
+  margin-bottom: 2px !important;
+  color: #14184a !important;
+  font-size: 1rem !important;
+  font-weight: 700 !important;
+}
+
+header:has(nav[aria-label='Navigasi utama']) + main > section:nth-of-type(2) [class*='processCard'] p {
+  color: #5e6282 !important;
+  font-size: 0.95rem !important;
+  line-height: 1.55 !important;
+}
+
+header:has(nav[aria-label='Navigasi utama']) + main > section:nth-of-type(2) [class*='processCard'] a[class*='btnPrimary'] {
+  width: 100% !important;
+  min-height: 52px !important;
+  border-radius: 10px !important;
+  font-size: 1rem !important;
+  font-weight: 700 !important;
+}
+
+header:has(nav[aria-label='Navigasi utama']) + main > section:nth-of-type(2) [class*='offerFoot'] {
+  margin-top: 20px !important;
+  border: 1px solid #e4efee !important;
+  border-radius: 10px !important;
+  background: #eef7f6 !important;
+  padding: 13px 16px !important;
+}
+
 /* Light footer aligned with the supplied portal reference. */
 footer:has(img[src*='nuzultrip-logo-portal']) {
   border-top: 1px solid #e7e6f0 !important;
@@ -220,6 +360,11 @@ footer:has(img[src*='nuzultrip-logo-portal']) [class*='legal'] span {
     margin-left: -5% !important;
     transform: scale(1.04) !important;
   }
+
+  header:has(nav[aria-label='Navigasi utama']) + main > section:nth-of-type(2) [class*='offerGrid'] {
+    grid-template-columns: minmax(0, 1.2fr) minmax(310px, 0.8fr) !important;
+    gap: 18px !important;
+  }
 }
 
 @media (max-width: 900px) {
@@ -243,6 +388,14 @@ footer:has(img[src*='nuzultrip-logo-portal']) [class*='legal'] span {
     font-size: clamp(2rem, 6vw, 2.75rem) !important;
   }
 
+  header:has(nav[aria-label='Navigasi utama']) + main > section:nth-of-type(2) [class*='offerGrid'] {
+    grid-template-columns: 1fr !important;
+  }
+
+  header:has(nav[aria-label='Navigasi utama']) + main > section:nth-of-type(2) [class*='processCard'] {
+    position: static !important;
+  }
+
   footer:has(img[src*='nuzultrip-logo-portal']) {
     padding-block: 54px 28px !important;
   }
@@ -264,6 +417,19 @@ footer:has(img[src*='nuzultrip-logo-portal']) [class*='legal'] span {
 
   header:has(nav[aria-label='Navigasi utama']) + main > section:not(:first-child) h2 {
     font-size: 2rem !important;
+  }
+
+  header:has(nav[aria-label='Navigasi utama']) + main > section:nth-of-type(2) [class*='offerRow'] {
+    grid-template-columns: 1fr !important;
+  }
+
+  header:has(nav[aria-label='Navigasi utama']) + main > section:nth-of-type(2) [class*='offerRow'] > strong {
+    border-left: 0 !important;
+    border-top: 1px solid #eef0f4 !important;
+  }
+
+  header:has(nav[aria-label='Navigasi utama']) + main > section:nth-of-type(2) [class*='processCard'] {
+    padding: 20px !important;
   }
 
   footer:has(img[src*='nuzultrip-logo-portal']) {
