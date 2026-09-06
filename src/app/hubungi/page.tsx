@@ -10,33 +10,35 @@ export default async function ContactPage({
   const params = await searchParams
 
   return (
-    <main className="bg-background text-fg min-h-dvh px-6 py-16 sm:py-24">
+    <main className="min-h-dvh bg-[#f5faf9] px-6 py-14 text-[#142657] sm:py-20">
       <div className="mx-auto max-w-3xl">
-        <Link href="/" className="text-caption text-fg-muted hover:text-fg">
+        <Link href="/" className="text-base font-medium text-[#397077] hover:text-[#0b7374]">
           ← Kembali ke Investor Relations
         </Link>
 
         <div className="mt-8">
-          <p className="text-caption text-fg-subtle font-medium tracking-[0.16em] uppercase">
+          <p className="text-sm font-bold tracking-[0.16em] text-[#0b7374] uppercase">
             Investor Relations
           </p>
-          <h1 className="font-display text-display-lg text-fg mt-3">Hubungi Tim Kami</h1>
-          <p className="text-body-lg text-fg-muted mt-4 max-w-2xl leading-8">
+          <h1 className="font-display text-display-lg mt-3 text-[#142657]">Hubungi Tim Kami</h1>
+          <p className="mt-5 max-w-2xl text-lg leading-8 text-[#46556f] sm:text-xl sm:leading-9">
             Sampaikan minat investasi, pertanyaan perusahaan, atau permintaan informasi. Permintaan
             akan masuk ke inbox Investor Relations untuk ditindaklanjuti oleh tim.
           </p>
         </div>
 
         {params.sent === '1' ? (
-          <div className="border-border bg-surface mt-8 rounded-2xl border p-6">
-            <h2 className="font-display text-heading-md text-fg">Permintaan berhasil dikirim</h2>
-            <p className="text-body-sm text-fg-muted mt-2 leading-6">
+          <div className="mt-9 rounded-2xl border border-[#cfe0df] bg-white p-7 shadow-sm sm:p-8">
+            <h2 className="font-display text-2xl font-semibold text-[#142657]">
+              Permintaan berhasil dikirim
+            </h2>
+            <p className="mt-3 text-base leading-7 text-[#46556f] sm:text-lg sm:leading-8">
               Tim Investor Relations akan meninjau permintaan Anda dan melakukan tindak lanjut
               melalui informasi kontak yang diberikan.
             </p>
             <Link
               href="/"
-              className="text-primary mt-5 inline-flex text-sm font-semibold hover:underline"
+              className="mt-6 inline-flex text-base font-semibold text-[#0b7374] hover:underline"
             >
               Kembali ke portal
             </Link>
@@ -44,12 +46,12 @@ export default async function ContactPage({
         ) : (
           <form
             action={submitPortalInquiry}
-            className="border-border bg-surface mt-8 space-y-6 rounded-2xl border p-6 sm:p-8"
+            className="mt-9 space-y-7 rounded-2xl border border-[#cfe0df] bg-white p-6 shadow-sm sm:p-9"
           >
             {params.error === 'invalid' ? (
               <div
                 role="alert"
-                className="border-border bg-background text-fg-muted rounded-xl border p-4 text-sm"
+                className="rounded-xl border border-[#e3b7ae] bg-[#fff4f1] p-4 text-base text-[#8b3c2f]"
               >
                 Data belum lengkap atau formatnya tidak valid. Periksa kembali formulir.
               </div>
@@ -57,7 +59,7 @@ export default async function ContactPage({
 
             <div className="grid gap-6 sm:grid-cols-2">
               <div>
-                <label htmlFor="name" className="text-body-sm text-fg font-medium">
+                <label htmlFor="name" className="text-base font-semibold text-[#142657]">
                   Nama lengkap
                 </label>
                 <input
@@ -65,11 +67,11 @@ export default async function ContactPage({
                   name="name"
                   required
                   maxLength={200}
-                  className="border-border bg-background text-fg focus:border-primary mt-2 h-11 w-full rounded-xl border px-3 text-sm outline-none"
+                  className="mt-2 h-12 w-full rounded-xl border border-[#799fa2] bg-white px-4 text-base text-[#142657] outline-none focus:border-[#0b7374] focus:ring-2 focus:ring-[#0b7374]/20"
                 />
               </div>
               <div>
-                <label htmlFor="email" className="text-body-sm text-fg font-medium">
+                <label htmlFor="email" className="text-base font-semibold text-[#142657]">
                   Email
                 </label>
                 <input
@@ -78,35 +80,35 @@ export default async function ContactPage({
                   type="email"
                   required
                   maxLength={320}
-                  className="border-border bg-background text-fg focus:border-primary mt-2 h-11 w-full rounded-xl border px-3 text-sm outline-none"
+                  className="mt-2 h-12 w-full rounded-xl border border-[#799fa2] bg-white px-4 text-base text-[#142657] outline-none focus:border-[#0b7374] focus:ring-2 focus:ring-[#0b7374]/20"
                 />
               </div>
               <div>
-                <label htmlFor="phone" className="text-body-sm text-fg font-medium">
+                <label htmlFor="phone" className="text-base font-semibold text-[#142657]">
                   Nomor telepon
                 </label>
                 <input
                   id="phone"
                   name="phone"
                   maxLength={50}
-                  className="border-border bg-background text-fg focus:border-primary mt-2 h-11 w-full rounded-xl border px-3 text-sm outline-none"
+                  className="mt-2 h-12 w-full rounded-xl border border-[#799fa2] bg-white px-4 text-base text-[#142657] outline-none focus:border-[#0b7374] focus:ring-2 focus:ring-[#0b7374]/20"
                 />
               </div>
               <div>
-                <label htmlFor="organization" className="text-body-sm text-fg font-medium">
+                <label htmlFor="organization" className="text-base font-semibold text-[#142657]">
                   Perusahaan / organisasi
                 </label>
                 <input
                   id="organization"
                   name="organization"
                   maxLength={200}
-                  className="border-border bg-background text-fg focus:border-primary mt-2 h-11 w-full rounded-xl border px-3 text-sm outline-none"
+                  className="mt-2 h-12 w-full rounded-xl border border-[#799fa2] bg-white px-4 text-base text-[#142657] outline-none focus:border-[#0b7374] focus:ring-2 focus:ring-[#0b7374]/20"
                 />
               </div>
             </div>
 
             <div>
-              <label htmlFor="message" className="text-body-sm text-fg font-medium">
+              <label htmlFor="message" className="text-base font-semibold text-[#142657]">
                 Pesan
               </label>
               <textarea
@@ -115,17 +117,17 @@ export default async function ContactPage({
                 required
                 maxLength={5000}
                 rows={7}
-                className="border-border bg-background text-fg focus:border-primary mt-2 w-full rounded-xl border px-3 py-3 text-sm leading-6 outline-none"
+                className="mt-2 w-full rounded-xl border border-[#799fa2] bg-white px-4 py-3 text-base leading-7 text-[#142657] outline-none focus:border-[#0b7374] focus:ring-2 focus:ring-[#0b7374]/20"
               />
             </div>
 
             <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-caption text-fg-subtle">
+              <p className="text-sm leading-6 text-[#617087] sm:text-base">
                 Data digunakan untuk menindaklanjuti permintaan Anda.
               </p>
               <button
                 type="submit"
-                className="bg-primary text-primary-foreground inline-flex min-h-11 items-center justify-center rounded-xl px-5 text-sm font-semibold hover:opacity-90"
+                className="inline-flex min-h-12 items-center justify-center rounded-xl bg-[#0b7374] px-6 text-base font-semibold text-white transition-colors hover:bg-[#085e60]"
               >
                 Kirim Permintaan
               </button>
