@@ -1,46 +1,56 @@
 /* Public portal visual corrections scoped to the public header + hero. */
 header:has(a[href="/masuk"]) > div {
-  min-height: 72px !important;
-  height: 72px !important;
+  min-height: 76px !important;
+  height: 76px !important;
 }
 
 header:has(a[href="/masuk"]) a[href="/"] {
   display: flex !important;
   align-items: center !important;
-  min-width: 170px;
+  min-width: 188px;
   overflow: visible !important;
 }
 
 header:has(a[href="/masuk"]) a[href="/"] img[src*="nuzultrip-logo-portal"] {
   display: block !important;
-  width: 162px !important;
-  height: 48px !important;
-  max-height: 48px !important;
+  width: 178px !important;
+  height: 52px !important;
+  max-height: 52px !important;
   object-fit: contain !important;
   object-position: left center !important;
   overflow: visible !important;
 }
 
 header:has(a[href="/masuk"]) nav {
-  font-size: 0.82rem !important;
-  gap: 26px !important;
+  font-size: 0.9rem !important;
+  gap: 28px !important;
 }
 
 header:has(a[href="/masuk"]) a[href="/masuk"] {
-  font-size: 0.8rem !important;
-  padding: 9px 18px !important;
+  font-size: 0.9rem !important;
+  padding: 10px 20px !important;
 }
 
 header:has(a[href="/masuk"]) + main > section:first-child {
-  padding-top: 70px !important;
-  padding-bottom: 58px !important;
+  padding-top: 62px !important;
+  padding-bottom: 62px !important;
+}
+
+header:has(a[href="/masuk"]) + main > section:first-child > div:nth-child(2) > div:first-child {
+  transform: translateY(-14px);
+}
+
+header:has(a[href="/masuk"]) + main > section:first-child .eyebrow,
+header:has(a[href="/masuk"]) + main > section:first-child [class*="eyebrow"] {
+  font-size: 0.78rem !important;
+  letter-spacing: 0.18em !important;
 }
 
 header:has(a[href="/masuk"]) + main > section:first-child h1 {
   max-width: none !important;
-  font-size: clamp(3.25rem, 4.6vw, 4.65rem) !important;
-  line-height: 1.02 !important;
-  letter-spacing: -0.035em !important;
+  font-size: clamp(4rem, 5.6vw, 5.6rem) !important;
+  line-height: 0.98 !important;
+  letter-spacing: -0.04em !important;
 }
 
 header:has(a[href="/masuk"]) + main > section:first-child h1 > span {
@@ -49,42 +59,72 @@ header:has(a[href="/masuk"]) + main > section:first-child h1 > span {
 }
 
 header:has(a[href="/masuk"]) + main > section:first-child h1 + p {
-  max-width: 38rem !important;
-  font-size: 0.96rem !important;
-  line-height: 1.75 !important;
+  max-width: 42rem !important;
+  font-size: 1.12rem !important;
+  line-height: 1.78 !important;
 }
 
 header:has(a[href="/masuk"]) + main > section:first-child h1 ~ div span {
-  font-size: 0.72rem !important;
+  font-size: 0.88rem !important;
+}
+
+header:has(a[href="/masuk"]) + main > section:first-child h1 ~ div a {
+  font-size: 0.92rem !important;
+  min-height: 44px !important;
+  padding-inline: 20px !important;
 }
 
 header:has(a[href="/masuk"]) + main > section:first-child h1 ~ p:last-of-type {
-  font-size: 0.72rem !important;
+  font-size: 0.86rem !important;
+  line-height: 1.55 !important;
+}
+
+header:has(a[href="/masuk"]) + main > section:first-child h1 ~ p:last-of-type svg {
+  width: 16px !important;
+  height: 16px !important;
 }
 
 header:has(a[href="/masuk"]) + main > section:first-child + div b {
-  font-size: 0.82rem !important;
+  font-size: 0.94rem !important;
 }
 
 header:has(a[href="/masuk"]) + main > section:first-child + div small {
-  font-size: 0.7rem !important;
-  line-height: 1.45 !important;
+  font-size: 0.82rem !important;
+  line-height: 1.5 !important;
+}
+
+@media (max-width: 1100px) {
+  header:has(a[href="/masuk"]) + main > section:first-child h1 {
+    font-size: clamp(3.5rem, 6vw, 4.8rem) !important;
+  }
+
+  header:has(a[href="/masuk"]) + main > section:first-child h1 + p {
+    font-size: 1rem !important;
+  }
 }
 
 @media (max-width: 900px) {
   header:has(a[href="/masuk"]) > div {
-    min-height: 64px !important;
-    height: 64px !important;
+    min-height: 68px !important;
+    height: 68px !important;
   }
 
   header:has(a[href="/masuk"]) a[href="/"] img[src*="nuzultrip-logo-portal"] {
-    width: 142px !important;
-    height: 44px !important;
-    max-height: 44px !important;
+    width: 148px !important;
+    height: 46px !important;
+    max-height: 46px !important;
+  }
+
+  header:has(a[href="/masuk"]) + main > section:first-child > div:nth-child(2) > div:first-child {
+    transform: none;
   }
 
   header:has(a[href="/masuk"]) + main > section:first-child h1 {
-    font-size: clamp(2.7rem, 9vw, 3.7rem) !important;
+    font-size: clamp(2.9rem, 9.5vw, 4rem) !important;
+  }
+
+  header:has(a[href="/masuk"]) + main > section:first-child h1 + p {
+    font-size: 0.98rem !important;
   }
 }
 
@@ -94,9 +134,9 @@ header:has(a[href="/masuk"]) + main > section:first-child + div small {
   }
 
   header:has(a[href="/masuk"]) a[href="/"] img[src*="nuzultrip-logo-portal"] {
-    width: 126px !important;
-    height: 40px !important;
-    max-height: 40px !important;
+    width: 132px !important;
+    height: 42px !important;
+    max-height: 42px !important;
   }
 
   header:has(a[href="/masuk"]) + main > section:first-child h1 > span {
@@ -104,6 +144,11 @@ header:has(a[href="/masuk"]) + main > section:first-child + div small {
   }
 
   header:has(a[href="/masuk"]) + main > section:first-child h1 + p {
-    font-size: 0.9rem !important;
+    font-size: 0.94rem !important;
+  }
+
+  header:has(a[href="/masuk"]) + main > section:first-child h1 ~ div span,
+  header:has(a[href="/masuk"]) + main > section:first-child h1 ~ p:last-of-type {
+    font-size: 0.78rem !important;
   }
 }
