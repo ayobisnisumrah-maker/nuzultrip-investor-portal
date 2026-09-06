@@ -76,12 +76,17 @@ async function createChatFixture(): Promise<ChatFixture> {
     },
     is_system: false,
   })
-  if (messageError) throw new Error(`Failed to create initial chat message: ${messageError.message}`)
+  if (messageError) {
+    throw new Error(`Failed to create initial chat message: ${messageError.message}`)
+  }
 
   return { admin, investor, threadId: thread.id as string }
 }
 
-async function openAdminChat(browser: Browser, fixture: ChatFixture): Promise<{ context: BrowserContext; page: Page }> {
+async function openAdminChat(
+  browser: Browser,
+  fixture: ChatFixture,
+): Promise<{ context: BrowserContext; page: Page }> {
   const context = await browser.newContext()
   const page = await context.newPage()
   await signIn(page, fixture.admin, '/admin')
@@ -91,7 +96,10 @@ async function openAdminChat(browser: Browser, fixture: ChatFixture): Promise<{ 
   return { context, page }
 }
 
-async function openInvestorChat(browser: Browser, fixture: ChatFixture): Promise<{ context: BrowserContext; page: Page }> {
+async function openInvestorChat(
+  browser: Browser,
+  fixture: ChatFixture,
+): Promise<{ context: BrowserContext; page: Page }> {
   const context = await browser.newContext()
   const page = await context.newPage()
   await signIn(page, fixture.investor, '/investor')
@@ -148,7 +156,7 @@ test.describe('admin ↔ investor messaging', () => {
     await expect(field).toHaveValue(/menindaklanjuti percakapan sebelumnya/i)
 
     await field.fill(`${await field.inputValue()} Terima kasih 🙏`)
-    await admin.page.getByRole('button', { name: 'Kirim' }).click()
+    await admin.page.getByRole('button', { name: 'Kirim', exact: true }).click()
     await expect(admin.page.getByText(/Terima kasih 🙏/)).toBeVisible()
 
     await admin.context.close()
@@ -166,6 +174,24 @@ test.describe('admin ↔ investor messaging', () => {
     await investor.context.close()
   })
 
+  test('closed thread becomes read-only in the investor UI', async ({ browser }) => {
+    const fixture = await createChatFixture()
+    const supabase = serviceClient()
+    const closedAt = new Date().toISOString()
+    const { error } = await supabase
+      .from('message_threads')
+      .update({ is_closed: true, closed_at: closedAt, closed_by: fixture.admin.userId })
+      .eq('id', fixture.threadId)
+    if (error) throw new Error(`Failed to close chat thread: ${error.message}`)
+
+    const investor = await openInvestorChat(browser, fixture)
+    await expect(investor.page.getByText('Percakapan ditutup', { exact: true })).toBeVisible()
+    await expect(investor.page.getByPlaceholder('Tulis pesan…')).toHaveCount(0)
+    await expect(investor.page.getByRole('button', { name: 'Kirim', exact: true })).toHaveCount(0)
+
+    await investor.context.close()
+  })
+
   test('composer remains usable on a narrow mobile viewport', async ({ browser }) => {
     const fixture = await createChatFixture()
     const context = await browser.newContext({ viewport: { width: 390, height: 844 } })
@@ -177,11 +203,11 @@ test.describe('admin ↔ investor messaging', () => {
 
     const field = await composer(page)
     await expect(field).toBeInViewport()
-    await expect(page.getByRole('button', { name: 'Kirim' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Kirim', exact: true })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Pilih emoji' })).toBeVisible()
 
     await field.fill('Pesan dari mobile ✅')
-    await page.getByRole('button', { name: 'Kirim' }).click()
+    await page.getByRole('button', { name: 'Kirim', exact: true }).click()
     await expect(page.getByText('Pesan dari mobile ✅')).toBeVisible()
 
     await context.close()
