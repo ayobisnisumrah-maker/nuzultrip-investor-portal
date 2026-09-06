@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 
-import { PublicPortal } from '@/features/portal/public-portal'
+import { PublicPortalReference } from '@/features/portal/public-portal-reference'
 import {
   getPublishedHomePage,
   getPublishedNavigation,
@@ -79,7 +79,7 @@ export default async function Home() {
   }
 
   return (
-    <PublicPortal
+    <PublicPortalReference
       page={{
         title: 'Nuzultrip',
         seo: portal.page.seo,
