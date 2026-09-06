@@ -9,6 +9,7 @@
   --surface: #fff;
   --tint: #fafafd;
   --ink: #14184a;
+  --inkHover: #0d1138;
   --inkSoft: #2b3164;
   --muted: #5e6282;
   --faint: #676a87; /* dari #8a8ca8 (3.28:1) -> 5.27:1 */
@@ -22,7 +23,10 @@
   --coralText: #b8452f;
   --tealText: #0b7374;
   --amber: #f1a501;
+  --amberText: #24200f;
   --teal: #0e9c9c;
+  --buttonBorder: #d7d5e6;
+  --focusRing: #0b7374;
   --maxw: 1160px;
   background: var(--bg);
   color: var(--muted);
@@ -43,6 +47,14 @@
 .page a {
   color: inherit;
   text-decoration: none;
+}
+
+.page a:focus-visible,
+.page button:focus-visible,
+.page input:focus-visible,
+.page textarea:focus-visible {
+  outline: 3px solid var(--focusRing);
+  outline-offset: 2px;
 }
 
 .page h1,
@@ -135,9 +147,15 @@
   display: flex;
   align-items: center;
   gap: 22px;
-  font-size: var(--fs4);
+  font-size: var(--fs3);
   font-weight: 500;
   color: var(--inkSoft);
+}
+
+.navLinks a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
 }
 
 .navLinks a:hover {
@@ -145,13 +163,21 @@
 }
 
 .navCta {
-  border-radius: 7px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  border-radius: 8px;
   background: var(--ink);
   color: #fff !important;
-  min-height: 44px;
-  padding: 10px 22px;
-  font-size: var(--fs4);
+  padding: 10px 20px;
+  font-size: var(--fs2);
   font-weight: 600;
+  transition: background-color 180ms ease;
+}
+
+.navCta:hover {
+  background: var(--inkHover);
 }
 
 .hero {
@@ -254,23 +280,35 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 36px;
-  padding: 0 15px;
-  border-radius: 7px;
-  font-size: var(--fs4);
+  min-height: 44px;
+  font-size: var(--fs2);
   font-weight: 600;
+  border-radius: 9px;
 }
 
 .btnPrimary {
+  border: 0;
   background: var(--amber);
-  color: #29220b !important;
-  box-shadow: 0 10px 22px -14px rgba(241, 165, 1, 0.9);
+  color: var(--amberText) !important;
+  padding: 14px 26px;
+  box-shadow: 0 14px 26px -16px rgba(241, 165, 1, 0.9);
+  transition: transform 180ms ease;
+}
+
+.btnPrimary:hover {
+  transform: translateY(-2px);
 }
 
 .btnOutline {
-  border: 1px solid #d9d8e4;
+  border: 1px solid var(--buttonBorder);
   background: #fff;
   color: var(--ink) !important;
+  padding: 13px 24px;
+  transition: border-color 180ms ease;
+}
+
+.btnOutline:hover {
+  border-color: var(--ink);
 }
 
 .heroFoot {
@@ -458,15 +496,18 @@
 }
 
 .offerTable {
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
   border: 1px solid var(--line);
   border-radius: 10px;
   background: #fff;
+  overscroll-behavior-inline: contain;
 }
 
 .offerRow {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(15rem, 1fr) minmax(15rem, 1fr);
+  min-width: 30rem;
   border-bottom: 1px solid var(--line);
   font-size: var(--fs4);
 }
@@ -1058,6 +1099,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  min-height: 44px;
   border: 1px solid var(--line);
   border-radius: 9px;
   background: #fff;
@@ -1143,11 +1185,10 @@
   color: var(--ink);
   font: inherit;
   font-size: var(--fs3);
-  outline: none;
 }
 
 .contactForm input {
-  height: 34px;
+  min-height: 44px;
 }
 
 .contactForm textarea {
@@ -1161,13 +1202,14 @@
 
 .contactForm button {
   grid-column: 1/-1;
+  min-height: 44px;
   border: 0;
-  border-radius: 7px;
+  border-radius: 9px;
   background: var(--coralText);
   color: #fff;
-  padding: 10px 14px;
+  padding: 13px 24px;
   font: inherit;
-  font-size: var(--fs4);
+  font-size: var(--fs2);
   font-weight: 600;
   cursor: pointer;
 }
@@ -1217,6 +1259,12 @@
   line-height: 1.65;
 }
 
+.footerGrid a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+
 .footerGrid a:hover {
   color: #77d9d4;
 }
@@ -1240,16 +1288,10 @@
   .navLinks {
     display: none;
   }
-  .heroGrid,
   .growthGrid,
   .offerGrid,
-  .vm,
-  .contactPanel {
+  .vm {
     grid-template-columns: 1fr;
-  }
-  .heroArt {
-    margin-inline: auto;
-    max-width: 520px;
   }
   .pillarGrid,
   .featureGrid {
@@ -1259,17 +1301,32 @@
   .pillar {
     border-right: 0;
   }
-  .ecosystemGrid {
+  .ecosystemGrid,
+  .govGrid,
+  .docsGrid,
+  .footerGrid {
     grid-template-columns: repeat(2, 1fr);
   }
-  .footerGrid {
-    grid-template-columns: 1.4fr 1fr 1fr;
+}
+
+@media (max-width: 900px) {
+  .heroGrid,
+  .contactPanel {
+    grid-template-columns: 1fr;
+  }
+  .heroArt {
+    margin-inline: auto;
+    max-width: 500px;
   }
   .contactPanel {
     padding: 30px;
   }
-  .floatCard {
-    display: none;
+  .contactForm {
+    grid-template-columns: 1fr;
+  }
+  .contactForm label:has(textarea),
+  .contactForm button {
+    grid-column: auto;
   }
 }
 
@@ -1294,7 +1351,7 @@
     width: 132px !important;
   }
   .navCta {
-    padding: 6px 12px;
+    padding: 10px 14px;
   }
   .hero {
     padding: 38px 0;
@@ -1335,17 +1392,24 @@
   .contactPanel {
     padding: 24px 20px;
   }
-  .contactForm {
-    grid-template-columns: 1fr;
-  }
-  .contactForm label:has(textarea),
-  .contactForm button {
-    grid-column: auto;
-  }
   .legal {
     flex-direction: column;
   }
   .heroTags span {
     font-size: var(--fs2);
+  }
+  .floatCard {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btnPrimary,
+  .btnOutline,
+  .navCta {
+    transition: none;
+  }
+  .btnPrimary:hover {
+    transform: none;
   }
 }
