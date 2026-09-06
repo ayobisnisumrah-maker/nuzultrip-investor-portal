@@ -139,42 +139,70 @@ header:has(nav[aria-label='Navigasi utama']) + main > section:not(:first-child) 
   min-height: 48px !important;
 }
 
-/* A single, stable footer palette in light and dark system modes. */
+/* Light footer aligned with the supplied portal reference. */
 footer:has(img[src*='nuzultrip-logo-portal']) {
-  border-top-color: #263c70 !important;
-  background: #142657 !important;
-  color: #dce7ee !important;
-  padding-block: 48px 28px !important;
-  color-scheme: dark;
+  border-top: 1px solid #e7e6f0 !important;
+  background: #fbfbfd !important;
+  color: #635f7c !important;
+  padding-block: 68px 30px !important;
+  color-scheme: light;
+}
+
+footer:has(img[src*='nuzultrip-logo-portal']) > div {
+  max-width: 1240px !important;
 }
 
 footer:has(img[src*='nuzultrip-logo-portal']) img {
-  width: 162px !important;
+  width: 154px !important;
   height: auto !important;
-  border-radius: 10px;
-  background: #ffffff;
-  padding: 8px 12px;
+  max-height: none !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  padding: 0 !important;
 }
 
 footer:has(img[src*='nuzultrip-logo-portal']) h4 {
-  color: #ffffff !important;
-  font-size: 1rem !important;
+  margin-bottom: 14px !important;
+  color: #14184a !important;
+  font-size: 1.02rem !important;
+  font-weight: 700 !important;
 }
 
 footer:has(img[src*='nuzultrip-logo-portal']) p,
 footer:has(img[src*='nuzultrip-logo-portal']) a,
 footer:has(img[src*='nuzultrip-logo-portal']) span {
-  color: #dce7ee !important;
-  font-size: 0.9375rem !important;
-  line-height: 1.65 !important;
+  color: #69657f !important;
+  font-size: 0.95rem !important;
+  line-height: 1.72 !important;
+}
+
+footer:has(img[src*='nuzultrip-logo-portal']) p {
+  max-width: 290px !important;
+}
+
+footer:has(img[src*='nuzultrip-logo-portal']) a {
+  transition: color 160ms ease;
 }
 
 footer:has(img[src*='nuzultrip-logo-portal']) a:hover {
-  color: #77d9d4 !important;
+  color: #0e8588 !important;
+}
+
+footer:has(img[src*='nuzultrip-logo-portal']) [class*='footerGrid'] {
+  align-items: start !important;
+  gap: clamp(42px, 6vw, 84px) !important;
 }
 
 footer:has(img[src*='nuzultrip-logo-portal']) [class*='legal'] {
-  border-top-color: #334a7d !important;
+  margin-top: 54px !important;
+  padding-top: 24px !important;
+  border-top: 1px solid #e7e6f0 !important;
+  color: #8985a0 !important;
+}
+
+footer:has(img[src*='nuzultrip-logo-portal']) [class*='legal'] span {
+  color: #8985a0 !important;
+  font-size: 0.86rem !important;
 }
 
 @media (max-width: 1100px) {
@@ -214,6 +242,10 @@ footer:has(img[src*='nuzultrip-logo-portal']) [class*='legal'] {
   header:has(nav[aria-label='Navigasi utama']) + main > section:not(:first-child) h2 {
     font-size: clamp(2rem, 6vw, 2.75rem) !important;
   }
+
+  footer:has(img[src*='nuzultrip-logo-portal']) {
+    padding-block: 54px 28px !important;
+  }
 }
 
 @media (max-width: 640px) {
@@ -235,6 +267,10 @@ footer:has(img[src*='nuzultrip-logo-portal']) [class*='legal'] {
   }
 
   footer:has(img[src*='nuzultrip-logo-portal']) {
-    padding-block: 40px 24px !important;
+    padding-block: 44px 24px !important;
+  }
+
+  footer:has(img[src*='nuzultrip-logo-portal']) [class*='legal'] {
+    margin-top: 38px !important;
   }
 }
