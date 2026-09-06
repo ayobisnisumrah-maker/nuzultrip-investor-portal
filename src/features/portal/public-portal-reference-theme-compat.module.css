@@ -1,0 +1,165 @@
+/* Temporary compatibility fallback for PR #19 markup before semantic hooks land.
+   These selectors mirror the current DOM only; semantic selectors remain canonical. */
+.theme :global(header a[href='/masuk']) {
+  border-color: var(--nuzul-navy) !important;
+  background: var(--nuzul-navy) !important;
+  color: #fff !important;
+  border-radius: 8px !important;
+  padding-inline: 1.2rem !important;
+}
+
+.theme :global(main > section:first-child) {
+  position: relative;
+  min-height: 650px;
+  overflow: hidden;
+  border-bottom: 0 !important;
+  background:
+    radial-gradient(circle at 88% 20%, rgba(255, 241, 218, 0.96), transparent 36%),
+    radial-gradient(circle at 76% 78%, rgba(14, 156, 156, 0.08), transparent 24%),
+    linear-gradient(180deg, #ffffff 0%, #fffdf8 100%);
+}
+
+.theme :global(main > section:first-child > div:last-child) {
+  max-width: 1180px !important;
+  min-height: 650px !important;
+  padding-top: 72px !important;
+  padding-bottom: 84px !important;
+  padding-right: min(48vw, 570px) !important;
+}
+
+.theme :global(main > section:first-child > div:last-child > div) {
+  max-width: 620px !important;
+  position: relative;
+  z-index: 2;
+}
+
+.theme :global(main > section:first-child p:first-child) {
+  color: #df6951 !important;
+  letter-spacing: 0.2em !important;
+}
+
+.theme :global(main > section:first-child h1) {
+  color: #14184a !important;
+  font-family: 'Volkhov', 'Iowan Old Style', Georgia, serif;
+  font-size: clamp(2.6rem, 4.8vw, 4.25rem) !important;
+  line-height: 1.06 !important;
+  letter-spacing: -0.03em !important;
+  font-weight: 700 !important;
+}
+
+.theme :global(main > section:first-child h1::after) {
+  content: '';
+  display: block;
+  width: 138px;
+  height: 6px;
+  margin-top: 18px;
+  border-radius: 999px;
+  background: #df6951;
+  transform: rotate(-2deg);
+}
+
+.theme :global(main > section:first-child h1 + p) {
+  color: #5e6282 !important;
+  max-width: 590px !important;
+  font-size: 0.98rem !important;
+  line-height: 1.85 !important;
+}
+
+.theme :global(main > section:first-child a) {
+  border-radius: 9px !important;
+}
+
+.theme :global(main > section:first-child a:first-child) {
+  background: #f1a501 !important;
+  color: #24200f !important;
+  box-shadow: 0 14px 26px -16px rgba(241, 165, 1, 0.9);
+}
+
+.theme :global(main > section:first-child a:last-child) {
+  border-color: #d7d5e6 !important;
+  color: #14184a !important;
+  background: #fff !important;
+}
+
+.theme :global(main > section:first-child::after) {
+  content: '';
+  position: absolute;
+  z-index: 1;
+  right: max(3vw, calc((100vw - 1180px) / 2));
+  top: 50%;
+  width: min(43vw, 540px);
+  aspect-ratio: 1.15 / 1;
+  transform: translateY(-50%);
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  filter: drop-shadow(0 28px 46px rgba(20, 24, 74, 0.16));
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 560 470'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop stop-color='%231B2C6B'/%3E%3Cstop offset='1' stop-color='%230E9C9C'/%3E%3C/linearGradient%3E%3ClinearGradient id='d' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop stop-color='%23FDFBF6'/%3E%3Cstop offset='1' stop-color='%23E8DFC9'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='300' cy='224' r='184' fill='url(%23g)'/%3E%3Ccircle cx='300' cy='224' r='184' fill='none' stroke='white' stroke-opacity='.18' stroke-width='2'/%3E%3Ccircle cx='406' cy='118' r='21' fill='%23FFD98A'/%3E%3Ccircle cx='414' cy='111' r='20' fill='%231B2C6B'/%3E%3Cpath d='M232 248c0-44 30-70 68-92 38 22 68 48 68 92z' fill='url(%23d)'/%3E%3Crect x='222' y='248' width='156' height='82' rx='10' fill='%23FDFBF6'/%3E%3Crect x='196' y='194' width='20' height='136' rx='7' fill='url(%23d)'/%3E%3Cpath d='M206 166c9 10 13 17 13 23a13 13 0 01-26 0c0-6 4-13 13-23z' fill='%23F2DFB6'/%3E%3Crect x='384' y='194' width='20' height='136' rx='7' fill='url(%23d)'/%3E%3Cpath d='M394 166c9 10 13 17 13 23a13 13 0 01-26 0c0-6 4-13 13-23z' fill='%23F2DFB6'/%3E%3Cg fill='%231B2C6B' opacity='.82'%3E%3Cpath d='M248 330v-36a13 13 0 0126 0v36z'/%3E%3Cpath d='M287 330v-44a13 13 0 0126 0v44z'/%3E%3Cpath d='M326 330v-36a13 13 0 0126 0v36z'/%3E%3C/g%3E%3Crect x='182' y='328' width='236' height='16' rx='8' fill='%23EFE4CB'/%3E%3Cpath d='M72 177c70-58 164-58 226-16' fill='none' stroke='%2325BDB6' stroke-width='3' stroke-linecap='round' stroke-dasharray='7 9'/%3E%3Cpath d='M300 157l-24 8 9 5-2 11 8-9 14 3z' fill='%2325BDB6'/%3E%3Cg transform='translate(145 342)'%3E%3Crect width='94' height='68' rx='14' fill='%23DF6951'/%3E%3Crect x='25' width='12' height='68' fill='white' opacity='.32'/%3E%3Crect x='58' width='12' height='68' fill='white' opacity='.32'/%3E%3Ccircle cx='20' cy='76' r='7' fill='%231B2C6B'/%3E%3Ccircle cx='74' cy='76' r='7' fill='%231B2C6B'/%3E%3C/g%3E%3Cg transform='translate(390 348)'%3E%3Crect width='72' height='54' rx='9' fill='%2325BDB6'/%3E%3Cpath d='M15 17h42M15 28h30M15 39h36' stroke='white' stroke-width='5' stroke-linecap='round' opacity='.8'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+.theme :global(main > section:not(:first-child)) {
+  border-color: transparent !important;
+  padding-top: 84px !important;
+  padding-bottom: 84px !important;
+}
+
+.theme :global(main > section:nth-of-type(even)) {
+  background: #fafafd;
+}
+
+.theme :global(main > section:nth-of-type(odd):not(:first-child)) {
+  background: #fff;
+}
+
+.theme :global(main > section:not(:first-child) > div) {
+  max-width: 1180px !important;
+}
+
+.theme :global(main section h2) {
+  color: #14184a !important;
+  font-family: 'Volkhov', 'Iowan Old Style', Georgia, serif;
+}
+
+.theme :global(main section p[class*='uppercase']) {
+  color: #df6951 !important;
+}
+
+.theme :global(footer p:first-child) {
+  color: #14184a !important;
+}
+
+@media (max-width: 1023px) {
+  .theme :global(main > section:first-child > div:last-child) {
+    padding-right: 44vw !important;
+  }
+  .theme :global(main > section:first-child::after) {
+    right: -4vw;
+    width: 46vw;
+  }
+}
+
+@media (max-width: 767px) {
+  .theme :global(main > section:first-child) {
+    min-height: auto;
+  }
+  .theme :global(main > section:first-child > div:last-child) {
+    min-height: auto !important;
+    padding-top: 64px !important;
+    padding-bottom: 350px !important;
+    padding-right: 24px !important;
+  }
+  .theme :global(main > section:first-child::after) {
+    top: auto;
+    bottom: 12px;
+    right: 50%;
+    width: min(92vw, 430px);
+    transform: translateX(50%);
+  }
+  .theme :global(main > section:first-child h1) {
+    font-size: clamp(2.35rem, 12vw, 3.8rem) !important;
+  }
+  .theme :global(main > section:not(:first-child)) {
+    padding-top: 64px !important;
+    padding-bottom: 64px !important;
+  }
+}
