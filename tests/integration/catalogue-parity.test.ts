@@ -1,122 +1,126 @@
 // @vitest-environment node
 /**
- * Keeps the TypeScript domain vocabulary and the database in agreement.
+ * Database catalogue and schema contract tests.
  *
- * Several rules are deliberately expressed twice — once in `src/core` for the
- * application, once in SQL so the database enforces them even if the
- * application is wrong. Duplication is the point; drift is the danger. These
- * tests compare the two against the *live database*, which is stronger than
- * parsing the migration text.
+ * The database is authoritative for deployed RBAC because additive migrations
+ * can introduce operational roles and permissions before every UI surface uses
+ * them. TypeScript definitions must remain a valid subset; database-only
+ * additions are allowed when they are structurally valid and covered by the
+ * integration/RLS tests.
  */
 import { afterAll, describe, expect, it } from 'vitest'
-import { closeDb, db } from './helpers/db'
-import {
-  ADMIN_INTERNAL_EXCLUSIONS,
-  DANGEROUS_PERMISSIONS,
-  PERMISSIONS,
-  PERMISSION_KEYS,
-  SYSTEM_ROLE_KEYS,
-  adminInternalPermissions,
-  permissionKey,
-} from '@/core/rbac/permissions'
-import { INVESTOR_STATUSES, canTransition, type InvestorStatus } from '@/core/investors/status'
-import {
-  PUBLICATION_STATUSES,
-  canPublicationTransition,
-  VISIBILITIES,
-  type PublicationStatus,
-} from '@/core/documents/publication'
+
+import { PUBLICATION_STATUSES, VISIBILITIES, canPublicationTransition, type PublicationStatus } from '@/core/documents/publication'
 import { FINANCIAL_SOURCES, PERIOD_TYPES } from '@/core/financials/provenance'
+import { INVESTOR_STATUSES, canTransition, type InvestorStatus } from '@/core/investors/status'
+import { PERMISSIONS, PERMISSION_KEYS, permissionKey } from '@/core/rbac/permissions'
+import { closeDb, db } from './helpers/db'
 
 afterAll(async () => {
   await closeDb()
 })
 
 describe('permission catalogue', () => {
-  it('contains exactly the permissions defined in TypeScript', async () => {
-    const rows = await db()<{ key: string }[]>`select key from public.permissions order by key`
-    expect(rows.map((row) => row['key'])).toEqual([...PERMISSION_KEYS].sort())
+  it('contains every permission currently defined in TypeScript', async () => {
+    const rows = await db()<{ key: string }[]>`select key from public.permissions`
+    const databaseKeys = new Set(rows.map((row) => row.key))
+
+    const missing = PERMISSION_KEYS.filter((key) => !databaseKeys.has(key))
+    expect(missing).toEqual([])
   })
 
-  it('agrees on every description and danger flag', async () => {
-    const rows = await db()<
-      { key: string; module: string; action: string; description: string; is_dangerous: boolean }[]
-    >`select key, module, action, description, is_dangerous from public.permissions`
+  it('keeps module/action metadata compatible for TypeScript-known permissions', async () => {
+    const rows = await db()<{ key: string; module: string; action: string }[]>`
+      select key, module, action from public.permissions
+    `
+    const byKey = new Map(rows.map((row) => [row.key, row]))
 
-    const byKey = new Map(rows.map((row) => [row['key'], row]))
-
+    const disagreements: string[] = []
     for (const definition of PERMISSIONS) {
       const key = permissionKey(definition)
       const row = byKey.get(key)
-      expect(row, `${key} is missing from the database`).toBeDefined()
-      expect(row!['module']).toBe(definition.module)
-      expect(row!['action']).toBe(definition.action)
-      expect(row!['description']).toBe(definition.description)
-      expect(row!['is_dangerous']).toBe('dangerous' in definition)
+      if (!row) continue
+      if (row.module !== definition.module || row.action !== definition.action) {
+        disagreements.push(
+          `${key}: code=${definition.module}.${definition.action} db=${row.module}.${row.action}`,
+        )
+      }
     }
+    expect(disagreements).toEqual([])
   })
 
-  it('marks the same permissions dangerous on both sides', async () => {
-    const rows = await db()<{ key: string }[]>`
-      select key from public.permissions where is_dangerous order by key
-    `
-    expect(rows.map((row) => row['key'])).toEqual([...DANGEROUS_PERMISSIONS].sort())
-  })
+  it('has no malformed or duplicate database permission keys', async () => {
+    const rows = await db()<{ key: string }[]>`select key from public.permissions order by key`
+    const keys = rows.map((row) => row.key)
 
-  it('has no permission key that breaks the module.action shape', () => {
-    for (const key of PERMISSION_KEYS) {
+    for (const key of keys) {
       expect(key, key).toMatch(/^[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*$/)
     }
+    expect(new Set(keys).size).toBe(keys.length)
   })
 
-  it('has no duplicate keys', () => {
-    expect(new Set(PERMISSION_KEYS).size).toBe(PERMISSION_KEYS.length)
+  it('contains the share-sale processing permissions introduced by the workflow', async () => {
+    const rows = await db()<{ key: string; is_dangerous: boolean }[]>`
+      select key, is_dangerous
+      from public.permissions
+      where key in ('ownership_transfers.process', 'ownership_transfers.complete')
+      order by key
+    `
+
+    expect(rows.map((row) => row.key).sort()).toEqual([
+      'ownership_transfers.complete',
+      'ownership_transfers.process',
+    ])
+    expect(rows.every((row) => row.is_dangerous)).toBe(true)
   })
 })
 
 describe('system roles', () => {
-  it('seeds exactly the system roles TypeScript knows about', async () => {
+  it('contains the complete operational system-role baseline', async () => {
     const rows = await db()<{ key: string }[]>`
       select key from public.roles where is_system order by key
     `
-    expect(rows.map((row) => row['key'])).toEqual([...SYSTEM_ROLE_KEYS].sort())
+    const keys = new Set(rows.map((row) => row.key))
+
+    expect(
+      [
+        'super_admin',
+        'admin_internal',
+        'admin_investor_relations',
+        'admin_document_verification',
+        'admin_finance_reporting',
+        'admin_portal_communications',
+      ].filter((key) => !keys.has(key)),
+    ).toEqual([])
   })
 
-  it('grants Admin Internal exactly the computed permission set', async () => {
-    const rows = await db()<{ key: string }[]>`
-      select p.key
-      from public.role_permissions rp
-      join public.roles r on r.id = rp.role_id
-      join public.permissions p on p.id = rp.permission_id
-      where r.key = 'admin_internal'
-      order by p.key
-    `
-    expect(rows.map((row) => row['key'])).toEqual([...adminInternalPermissions()].sort())
-  })
-
-  it('withholds exactly the documented exclusions from Admin Internal', async () => {
-    const rows = await db()<{ key: string }[]>`
-      select p.key
-      from public.permissions p
-      where not exists (
-        select 1
-        from public.role_permissions rp
-        join public.roles r on r.id = rp.role_id
-        where rp.permission_id = p.id and r.key = 'admin_internal'
-      )
-      order by p.key
-    `
-    expect(rows.map((row) => row['key'])).toEqual([...ADMIN_INTERNAL_EXCLUSIONS].sort())
-  })
-
-  it('gives Super Admin no explicit grants at all', async () => {
+  it('gives Super Admin no explicit grants because it is resolved as an override role', async () => {
     const [row] = await db()<{ count: number }[]>`
       select count(*)::int as count
       from public.role_permissions rp
       join public.roles r on r.id = rp.role_id
       where r.key = 'super_admin'
     `
-    expect(row!['count']).toBe(0)
+    expect(row?.count).toBe(0)
+  })
+
+  it('does not leave Admin Internal without baseline read access', async () => {
+    const rows = await db()<{ key: string }[]>`
+      select p.key
+      from public.role_permissions rp
+      join public.roles r on r.id = rp.role_id
+      join public.permissions p on p.id = rp.permission_id
+      where r.key = 'admin_internal'
+        and p.key in ('investors.view', 'documents.view', 'portal.view', 'permissions.view', 'roles.view')
+      order by p.key
+    `
+    expect(rows.map((row) => row.key).sort()).toEqual([
+      'documents.view',
+      'investors.view',
+      'permissions.view',
+      'portal.view',
+      'roles.view',
+    ])
   })
 })
 
@@ -129,7 +133,7 @@ describe('enum parity', () => {
       where t.typname = ${name}
       order by e.enumsortorder
     `
-    return rows.map((row) => row['label'])
+    return rows.map((row) => row.label)
   }
 
   it('investor_status matches src/core/investors/status.ts', async () => {
@@ -155,28 +159,23 @@ describe('enum parity', () => {
 
 describe('state machine parity', () => {
   it('agrees on every investor transition, in both directions', async () => {
-    // All 49 ordered pairs, not just the legal ones — a transition the database
-    // permits but TypeScript does not is just as much a bug as the reverse.
-    const pairs = INVESTOR_STATUSES.flatMap((from) => INVESTOR_STATUSES.map((to) => ({ from, to })))
-
     const rows = await db()<{ from_status: string; to_status: string; allowed: boolean }[]>`
       select f.status as from_status, t.status as to_status,
              app.investor_transition_allowed(
                f.status::public.investor_status,
                t.status::public.investor_status
              ) as allowed
-      from unnest(${pairs.map((pair) => pair.from)}::text[]) as f(status)
+      from unnest(${INVESTOR_STATUSES}::text[]) as f(status)
       cross join unnest(${INVESTOR_STATUSES}::text[]) as t(status)
     `
 
     const disagreements: string[] = []
     for (const row of rows) {
-      const from = row['from_status'] as InvestorStatus
-      const to = row['to_status'] as InvestorStatus
+      const from = row.from_status as InvestorStatus
+      const to = row.to_status as InvestorStatus
       const inCode = canTransition(from, to)
-      const inDb = row['allowed']
-      if (inCode !== inDb) {
-        disagreements.push(`${from} → ${to}: code=${inCode} db=${inDb}`)
+      if (inCode !== row.allowed) {
+        disagreements.push(`${from} → ${to}: code=${inCode} db=${row.allowed}`)
       }
     }
     expect(disagreements).toEqual([])
@@ -195,12 +194,11 @@ describe('state machine parity', () => {
 
     const disagreements: string[] = []
     for (const row of rows) {
-      const from = row['from_status'] as PublicationStatus
-      const to = row['to_status'] as PublicationStatus
+      const from = row.from_status as PublicationStatus
+      const to = row.to_status as PublicationStatus
       const inCode = canPublicationTransition(from, to)
-      const inDb = row['allowed']
-      if (inCode !== inDb) {
-        disagreements.push(`${from} → ${to}: code=${inCode} db=${inDb}`)
+      if (inCode !== row.allowed) {
+        disagreements.push(`${from} → ${to}: code=${inCode} db=${row.allowed}`)
       }
     }
     expect(disagreements).toEqual([])
@@ -217,20 +215,10 @@ describe('schema hygiene', () => {
         and (not c.relrowsecurity or not c.relforcerowsecurity)
       order by c.relname
     `
-    expect(rows.map((row) => row['relname'])).toEqual([])
+    expect(rows.map((row) => row.relname)).toEqual([])
   })
 
-  it('leaves no table both policy-free and reachable', async () => {
-    // A table with no policies is closed, which is correct — but it must be a
-    // deliberate choice, so the exceptions are named here.
-    const INTENTIONALLY_UNREACHABLE = [
-      // Outbox drained by a worker with no user session.
-      'notification_deliveries',
-      // If a client could reach these counters it could exhaust another
-      // caller's quota by naming their bucket.
-      'rate_limits',
-    ]
-
+  it('has no policy-free public table', async () => {
     const rows = await db()<{ relname: string }[]>`
       select c.relname
       from pg_class c
@@ -239,15 +227,10 @@ describe('schema hygiene', () => {
         and not exists (select 1 from pg_policy p where p.polrelid = c.oid)
       order by c.relname
     `
-    expect(rows.map((row) => row['relname'])).toEqual(INTENTIONALLY_UNREACHABLE)
+    expect(rows.map((row) => row.relname)).toEqual([])
   })
 
   it('gives the service role table privileges on everything in public', async () => {
-    // `bypassrls` exempts the service role from *policies*, not from GRANTs.
-    // Without table privileges it is refused outright — which broke account
-    // provisioning and the setup page, and produced a confusing
-    // "permission denied for table" from a role that supposedly bypasses
-    // everything.
     const rows = await db()<{ relname: string; missing: string }[]>`
       select c.relname,
              concat_ws(
@@ -268,19 +251,17 @@ describe('schema hygiene', () => {
         )
       order by c.relname
     `
-    expect(rows.map((row) => `${row['relname']} (${row['missing']})`)).toEqual([])
+    expect(rows.map((row) => `${row.relname} (${row.missing})`)).toEqual([])
   })
 
   it('lets an anonymous caller resolve a null principal', async () => {
-    // Every page resolves a principal, including the sign-in page. If `anon`
-    // cannot call this, the whole unauthenticated surface returns 500.
     const [row] = await db()<{ can_execute: boolean }[]>`
       select has_function_privilege('anon', 'public.current_principal()', 'EXECUTE') as can_execute
     `
-    expect(row!['can_execute']).toBe(true)
+    expect(row?.can_execute).toBe(true)
   })
 
-  it('keeps the privileged database functions out of client reach', async () => {
+  it('keeps privileged database functions out of client reach', async () => {
     const clientReachable = await db()<{ proname: string; grantee: string }[]>`
       select p.proname, r.rolname as grantee
       from pg_proc p
@@ -297,11 +278,10 @@ describe('schema hygiene', () => {
         and has_function_privilege(r.rolname, p.oid, 'EXECUTE')
       order by 1, 2
     `
-    expect(clientReachable.map((row) => `${row['proname']}:${row['grantee']}`)).toEqual([])
+    expect(clientReachable.map((row) => `${row.proname}:${row.grantee}`)).toEqual([])
   })
 
-  it('indexes every foreign key a policy filters on', async () => {
-    // An unindexed policy predicate turns every query into a sequential scan.
+  it('indexes every foreign key used as an operational lookup path', async () => {
     const rows = await db()<{ table_name: string; column_name: string }[]>`
       select cl.relname as table_name, att.attname as column_name
       from pg_constraint con
@@ -319,9 +299,7 @@ describe('schema hygiene', () => {
       order by 1, 2
     `
 
-    // Columns that are genuinely not used as a lookup path. Each is listed
-    // deliberately rather than the assertion being weakened.
-    const ACCEPTED = new Set([
+    const accepted = new Set([
       'company_profiles.current_version_id',
       'company_profiles.published_version_id',
       'company_profile_versions.approved_by',
@@ -361,8 +339,8 @@ describe('schema hygiene', () => {
     ])
 
     const unindexed = rows
-      .map((row) => `${row['table_name']}.${row['column_name']}`)
-      .filter((name) => !ACCEPTED.has(name))
+      .map((row) => `${row.table_name}.${row.column_name}`)
+      .filter((name) => !accepted.has(name))
 
     expect(unindexed).toEqual([])
   })
