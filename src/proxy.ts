@@ -41,6 +41,16 @@ function buildCsp(nonce: string, isDev: boolean, supabaseUrl: string): string {
 }
 
 export function proxy(request: NextRequest) {
+  if (
+    request.nextUrl.hostname.toLowerCase() === 'admin.nuzultrip.com' &&
+    request.nextUrl.pathname === '/'
+  ) {
+    const adminUrl = request.nextUrl.clone()
+    adminUrl.pathname = '/admin'
+
+    return NextResponse.redirect(adminUrl)
+  }
+
   const nonce = createNonce()
 
   const environment = getClientEnv()
