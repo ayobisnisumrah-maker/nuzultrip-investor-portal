@@ -1,6 +1,8 @@
 import Link from 'next/link'
 
+import { topics } from '@/core/realtime/events'
 import { ProfitDistributionManager } from '@/features/admin/profit-distribution-manager'
+import { RealtimeRefresher } from '@/features/realtime/realtime-refresher'
 import { adminWithPermission } from '@/server/auth/page-guards'
 import {
   listProfitDistributionAllocations,
@@ -53,6 +55,7 @@ export default async function ProfitDistributionsPage() {
 
   return (
     <div className="space-y-5">
+      <RealtimeRefresher topic={topics.admin()} kinds={['profit_distribution.changed']} />
       <div className="flex flex-wrap items-center justify-end gap-2">
         {visibleDistributions.slice(0, 5).map((distribution) => (
           <Link
