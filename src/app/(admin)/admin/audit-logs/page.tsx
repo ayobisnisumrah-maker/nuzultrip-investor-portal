@@ -1,4 +1,4 @@
-﻿import type { Metadata } from 'next'
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Activity, ChevronLeft, ChevronRight, Search } from 'lucide-react'
 
@@ -12,7 +12,7 @@ import { PageHeader, Stack } from '@/ui/layout'
 import { EmptyState } from '@/ui/states'
 
 export const metadata: Metadata = {
-  title: 'Audit Log',
+  title: 'Log Audit',
 }
 
 const PAGE_SIZE = 20
@@ -69,9 +69,9 @@ function labelActorType(value: string) {
     case 'investor':
       return 'Investor'
     case 'system':
-      return 'System'
+      return 'Sistem'
     case 'anonymous':
-      return 'Anonymous'
+      return 'Anonim'
     default:
       return value
   }
@@ -151,12 +151,12 @@ export default async function AdminAuditLogsPage({
     return (
       <Stack gap={6}>
         <PageHeader
-          eyebrow="Security"
-          title="Audit Log"
+          eyebrow="Keamanan"
+          title="Log Audit"
           description="Jejak aktivitas dan perubahan penting dalam sistem."
         />
 
-        <Alert tone="danger" title="Audit log tidak dapat dimuat">
+        <Alert tone="danger" title="Log audit tidak dapat dimuat">
           Sistem gagal mengambil log audit. Silakan coba lagi.
         </Alert>
       </Stack>
@@ -201,7 +201,7 @@ export default async function AdminAuditLogsPage({
     },
     {
       id: 'actor',
-      header: 'Actor',
+      header: 'Pelaku',
       primary: true,
       cell: (row) => (
         <div className="min-w-0">
@@ -214,7 +214,7 @@ export default async function AdminAuditLogsPage({
     },
     {
       id: 'action',
-      header: 'Action',
+      header: 'Tindakan',
       cell: (row) => (
         <code className="bg-surface-muted text-caption text-fg rounded px-1.5 py-1 font-mono">
           {row.action}
@@ -223,7 +223,7 @@ export default async function AdminAuditLogsPage({
     },
     {
       id: 'entity',
-      header: 'Entity',
+      header: 'Entitas',
       cell: (row) => (
         <div className="min-w-0">
           <p className="text-body-sm text-fg">{row.entity_type}</p>
@@ -258,8 +258,8 @@ export default async function AdminAuditLogsPage({
   return (
     <Stack gap={8}>
       <PageHeader
-        eyebrow="Security"
-        title="Audit Log"
+        eyebrow="Keamanan"
+        title="Log Audit"
         description="Jejak aktivitas, perubahan data, dan tindakan penting yang tercatat oleh sistem."
       />
 
@@ -271,7 +271,7 @@ export default async function AdminAuditLogsPage({
           </CardTitle>
 
           <p className="text-body-sm text-fg-muted">
-            Log bersifat append-only dan ditampilkan sesuai permission akun Anda.
+            Catatan audit hanya dapat ditambahkan dan ditampilkan sesuai izin akun Anda.
           </p>
         </CardHeader>
 
@@ -281,7 +281,7 @@ export default async function AdminAuditLogsPage({
             className="mb-5 grid gap-3 md:grid-cols-[minmax(0,1fr)_12rem_12rem_12rem_auto]"
           >
             <label className="relative">
-              <span className="sr-only">Cari audit log</span>
+              <span className="sr-only">Cari log audit</span>
 
               <Search
                 aria-hidden="true"
@@ -291,7 +291,7 @@ export default async function AdminAuditLogsPage({
               <input
                 name="q"
                 defaultValue={q}
-                placeholder="Cari action, actor, entity, atau ringkasan..."
+                placeholder="Cari tindakan, pelaku, entitas, atau ringkasan..."
                 className="border-border bg-canvas text-body-sm text-fg focus:border-accent-solid focus:ring-accent-solid/20 h-10 w-full rounded-lg border pr-3 pl-9 transition outline-none focus:ring-2"
               />
             </label>
@@ -299,7 +299,7 @@ export default async function AdminAuditLogsPage({
             <input
               name="action"
               defaultValue={action}
-              placeholder="Action..."
+              placeholder="Tindakan..."
               className="border-border bg-canvas text-body-sm text-fg focus:border-accent-solid h-10 rounded-lg border px-3 outline-none"
             />
 
@@ -308,17 +308,17 @@ export default async function AdminAuditLogsPage({
               defaultValue={actorType}
               className="border-border bg-canvas text-body-sm text-fg focus:border-accent-solid h-10 rounded-lg border px-3 outline-none"
             >
-              <option value="">Semua actor</option>
+              <option value="">Semua pelaku</option>
               <option value="admin">Admin</option>
               <option value="investor">Investor</option>
-              <option value="system">System</option>
-              <option value="anonymous">Anonymous</option>
+              <option value="system">Sistem</option>
+              <option value="anonymous">Anonim</option>
             </select>
 
             <input
               name="entityType"
               defaultValue={entityType}
-              placeholder="Entity..."
+              placeholder="Entitas..."
               className="border-border bg-canvas text-body-sm text-fg focus:border-accent-solid h-10 rounded-lg border px-3 outline-none"
             />
 
@@ -334,13 +334,13 @@ export default async function AdminAuditLogsPage({
             rows={rows}
             columns={columns}
             rowKey={(row) => row.id}
-            caption="Audit log"
+            caption="Log audit"
             empty={
               <EmptyState
                 title="Tidak ada aktivitas"
                 description={
                   q || action || actorType || entityType
-                    ? 'Tidak ada audit log yang cocok dengan filter saat ini.'
+                    ? 'Tidak ada log audit yang cocok dengan filter saat ini.'
                     : 'Belum ada aktivitas audit yang tercatat.'
                 }
               />
