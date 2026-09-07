@@ -18,6 +18,7 @@ const RESERVED_SALE_STATUSES = new Set([
 ])
 
 const HOLDING_STATUS_LABELS: Record<string, string> = {
+  reserved: 'Dicadangkan',
   active: 'Aktif',
   transferred: 'Dialihkan',
   cancelled: 'Dibatalkan',
