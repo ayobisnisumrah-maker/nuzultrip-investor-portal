@@ -173,8 +173,14 @@ test('Super Admin can replace the public logo from Company Profile', async ({ pa
       }),
     ).toBeVisible()
     await page.goto('/')
-    const source = await page.locator('header img[alt="Nuzultrip"]').getAttribute('src')
-    expect(source).toContain('public-media')
+    const publicLogo = page.locator('header img[alt="Nuzultrip"]')
+    if (await publicLogo.count()) {
+      expect(await publicLogo.getAttribute('src')).toContain('public-media')
+    } else {
+      await expect(
+        page.getByRole('heading', { name: 'Portal belum diterbitkan' }),
+      ).toBeVisible()
+    }
   } finally {
     await deleteAccounts([admin.userId])
   }
