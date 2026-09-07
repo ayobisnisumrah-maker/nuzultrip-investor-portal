@@ -10,15 +10,44 @@ async function clickAndWaitForStateChange(page: Page, name: RegExp) {
   await expect(button).not.toBeVisible({ timeout: 30_000 })
 }
 
+async function resolvePortalFixtureIdBySlug(page: Page, slug: string): Promise<string | null> {
+  await page.goto('/admin/portal/pages', {
+    waitUntil: 'domcontentloaded',
+    timeout: 60_000,
+  })
+
+  const row = page
+    .locator('div.divide-y > div')
+    .filter({ hasText: `/${slug}` })
+    .first()
+
+  if (!(await row.isVisible().catch(() => false))) return null
+
+  const href = await row.getByRole('link', { name: 'Kelola' }).getAttribute('href')
+  const match = href?.match(/\/admin\/portal\/pages\/([^/?#]+)$/)
+  return match?.[1] ?? null
+}
+
 /**
  * Remove a non-system portal page created by a production browser test.
  *
- * Portal pages can only be deleted after they are archived, so cleanup advances
- * an unfinished fixture through the same public lifecycle before deleting it.
- * This deliberately uses the UI and the production test admin session: the
- * production suite must never depend on the service-role key.
+ * `slug` is a safety fallback for failures that happen after the create action
+ * reaches production but before Playwright captures the redirected page id.
+ * Without this fallback, a failed production test can leave an E2E page behind.
+ *
+ * Cleanup still uses only the Admin UI and the production test session: no
+ * service-role key and no direct database mutation are required by the suite.
  */
-export async function deleteProductionPortalFixture(page: Page, portalPageId: string | null) {
+export async function deleteProductionPortalFixture(
+  page: Page,
+  fixture: { pageId?: string | null; slug?: string | null },
+) {
+  let portalPageId = fixture.pageId ?? null
+
+  if (!portalPageId && fixture.slug) {
+    portalPageId = await resolvePortalFixtureIdBySlug(page, fixture.slug)
+  }
+
   if (!portalPageId) return
 
   await page.goto(`/admin/portal/pages/${portalPageId}`, {
@@ -29,7 +58,7 @@ export async function deleteProductionPortalFixture(page: Page, portalPageId: st
   const body = page.locator('body')
   if (await body.getByText(/404|not found|tidak ditemukan/i).count()) return
 
-  for (let step = 0; step < 6; step += 1) {
+  for (let step = 0; step < 7; step += 1) {
     const deleteButton = page.getByRole('button', { name: /hapus permanen/i })
 
     if (await deleteButton.isVisible().catch(() => false)) {
