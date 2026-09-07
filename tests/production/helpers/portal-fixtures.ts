@@ -2,6 +2,12 @@ import { expect, type Page } from '@playwright/test'
 
 const lifecycleButtons = [/^Kirim untuk Ditinjau$/i, /^Setujui$/i, /^Terbitkan$/i] as const
 
+type PortalFixture =
+  | string
+  | null
+  | undefined
+  | { pageId?: string | null; slug?: string | null }
+
 async function clickAndWaitForStateChange(page: Page, name: RegExp) {
   const button = page.getByRole('button', { name })
 
@@ -35,17 +41,19 @@ async function resolvePortalFixtureIdBySlug(page: Page, slug: string): Promise<s
  * reaches production but before Playwright captures the redirected page id.
  * Without this fallback, a failed production test can leave an E2E page behind.
  *
- * Cleanup still uses only the Admin UI and the production test session: no
- * service-role key and no direct database mutation are required by the suite.
+ * A plain page id remains accepted for older callers while production specs
+ * migrate to the safer `{ pageId, slug }` form.
  */
-export async function deleteProductionPortalFixture(
-  page: Page,
-  fixture: { pageId?: string | null; slug?: string | null },
-) {
-  let portalPageId = fixture.pageId ?? null
+export async function deleteProductionPortalFixture(page: Page, fixture: PortalFixture) {
+  const normalized =
+    typeof fixture === 'string' || fixture == null
+      ? { pageId: fixture ?? null, slug: null }
+      : fixture
 
-  if (!portalPageId && fixture.slug) {
-    portalPageId = await resolvePortalFixtureIdBySlug(page, fixture.slug)
+  let portalPageId = normalized.pageId ?? null
+
+  if (!portalPageId && normalized.slug) {
+    portalPageId = await resolvePortalFixtureIdBySlug(page, normalized.slug)
   }
 
   if (!portalPageId) return
