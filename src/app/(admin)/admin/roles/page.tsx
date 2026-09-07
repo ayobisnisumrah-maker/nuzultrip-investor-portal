@@ -1,7 +1,8 @@
-﻿import Link from 'next/link'
-import { requireAdminPage } from '@/server/auth/page-guards'
+import Link from 'next/link'
+
 import { hasPermission } from '@/core/auth/principal'
 import { permissionsByModule } from '@/core/rbac/permissions'
+import { requireAdminPage } from '@/server/auth/page-guards'
 import { getServerSupabase } from '@/server/supabase/server'
 
 export default async function AdminRolesPage() {
@@ -12,7 +13,7 @@ export default async function AdminRolesPage() {
       <main className="p-6">
         <h1 className="text-xl font-semibold">Akses ditolak</h1>
         <p className="text-muted-foreground mt-2 text-sm">
-          Anda tidak memiliki izin untuk melihat Role & Permission.
+          Anda tidak memiliki izin untuk melihat Peran & Izin.
         </p>
       </main>
     )
@@ -21,12 +22,12 @@ export default async function AdminRolesPage() {
   const supabase = await getServerSupabase()
 
   /*
-   * Super Admin bukan role operasional.
+   * Super Admin bukan peran operasional.
    *
-   * Ia adalah system authority dengan seluruh permission secara implisit
-   * dan tidak boleh dikelola melalui Role & Permission.
+   * Ia adalah otoritas sistem dengan seluruh izin secara implisit dan tidak
+   * boleh dikelola melalui Peran & Izin.
    *
-   * Karena itu Super Admin sengaja tidak diambil dari daftar role yang
+   * Karena itu Super Admin sengaja tidak diambil dari daftar peran yang
    * ditampilkan di halaman ini.
    */
   const { data: roles, error } = await supabase
@@ -37,7 +38,7 @@ export default async function AdminRolesPage() {
     .order('name', { ascending: true })
 
   if (error) {
-    throw new Error(`Gagal mengambil data role: ${error.message}`)
+    throw new Error(`Gagal mengambil data peran: ${error.message}`)
   }
 
   const { data: permissions, error: permissionsError } = await supabase
@@ -47,7 +48,7 @@ export default async function AdminRolesPage() {
     .order('action', { ascending: true })
 
   if (permissionsError) {
-    throw new Error(`Gagal mengambil katalog permission: ${permissionsError.message}`)
+    throw new Error(`Gagal mengambil katalog izin: ${permissionsError.message}`)
   }
 
   const { data: assignments, error: assignmentsError } = await supabase
@@ -55,17 +56,18 @@ export default async function AdminRolesPage() {
     .select('id, role_id, is_active')
 
   if (assignmentsError) {
-    throw new Error(`Gagal mengambil assignment admin: ${assignmentsError.message}`)
+    throw new Error(`Gagal mengambil penugasan admin: ${assignmentsError.message}`)
   }
 
   const adminCountByRole = new Map<string, number>()
 
   for (const admin of assignments ?? []) {
-    /*
-     * Super Admin tidak ditampilkan di halaman Role & Permission.
-     * Assignment tetap dihitung untuk role operasional yang ditampilkan.
-     */
-    adminCountByRole.set(admin.role_id, (adminCountByRole.get(admin.role_id) ?? 0) + 1)
+    if (!admin.is_active) continue
+
+    adminCountByRole.set(
+      admin.role_id,
+      (adminCountByRole.get(admin.role_id) ?? 0) + 1,
+    )
   }
 
   const permissionCountByRole = new Map<string, number>()
@@ -75,16 +77,18 @@ export default async function AdminRolesPage() {
     .select('role_id')
 
   if (rolePermissionsError) {
-    throw new Error(`Gagal mengambil permission role: ${rolePermissionsError.message}`)
+    throw new Error(`Gagal mengambil izin peran: ${rolePermissionsError.message}`)
   }
 
   for (const item of rolePermissions ?? []) {
-    permissionCountByRole.set(item.role_id, (permissionCountByRole.get(item.role_id) ?? 0) + 1)
+    permissionCountByRole.set(
+      item.role_id,
+      (permissionCountByRole.get(item.role_id) ?? 0) + 1,
+    )
   }
 
   const totalPermissions = permissions?.length ?? 0
   const roleList = roles ?? []
-
   const systemRoleCount = roleList.filter((role) => role.is_system).length
   const customRoleCount = roleList.filter((role) => !role.is_system).length
 
@@ -92,44 +96,40 @@ export default async function AdminRolesPage() {
     <main className="flex flex-col gap-6 p-6">
       <header>
         <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-semibold tracking-tight">Role & Permission</h1>
-
+          <h1 className="text-2xl font-semibold tracking-tight">Peran & Izin</h1>
           <p className="text-muted-foreground text-sm">
-            Kelola role administrator operasional dan permission yang dapat diberikan oleh Super
-            Admin.
+            Kelola peran administrator operasional dan izin yang dapat diberikan oleh Super Admin.
           </p>
         </div>
       </header>
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <div className="bg-card rounded-xl border p-5">
-          <p className="text-muted-foreground text-sm">Total Role Operasional</p>
+          <p className="text-muted-foreground text-sm">Total Peran Operasional</p>
           <p className="mt-2 text-2xl font-semibold">{roleList.length}</p>
         </div>
 
         <div className="bg-card rounded-xl border p-5">
-          <p className="text-muted-foreground text-sm">Permission</p>
+          <p className="text-muted-foreground text-sm">Total Izin</p>
           <p className="mt-2 text-2xl font-semibold">{totalPermissions}</p>
         </div>
 
         <div className="bg-card rounded-xl border p-5">
-          <p className="text-muted-foreground text-sm">Role System</p>
+          <p className="text-muted-foreground text-sm">Peran Sistem</p>
           <p className="mt-2 text-2xl font-semibold">{systemRoleCount}</p>
         </div>
 
         <div className="bg-card rounded-xl border p-5">
-          <p className="text-muted-foreground text-sm">Role Custom</p>
+          <p className="text-muted-foreground text-sm">Peran Kustom</p>
           <p className="mt-2 text-2xl font-semibold">{customRoleCount}</p>
         </div>
       </section>
 
       <section className="bg-card rounded-xl border">
         <div className="border-b p-5">
-          <h2 className="font-semibold">Daftar Role Operasional</h2>
-
+          <h2 className="font-semibold">Daftar Peran Operasional</h2>
           <p className="text-muted-foreground mt-1 text-sm">
-            Super Admin adalah system authority dan tidak dikelola melalui halaman Role &
-            Permission. Role operasional dapat dikelola sesuai permission yang dimiliki.
+            Super Admin adalah otoritas sistem dan tidak dikelola melalui halaman ini. Peran operasional dapat dikelola sesuai izin yang dimiliki.
           </p>
         </div>
 
@@ -137,11 +137,11 @@ export default async function AdminRolesPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b text-left">
-                <th className="px-5 py-3 font-medium">Role</th>
+                <th className="px-5 py-3 font-medium">Peran</th>
                 <th className="px-5 py-3 font-medium">Tipe</th>
-                <th className="px-5 py-3 font-medium">Admin</th>
-                <th className="px-5 py-3 font-medium">Permission</th>
-                <th className="px-5 py-3 font-medium">Version</th>
+                <th className="px-5 py-3 font-medium">Admin Aktif</th>
+                <th className="px-5 py-3 font-medium">Izin</th>
+                <th className="px-5 py-3 font-medium">Versi</th>
                 <th className="px-5 py-3 text-right font-medium">Aksi</th>
               </tr>
             </thead>
@@ -151,9 +151,7 @@ export default async function AdminRolesPage() {
                 <tr key={role.id} className="border-b last:border-0">
                   <td className="px-5 py-4">
                     <div className="font-medium">{role.name}</div>
-
                     <div className="text-muted-foreground text-xs">{role.key}</div>
-
                     {role.description ? (
                       <div className="text-muted-foreground mt-1 max-w-xl text-xs">
                         {role.description}
@@ -162,19 +160,15 @@ export default async function AdminRolesPage() {
                   </td>
 
                   <td className="px-5 py-4">
-                    {role.is_system ? (
-                      <span className="rounded-full border px-2 py-1 text-xs">System</span>
-                    ) : (
-                      <span className="rounded-full border px-2 py-1 text-xs">Custom</span>
-                    )}
+                    <span className="rounded-full border px-2 py-1 text-xs">
+                      {role.is_system ? 'Sistem' : 'Kustom'}
+                    </span>
                   </td>
 
                   <td className="px-5 py-4">{adminCountByRole.get(role.id) ?? 0}</td>
 
                   <td className="px-5 py-4">
-                    {role.is_system
-                      ? `${permissionCountByRole.get(role.id) ?? 0}/${totalPermissions}`
-                      : `${permissionCountByRole.get(role.id) ?? 0}/${totalPermissions}`}
+                    {permissionCountByRole.get(role.id) ?? 0}/{totalPermissions}
                   </td>
 
                   <td className="px-5 py-4">v{role.permission_version}</td>
@@ -193,7 +187,7 @@ export default async function AdminRolesPage() {
               {roleList.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="text-muted-foreground px-5 py-10 text-center text-sm">
-                    Belum ada role operasional.
+                    Belum ada peran operasional.
                   </td>
                 </tr>
               ) : null}
@@ -204,10 +198,9 @@ export default async function AdminRolesPage() {
 
       <section className="bg-card rounded-xl border p-5">
         <div className="mb-5">
-          <h2 className="font-semibold">Permission Catalogue</h2>
-
+          <h2 className="font-semibold">Katalog Izin</h2>
           <p className="text-muted-foreground mt-1 text-sm">
-            Katalog permission yang tersedia untuk Role Editor.
+            Katalog izin yang tersedia untuk pengelolaan peran.
           </p>
         </div>
 
@@ -219,14 +212,12 @@ export default async function AdminRolesPage() {
               <div className="mt-3 flex flex-col gap-2">
                 {group.permissions.map((permission) => {
                   const key = `${permission.module}.${permission.action}`
-
                   const databasePermission = permissions?.find((item) => item.key === key)
 
                   return (
                     <div key={key} className="flex items-start justify-between gap-3 text-sm">
                       <div>
                         <div className="font-medium">{key}</div>
-
                         <div className="text-muted-foreground text-xs">
                           {permission.description}
                         </div>
@@ -234,7 +225,7 @@ export default async function AdminRolesPage() {
 
                       {databasePermission?.is_dangerous ? (
                         <span className="shrink-0 rounded-full border px-2 py-1 text-[10px]">
-                          Berbahaya
+                          Sensitif
                         </span>
                       ) : null}
                     </div>
