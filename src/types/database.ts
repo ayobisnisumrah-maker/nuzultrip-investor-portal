@@ -98,6 +98,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      expire_message_threads: { Args: never; Returns: number }
       has_permission: { Args: { p_key: string }; Returns: boolean }
       investor_granted_document: {
         Args: { p_document_id: string }
@@ -180,6 +181,7 @@ export type Database = {
           status: Database["public"]["Enums"]["publication_status"]
         }[]
       }
+      unread_message_count: { Args: never; Returns: number }
     }
     Enums: {
       [_ in never]: never
@@ -1848,6 +1850,7 @@ export type Database = {
       message_threads: {
         Row: {
           awaiting_admin_reply: boolean
+          awaiting_response_from: string | null
           broadcast_id: string | null
           closed_at: string | null
           closed_by: string | null
@@ -1867,6 +1870,7 @@ export type Database = {
         }
         Insert: {
           awaiting_admin_reply?: boolean
+          awaiting_response_from?: string | null
           broadcast_id?: string | null
           closed_at?: string | null
           closed_by?: string | null
@@ -1886,6 +1890,7 @@ export type Database = {
         }
         Update: {
           awaiting_admin_reply?: boolean
+          awaiting_response_from?: string | null
           broadcast_id?: string | null
           closed_at?: string | null
           closed_by?: string | null
