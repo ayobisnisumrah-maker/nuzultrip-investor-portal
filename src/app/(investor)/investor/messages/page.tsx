@@ -50,10 +50,21 @@ export default async function InvestorMessagesPage() {
         .select('id, thread_id, body_text, sender_id, sender_label, sent_at')
         .in('thread_id', threadIds)
         .order('sent_at', { ascending: false })
-        .limit(300)
+        .limit(500)
     : { data: [] }
 
   const messages = (rawMessages ?? []) as unknown as Message[]
+  const incomingMessageIds = messages
+    .filter((message) => message.sender_id !== principal.userId)
+    .map((message) => message.id)
+
+  const { data: readRows } = incomingMessageIds.length
+    ? await supabase
+        .from('message_reads')
+        .select('message_id')
+        .eq('user_id', principal.userId)
+        .in('message_id', incomingMessageIds)
+    : { data: [] }
 
   return (
     <Stack gap={6}>
@@ -66,6 +77,7 @@ export default async function InvestorMessagesPage() {
       <InvestorMessageWorkspace
         initialThreads={threads}
         initialMessages={messages}
+        initialReadMessageIds={(readRows ?? []).map((row) => row.message_id)}
         currentUserId={principal.userId}
         timezone={principal.timezone}
       />
