@@ -132,7 +132,6 @@ export default async function MessagesPage({
         unreadByThread={unreadByThread}
         investors={investors ?? []}
         canSend={principal.permissions.has('messages.send')}
-        canHandle={principal.permissions.has('inquiries.handle')}
         currentUserId={principal.userId}
         timezone={principal.timezone}
       />
