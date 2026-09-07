@@ -2,8 +2,8 @@
 
 import { z } from 'zod'
 
-import { canPublicationTransition, type PublicationStatus } from '@/core/documents/publication'
-import { ConflictError, ForbiddenError, NotFoundError } from '@/core/errors'
+import type { PublicationStatus } from '@/core/documents/publication'
+import { ConflictError, NotFoundError } from '@/core/errors'
 import { defineAction, requirePermission } from '@/server/auth/guards'
 
 type RevokeGrantDocument = { title: string }
@@ -15,6 +15,20 @@ type RevokeGrantRow = {
   revoked_at: string | null
   documents: RevokeGrantDocument | RevokeGrantDocument[] | null
   investors: RevokeGrantInvestor | RevokeGrantInvestor[] | null
+}
+
+type PublicationTransitionRow = {
+  document_id: string
+  title: string
+  previous_status: PublicationStatus
+  status: PublicationStatus
+}
+
+type AppRpcClient = {
+  rpc: (
+    name: 'transition_document_publication',
+    args: { p_document_id: string; p_target: PublicationStatus },
+  ) => Promise<{ data: PublicationTransitionRow[] | PublicationTransitionRow | null; error: { message: string } | null }>
 }
 
 const documentIdSchema = z.object({ documentId: z.string().uuid() })
@@ -30,93 +44,27 @@ async function transitionDocument(
   target: PublicationStatus,
   supabase: Parameters<Parameters<typeof defineAction>[0]['handler']>[0]['supabase'],
 ) {
-  const { data: document, error: readError } = await supabase
-    .from('documents')
-    .select('id, title, status, current_version_id')
-    .eq('id', documentId)
-    .maybeSingle()
-  if (readError)
+  const appClient = supabase.schema('app') as unknown as AppRpcClient
+  const { data, error } = await appClient.rpc('transition_document_publication', {
+    p_document_id: documentId,
+    p_target: target,
+  })
+
+  if (error) {
     throw new ConflictError(
-      `Failed to read document: ${readError.message}`,
-      'Dokumen tidak dapat dibaca saat ini.',
-    )
-  if (!document) throw new NotFoundError('Dokumen')
-
-  const current = document.status
-  if (!canPublicationTransition(current, target)) {
-    throw new ForbiddenError(`Invalid document publication transition: ${current} -> ${target}.`, {
-      from: current,
-      to: target,
-    })
-  }
-
-  if (target === 'published') {
-    if (!document.current_version_id) {
-      throw new ConflictError(
-        'Document has no current version.',
-        'Dokumen belum memiliki versi yang dapat diterbitkan.',
-      )
-    }
-    const { data: version, error: versionReadError } = await supabase
-      .from('document_versions')
-      .select('id, status')
-      .eq('id', document.current_version_id)
-      .eq('document_id', document.id)
-      .maybeSingle()
-    if (versionReadError)
-      throw new ConflictError(
-        `Failed to read document version: ${versionReadError.message}`,
-        'Versi dokumen tidak dapat dibaca saat ini.',
-      )
-    if (!version || version.status !== 'approved') {
-      throw new ConflictError(
-        'Current document version is not approved.',
-        'Versi aktif dokumen harus disetujui sebelum diterbitkan.',
-      )
-    }
-    const { error: versionError } = await supabase
-      .from('document_versions')
-      .update({ status: 'published' })
-      .eq('id', version.id)
-    if (versionError)
-      throw new ConflictError(
-        `Failed to publish document version: ${versionError.message}`,
-        'Versi dokumen tidak dapat diterbitkan saat ini.',
-      )
-  } else if (target !== 'archived' && document.current_version_id) {
-    const { error: versionError } = await supabase
-      .from('document_versions')
-      .update({ status: target })
-      .eq('id', document.current_version_id)
-      .eq('document_id', document.id)
-    if (versionError)
-      throw new ConflictError(
-        `Failed to update document version: ${versionError.message}`,
-        'Versi dokumen tidak dapat diperbarui saat ini.',
-      )
-  }
-
-  const update =
-    target === 'published'
-      ? { status: target, published_version_id: document.current_version_id }
-      : { status: target }
-  const { data: updated, error } = await supabase
-    .from('documents')
-    .update(update)
-    .eq('id', document.id)
-    .select('id, title, status')
-    .maybeSingle()
-  if (error)
-    throw new ConflictError(
-      `Failed to update document: ${error.message}`,
+      `Failed to transition document publication: ${error.message}`,
       'Status dokumen tidak dapat diperbarui saat ini.',
     )
-  if (!updated) throw new NotFoundError('Dokumen')
+  }
+
+  const row = Array.isArray(data) ? data[0] : data
+  if (!row) throw new NotFoundError('Dokumen')
+
   return {
-    documentId: updated.id,
-    title: updated.title,
-    previousStatus: current,
-    status: updated.status,
+    documentId: row.document_id,
+    title: row.title,
+    previousStatus: row.previous_status,
+    status: row.status,
   }
 }
 
