@@ -10,6 +10,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: browser-e2e-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   LANG: C.UTF-8
@@ -63,6 +67,9 @@ jobs:
         with:
           version: latest
           github-token: ${{ github.token }}
+
+      - name: Clear stale local Supabase containers
+        run: supabase stop --no-backup || true
 
       - name: Start local Supabase
         run: supabase start
