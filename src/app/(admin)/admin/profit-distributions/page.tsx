@@ -22,7 +22,7 @@ export default async function ProfitDistributionsPage() {
           Anda tidak memiliki izin untuk melihat distribusi bagi hasil.
         </p>
         <p className="text-caption text-fg-subtle mt-3">
-          Permission: <code>profit_distributions.view</code>
+          Izin sistem: <code>profit_distributions.view</code>
         </p>
       </div>
     )
@@ -60,7 +60,7 @@ export default async function ProfitDistributionsPage() {
             href={`/admin/profit-distributions/${distribution.id}`}
             className="border-border text-body-sm text-fg hover:bg-surface-muted rounded-lg border px-3 py-2 font-medium"
           >
-            Lifecycle {distribution.period_end}
+            Detail periode {new Date(distribution.period_end).toLocaleDateString('id-ID')}
           </Link>
         ))}
         {principal.permissions.has('profit_distributions.create') ? (
