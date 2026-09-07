@@ -12,12 +12,36 @@ import { EmptyState } from '@/ui/states'
 
 export const metadata: Metadata = { title: 'KPI Keuangan' }
 
+const PERIOD_TYPE_LABELS: Record<string, string> = {
+  monthly: 'Bulanan',
+  quarterly: 'Triwulanan',
+  semiannual: 'Semester',
+  yearly: 'Tahunan',
+}
+
 function formatKpi(value: number | string, unit: string) {
   const n = typeof value === 'number' ? value : Number(value)
   if (!Number.isFinite(n)) return String(value)
-  if (unit === 'percent' || unit === '%') return `${new Intl.NumberFormat('id-ID', { maximumFractionDigits: 2 }).format(n)}%`
-  if (unit === 'IDR') return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(n)
+  if (unit === 'percent' || unit === '%') {
+    return `${new Intl.NumberFormat('id-ID', { maximumFractionDigits: 2 }).format(n)}%`
+  }
+  if (unit === 'IDR') {
+    return new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      maximumFractionDigits: 0,
+    }).format(n)
+  }
   return `${new Intl.NumberFormat('id-ID', { maximumFractionDigits: 2 }).format(n)} ${unit}`.trim()
+}
+
+function formatPeriod(period: {
+  period_type: string
+  fiscal_year: number
+  period_index: number | null
+}) {
+  const label = PERIOD_TYPE_LABELS[period.period_type] ?? period.period_type
+  return `${label} ${period.fiscal_year}${period.period_index ? ` · Periode ${period.period_index}` : ''}`
 }
 
 export default async function FinancialKpisPage() {
@@ -80,7 +104,7 @@ export default async function FinancialKpisPage() {
       <PageHeader
         eyebrow="Laporan & Keuangan"
         title="KPI Keuangan"
-        description="Indikator utama yang tersimpan pada versi laporan keuangan. Nilai di halaman ini berasal langsung dari database pelaporan, bukan angka simulasi."
+        description="Indikator utama yang tersimpan pada versi laporan keuangan. Nilai di halaman ini berasal langsung dari basis data pelaporan, bukan angka simulasi."
         actions={
           <Button asChild variant="secondary">
             <Link href="/admin/financials">Kelola Laporan</Link>
@@ -113,17 +137,17 @@ export default async function FinancialKpisPage() {
                     <p className="text-caption text-fg-subtle uppercase tracking-wide">{kpi.kpi_key}</p>
                     <p className="text-body-sm text-fg-muted mt-1">{kpi.label}</p>
                     <p className="text-heading-md text-fg mt-3 font-semibold tabular-nums">{formatKpi(kpi.value, kpi.unit)}</p>
-                    <p className="text-caption text-fg-muted mt-2">Basis: {kpi.basis}</p>
+                    <p className="text-caption text-fg-muted mt-2">Dasar perhitungan: {kpi.basis}</p>
                     <div className="border-border mt-4 border-t pt-3">
                       {report ? (
-                        <Link href={`/admin/financials/${report.id}`} className="text-body-sm text-link font-medium hover:underline">
+                        <Link href={`/admin/financials/reports/${report.id}`} className="text-body-sm text-link font-medium hover:underline">
                           {report.title}
                         </Link>
                       ) : (
                         <p className="text-body-sm text-fg-muted">Laporan tidak ditemukan</p>
                       )}
                       <p className="text-caption text-fg-subtle mt-1">
-                        {period ? `${period.period_type} ${period.fiscal_year}${period.period_index ? `/${period.period_index}` : ''}` : 'Periode tidak tersedia'}
+                        {period ? formatPeriod(period) : 'Periode tidak tersedia'}
                         {version ? ` · Versi ${version.version_number}` : ''}
                       </p>
                     </div>
