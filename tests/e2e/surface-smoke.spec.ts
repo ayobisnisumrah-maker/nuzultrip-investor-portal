@@ -101,6 +101,7 @@ test('public portal and authentication routes render cleanly', async ({ page }) 
   await expectHealthyRoutes(page, PUBLIC_ROUTES, 'public')
 
   await page.goto('/')
+  await expect(page.locator('h1 span').first()).toBeVisible()
   const clippedHeadlineLines = await page.locator('h1 span').evaluateAll((lines) =>
     lines
       .filter((line) => {
@@ -115,10 +116,27 @@ test('public portal and authentication routes render cleanly', async ({ page }) 
   )
   expect(clippedHeadlineLines, 'public: hero headline is clipped by the viewport').toEqual([])
 
+  const missingAnchorTargets = await page
+    .locator('a[href^="#"]')
+    .evaluateAll((links) =>
+      links
+        .map((link) => link.getAttribute('href'))
+        .filter((href): href is string => Boolean(href && !document.querySelector(href))),
+    )
+  expect(missingAnchorTargets, 'public: navigation points to a missing section').toEqual([])
+
   await page.goto('/hubungi')
   await expect(page.getByLabel('Nama lengkap')).toBeVisible()
   await expect(page.getByLabel('Email')).toBeVisible()
   await expect(page.getByLabel('Pesan')).toBeVisible()
+  await page.getByLabel('Nama lengkap').fill('Pengujian Portal Nuzultrip')
+  await page.getByLabel('Email').fill(`portal-e2e-${Date.now()}@example.com`)
+  await page.getByLabel('Pesan').fill('Memastikan tombol permintaan tersimpan dan diterima admin.')
+  await page.getByRole('button', { name: 'Kirim Permintaan' }).click()
+  await expect(page).toHaveURL(/\/hubungi\?sent=1$/)
+  await expect(page.getByRole('heading', { name: 'Permintaan berhasil dikirim' })).toBeVisible()
+  await page.getByRole('link', { name: 'Kembali ke portal' }).click()
+  await expect(page).toHaveURL('/')
 
   await page.goto('/masuk')
   await expect(page.getByLabel(/Surel/)).toBeVisible()
