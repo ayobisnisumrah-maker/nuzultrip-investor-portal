@@ -47,6 +47,7 @@ export default async function InquiriesPage() {
         threads={[]}
         selectedThread={null}
         messages={[]}
+        unreadByThread={{}}
         inquiries={inquiries ?? []}
         canSend={false}
         canHandle={principal.permissions.has('inquiries.handle')}
