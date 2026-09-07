@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 
-import { CommunicationWorkbench } from '@/features/admin/communication-workbench'
+import { InquiryWorkbench } from '@/features/admin/inquiry-workbench'
 import { requireAdminPage } from '@/server/auth/page-guards'
 import { getServerSupabase } from '@/server/supabase/server'
 import { Alert } from '@/ui/alert'
@@ -43,15 +43,10 @@ export default async function InquiriesPage() {
           Kelola inquiry dari portal publik, tindak lanjutnya, dan konversinya menjadi percakapan.
         </p>
       </div>
-      <CommunicationWorkbench
-        threads={[]}
-        selectedThread={null}
-        messages={[]}
-        unreadByThread={{}}
+
+      <InquiryWorkbench
         inquiries={inquiries ?? []}
-        canSend={false}
         canHandle={principal.permissions.has('inquiries.handle')}
-        currentUserId={principal.userId}
         timezone={principal.timezone}
       />
     </div>
