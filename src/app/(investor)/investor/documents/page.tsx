@@ -9,6 +9,28 @@ import { EmptyState } from '@/ui/states'
 
 export const metadata: Metadata = { title: 'Dokumen & Data Room' }
 
+const KIND_LABELS: Record<string, string> = {
+  company_profile: 'Profil perusahaan',
+  legal: 'Legal',
+  financial: 'Keuangan',
+  ownership: 'Kepemilikan',
+  offering: 'Penawaran Equity',
+  due_diligence: 'Uji tuntas',
+  investor_update: 'Pembaruan investor',
+  other: 'Dokumen lainnya',
+}
+
+const VISIBILITY_LABELS: Record<string, string> = {
+  investors: 'Seluruh investor',
+  restricted: 'Akses khusus',
+}
+
+function humanize(value: string) {
+  return value
+    .replaceAll('_', ' ')
+    .replace(/\b\w/g, (letter) => letter.toUpperCase())
+}
+
 export default async function InvestorDocumentsPage() {
   const principal = await requireInvestorPage('/investor/documents')
   const supabase = await getServerSupabase()
@@ -28,14 +50,14 @@ export default async function InvestorDocumentsPage() {
         kinds={['investor.document_shared', 'investor.document_revoked']}
       />
       <PageHeader
-        eyebrow="Protected Content"
+        eyebrow="Dokumen Investor"
         title="Dokumen & Data Room"
-        description="Dokumen yang tersedia untuk akun investor Anda."
+        description="Akses dokumen perusahaan dan materi investor yang tersedia untuk akun Anda sesuai hak akses."
       />
       {!documents?.length ? (
         <EmptyState
           title="Belum ada dokumen"
-          description="Dokumen yang telah dipublikasikan untuk investor akan muncul di sini."
+          description="Dokumen yang telah diterbitkan atau diberikan akses kepada akun Anda akan muncul di sini."
         />
       ) : (
         <div className="grid gap-4 lg:grid-cols-2">
@@ -47,12 +69,14 @@ export default async function InvestorDocumentsPage() {
               <CardBody>
                 <div className="flex flex-col gap-3">
                   <p className="text-body-sm text-fg-muted">
-                    {document.summary || 'Dokumen investor.'}
+                    {document.summary || 'Dokumen perusahaan yang tersedia untuk akun investor Anda.'}
                   </p>
                   <div className="text-caption text-fg-subtle flex flex-wrap gap-2">
-                    <span>{document.kind}</span>
+                    <span>{KIND_LABELS[document.kind] ?? humanize(document.kind)}</span>
                     <span>•</span>
-                    <span>{document.visibility}</span>
+                    <span>
+                      {VISIBILITY_LABELS[document.visibility] ?? humanize(document.visibility)}
+                    </span>
                   </div>
                   {document.published_version_id ? (
                     <a
