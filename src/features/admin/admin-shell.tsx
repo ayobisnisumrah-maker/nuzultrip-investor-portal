@@ -127,6 +127,7 @@ export function AdminShell({
         event.kind === 'investor.status_changed' ||
         event.kind === 'admin.changed' ||
         event.kind === 'rbac.changed' ||
+        event.kind === 'portal.theme_updated' ||
         event.kind === 'document.state_changed' ||
         event.kind === 'financial_period.changed' ||
         event.kind === 'financial_report.state_changed' ||
