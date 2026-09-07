@@ -62,9 +62,10 @@ test('public document request appears in Admin Permintaan Masuk without reload',
   })
 
   // Browser Admin tidak direload atau dinavigasi setelah inquiry dikirim.
-  // Munculnya email unik ini membuktikan event inquiry.received memicu refresh server snapshot.
-  await expect(adminPage.getByText(email, { exact: true })).toBeVisible({ timeout: 30_000 })
-  await adminPage.getByText(email, { exact: true }).click()
+  // Munculnya item unik ini membuktikan event inquiry.received memicu refresh server snapshot.
+  const requestListItem = adminPage.getByRole('button').filter({ hasText: email })
+  await expect(requestListItem).toBeVisible({ timeout: 30_000 })
+  await requestListItem.click()
   await expect(adminPage.locator('main')).toContainText(message)
   await expect(adminPage.locator('main')).toContainText('Informasi / dokumen untuk dipelajari')
 
