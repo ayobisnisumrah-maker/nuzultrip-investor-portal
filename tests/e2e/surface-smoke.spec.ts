@@ -103,7 +103,7 @@ test('public portal and authentication routes render cleanly', async ({ page }) 
   await page.goto('/hubungi')
   await expect(page.getByLabel('Nama lengkap')).toBeVisible()
   await expect(page.getByLabel('Email')).toBeVisible()
-  await expect(page.getByLabel('Pesan')).toBeVisible()
+  await expect(page.getByLabel('Informasi / dokumen yang ingin dipelajari')).toBeVisible()
 
   await page.goto('/masuk')
   await expect(page.getByLabel(/Surel/)).toBeVisible()
