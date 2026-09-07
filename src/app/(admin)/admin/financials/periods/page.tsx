@@ -1,4 +1,4 @@
-﻿import Link from 'next/link'
+import Link from 'next/link'
 
 import { adminWithPermission } from '@/server/auth/page-guards'
 import { getServerSupabase } from '@/server/supabase/server'
@@ -6,11 +6,21 @@ import { getServerSupabase } from '@/server/supabase/server'
 function formatPeriodType(periodType: string) {
   const labels: Record<string, string> = {
     annual: 'Tahunan',
-    quarterly: 'Kuartal',
+    quarterly: 'Triwulanan',
     monthly: 'Bulanan',
   }
 
   return labels[periodType] ?? periodType
+}
+
+function formatPeriodName(periodType: string, periodIndex: number | null, fiscalYear: number) {
+  const type = formatPeriodType(periodType)
+
+  if (periodType === 'annual' || periodIndex == null) {
+    return `${type} ${fiscalYear}`
+  }
+
+  return `${type} ${periodIndex} / ${fiscalYear}`
 }
 
 function formatDate(value: string) {
@@ -90,7 +100,7 @@ export default async function FinancialPeriodsPage() {
           <h1 className="font-display text-heading-lg text-fg mt-1">Periode Keuangan</h1>
 
           <p className="text-body-sm text-fg-muted mt-2 max-w-2xl">
-            Kelola periode pelaporan keuangan perusahaan dan lifecycle setiap periode.
+            Kelola periode pelaporan keuangan perusahaan dan status setiap periode.
           </p>
         </div>
 
@@ -151,8 +161,7 @@ export default async function FinancialPeriodsPage() {
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <h3 className="text-body text-fg font-semibold">
-                      {formatPeriodType(period.period_type)} {period.period_index} /{' '}
-                      {period.fiscal_year}
+                      {formatPeriodName(period.period_type, period.period_index, period.fiscal_year)}
                     </h3>
 
                     <span
