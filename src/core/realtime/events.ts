@@ -104,6 +104,7 @@ export const TOPIC_EVENTS: Readonly<Record<string, readonly EventKind[]>> = {
     'investor.status_changed',
     'admin.changed',
     'rbac.changed',
+    'portal.theme_updated',
     'document.state_changed',
     'financial_period.changed',
     'financial_report.state_changed',
