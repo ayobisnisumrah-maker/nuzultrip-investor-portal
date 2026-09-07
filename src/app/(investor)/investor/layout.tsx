@@ -5,7 +5,9 @@ import { Avatar } from '@/ui/primitives'
 import { SignOutButton } from '@/features/shell/sign-out-button'
 import { RealtimeProvider } from '@/features/realtime/realtime-provider'
 import { RealtimeStatus } from '@/features/realtime/realtime-status'
+import { NotificationSoundListener } from '@/features/notifications/notification-sound-listener'
 import { requireInvestorPage } from '@/server/auth/page-guards'
+import { getNotificationSoundSettings } from '@/server/settings/notification-sound'
 import { ToastProvider } from '@/ui/toast'
 import { TooltipProvider } from '@/ui/menu'
 
@@ -16,6 +18,7 @@ export const metadata: Metadata = {
 
 export default async function InvestorLayout({ children }: { children: React.ReactNode }) {
   const principal = await requireInvestorPage()
+  const sound = await getNotificationSoundSettings()
 
   const sections = principal.hasDataAccess
     ? [
@@ -41,6 +44,13 @@ export default async function InvestorLayout({ children }: { children: React.Rea
 
   return (
     <RealtimeProvider topics={subscribed}>
+      <NotificationSoundListener
+        topics={subscribed}
+        role="investor"
+        enabled={sound.enabled}
+        soundUrl={sound.publicUrl}
+        volume={sound.volume}
+      />
       <ToastProvider>
         <TooltipProvider delayDuration={200}>
           <AppShell
