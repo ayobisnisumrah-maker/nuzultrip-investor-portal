@@ -1,5 +1,7 @@
 import type { Metadata } from 'next'
 
+import { topics } from '@/core/realtime/events'
+import { RealtimeRefresher } from '@/features/realtime/realtime-refresher'
 import { requireInvestorPage } from '@/server/auth/page-guards'
 import { getServerSupabase } from '@/server/supabase/server'
 import { Card, CardBody, CardHeader, CardTitle } from '@/ui/card'
@@ -31,7 +33,7 @@ const STATUS_LABELS: Record<string, string> = {
 }
 
 export default async function InvestorDistributionsPage() {
-  const principal = await requireInvestorPage()
+  const principal = await requireInvestorPage('/investor/distributions')
   const supabase = await getServerSupabase()
 
   const { data: allocations, error: allocationError } = await supabase
@@ -79,6 +81,10 @@ export default async function InvestorDistributionsPage() {
 
   return (
     <Stack gap={8}>
+      <RealtimeRefresher
+        topic={topics.investor(principal.investorId)}
+        kinds={['profit_distribution.changed']}
+      />
       <PageHeader
         eyebrow="Keuangan Investor"
         title="Bagi Hasil"
