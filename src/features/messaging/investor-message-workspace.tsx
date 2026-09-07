@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState, useTransition } from 'react'
+import { useCallback, useEffect, useMemo, useState, useTransition } from 'react'
 import { MessageCircleMore, Plus, Search } from 'lucide-react'
 
 import { LiveMessageThread } from '@/features/messaging/live-message-thread'
@@ -34,6 +34,7 @@ type Message = {
 type Props = {
   initialThreads: Thread[]
   initialMessages: Message[]
+  initialReadMessageIds: string[]
   currentUserId: string
   timezone: string
 }
@@ -56,11 +57,18 @@ function formatTime(value: string, timezone: string) {
   }).format(new Date(value))
 }
 
-export function InvestorMessageWorkspace({ initialThreads, initialMessages, currentUserId, timezone }: Props) {
+export function InvestorMessageWorkspace({
+  initialThreads,
+  initialMessages,
+  initialReadMessageIds,
+  currentUserId,
+  timezone,
+}: Props) {
   const supabase = useMemo(() => getBrowserSupabase(), [])
   const { push } = useToast()
   const [threads, setThreads] = useState(initialThreads)
   const [messages, setMessages] = useState(initialMessages)
+  const [readMessageIds, setReadMessageIds] = useState(() => new Set(initialReadMessageIds))
   const [selectedId, setSelectedId] = useState(initialThreads[0]?.id ?? '')
   const [query, setQuery] = useState('')
   const [now, setNow] = useState(() => Date.now())
@@ -70,7 +78,7 @@ export function InvestorMessageWorkspace({ initialThreads, initialMessages, curr
   const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
 
-  async function sync() {
+  const sync = useCallback(async () => {
     const [{ data: threadRows }, { data: messageRows }] = await Promise.all([
       supabase
         .from('message_threads')
@@ -81,31 +89,54 @@ export function InvestorMessageWorkspace({ initialThreads, initialMessages, curr
         .from('messages')
         .select('id, thread_id, body_text, sender_id, sender_label, sent_at')
         .order('sent_at', { ascending: false })
-        .limit(300),
+        .limit(500),
     ])
 
     const nextThreads = (threadRows ?? []) as unknown as Thread[]
     const nextMessages = (messageRows ?? []) as unknown as Message[]
+    const incomingIds = nextMessages
+      .filter((message) => message.sender_id !== currentUserId)
+      .map((message) => message.id)
+
+    const { data: readRows } = incomingIds.length
+      ? await supabase
+          .from('message_reads')
+          .select('message_id')
+          .eq('user_id', currentUserId)
+          .in('message_id', incomingIds)
+      : { data: [] }
+
     setThreads(nextThreads)
     setMessages(nextMessages)
+    setReadMessageIds(new Set((readRows ?? []).map((row) => row.message_id)))
     setSelectedId((current) => current || nextThreads[0]?.id || '')
-  }
+  }, [currentUserId, supabase])
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 30_000)
-    const syncTimer = window.setInterval(() => void sync(), 2_000)
+    const fallbackTimer = window.setInterval(() => {
+      if (document.visibilityState === 'visible' && navigator.onLine) void sync()
+    }, 15_000)
+
     const channel = supabase
       .channel(`investor-message-workspace:${currentUserId}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'message_threads' }, () => void sync())
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, () => void sync())
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'message_reads' }, () => void sync())
       .subscribe()
+
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') void sync()
+    }
+    document.addEventListener('visibilitychange', onVisible)
 
     return () => {
       window.clearInterval(timer)
-      window.clearInterval(syncTimer)
+      window.clearInterval(fallbackTimer)
+      document.removeEventListener('visibilitychange', onVisible)
       void supabase.removeChannel(channel)
     }
-  }, [currentUserId, supabase])
+  }, [currentUserId, supabase, sync])
 
   const latestByThread = useMemo(() => {
     const map = new Map<string, Message>()
@@ -113,12 +144,47 @@ export function InvestorMessageWorkspace({ initialThreads, initialMessages, curr
     return map
   }, [messages])
 
+  const unreadByThread = useMemo(() => {
+    const map = new Map<string, number>()
+    for (const message of messages) {
+      if (message.sender_id === currentUserId || readMessageIds.has(message.id)) continue
+      map.set(message.thread_id, (map.get(message.thread_id) ?? 0) + 1)
+    }
+    return map
+  }, [currentUserId, messages, readMessageIds])
+
   const selected = threads.find((thread) => thread.id === selectedId) ?? null
   const selectedMessages = selected
     ? messages
         .filter((message) => message.thread_id === selected.id)
         .sort((a, b) => new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime())
     : []
+
+  useEffect(() => {
+    if (!selectedId || document.visibilityState !== 'visible') return
+
+    const unreadIncoming = messages.filter(
+      (message) =>
+        message.thread_id === selectedId &&
+        message.sender_id !== currentUserId &&
+        !readMessageIds.has(message.id),
+    )
+    if (!unreadIncoming.length) return
+
+    const ids = unreadIncoming.map((message) => message.id)
+    setReadMessageIds((current) => {
+      const next = new Set(current)
+      ids.forEach((id) => next.add(id))
+      return next
+    })
+
+    void supabase
+      .from('message_reads')
+      .upsert(
+        ids.map((messageId) => ({ message_id: messageId, user_id: currentUserId })),
+        { onConflict: 'message_id,user_id', ignoreDuplicates: true },
+      )
+  }, [currentUserId, messages, readMessageIds, selectedId, supabase])
 
   const filteredThreads = threads.filter((thread) =>
     thread.subject.toLowerCase().includes(query.trim().toLowerCase()),
@@ -150,13 +216,15 @@ export function InvestorMessageWorkspace({ initialThreads, initialMessages, curr
   }
 
   return (
-    <div className="border-border bg-surface grid min-h-[38rem] overflow-hidden rounded-2xl border lg:grid-cols-[21rem_minmax(0,1fr)]">
+    <div className="border-border bg-surface grid min-h-[38rem] overflow-hidden rounded-2xl border lg:grid-cols-[21rem_minmax(0,1fr)] xl:grid-cols-[23rem_minmax(0,1fr)]">
       <aside className="border-border flex min-h-0 flex-col border-b lg:border-r lg:border-b-0">
         <div className="border-border space-y-3 border-b p-4">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <h2 className="text-body text-fg font-semibold">Pesan</h2>
-              <p className="text-caption text-fg-muted">Pilih percakapan untuk dibuka.</p>
+              <h2 className="text-body text-fg font-semibold">Percakapan</h2>
+              <p className="text-caption text-fg-muted">
+                {Array.from(unreadByThread.values()).reduce((sum, count) => sum + count, 0)} pesan belum dibaca
+              </p>
             </div>
             <Button variant="secondary" disabled={pendingRequest} onClick={() => setShowRequest(true)}>
               <Plus className="size-4" aria-hidden="true" />
@@ -179,20 +247,30 @@ export function InvestorMessageWorkspace({ initialThreads, initialMessages, curr
             const latest = latestByThread.get(thread.id)
             const expired = isExpired(thread, now)
             const active = selectedId === thread.id
+            const unread = unreadByThread.get(thread.id) ?? 0
             return (
               <button
                 key={thread.id}
                 type="button"
                 onClick={() => setSelectedId(thread.id)}
-                className={`border-border w-full border-b px-4 py-3 text-left transition ${active ? 'bg-surface-muted' : 'hover:bg-surface-muted/60'}`}
+                className={`border-border w-full border-b px-4 py-3 text-left transition ${active ? 'bg-accent-soft' : 'hover:bg-surface-muted/60'}`}
               >
                 <div className="flex items-center justify-between gap-2">
-                  <p className="text-body-sm text-fg truncate font-semibold">{thread.subject}</p>
-                  <span className="text-caption text-fg-subtle shrink-0">
-                    {expired ? 'Selesai' : thread.awaiting_admin_reply ? 'Menunggu' : 'Aktif'}
-                  </span>
+                  <p className={`text-body-sm text-fg truncate ${unread ? 'font-bold' : 'font-semibold'}`}>{thread.subject}</p>
+                  <div className="flex shrink-0 items-center gap-2">
+                    {unread ? (
+                      <span className="bg-accent-solid text-on-accent inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-[11px] font-bold">
+                        {unread > 99 ? '99+' : unread}
+                      </span>
+                    ) : null}
+                    <span className="text-caption text-fg-subtle">
+                      {expired ? 'Selesai' : thread.awaiting_admin_reply ? 'Menunggu' : 'Aktif'}
+                    </span>
+                  </div>
                 </div>
-                <p className="text-caption text-fg-muted mt-1 truncate">{latest?.body_text ?? 'Belum ada pesan'}</p>
+                <p className={`text-caption mt-1 truncate ${unread ? 'text-fg font-medium' : 'text-fg-muted'}`}>
+                  {latest ? `${latest.sender_id === currentUserId ? 'Anda: ' : 'Tim Nuzultrip: '}${latest.body_text}` : 'Belum ada pesan'}
+                </p>
                 <p className="text-caption text-fg-subtle mt-1">
                   {latest ? formatTime(latest.sent_at, timezone) : formatTime(thread.created_at, timezone)}
                 </p>
