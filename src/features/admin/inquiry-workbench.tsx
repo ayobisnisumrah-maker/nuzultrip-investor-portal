@@ -1,14 +1,14 @@
 'use client'
 
-import { useMemo, useState, useTransition } from 'react'
+import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 
-import { convertInquiryToThread, updateInquiryStatus } from '@/server/messaging/admin-actions'
+import { updateInquiryStatus } from '@/server/messaging/admin-actions'
 import { Alert } from '@/ui/alert'
-import { Button } from '@/ui/button'
 import { useToast } from '@/ui/toast'
 
 type InquiryStatus = 'new' | 'in_progress' | 'converted' | 'closed'
+type EditableInquiryStatus = 'new' | 'in_progress' | 'closed'
 
 type Inquiry = {
   id: string
@@ -18,15 +18,14 @@ type Inquiry = {
   organization: string | null
   message: string
   status: InquiryStatus
-  thread_id: string | null
   created_at: string
 }
 
 const STATUS_LABELS: Record<InquiryStatus, string> = {
   new: 'Baru',
   in_progress: 'Diproses',
-  converted: 'Dikonversi',
-  closed: 'Ditutup',
+  converted: 'Selesai',
+  closed: 'Selesai',
 }
 
 function formatReceivedAt(value: string, timezone: string) {
@@ -47,46 +46,32 @@ function formatReceivedAt(value: string, timezone: string) {
   }
 }
 
-function normalizeEmail(value: string) {
-  return value.trim().toLocaleLowerCase('id-ID')
-}
-
 export function InquiryWorkbench({
   inquiries,
   canHandle,
-  eligibleEmails,
   timezone,
 }: {
   inquiries: Inquiry[]
   canHandle: boolean
-  eligibleEmails: string[]
   timezone: string
 }) {
   const router = useRouter()
   const { push } = useToast()
   const [pending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
-  const [busyInquiryId, setBusyInquiryId] = useState<string | null>(null)
   const [selectedInquiryId, setSelectedInquiryId] = useState<string | null>(
     inquiries[0]?.id ?? null,
-  )
-
-  const eligibleEmailSet = useMemo(
-    () => new Set(eligibleEmails.map(normalizeEmail)),
-    [eligibleEmails],
   )
 
   const selectedInquiry =
     inquiries.find((inquiry) => inquiry.id === selectedInquiryId) ?? inquiries[0] ?? null
 
-  function changeStatus(inquiryId: string, status: InquiryStatus) {
-    if (pending || status === 'converted') return
+  function changeStatus(inquiryId: string, status: EditableInquiryStatus) {
+    if (pending) return
     setError(null)
-    setBusyInquiryId(inquiryId)
 
     startTransition(async () => {
       const result = await updateInquiryStatus({ inquiryId, status })
-      setBusyInquiryId(null)
 
       if (!result.ok) {
         setError(result.error.message)
@@ -102,65 +87,21 @@ export function InquiryWorkbench({
     })
   }
 
-  function openConversation(inquiry: Inquiry) {
-    if (pending) return
-
-    if (inquiry.thread_id) {
-      router.push(`/admin/messages?thread=${inquiry.thread_id}`)
-      return
-    }
-
-    const linkedInvestor = eligibleEmailSet.has(normalizeEmail(inquiry.email))
-    if (!linkedInvestor) {
-      setError(
-        'Permintaan ini belum terhubung ke akun investor aktif dengan email yang sama. Isi pesan tetap dapat dibaca dan status dapat diproses dari halaman ini.',
-      )
-      return
-    }
-
-    setError(null)
-    setBusyInquiryId(inquiry.id)
-    startTransition(async () => {
-      const result = await convertInquiryToThread({ inquiryId: inquiry.id })
-      setBusyInquiryId(null)
-
-      if (!result.ok) {
-        setError(result.error.message)
-        return
-      }
-
-      push({
-        tone: 'success',
-        title: 'Percakapan dibuat',
-        description: 'Permintaan telah dikonversi menjadi percakapan investor.',
-      })
-      router.push(`/admin/messages?thread=${result.data.threadId}`)
-      router.refresh()
-    })
-  }
-
   if (!inquiries.length) {
     return (
       <div className="border-border bg-surface rounded-2xl border p-8 text-center shadow-sm">
         <h2 className="text-body text-fg font-semibold">Belum ada permintaan masuk</h2>
         <p className="text-body-sm text-fg-muted mt-2">
-          Permintaan dari formulir portal publik akan muncul di halaman ini.
+          Permintaan informasi atau dokumen dari portal publik akan muncul di halaman ini.
         </p>
       </div>
     )
   }
 
-  const selectedLinkedInvestor = selectedInquiry
-    ? Boolean(selectedInquiry.thread_id) || eligibleEmailSet.has(normalizeEmail(selectedInquiry.email))
-    : false
-  const selectedBusy = Boolean(
-    selectedInquiry && pending && busyInquiryId === selectedInquiry.id,
-  )
-
   return (
     <div className="space-y-4">
       {error ? (
-        <Alert tone="danger" title="Operasi gagal">
+        <Alert tone="danger" title="Status tidak dapat diperbarui">
           {error}
         </Alert>
       ) : null}
@@ -168,9 +109,9 @@ export function InquiryWorkbench({
       <div className="border-border bg-surface overflow-hidden rounded-2xl border shadow-sm">
         <div className="border-border flex flex-wrap items-end justify-between gap-3 border-b px-4 py-4 sm:px-5">
           <div>
-            <h2 className="text-body text-fg font-semibold">Permintaan dari portal publik</h2>
+            <h2 className="text-body text-fg font-semibold">Permintaan informasi / dokumen</h2>
             <p className="text-caption text-fg-muted mt-1">
-              Pilih permintaan untuk membaca isi pesan lengkap dan melakukan tindak lanjut.
+              Pilih permintaan untuk membaca kebutuhan lengkap dan mencatat tindak lanjutnya.
             </p>
           </div>
           <span className="border-border text-caption text-fg-subtle rounded-full border px-2.5 py-1">
@@ -183,8 +124,6 @@ export function InquiryWorkbench({
             <div className="max-h-[520px] overflow-y-auto">
               {inquiries.map((inquiry) => {
                 const active = selectedInquiry?.id === inquiry.id
-                const linkedInvestor =
-                  Boolean(inquiry.thread_id) || eligibleEmailSet.has(normalizeEmail(inquiry.email))
 
                 return (
                   <button
@@ -212,15 +151,8 @@ export function InquiryWorkbench({
                       {inquiry.message}
                     </p>
 
-                    <div className="text-caption text-fg-subtle mt-3 flex flex-wrap items-center justify-between gap-2">
-                      <span>{formatReceivedAt(inquiry.created_at, timezone)}</span>
-                      <span>
-                        {inquiry.thread_id
-                          ? 'Percakapan aktif'
-                          : linkedInvestor
-                            ? 'Investor terhubung'
-                            : 'Belum terhubung'}
-                      </span>
+                    <div className="text-caption text-fg-subtle mt-3">
+                      {formatReceivedAt(inquiry.created_at, timezone)}
                     </div>
                   </button>
                 )
@@ -261,65 +193,43 @@ export function InquiryWorkbench({
                       {selectedInquiry.organization || 'Tidak dicantumkan'}
                     </dd>
                   </div>
-                  <div className="border-border border-b p-4 sm:border-r sm:border-b-0">
+                  <div className="border-border p-4 sm:border-r">
                     <dt className="text-caption text-fg-subtle">Diterima</dt>
                     <dd className="text-body-sm text-fg mt-1 font-medium">
                       {formatReceivedAt(selectedInquiry.created_at, timezone)}
                     </dd>
                   </div>
                   <div className="p-4">
-                    <dt className="text-caption text-fg-subtle">Koneksi investor</dt>
+                    <dt className="text-caption text-fg-subtle">Jenis permintaan</dt>
                     <dd className="text-body-sm text-fg mt-1 font-medium">
-                      {selectedInquiry.thread_id
-                        ? 'Sudah menjadi percakapan investor'
-                        : selectedLinkedInvestor
-                          ? 'Terhubung ke investor aktif'
-                          : 'Belum terhubung ke investor aktif'}
+                      Informasi / dokumen untuk dipelajari
                     </dd>
                   </div>
                 </dl>
 
                 <div className="mt-6">
-                  <p className="text-body-sm text-fg font-semibold">Isi pesan</p>
+                  <p className="text-body-sm text-fg font-semibold">Kebutuhan / pesan</p>
                   <div className="border-border bg-canvas text-body text-fg mt-2 min-h-40 rounded-xl border p-5 leading-7 whitespace-pre-wrap break-words">
                     {selectedInquiry.message}
                   </div>
                 </div>
 
                 {canHandle ? (
-                  <div className="border-border mt-6 flex flex-col gap-3 border-t pt-5 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-caption text-fg-subtle">Status tindak lanjut</span>
-                      <select
-                        value={selectedInquiry.status}
-                        disabled={pending || selectedInquiry.status === 'converted'}
-                        onChange={(event) =>
-                          changeStatus(selectedInquiry.id, event.target.value as InquiryStatus)
-                        }
-                        className="border-border bg-canvas text-body-sm h-10 rounded-lg border px-3"
-                        aria-label={`Status permintaan ${selectedInquiry.name}`}
-                      >
-                        <option value="new">Baru</option>
-                        <option value="in_progress">Diproses</option>
-                        <option value="converted" disabled>
-                          Dikonversi
-                        </option>
-                        <option value="closed">Ditutup</option>
-                      </select>
-                    </div>
-
-                    <Button
-                      variant="primary"
-                      loading={selectedBusy}
-                      disabled={pending && !selectedBusy}
-                      onClick={() => openConversation(selectedInquiry)}
+                  <div className="border-border mt-6 flex flex-wrap items-center gap-3 border-t pt-5">
+                    <span className="text-caption text-fg-subtle">Status tindak lanjut</span>
+                    <select
+                      value={selectedInquiry.status === 'converted' ? 'closed' : selectedInquiry.status}
+                      disabled={pending}
+                      onChange={(event) =>
+                        changeStatus(selectedInquiry.id, event.target.value as EditableInquiryStatus)
+                      }
+                      className="border-border bg-canvas text-body-sm h-10 rounded-lg border px-3"
+                      aria-label={`Status permintaan ${selectedInquiry.name}`}
                     >
-                      {selectedInquiry.thread_id
-                        ? 'Buka Percakapan'
-                        : selectedLinkedInvestor
-                          ? 'Jadikan Percakapan'
-                          : 'Belum Terhubung ke Investor'}
-                    </Button>
+                      <option value="new">Baru</option>
+                      <option value="in_progress">Diproses</option>
+                      <option value="closed">Selesai</option>
+                    </select>
                   </div>
                 ) : (
                   <p className="text-caption text-fg-subtle mt-6">Akses baca saja.</p>
