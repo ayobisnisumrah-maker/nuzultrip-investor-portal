@@ -40,24 +40,24 @@ begin
     raise exception 'Missing permission: profit_distribution_payments.mark_paid' using errcode='42501';
   end if;
 
-  select * into v_allocation
-  from public.profit_distribution_allocations
-  where id=p_allocation_id
+  select a.* into v_allocation
+  from public.profit_distribution_allocations a
+  where a.id=p_allocation_id
   for update;
   if v_allocation.id is null then raise exception 'Allocation not found.' using errcode='P0002'; end if;
   if v_allocation.status <> 'payable' then raise exception 'Only payable allocations can be marked paid.' using errcode='42501'; end if;
 
-  select * into v_distribution
-  from public.profit_distributions
-  where id=v_allocation.distribution_id
+  select d.* into v_distribution
+  from public.profit_distributions d
+  where d.id=v_allocation.distribution_id
   for update;
   if v_distribution.id is null or v_distribution.status <> 'payable' then
     raise exception 'Parent distribution must be payable.' using errcode='42501';
   end if;
 
-  select * into v_proof
-  from public.profit_distribution_payment_proofs
-  where allocation_id=v_allocation.id
+  select p.* into v_proof
+  from public.profit_distribution_payment_proofs p
+  where p.allocation_id=v_allocation.id
   for share;
   if v_proof.id is null then
     raise exception 'Payment proof is required before marking the allocation paid.' using errcode='23514';
@@ -65,17 +65,17 @@ begin
 
   v_reference := coalesce(nullif(btrim(coalesce(p_payment_reference,'')),''), v_allocation.payment_reference, v_proof.payment_reference);
 
-  update public.profit_distribution_allocations
+  update public.profit_distribution_allocations a
   set status='paid', paid_at=v_now, payment_reference=v_reference, updated_at=v_now
-  where id=v_allocation.id;
+  where a.id=v_allocation.id;
 
   if not exists (
-    select 1 from public.profit_distribution_allocations
-    where distribution_id=v_distribution.id and status not in ('paid','cancelled')
+    select 1 from public.profit_distribution_allocations a
+    where a.distribution_id=v_distribution.id and a.status not in ('paid','cancelled')
   ) then
-    update public.profit_distributions
+    update public.profit_distributions d
     set status='paid', paid_at=v_now, updated_by=auth.uid()
-    where id=v_distribution.id;
+    where d.id=v_distribution.id;
     v_distribution.status := 'paid';
   end if;
 
