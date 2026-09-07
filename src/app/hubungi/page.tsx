@@ -29,10 +29,13 @@ export default async function ContactPage({
           <p className="text-sm font-bold tracking-[0.16em] text-[#0b7374] uppercase">
             Investor Relations
           </p>
-          <h1 className="font-display text-display-lg mt-3 text-[#142657]">Hubungi Tim Kami</h1>
+          <h1 className="font-display text-display-lg mt-3 text-[#142657]">
+            Minta Informasi atau Dokumen
+          </h1>
           <p className="mt-5 max-w-2xl text-lg leading-8 text-[#46556f] sm:text-xl sm:leading-9">
-            Sampaikan minat investasi, pertanyaan perusahaan, atau permintaan informasi. Permintaan
-            akan masuk ke inbox Investor Relations untuk ditindaklanjuti oleh tim.
+            Gunakan formulir ini untuk meminta informasi atau dokumen Nuzultrip Equity yang ingin Anda
+            pelajari terlebih dahulu. Pengiriman formulir ini bukan pendaftaran investor dan tidak
+            membuat akun investor.
           </p>
         </div>
 
@@ -42,8 +45,8 @@ export default async function ContactPage({
               Permintaan berhasil dikirim
             </h2>
             <p className="mt-3 text-base leading-7 text-[#46556f] sm:text-lg sm:leading-8">
-              Tim Investor Relations akan meninjau permintaan Anda dan melakukan tindak lanjut
-              melalui informasi kontak yang diberikan.
+              Tim Investor Relations akan meninjau kebutuhan informasi atau dokumen Anda dan
+              menindaklanjutinya melalui informasi kontak yang diberikan.
             </p>
             <Link
               href="/"
@@ -118,7 +121,7 @@ export default async function ContactPage({
 
             <div>
               <label htmlFor="message" className="text-base font-semibold text-[#142657]">
-                Pesan
+                Informasi / dokumen yang ingin dipelajari
               </label>
               <textarea
                 id="message"
@@ -126,13 +129,14 @@ export default async function ContactPage({
                 required
                 maxLength={5000}
                 rows={7}
-                className="mt-2 w-full rounded-xl border border-[#799fa2] bg-white px-4 py-3 text-base leading-7 text-[#142657] outline-none focus:border-[#0b7374] focus:ring-2 focus:ring-[#0b7374]/20"
+                placeholder="Contoh: Saya ingin mempelajari profil perusahaan, skema kepemilikan, atau dokumen pendukung yang tersedia."
+                className="mt-2 w-full rounded-xl border border-[#799fa2] bg-white px-4 py-3 text-base leading-7 text-[#142657] outline-none placeholder:text-[#8290a5] focus:border-[#0b7374] focus:ring-2 focus:ring-[#0b7374]/20"
               />
             </div>
 
             <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm leading-6 text-[#617087] sm:text-base">
-                Data digunakan untuk menindaklanjuti permintaan Anda.
+                Data digunakan hanya untuk menindaklanjuti permintaan informasi atau dokumen Anda.
               </p>
               <InquirySubmitButton />
             </div>
