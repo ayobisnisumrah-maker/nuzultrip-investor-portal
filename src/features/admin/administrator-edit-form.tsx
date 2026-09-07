@@ -30,6 +30,13 @@ type Props = {
   canDelete?: boolean
 }
 
+const ASSIGNABLE_OPERATIONAL_ROLE_KEYS = new Set([
+  'admin_investor_relations',
+  'admin_document_verification',
+  'admin_finance_reporting',
+  'admin_portal_communications',
+])
+
 export function AdministratorEditForm({
   admin,
   roles,
@@ -45,11 +52,15 @@ export function AdministratorEditForm({
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
 
-  const assignableRoles = roles.filter((role) => role.key !== 'super_admin')
-  const selectedRole = assignableRoles.find((role) => role.id === roleId)
+  const currentRole = roles.find((role) => role.id === admin.roleId)
+  const assignableRoles = roles.filter((role) => ASSIGNABLE_OPERATIONAL_ROLE_KEYS.has(role.key))
+  const currentRoleProtected = Boolean(
+    currentRole && !ASSIGNABLE_OPERATIONAL_ROLE_KEYS.has(currentRole.key),
+  )
+  const selectedRole = roles.find((role) => role.id === roleId)
 
   function submit() {
-    if (pending) return
+    if (pending || currentRoleProtected) return
 
     setError(null)
     setSuccess(null)
@@ -147,9 +158,7 @@ export function AdministratorEditForm({
 
     startTransition(async () => {
       try {
-        const result = await deleteAdmin({
-          adminId: admin.id,
-        })
+        const result = await deleteAdmin({ adminId: admin.id })
 
         if (!result.ok) {
           setError(result.error.message)
@@ -180,16 +189,25 @@ export function AdministratorEditForm({
           submit()
         }}
       >
+        {currentRoleProtected ? (
+          <div className="rounded-lg border p-4" role="status">
+            <p className="text-sm font-medium">Peran sistem internal dilindungi</p>
+            <p className="text-muted-foreground mt-1 text-sm">
+              Administrator ini menggunakan peran sistem internal yang tidak dapat diubah melalui
+              pengelolaan Administrator. Kontrol status tetap tersedia sesuai izin Anda.
+            </p>
+          </div>
+        ) : null}
+
         <div>
           <label htmlFor="administrator-edit-name" className="text-sm font-medium">
             Nama Lengkap
           </label>
-
           <input
             id="administrator-edit-name"
             value={fullName}
             onChange={(event) => setFullName(event.target.value)}
-            disabled={pending}
+            disabled={pending || currentRoleProtected}
             autoComplete="name"
             required
             className="bg-background mt-2 h-11 w-full rounded-lg border px-3 text-sm outline-none focus:ring-2"
@@ -200,7 +218,6 @@ export function AdministratorEditForm({
           <label htmlFor="administrator-edit-email" className="text-sm font-medium">
             Surel
           </label>
-
           <input
             id="administrator-edit-email"
             value={admin.email}
@@ -208,7 +225,6 @@ export function AdministratorEditForm({
             readOnly
             className="bg-muted text-muted-foreground mt-2 h-11 w-full rounded-lg border px-3 text-sm outline-none"
           />
-
           <p className="text-muted-foreground mt-1 text-xs">
             Surel akun tidak diubah melalui formulir ini.
           </p>
@@ -218,33 +234,35 @@ export function AdministratorEditForm({
           <label htmlFor="administrator-edit-role" className="text-sm font-medium">
             Peran Administrator
           </label>
-
           <select
             id="administrator-edit-role"
             value={roleId}
             onChange={(event) => setRoleId(event.target.value)}
-            disabled={pending || assignableRoles.length === 0}
+            disabled={pending || currentRoleProtected || assignableRoles.length === 0}
             required
             className="bg-background mt-2 h-11 w-full rounded-lg border px-3 text-sm outline-none focus:ring-2"
           >
-            <option value="">Pilih peran administrator</option>
-
-            {assignableRoles.map((role) => (
-              <option key={role.id} value={role.id}>
-                {role.name}
-              </option>
-            ))}
+            {currentRoleProtected && currentRole ? (
+              <option value={currentRole.id}>{currentRole.name}</option>
+            ) : (
+              <>
+                <option value="">Pilih peran administrator</option>
+                {assignableRoles.map((role) => (
+                  <option key={role.id} value={role.id}>
+                    {role.name}
+                  </option>
+                ))}
+              </>
+            )}
           </select>
-
           <p className="text-muted-foreground mt-2 text-xs">
-            Super Admin tidak dapat diberikan melalui pengelolaan Administrator. Peran operasional,
-            termasuk Admin Internal, dapat diberikan sesuai kewenangan.
+            Hanya peran operasional yang dapat diberikan. Super Admin dan peran sistem internal
+            tidak tersedia untuk penetapan melalui halaman ini.
           </p>
 
           {selectedRole ? (
             <div className="mt-3 rounded-lg border p-4">
               <p className="text-sm font-medium">{selectedRole.name}</p>
-
               <p className="text-muted-foreground mt-1 text-xs">{selectedRole.description}</p>
             </div>
           ) : null}
@@ -254,12 +272,11 @@ export function AdministratorEditForm({
           <label htmlFor="administrator-edit-title" className="text-sm font-medium">
             Jabatan
           </label>
-
           <input
             id="administrator-edit-title"
             value={title}
             onChange={(event) => setTitle(event.target.value)}
-            disabled={pending}
+            disabled={pending || currentRoleProtected}
             placeholder="Contoh: Manajer Hubungan Investor"
             className="bg-background mt-2 h-11 w-full rounded-lg border px-3 text-sm outline-none focus:ring-2"
           />
@@ -267,11 +284,9 @@ export function AdministratorEditForm({
 
         <div>
           <label className="text-sm font-medium">Referensi Pegawai</label>
-
           <div className="bg-muted text-muted-foreground mt-2 rounded-lg border px-3 py-2.5 text-sm">
             {admin.employeeRef || '-'}
           </div>
-
           <p className="text-muted-foreground mt-1 text-xs">
             Referensi pegawai dikelola oleh sistem dan tidak diubah melalui formulir ini.
           </p>
@@ -279,11 +294,9 @@ export function AdministratorEditForm({
 
         <div>
           <label className="text-sm font-medium">Status Akun</label>
-
           <div className="mt-2 rounded-lg border px-3 py-2.5 text-sm">
             {admin.isActive ? 'Aktif' : 'Nonaktif'}
           </div>
-
           <p className="text-muted-foreground mt-1 text-xs">
             Status akun dapat diubah melalui kontrol status Administrator di bawah.
           </p>
@@ -307,7 +320,6 @@ export function AdministratorEditForm({
         {error ? (
           <div className="rounded-lg border p-4" role="alert">
             <p className="text-sm font-medium">Operasi administrator gagal</p>
-
             <p className="text-muted-foreground mt-1 text-sm">{error}</p>
           </div>
         ) : null}
@@ -315,7 +327,6 @@ export function AdministratorEditForm({
         {success ? (
           <div className="rounded-lg border p-4" role="status">
             <p className="text-sm font-medium">{success}</p>
-
             <p className="text-muted-foreground mt-1 text-sm">
               Perubahan telah disimpan dan dicatat pada jejak audit.
             </p>
@@ -333,23 +344,23 @@ export function AdministratorEditForm({
               Kembali
             </button>
 
-            <button
-              type="submit"
-              disabled={pending || !fullName.trim() || !roleId}
-              className="bg-background hover:bg-muted rounded-lg border px-5 py-2.5 text-sm font-medium shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {pending ? 'Menyimpan...' : 'Simpan Perubahan'}
-            </button>
+            {!currentRoleProtected ? (
+              <button
+                type="submit"
+                disabled={pending || !fullName.trim() || !roleId}
+                className="bg-background hover:bg-muted rounded-lg border px-5 py-2.5 text-sm font-medium shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {pending ? 'Menyimpan...' : 'Simpan Perubahan'}
+              </button>
+            ) : null}
           </div>
 
           {canDelete ? (
             <div className="rounded-xl border p-4">
               <p className="text-sm font-semibold">Zona Berbahaya</p>
-
               <p className="text-muted-foreground mt-1 text-sm">
                 Menghapus administrator bersifat permanen dan tidak dapat dibatalkan.
               </p>
-
               <button
                 type="button"
                 onClick={removeAdministrator}
