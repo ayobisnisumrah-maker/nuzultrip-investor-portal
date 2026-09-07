@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 
 import { PublicPortalReference } from '@/features/portal/public-portal-reference'
+import { getPublicBrandLogo } from '@/server/portal/public-branding'
 import {
   getPublicDocuments,
   getPublishedHomePage,
@@ -53,10 +54,11 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function Home() {
-  const [portal, navigation, publicDocuments] = await Promise.all([
+  const [portal, navigation, publicDocuments, brandLogoUrl] = await Promise.all([
     getPublishedHomePage(),
     getPublishedNavigation(),
     getPublicDocuments(),
+    getPublicBrandLogo(),
   ])
 
   if (!portal) {
@@ -89,6 +91,7 @@ export default async function Home() {
       sections={portal.sections}
       navigation={navigation}
       publicDocuments={publicDocuments}
+      brandLogoUrl={brandLogoUrl}
     />
   )
 }
