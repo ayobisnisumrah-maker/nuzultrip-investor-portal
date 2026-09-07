@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 
 import { CommunicationWorkbench } from '@/features/admin/communication-workbench'
 import { requireAdminPage } from '@/server/auth/page-guards'
+import { expireMessageThreads } from '@/server/messaging/lifecycle'
 import { getServerSupabase } from '@/server/supabase/server'
 import { Alert } from '@/ui/alert'
 
@@ -31,10 +32,14 @@ export default async function MessagesPage({
   }
 
   const supabase = await getServerSupabase()
+  await expireMessageThreads(supabase)
+
   const params = await searchParams
-  const { data: threads, error } = await supabase
+  const { data: rawThreads, error } = await supabase
     .from('message_threads')
-    .select('id, subject, thread_kind, investor_id, last_message_at, is_closed')
+    .select(
+      'id, subject, thread_kind, investor_id, last_message_at, is_closed, expires_at, reply_deadline_at, awaiting_admin_reply',
+    )
     .order('last_message_at', { ascending: false, nullsFirst: false })
     .limit(100)
 
@@ -46,8 +51,21 @@ export default async function MessagesPage({
     )
   }
 
-  const selectedId = params.thread ?? threads?.[0]?.id
-  const selectedThread = threads?.find((thread) => thread.id === selectedId) ?? null
+  const now = Date.now()
+  const threads = (rawThreads ?? []).map((thread) => ({
+    id: thread.id,
+    subject: thread.subject,
+    thread_kind: thread.thread_kind,
+    investor_id: thread.investor_id,
+    last_message_at: thread.last_message_at,
+    is_closed:
+      thread.is_closed ||
+      Boolean(thread.expires_at && new Date(thread.expires_at).getTime() <= now) ||
+      Boolean(thread.reply_deadline_at && new Date(thread.reply_deadline_at).getTime() <= now),
+  }))
+
+  const selectedId = params.thread ?? threads[0]?.id
+  const selectedThread = threads.find((thread) => thread.id === selectedId) ?? null
   let messages: {
     id: string
     body_text: string
@@ -65,7 +83,7 @@ export default async function MessagesPage({
     messages = result.data ?? []
   }
 
-  const threadIds = (threads ?? []).map((thread) => thread.id)
+  const threadIds = threads.map((thread) => thread.id)
   const { data: listMessagesRaw } = threadIds.length
     ? await supabase
         .from('messages')
@@ -114,7 +132,7 @@ export default async function MessagesPage({
       </div>
 
       <CommunicationWorkbench
-        threads={threads ?? []}
+        threads={threads}
         selectedThread={selectedThread}
         messages={messages}
         unreadByThread={unreadByThread}
