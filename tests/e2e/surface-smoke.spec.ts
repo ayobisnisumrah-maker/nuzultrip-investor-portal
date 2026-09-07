@@ -105,8 +105,9 @@ test('public portal and authentication routes render cleanly', async ({ page }) 
   await expectHealthyRoutes(page, PUBLIC_ROUTES, 'public')
 
   await page.goto('/')
-  await expect(page.locator('h1 span').first()).toBeVisible()
-  const clippedHeadlineLines = await page.locator('h1 span').evaluateAll((lines) =>
+  const headline = page.locator('h1').first()
+  await expect(headline).toBeVisible()
+  const clippedHeadlineLines = await page.locator('h1, h1 span').evaluateAll((lines) =>
     lines
       .filter((line) => {
         const bounds = line.getBoundingClientRect()
