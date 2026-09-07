@@ -50,12 +50,12 @@ export default async function FinancialsPage() {
       <PageHeader
         eyebrow="Keuangan"
         title="Ringkasan Keuangan"
-        description="Pantau sumber informasi keuangan resmi yang digunakan oleh Admin dan ditampilkan kepada investor setelah dipublikasikan."
+        description="Pantau sumber informasi keuangan resmi yang digunakan Admin dan hanya ditampilkan kepada investor setelah melalui persetujuan dan publikasi."
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Card><CardBody><div className="text-caption text-fg-subtle">Periode Terbuka</div><div className="text-heading-lg mt-1 font-semibold">{openPeriods}</div></CardBody></Card>
-        <Card><CardBody><div className="text-caption text-fg-subtle">Laporan Dalam Workflow</div><div className="text-heading-lg mt-1 font-semibold">{reportsInWorkflow}</div></CardBody></Card>
+        <Card><CardBody><div className="text-caption text-fg-subtle">Laporan Dalam Proses</div><div className="text-heading-lg mt-1 font-semibold">{reportsInWorkflow}</div></CardBody></Card>
         <Card><CardBody><div className="text-caption text-fg-subtle">Laporan Terbit</div><div className="text-heading-lg mt-1 font-semibold">{publishedReports}</div></CardBody></Card>
         <Card><CardBody><div className="text-caption text-fg-subtle">KPI Tercatat</div><div className="text-heading-lg mt-1 font-semibold">{kpisResult.count ?? 0}</div></CardBody></Card>
       </div>
@@ -63,13 +63,13 @@ export default async function FinancialsPage() {
       <div className="grid gap-4 md:grid-cols-3">
         <Link href="/admin/financials/periods" className="border-border bg-surface hover:border-primary-solid rounded-xl border p-5 transition">
           <h2 className="text-body text-fg font-semibold">Periode Keuangan</h2>
-          <p className="text-body-sm text-fg-muted mt-2">Kelola periode pelaporan dan status pembukaan sampai penguncian periode.</p>
+          <p className="text-body-sm text-fg-muted mt-2">Kelola periode pelaporan, pembukaan periode, dan penguncian setelah proses pelaporan selesai.</p>
           <p className="text-caption text-fg-subtle mt-4">{periods.length} periode terdaftar</p>
         </Link>
 
         <Link href="/admin/financials/reports" className="border-border bg-surface hover:border-primary-solid rounded-xl border p-5 transition">
           <h2 className="text-body text-fg font-semibold">Laporan Keuangan</h2>
-          <p className="text-body-sm text-fg-muted mt-2">Pantau laporan, review, approval, visibilitas, dan publikasi kepada investor.</p>
+          <p className="text-body-sm text-fg-muted mt-2">Pantau laporan, peninjauan, persetujuan, visibilitas, dan publikasi kepada investor.</p>
           <p className="text-caption text-fg-subtle mt-4">{reports.length} laporan terdaftar</p>
         </Link>
 
