@@ -3,8 +3,9 @@
 -- an investor id only for active accounts whose investor status is approved/active.
 --
 -- Keep lifecycle/account rows readable so the UI can explain a rejected or
--- inactive state, but block operational surfaces such as messaging and
--- notifications when `current_investor_id()` becomes null.
+-- inactive state, but block operational surfaces such as messaging,
+-- notifications, and private payment-proof storage when
+-- `current_investor_id()` becomes null.
 
 create or replace function app.participates_in_thread(p_thread_id uuid)
 returns boolean
@@ -132,4 +133,18 @@ with check (
     app.current_investor_id() is not null
     or app.is_admin()
   )
+);
+
+-- Private payment proof objects must follow the same investor lifecycle gate.
+-- Folder ownership alone is not enough because an inactive/rejected investor
+-- still retains the same auth.uid().
+drop policy if exists payment_proofs_investor_select_own on storage.objects;
+create policy payment_proofs_investor_select_own
+on storage.objects
+for select
+to authenticated
+using (
+  bucket_id = 'profit-distribution-proofs'
+  and app.current_investor_id() is not null
+  and (storage.foldername(name))[1] = app.current_investor_id()::text
 );
