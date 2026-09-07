@@ -18,18 +18,11 @@ export default async function InquiriesPage() {
   }
 
   const supabase = await getServerSupabase()
-  const [{ data: inquiries, error }, { data: eligibleInvestors }] = await Promise.all([
-    supabase
-      .from('portal_inquiries')
-      .select('id, name, email, phone, organization, message, status, thread_id, created_at')
-      .order('created_at', { ascending: false })
-      .limit(100),
-    supabase
-      .from('investors')
-      .select('id')
-      .in('status', ['approved', 'active'])
-      .limit(500),
-  ])
+  const { data: inquiries, error } = await supabase
+    .from('portal_inquiries')
+    .select('id, name, email, phone, organization, message, status, created_at')
+    .order('created_at', { ascending: false })
+    .limit(100)
 
   if (error) {
     return (
@@ -39,17 +32,6 @@ export default async function InquiriesPage() {
     )
   }
 
-  const investorIds = (eligibleInvestors ?? []).map((row) => row.id)
-  const { data: investorAccounts } = investorIds.length
-    ? await supabase
-        .from('user_accounts')
-        .select('id, email, status')
-        .in('id', investorIds)
-        .eq('status', 'active')
-    : { data: [] }
-
-  const eligibleEmails = (investorAccounts ?? []).map((row) => row.email.toLocaleLowerCase('id-ID'))
-
   return (
     <div className="space-y-6">
       <div>
@@ -58,14 +40,13 @@ export default async function InquiriesPage() {
         </p>
         <h1 className="font-display text-heading-lg text-fg mt-1">Permintaan Masuk</h1>
         <p className="text-body-sm text-fg-muted mt-2 max-w-3xl">
-          Kelola inquiry dari portal publik, tindak lanjutnya, dan konversinya menjadi percakapan.
+          Tinjau permintaan informasi atau dokumen dari portal publik dan catat status tindak lanjutnya. Pengirim tidak perlu mendaftar sebagai investor.
         </p>
       </div>
 
       <InquiryWorkbench
         inquiries={inquiries ?? []}
         canHandle={principal.permissions.has('inquiries.handle')}
-        eligibleEmails={eligibleEmails}
         timezone={principal.timezone}
       />
     </div>
