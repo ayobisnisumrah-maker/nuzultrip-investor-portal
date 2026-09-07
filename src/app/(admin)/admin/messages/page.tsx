@@ -9,6 +9,13 @@ export const metadata: Metadata = { title: 'Pesan' }
 
 type SearchParams = { thread?: string }
 
+type ListMessage = {
+  id: string
+  thread_id: string
+  sender_id: string | null
+  sent_at: string
+}
+
 export default async function MessagesPage({
   searchParams,
 }: {
@@ -39,7 +46,7 @@ export default async function MessagesPage({
     )
   }
 
-  const selectedId = params.thread
+  const selectedId = params.thread ?? threads?.[0]?.id
   const selectedThread = threads?.find((thread) => thread.id === selectedId) ?? null
   let messages: {
     id: string
@@ -56,6 +63,36 @@ export default async function MessagesPage({
       .eq('thread_id', selectedThread.id)
       .order('sent_at', { ascending: true })
     messages = result.data ?? []
+  }
+
+  const threadIds = (threads ?? []).map((thread) => thread.id)
+  const { data: listMessagesRaw } = threadIds.length
+    ? await supabase
+        .from('messages')
+        .select('id, thread_id, sender_id, sent_at')
+        .in('thread_id', threadIds)
+        .order('sent_at', { ascending: false })
+        .limit(2000)
+    : { data: [] }
+
+  const listMessages = (listMessagesRaw ?? []) as ListMessage[]
+  const incomingIds = listMessages
+    .filter((message) => message.sender_id !== principal.userId)
+    .map((message) => message.id)
+
+  const { data: readRows } = incomingIds.length
+    ? await supabase
+        .from('message_reads')
+        .select('message_id')
+        .eq('user_id', principal.userId)
+        .in('message_id', incomingIds)
+    : { data: [] }
+
+  const readIds = new Set((readRows ?? []).map((row) => row.message_id))
+  const unreadByThread: Record<string, number> = {}
+  for (const message of listMessages) {
+    if (message.sender_id === principal.userId || readIds.has(message.id)) continue
+    unreadByThread[message.thread_id] = (unreadByThread[message.thread_id] ?? 0) + 1
   }
 
   const { data: investors } = await supabase
@@ -80,6 +117,7 @@ export default async function MessagesPage({
         threads={threads ?? []}
         selectedThread={selectedThread}
         messages={messages}
+        unreadByThread={unreadByThread}
         investors={investors ?? []}
         canSend={principal.permissions.has('messages.send')}
         canHandle={principal.permissions.has('inquiries.handle')}
