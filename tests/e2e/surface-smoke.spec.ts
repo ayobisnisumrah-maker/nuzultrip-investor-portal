@@ -167,7 +167,11 @@ test('Super Admin can replace the public logo from Company Profile', async ({ pa
       buffer: onePixelPng,
     })
     await page.getByRole('button', { name: 'Simpan Logo' }).click()
-    await expect(page.getByRole('status')).toContainText('berhasil diperbarui')
+    await expect(
+      page.getByText('Logo perusahaan berhasil diperbarui dan akan digunakan oleh portal publik.', {
+        exact: true,
+      }),
+    ).toBeVisible()
     await page.goto('/')
     const source = await page.locator('header img[alt="Nuzultrip"]').getAttribute('src')
     expect(source).toContain('public-media')
