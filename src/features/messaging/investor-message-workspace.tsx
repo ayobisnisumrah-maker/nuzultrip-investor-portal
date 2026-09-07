@@ -1,11 +1,14 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState, useTransition } from 'react'
+import { useEffect, useMemo, useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import { MessageCircleMore, Plus, Search } from 'lucide-react'
 
+import { topics } from '@/core/realtime/events'
 import { LiveMessageThread } from '@/features/messaging/live-message-thread'
-import { getBrowserSupabase } from '@/lib/supabase-browser'
+import { useRealtime } from '@/features/realtime/realtime-provider'
 import { createInvestorMessageRequest } from '@/server/messaging/investor-actions'
+import { markThreadRead } from '@/server/messaging/read-actions'
 import { Alert } from '@/ui/alert'
 import { Button } from '@/ui/button'
 import { useToast } from '@/ui/toast'
@@ -35,6 +38,7 @@ type Props = {
   initialThreads: Thread[]
   initialMessages: Message[]
   initialReadMessageIds: string[]
+  investorId: string
   currentUserId: string
   timezone: string
 }
@@ -61,10 +65,12 @@ export function InvestorMessageWorkspace({
   initialThreads,
   initialMessages,
   initialReadMessageIds,
+  investorId,
   currentUserId,
   timezone,
 }: Props) {
-  const supabase = useMemo(() => getBrowserSupabase(), [])
+  const router = useRouter()
+  const realtime = useRealtime()
   const { push } = useToast()
   const [threads, setThreads] = useState(initialThreads)
   const [messages, setMessages] = useState(initialMessages)
@@ -78,65 +84,48 @@ export function InvestorMessageWorkspace({
   const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
 
-  const sync = useCallback(async () => {
-    const [{ data: threadRows }, { data: messageRows }] = await Promise.all([
-      supabase
-        .from('message_threads')
-        .select('id, subject, last_message_at, is_closed, created_at, initiated_by, awaiting_admin_reply, expires_at, reply_deadline_at')
-        .order('last_message_at', { ascending: false, nullsFirst: false })
-        .order('created_at', { ascending: false }),
-      supabase
-        .from('messages')
-        .select('id, thread_id, body_text, sender_id, sender_label, sent_at')
-        .order('sent_at', { ascending: false })
-        .limit(500),
-    ])
+  // RSC refreshes are the source of truth. This keeps local UI state aligned
+  // with authenticated server reads and prevents a stale unread count after refresh.
+  useEffect(() => {
+    setThreads(initialThreads)
+    setMessages(initialMessages)
+    setReadMessageIds(new Set(initialReadMessageIds))
+    setSelectedId((current) =>
+      current && initialThreads.some((thread) => thread.id === current)
+        ? current
+        : initialThreads[0]?.id ?? '',
+    )
+  }, [initialMessages, initialReadMessageIds, initialThreads])
 
-    const nextThreads = (threadRows ?? []) as unknown as Thread[]
-    const nextMessages = (messageRows ?? []) as unknown as Message[]
-    const incomingIds = nextMessages
-      .filter((message) => message.sender_id !== currentUserId)
-      .map((message) => message.id)
+  useEffect(() => {
+    const unsubscribe = realtime.subscribe(topics.investor(investorId), (event) => {
+      if (event.kind === 'message.received') router.refresh()
+    })
 
-    const { data: readRows } = incomingIds.length
-      ? await supabase
-          .from('message_reads')
-          .select('message_id')
-          .eq('user_id', currentUserId)
-          .in('message_id', incomingIds)
-      : { data: [] }
+    return unsubscribe
+  }, [investorId, realtime, router])
 
-    setThreads(nextThreads)
-    setMessages(nextMessages)
-    setReadMessageIds(new Set((readRows ?? []).map((row) => row.message_id)))
-    setSelectedId((current) => current || nextThreads[0]?.id || '')
-  }, [currentUserId, supabase])
+  useEffect(() => {
+    if (realtime.resumeToken > 0) router.refresh()
+  }, [realtime.resumeToken, router])
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 30_000)
-    const fallbackTimer = window.setInterval(() => {
-      if (document.visibilityState === 'visible' && navigator.onLine) void sync()
-    }, 15_000)
-
-    const channel = supabase
-      .channel(`investor-message-workspace:${currentUserId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'message_threads' }, () => void sync())
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, () => void sync())
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'message_reads' }, () => void sync())
-      .subscribe()
+    const reconcile = window.setInterval(() => {
+      if (document.visibilityState === 'visible' && navigator.onLine) router.refresh()
+    }, 30_000)
 
     const onVisible = () => {
-      if (document.visibilityState === 'visible') void sync()
+      if (document.visibilityState === 'visible') router.refresh()
     }
     document.addEventListener('visibilitychange', onVisible)
 
     return () => {
       window.clearInterval(timer)
-      window.clearInterval(fallbackTimer)
+      window.clearInterval(reconcile)
       document.removeEventListener('visibilitychange', onVisible)
-      void supabase.removeChannel(channel)
     }
-  }, [currentUserId, supabase, sync])
+  }, [router])
 
   const latestByThread = useMemo(() => {
     const map = new Map<string, Message>()
@@ -178,13 +167,20 @@ export function InvestorMessageWorkspace({
       return next
     })
 
-    void supabase
-      .from('message_reads')
-      .upsert(
-        ids.map((messageId) => ({ message_id: messageId, user_id: currentUserId })),
-        { onConflict: 'message_id,user_id', ignoreDuplicates: true },
-      )
-  }, [currentUserId, messages, readMessageIds, selectedId, supabase])
+    void markThreadRead({ threadId: selectedId }).then((result) => {
+      if (result.ok) {
+        router.refresh()
+        return
+      }
+      // Roll back optimistic read state so a failed persistence attempt never
+      // lies to the user and the badge can be retried on the next reconciliation.
+      setReadMessageIds((current) => {
+        const next = new Set(current)
+        ids.forEach((id) => next.delete(id))
+        return next
+      })
+    })
+  }, [currentUserId, messages, readMessageIds, router, selectedId])
 
   const filteredThreads = threads.filter((thread) =>
     thread.subject.toLowerCase().includes(query.trim().toLowerCase()),
@@ -209,11 +205,13 @@ export function InvestorMessageWorkspace({
       setSubject('')
       setBody('')
       setShowRequest(false)
-      await sync()
       setSelectedId(result.data.threadId)
+      router.refresh()
       push({ tone: 'success', title: 'Pertanyaan dikirim', description: 'Menunggu jawaban tim Nuzultrip.' })
     })
   }
+
+  const selectedLastMessageId = selectedMessages.at(-1)?.id ?? 'empty'
 
   return (
     <div className="border-border bg-surface grid min-h-[38rem] overflow-hidden rounded-2xl border lg:grid-cols-[21rem_minmax(0,1fr)] xl:grid-cols-[23rem_minmax(0,1fr)]">
@@ -307,7 +305,7 @@ export function InvestorMessageWorkspace({
             </div>
 
             <LiveMessageThread
-              key={selected.id}
+              key={`${selected.id}:${selectedLastMessageId}`}
               threadId={selected.id}
               initialMessages={selectedMessages}
               currentUserId={currentUserId}
