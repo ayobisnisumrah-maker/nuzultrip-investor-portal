@@ -9,7 +9,7 @@ declare
   report_id uuid;
   version_id uuid;
   report_status public.publication_status;
-  report_visibility public.content_visibility;
+  report_visibility public.visibility;
 begin
   if tg_table_name = 'financial_report_versions' then
     report_id := case when tg_op = 'DELETE' then old.financial_report_id else new.financial_report_id end;
