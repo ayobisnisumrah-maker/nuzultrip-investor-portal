@@ -1,7 +1,9 @@
 import type { Metadata } from 'next'
 import { adminWithPermission } from '@/server/auth/page-guards'
 import { getEmailSettings } from '@/server/settings/email'
+import { getNotificationSoundSettings } from '@/server/settings/notification-sound'
 import { EmailSettingsForm } from '@/features/admin/email-settings-form'
+import { NotificationSoundSettingsForm } from '@/features/admin/notification-sound-settings-form'
 
 export const metadata: Metadata = {
   title: 'Pengaturan',
@@ -26,7 +28,10 @@ export default async function AdminSettingsPage() {
     )
   }
 
-  const emailSettings = await getEmailSettings()
+  const [emailSettings, notificationSound] = await Promise.all([
+    getEmailSettings(),
+    getNotificationSoundSettings(),
+  ])
 
   return (
     <div className="flex flex-col gap-8">
@@ -40,6 +45,22 @@ export default async function AdminSettingsPage() {
           code.
         </p>
       </header>
+
+      <section className="flex flex-col gap-5">
+        <div>
+          <h2 className="font-display text-heading-md text-fg">
+            Notifikasi
+          </h2>
+          <p className="text-body-sm text-fg-muted mt-1">
+            Atur nada yang diputar ketika pesan atau notifikasi baru diterima.
+          </p>
+        </div>
+
+        <NotificationSoundSettingsForm
+          settings={notificationSound}
+          canUpdate={principal.permissions.has('settings.update')}
+        />
+      </section>
 
       <section className="flex flex-col gap-5">
         <div>
