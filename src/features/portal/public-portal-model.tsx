@@ -94,7 +94,7 @@ function Hero({ section }: { section: PublicPortalSection }) {
               </div>
             ) : null}
 
-            {primaryLabel && primaryHref || secondaryLabel && secondaryHref ? (
+            {(primaryLabel && primaryHref) || (secondaryLabel && secondaryHref) ? (
               <div className={styles.heroActions}>
                 {primaryLabel && primaryHref ? (
                   <Link className={styles.btnPrimary} href={primaryHref}>
@@ -242,7 +242,8 @@ function Offering({ section }: { section: PublicPortalSection }) {
           <div className={styles.fundingTarget}>
             {fundingLabel ? <span>{fundingLabel}</span> : null}
             <strong>
-              {fundingCurrency ? `${fundingCurrency} ` : ''}{fundingTarget}
+              {fundingCurrency ? `${fundingCurrency} ` : ''}
+              {fundingTarget}
             </strong>
           </div>
         ) : null}
@@ -331,7 +332,9 @@ function VisionMission({ section }: { section: PublicPortalSection }) {
           <p>{text(c.vision)}</p>
         </blockquote>
         <div className={styles.missionBox}>
-          {text(c.mission_label) ? <span className={styles.eyebrow}>{text(c.mission_label)}</span> : null}
+          {text(c.mission_label) ? (
+            <span className={styles.eyebrow}>{text(c.mission_label)}</span>
+          ) : null}
           <ul>
             {mission.map((item, index) => (
               <li key={`${section.id}-m-${index}`}>
@@ -352,7 +355,11 @@ function Revenue({ section }: { section: PublicPortalSection }) {
   return (
     <section id={section.anchor_id ?? section.id} className={`${styles.section} ${styles.tinted}`}>
       <div className={styles.wrap}>
-        <SectionHeader eyebrow={text(c.eyebrow)} title={text(c.title)} description={text(c.description)} />
+        <SectionHeader
+          eyebrow={text(c.eyebrow)}
+          title={text(c.title)}
+          description={text(c.description)}
+        />
         <div className={styles.revenueGrid}>
           {items.slice(0, 4).map((item, index) => (
             <article key={`${section.id}-revenue-${index}`}>
@@ -395,7 +402,9 @@ function Ecosystem({ section }: { section: PublicPortalSection }) {
               <span className={styles.ecoIcon}>{['♙', '▤', '◎', '⌘', '▣', '✧'][index]}</span>
               <h3>{text(item.title)}</h3>
               <p>{text(item.description)}</p>
-              {text(item.caption) || itemCaption ? <small>{text(item.caption) ?? itemCaption}</small> : null}
+              {text(item.caption) || itemCaption ? (
+                <small>{text(item.caption) ?? itemCaption}</small>
+              ) : null}
             </article>
           ))}
         </div>
@@ -411,7 +420,11 @@ function Growth({ section }: { section: PublicPortalSection }) {
     <section id={section.anchor_id ?? section.id} className={`${styles.section} ${styles.tinted}`}>
       <div className={`${styles.wrap} ${styles.growthGrid}`}>
         <div>
-          <SectionHeader eyebrow={text(c.eyebrow)} title={text(c.title)} description={text(c.description)} />
+          <SectionHeader
+            eyebrow={text(c.eyebrow)}
+            title={text(c.title)}
+            description={text(c.description)}
+          />
           <div className={styles.growthSteps}>
             {milestones.slice(0, 4).map((item, index) => (
               <div className={styles.growthStep} key={`${section.id}-growth-${index}`}>
@@ -430,7 +443,9 @@ function Growth({ section }: { section: PublicPortalSection }) {
         </div>
         {text(c.progress_title) || text(c.progress_label) ? (
           <div className={styles.progressMock}>
-            {text(c.progress_title) ? <div className={styles.progressTop}>{text(c.progress_title)}</div> : null}
+            {text(c.progress_title) ? (
+              <div className={styles.progressTop}>{text(c.progress_title)}</div>
+            ) : null}
             <div className={styles.progressBody}>
               {text(c.progress_label) ? <small>{text(c.progress_label)}</small> : null}
               {milestones.slice(0, 4).map((item, index) => {
@@ -463,13 +478,21 @@ function UseFunds({ section }: { section: PublicPortalSection }) {
   return (
     <section id={section.anchor_id ?? section.id} className={styles.section}>
       <div className={styles.wrap}>
-        <SectionHeader eyebrow={text(c.eyebrow)} title={text(c.title)} description={text(c.description)} />
+        <SectionHeader
+          eyebrow={text(c.eyebrow)}
+          title={text(c.title)}
+          description={text(c.description)}
+        />
         <div className={styles.fundsGrid}>
           {items.slice(0, 4).map((item, index) => (
             <article key={`${section.id}-fund-${index}`}>
               <span>{String(index + 1).padStart(2, '0')}</span>
               <div>
-                {priorityLabel ? <small>{priorityLabel} {index + 1}</small> : null}
+                {priorityLabel ? (
+                  <small>
+                    {priorityLabel} {index + 1}
+                  </small>
+                ) : null}
                 <h3>{text(item.title)}</h3>
                 <p>{text(item.description)}</p>
               </div>
@@ -538,7 +561,11 @@ function Documents({ section }: { section: PublicPortalSection }) {
   return (
     <section id={section.anchor_id ?? section.id} className={`${styles.section} ${styles.tinted}`}>
       <div className={styles.wrap}>
-        <SectionHeader eyebrow={text(c.eyebrow)} title={text(c.title)} description={text(c.description)} />
+        <SectionHeader
+          eyebrow={text(c.eyebrow)}
+          title={text(c.title)}
+          description={text(c.description)}
+        />
         <div className={styles.docsGrid}>
           {items.slice(0, 6).map((item, index) => {
             const href = text(item.href) ?? text(item.url)
@@ -682,11 +709,14 @@ export function PublicPortalModel({
   page,
   sections,
   navigation,
+  logoUrl,
 }: {
   page: { title: string; seo: unknown }
   sections: PublicPortalSection[]
   navigation: NavItem[]
+  logoUrl?: string | null
 }) {
+  const logoSource = logoUrl ?? '/brand/nuzultrip-logo-portal.svg'
   const header = navigation
     .filter((item) => item.location === 'header' && !item.parent_id)
     .sort((a, b) => a.position - b.position)
@@ -703,7 +733,7 @@ export function PublicPortalModel({
         <div className={`${styles.wrap} ${styles.navIn}`}>
           <Link className={styles.brand} href="/" aria-label="Nuzultrip">
             <Image
-              src="/brand/nuzultrip-logo-portal.svg"
+              src={logoSource}
               alt="Nuzultrip"
               width={162}
               height={50}
@@ -735,7 +765,7 @@ export function PublicPortalModel({
           <div className={styles.footerGrid}>
             <div>
               <Image
-                src="/brand/nuzultrip-logo-portal.svg"
+                src={logoSource}
                 alt="Nuzultrip"
                 width={162}
                 height={50}
@@ -765,7 +795,12 @@ export function PublicPortalModel({
             <div>
               <h4>Ikuti Nuzultrip</h4>
               {social.map((item) => (
-                <Link key={item.id} href={item.href} target={item.target} rel={item.target === '_blank' ? 'noreferrer' : undefined}>
+                <Link
+                  key={item.id}
+                  href={item.href}
+                  target={item.target}
+                  rel={item.target === '_blank' ? 'noreferrer' : undefined}
+                >
                   {item.label}
                 </Link>
               ))}

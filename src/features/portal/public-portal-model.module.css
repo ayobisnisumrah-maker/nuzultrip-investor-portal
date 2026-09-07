@@ -106,7 +106,7 @@
 }
 
 .navIn {
-  min-height: 82px;
+  min-height: 68px;
   display: flex;
   align-items: center;
   gap: 24px;
@@ -117,8 +117,8 @@
   align-items: center;
   gap: 8px;
   font-family: Volkhov, Georgia, serif;
-  min-width: 206px;
-  min-height: 58px;
+  min-width: 174px;
+  min-height: 50px;
   font-size: var(--fs5);
   font-weight: 700;
   color: var(--ink);
@@ -137,7 +137,7 @@
 }
 
 .brand img {
-  width: 190px !important;
+  width: 162px !important;
   height: auto !important;
   object-fit: contain;
 }
@@ -1215,9 +1215,9 @@
 }
 
 .footer {
-  border-top: 1px solid #263c70;
-  background: #142657;
-  color: #dce7ee;
+  border-top: 1px solid var(--line);
+  background: var(--tint);
+  color: var(--muted);
   padding: 48px 0 28px;
 }
 
@@ -1236,9 +1236,7 @@
 .footerGrid img {
   width: 162px !important;
   height: auto !important;
-  border-radius: 10px;
-  background: #fff;
-  padding: 8px 12px;
+  object-fit: contain;
 }
 
 .footerBrand {
@@ -1248,13 +1246,13 @@
 }
 
 .footerGrid h4 {
-  color: #fff;
+  color: var(--ink);
   font-size: var(--fs3);
 }
 
 .footerGrid p,
 .footerGrid a {
-  color: #dce7ee;
+  color: var(--muted);
   font-size: var(--fs2);
   line-height: 1.65;
 }
@@ -1266,7 +1264,7 @@
 }
 
 .footerGrid a:hover {
-  color: #77d9d4;
+  color: var(--coralText);
 }
 
 .legal {
@@ -1275,9 +1273,9 @@
   gap: 14px;
   margin-top: 22px;
   padding-top: 13px;
-  border-top: 1px solid #334a7d;
+  border-top: 1px solid var(--line);
   font-size: var(--fs1);
-  color: #dce7ee;
+  color: var(--faint);
 }
 
 @media (max-width: 950px) {

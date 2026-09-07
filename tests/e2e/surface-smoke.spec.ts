@@ -126,6 +126,41 @@ test('every static Super Admin route renders without server or layout errors', a
   }
 })
 
+test('Super Admin can replace the public portal logo from Company Profile', async ({
+  page,
+}, testInfo) => {
+  test.skip(
+    testInfo.project.name !== 'chromium',
+    'The mutation flow runs once on desktop Chromium.',
+  )
+
+  const admin = await createAdminAccount({ roleKey: 'super_admin' })
+  const onePixelPng = Buffer.from(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+    'base64',
+  )
+
+  try {
+    await signIn(page, admin, '/admin')
+    await page.goto('/admin/company-profile')
+
+    await expect(page.getByRole('heading', { name: 'Logo Portal Publik' })).toBeVisible()
+    await page.getByLabel('Pilih logo baru').setInputFiles({
+      name: 'logo-e2e.png',
+      mimeType: 'image/png',
+      buffer: onePixelPng,
+    })
+    await page.getByRole('button', { name: 'Simpan Logo' }).click()
+    await expect(page.getByRole('status')).toContainText('berhasil diperbarui')
+
+    await page.goto('/')
+    const source = await page.locator('header img[alt="Nuzultrip"]').getAttribute('src')
+    expect(source).toContain('storage%2Fv1%2Fobject%2Fpublic%2Fpublic-media%2Fbrand')
+  } finally {
+    await deleteAccounts([admin.userId])
+  }
+})
+
 test('every static Investor route renders without server or layout errors', async ({ page }) => {
   const investor = await createInvestorAccount('active')
   const failures = runtimeFailures(page)

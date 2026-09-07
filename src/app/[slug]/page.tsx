@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 
 import { PublicPortalReference } from '@/features/portal/public-portal-reference'
 import {
+  getActivePortalTheme,
   getPublishedNavigation,
   getPublishedPortalPageBySlug,
 } from '@/server/portal/public-queries'
@@ -13,9 +14,7 @@ type PageProps = {
   }>
 }
 
-export async function generateMetadata({
-  params,
-}: PageProps): Promise<Metadata> {
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params
 
   const portal = await getPublishedPortalPageBySlug(slug)
@@ -31,16 +30,12 @@ export async function generateMetadata({
   }
 
   const seo =
-    portal.page.seo &&
-    typeof portal.page.seo === 'object' &&
-    !Array.isArray(portal.page.seo)
+    portal.page.seo && typeof portal.page.seo === 'object' && !Array.isArray(portal.page.seo)
       ? (portal.page.seo as Record<string, unknown>)
       : {}
 
   const title =
-    typeof seo.title === 'string' && seo.title.trim()
-      ? seo.title.trim()
-      : portal.page.title
+    typeof seo.title === 'string' && seo.title.trim() ? seo.title.trim() : portal.page.title
 
   const description =
     typeof seo.description === 'string' && seo.description.trim()
@@ -62,14 +57,13 @@ export async function generateMetadata({
   }
 }
 
-export default async function PublicPortalPage({
-  params,
-}: PageProps) {
+export default async function PublicPortalPage({ params }: PageProps) {
   const { slug } = await params
 
-  const [portal, navigation] = await Promise.all([
+  const [portal, navigation, theme] = await Promise.all([
     getPublishedPortalPageBySlug(slug),
     getPublishedNavigation(),
+    getActivePortalTheme(),
   ])
 
   if (!portal) {
@@ -84,6 +78,7 @@ export default async function PublicPortalPage({
       }}
       sections={portal.sections}
       navigation={navigation}
+      logoUrl={theme?.logo_url}
     />
   )
 }

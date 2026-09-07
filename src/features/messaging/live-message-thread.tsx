@@ -55,6 +55,7 @@ export function LiveMessageThread({
 }: Props) {
   const { push } = useToast()
   const [messages, setMessages] = useState(initialMessages)
+  const [previousInitialMessages, setPreviousInitialMessages] = useState(initialMessages)
   const [body, setBody] = useState('')
   const [showEmoji, setShowEmoji] = useState(false)
   const [connected, setConnected] = useState(false)
@@ -63,7 +64,12 @@ export function LiveMessageThread({
   const bottomRef = useRef<HTMLDivElement | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
 
-  useEffect(() => setMessages(initialMessages), [initialMessages])
+  // A server refresh can replace the initial snapshot. Adjust during render so
+  // the next render is already consistent, without an extra effect/render pass.
+  if (previousInitialMessages !== initialMessages) {
+    setPreviousInitialMessages(initialMessages)
+    setMessages(initialMessages)
+  }
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
@@ -97,7 +103,8 @@ export function LiveMessageThread({
   }, [threadId])
 
   const sortedMessages = useMemo(
-    () => [...messages].sort((a, b) => new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime()),
+    () =>
+      [...messages].sort((a, b) => new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime()),
     [messages],
   )
 
@@ -155,9 +162,18 @@ export function LiveMessageThread({
           <p className="text-body-sm text-fg truncate font-semibold">{counterpartLabel}</p>
           <p className="text-caption text-fg-subtle mt-0.5">Percakapan pribadi</p>
         </div>
-        <div className="text-caption text-fg-subtle flex shrink-0 items-center gap-1.5" aria-live="polite">
-          {connected ? <Wifi className="size-3.5" aria-hidden="true" /> : <WifiOff className="size-3.5" aria-hidden="true" />}
-          <span className="hidden sm:inline">{connected ? 'Real-time aktif' : 'Menghubungkan'}</span>
+        <div
+          className="text-caption text-fg-subtle flex shrink-0 items-center gap-1.5"
+          aria-live="polite"
+        >
+          {connected ? (
+            <Wifi className="size-3.5" aria-hidden="true" />
+          ) : (
+            <WifiOff className="size-3.5" aria-hidden="true" />
+          )}
+          <span className="hidden sm:inline">
+            {connected ? 'Real-time aktif' : 'Menghubungkan'}
+          </span>
         </div>
       </div>
 
@@ -168,7 +184,9 @@ export function LiveMessageThread({
               const own = message.sender_id === currentUserId
               return (
                 <li key={message.id} className={`flex ${own ? 'justify-end' : 'justify-start'}`}>
-                  <article className={`max-w-[88%] sm:max-w-[76%] lg:max-w-[68%] ${own ? 'items-end' : 'items-start'} flex flex-col`}>
+                  <article
+                    className={`max-w-[88%] sm:max-w-[76%] lg:max-w-[68%] ${own ? 'items-end' : 'items-start'} flex flex-col`}
+                  >
                     <div
                       className={`rounded-2xl border px-3.5 py-2.5 sm:px-4 sm:py-3 ${
                         own
@@ -176,9 +194,13 @@ export function LiveMessageThread({
                           : 'border-border bg-surface-muted text-fg rounded-bl-md'
                       }`}
                     >
-                      <p className="text-body-sm whitespace-pre-wrap break-words">{message.body_text}</p>
+                      <p className="text-body-sm break-words whitespace-pre-wrap">
+                        {message.body_text}
+                      </p>
                     </div>
-                    <div className={`mt-1 flex items-center gap-2 px-1 ${own ? 'justify-end' : 'justify-start'}`}>
+                    <div
+                      className={`mt-1 flex items-center gap-2 px-1 ${own ? 'justify-end' : 'justify-start'}`}
+                    >
                       <span className="text-caption text-fg-subtle">
                         {own ? 'Anda' : message.sender_label || counterpartLabel}
                       </span>
@@ -198,7 +220,9 @@ export function LiveMessageThread({
           <div className="flex h-full min-h-64 items-center justify-center text-center">
             <div>
               <p className="text-body-sm text-fg font-medium">Belum ada pesan</p>
-              <p className="text-caption text-fg-muted mt-1">Mulai percakapan melalui kolom pesan di bawah.</p>
+              <p className="text-caption text-fg-muted mt-1">
+                Mulai percakapan melalui kolom pesan di bawah.
+              </p>
             </div>
           </div>
         )}
@@ -218,14 +242,19 @@ export function LiveMessageThread({
           <div className="mx-auto w-full max-w-4xl">
             {actor === 'admin' ? (
               <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-center">
-                <label htmlFor={`template-${threadId}`} className="text-caption text-fg-muted shrink-0 font-medium">
+                <label
+                  htmlFor={`template-${threadId}`}
+                  className="text-caption text-fg-muted shrink-0 font-medium"
+                >
                   Template
                 </label>
                 <select
                   id={`template-${threadId}`}
                   defaultValue=""
                   onChange={(event) => {
-                    const template = ADMIN_MESSAGE_TEMPLATES.find((item) => item.id === event.target.value)
+                    const template = ADMIN_MESSAGE_TEMPLATES.find(
+                      (item) => item.id === event.target.value,
+                    )
                     if (template) {
                       setBody(template.body)
                       requestAnimationFrame(() => textareaRef.current?.focus())
@@ -246,7 +275,9 @@ export function LiveMessageThread({
 
             {error ? (
               <div className="mb-2">
-                <Alert tone="danger" title="Pesan gagal dikirim">{error}</Alert>
+                <Alert tone="danger" title="Pesan gagal dikirim">
+                  {error}
+                </Alert>
               </div>
             ) : null}
 
@@ -259,7 +290,8 @@ export function LiveMessageThread({
                   push({
                     tone: 'info',
                     title: 'Lampiran tidak didukung',
-                    description: 'Chat hanya mendukung pesan teks dan emoji. Dokumen atau file tidak dapat dikirim melalui chat.',
+                    description:
+                      'Chat hanya mendukung pesan teks dan emoji. Dokumen atau file tidak dapat dikirim melalui chat.',
                   })
                 }
               }}
@@ -310,7 +342,9 @@ export function LiveMessageThread({
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <span className="text-caption text-fg-subtle hidden sm:inline">Enter kirim · Shift+Enter baris baru</span>
+                  <span className="text-caption text-fg-subtle hidden sm:inline">
+                    Enter kirim · Shift+Enter baris baru
+                  </span>
                   <Button disabled={pending || !body.trim()} onClick={submit}>
                     <Send className="size-4" aria-hidden="true" />
                     <span className="ml-2">{pending ? 'Mengirim…' : 'Kirim'}</span>
@@ -319,7 +353,8 @@ export function LiveMessageThread({
               </div>
             </div>
             <p className="text-caption text-fg-subtle mt-2">
-              Chat mendukung teks dan emoji. Dokumen, gambar, dan file tidak dapat dikirim melalui chat.
+              Chat mendukung teks dan emoji. Dokumen, gambar, dan file tidak dapat dikirim melalui
+              chat.
             </p>
           </div>
         )}

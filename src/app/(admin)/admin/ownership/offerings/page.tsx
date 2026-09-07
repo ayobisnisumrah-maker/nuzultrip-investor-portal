@@ -30,7 +30,7 @@ export default async function OwnershipOfferingsPage() {
 
   return (
     <div className="space-y-6">
-      <OwnershipOfferingManager offerings={offerings} />
+      <OwnershipOfferingManager offerings={offerings} timezone={principal.timezone} />
     </div>
   )
 }

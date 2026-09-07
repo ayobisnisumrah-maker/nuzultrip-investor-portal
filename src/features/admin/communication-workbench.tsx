@@ -81,7 +81,9 @@ export function CommunicationWorkbench({
   const [firstMessage, setFirstMessage] = useState('')
   const [error, setError] = useState<string | null>(null)
 
-  const selectedInvestor = investors?.find((investor) => investor.id === selectedThread?.investor_id)
+  const selectedInvestor = investors?.find(
+    (investor) => investor.id === selectedThread?.investor_id,
+  )
 
   function run(action: () => Promise<ActionResult<unknown>>, success: string) {
     setError(null)
@@ -117,7 +119,7 @@ export function CommunicationWorkbench({
                     key={thread.id}
                     type="button"
                     onClick={() => router.push(`/admin/messages?thread=${thread.id}`)}
-                    className={`hover:bg-surface-muted min-w-[16rem] rounded-lg border p-3 text-left transition lg:min-w-0 lg:w-full ${
+                    className={`hover:bg-surface-muted min-w-[16rem] rounded-lg border p-3 text-left transition lg:w-full lg:min-w-0 ${
                       selectedThread?.id === thread.id
                         ? 'border-accent-solid bg-surface-muted'
                         : 'border-border'
@@ -132,7 +134,7 @@ export function CommunicationWorkbench({
                     <p className="text-caption text-fg-muted mt-1 truncate">
                       {investor?.legal_name ?? 'Investor'}
                     </p>
-                    <p className="text-caption text-fg-subtle mt-1">
+                    <p className="text-caption text-fg-subtle mt-1" suppressHydrationWarning>
                       {thread.last_message_at
                         ? new Intl.DateTimeFormat('id-ID', {
                             timeZone: timezone,
@@ -154,7 +156,9 @@ export function CommunicationWorkbench({
 
         {canSend ? (
           <details className="border-border bg-surface rounded-xl border p-3 sm:p-4">
-            <summary className="text-body-sm text-fg cursor-pointer font-semibold">Buat percakapan baru</summary>
+            <summary className="text-body-sm text-fg cursor-pointer font-semibold">
+              Buat percakapan baru
+            </summary>
             <div className="mt-4 space-y-3">
               {investors?.length ? (
                 <select
@@ -170,7 +174,9 @@ export function CommunicationWorkbench({
                   ))}
                 </select>
               ) : (
-                <p className="text-caption text-fg-subtle">Belum ada investor yang dapat dipilih.</p>
+                <p className="text-caption text-fg-subtle">
+                  Belum ada investor yang dapat dipilih.
+                </p>
               )}
               <input
                 value={subject}
@@ -207,8 +213,12 @@ export function CommunicationWorkbench({
         {selectedThread ? (
           <>
             <div className="border-border border-b px-4 py-3 sm:px-5 sm:py-4">
-              <p className="text-caption text-fg-subtle font-medium tracking-[0.14em] uppercase">Percakapan</p>
-              <h2 className="text-heading-md text-fg mt-1 truncate font-semibold">{selectedThread.subject}</h2>
+              <p className="text-caption text-fg-subtle font-medium tracking-[0.14em] uppercase">
+                Percakapan
+              </p>
+              <h2 className="text-heading-md text-fg mt-1 truncate font-semibold">
+                {selectedThread.subject}
+              </h2>
               <p className="text-caption text-fg-muted mt-1 truncate">
                 {selectedInvestor
                   ? `${selectedInvestor.legal_name} · ${selectedInvestor.reference_code}`
@@ -230,18 +240,22 @@ export function CommunicationWorkbench({
           <div className="flex min-h-[34rem] items-center justify-center p-6 text-center">
             <div>
               <h2 className="text-body text-fg font-semibold">Pilih percakapan</h2>
-              <p className="text-body-sm text-fg-muted mt-1">Pilih thread investor untuk membaca dan membalas pesan.</p>
+              <p className="text-body-sm text-fg-muted mt-1">
+                Pilih thread investor untuk membaca dan membalas pesan.
+              </p>
             </div>
           </div>
         )}
       </section>
 
       {inquiries ? (
-        <div className="border-border bg-surface rounded-xl border p-4 lg:col-span-2 sm:p-5">
+        <div className="border-border bg-surface rounded-xl border p-4 sm:p-5 lg:col-span-2">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
               <h2 className="text-body text-fg font-semibold">Permintaan masuk</h2>
-              <p className="text-caption text-fg-muted mt-1">Tindak lanjuti inquiry dan konversi menjadi percakapan.</p>
+              <p className="text-caption text-fg-muted mt-1">
+                Tindak lanjuti inquiry dan konversi menjadi percakapan.
+              </p>
             </div>
             <span className="border-border text-caption text-fg-subtle rounded-full border px-2.5 py-1">
               {inquiries.length} permintaan
@@ -264,12 +278,25 @@ export function CommunicationWorkbench({
                     <tr key={inquiry.id}>
                       <td className="px-4 py-4">
                         <p className="text-body-sm text-fg font-medium">{inquiry.name}</p>
-                        <p className="text-caption text-fg-muted">{inquiry.email}{inquiry.organization ? ` · ${inquiry.organization}` : ''}</p>
+                        <p className="text-caption text-fg-muted">
+                          {inquiry.email}
+                          {inquiry.organization ? ` · ${inquiry.organization}` : ''}
+                        </p>
                       </td>
-                      <td className="text-body-sm text-fg-muted max-w-md px-4 py-4"><p className="line-clamp-2">{inquiry.message}</p></td>
-                      <td className="px-4 py-4"><span className="border-border text-caption text-fg rounded-full border px-2.5 py-1">{inquiry.status}</span></td>
-                      <td className="text-caption text-fg-muted px-4 py-4">
-                        {new Intl.DateTimeFormat('id-ID', { timeZone: timezone, dateStyle: 'medium', timeStyle: 'short' }).format(new Date(inquiry.created_at))}
+                      <td className="text-body-sm text-fg-muted max-w-md px-4 py-4">
+                        <p className="line-clamp-2">{inquiry.message}</p>
+                      </td>
+                      <td className="px-4 py-4">
+                        <span className="border-border text-caption text-fg rounded-full border px-2.5 py-1">
+                          {inquiry.status}
+                        </span>
+                      </td>
+                      <td className="text-caption text-fg-muted px-4 py-4" suppressHydrationWarning>
+                        {new Intl.DateTimeFormat('id-ID', {
+                          timeZone: timezone,
+                          dateStyle: 'medium',
+                          timeStyle: 'short',
+                        }).format(new Date(inquiry.created_at))}
                       </td>
                       <td className="px-4 py-4 text-right">
                         {canHandle ? (
@@ -316,7 +343,11 @@ export function CommunicationWorkbench({
                     </tr>
                   ))
                 ) : (
-                  <tr><td colSpan={5} className="text-body-sm text-fg-muted px-4 py-10 text-center">Belum ada permintaan masuk.</td></tr>
+                  <tr>
+                    <td colSpan={5} className="text-body-sm text-fg-muted px-4 py-10 text-center">
+                      Belum ada permintaan masuk.
+                    </td>
+                  </tr>
                 )}
               </tbody>
             </table>
@@ -326,7 +357,9 @@ export function CommunicationWorkbench({
 
       {error ? (
         <div className="lg:col-span-2">
-          <Alert tone="danger" title="Operasi gagal">{error}</Alert>
+          <Alert tone="danger" title="Operasi gagal">
+            {error}
+          </Alert>
         </div>
       ) : null}
     </div>
