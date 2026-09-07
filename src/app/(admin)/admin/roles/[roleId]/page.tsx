@@ -1,11 +1,11 @@
-﻿import Link from 'next/link'
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
-import { requireAdminPage } from '@/server/auth/page-guards'
 import { hasPermission } from '@/core/auth/principal'
 import { permissionsByModule } from '@/core/rbac/permissions'
-import { getServerSupabase } from '@/server/supabase/server'
 import { RoleEditor } from '@/features/admin/role-editor'
+import { requireAdminPage } from '@/server/auth/page-guards'
+import { getServerSupabase } from '@/server/supabase/server'
 
 export default async function AdminRoleDetailPage({
   params,
@@ -13,7 +13,6 @@ export default async function AdminRoleDetailPage({
   params: Promise<{ roleId: string }>
 }) {
   const { roleId } = await params
-
   const principal = await requireAdminPage(`/admin/roles/${roleId}`)
 
   if (!hasPermission(principal, 'roles.view')) {
@@ -21,7 +20,7 @@ export default async function AdminRoleDetailPage({
       <main className="p-6">
         <h1 className="text-xl font-semibold">Akses ditolak</h1>
         <p className="text-muted-foreground mt-2 text-sm">
-          Anda tidak memiliki izin untuk melihat Role & Permission.
+          Anda tidak memiliki izin untuk melihat Peran & Izin.
         </p>
       </main>
     )
@@ -36,7 +35,7 @@ export default async function AdminRoleDetailPage({
     .maybeSingle()
 
   if (roleError) {
-    throw new Error(`Gagal mengambil role: ${roleError.message}`)
+    throw new Error(`Gagal mengambil peran: ${roleError.message}`)
   }
 
   if (!role) {
@@ -50,7 +49,7 @@ export default async function AdminRoleDetailPage({
     .order('action', { ascending: true })
 
   if (permissionsError) {
-    throw new Error(`Gagal mengambil permission: ${permissionsError.message}`)
+    throw new Error(`Gagal mengambil izin: ${permissionsError.message}`)
   }
 
   const { data: assigned, error: assignedError } = await supabase
@@ -59,26 +58,28 @@ export default async function AdminRoleDetailPage({
     .eq('role_id', role.id)
 
   if (assignedError) {
-    throw new Error(`Gagal mengambil permission role: ${assignedError.message}`)
+    throw new Error(`Gagal mengambil izin peran: ${assignedError.message}`)
   }
 
-  const assignedPermissionIds = (assigned ?? []).map((item) => item.permission_id)
+  const assignedPermissionIds = (assigned ?? []).map(
+    (item) => item.permission_id,
+  )
 
   return (
     <main className="flex flex-col gap-6 p-6">
       <header className="flex flex-col gap-1">
         <div className="text-muted-foreground flex items-center gap-2 text-sm">
           <Link href="/admin/roles" className="hover:text-foreground">
-            Role & Permission
+            Peran & Izin
           </Link>
           <span>/</span>
           <span>{role.name}</span>
         </div>
 
-        <h1 className="text-2xl font-semibold tracking-tight">Kelola Role</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Kelola Peran</h1>
 
         <p className="text-muted-foreground text-sm">
-          Atur permission administrator menggunakan checklist.
+          Atur identitas peran kustom dan daftar izin administrator sesuai kewenangan Anda.
         </p>
       </header>
 
