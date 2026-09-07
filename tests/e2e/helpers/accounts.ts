@@ -157,6 +157,12 @@ async function fillStable(page: Page, selector: string, value: string): Promise<
 }
 
 export async function signIn(page: Page, account: TestAccount, expectPath: string): Promise<void> {
+  const landingPath = expectPath.startsWith('/investor')
+    ? '/investor'
+    : expectPath.startsWith('/admin')
+      ? '/admin'
+      : expectPath
+
   await page.goto('/masuk')
   await page.waitForLoadState('networkidle')
 
@@ -165,17 +171,20 @@ export async function signIn(page: Page, account: TestAccount, expectPath: strin
 
   await page.click('button[type="submit"]')
 
-  // Race the redirect against a visible error, so a failed sign-in reports what
-  // went wrong instead of expiring as an opaque navigation timeout.
-  // Scoped to `main` to avoid Next's route-announcer element, which also
-  // carries `role="alert"`.
+  // Authentication always lands on the role root. Tests may ask to continue
+  // to a nested route, but that navigation happens only after successful login.
   const failure = page.locator('main [role="alert"]')
   await Promise.race([
-    page.waitForURL(`**${expectPath}`, { timeout: 60_000 }),
+    page.waitForURL((url) => url.pathname === landingPath, { timeout: 60_000 }),
     failure.waitFor({ state: 'visible', timeout: 60_000 }).then(async () => {
       throw new Error(`Sign-in failed for ${account.email}: ${await failure.innerText()}`)
     }),
   ])
+
+  if (expectPath !== landingPath) {
+    await page.goto(expectPath, { waitUntil: 'domcontentloaded', timeout: 60_000 })
+    await page.waitForURL((url) => url.pathname === expectPath, { timeout: 60_000 })
+  }
 }
 
 /**
