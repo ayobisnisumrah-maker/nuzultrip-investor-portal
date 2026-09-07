@@ -1,5 +1,6 @@
 import Link from 'next/link'
 
+import { InquirySubmitButton } from '@/features/portal/inquiry-submit-button'
 import { submitPortalInquiry } from '@/server/portal/inquiry-actions'
 
 export default async function ContactPage({
@@ -125,12 +126,7 @@ export default async function ContactPage({
               <p className="text-sm leading-6 text-[#617087] sm:text-base">
                 Data digunakan untuk menindaklanjuti permintaan Anda.
               </p>
-              <button
-                type="submit"
-                className="inline-flex min-h-12 items-center justify-center rounded-xl bg-[#0b7374] px-6 text-base font-semibold text-white transition-colors hover:bg-[#085e60]"
-              >
-                Kirim Permintaan
-              </button>
+              <InquirySubmitButton />
             </div>
           </form>
         )}
