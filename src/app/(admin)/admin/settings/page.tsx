@@ -33,6 +33,7 @@ export default async function AdminSettingsPage() {
     getEmailSettings(),
     getNotificationSoundSettings(),
   ])
+  const canUpdate = principal.permissions.has('settings.update')
 
   return (
     <div className="flex flex-col gap-8">
@@ -58,7 +59,7 @@ export default async function AdminSettingsPage() {
 
         <NotificationSoundSettingsForm
           settings={notificationSound}
-          canUpdate={principal.permissions.has('settings.update')}
+          canUpdate={canUpdate}
         />
       </section>
 
@@ -72,7 +73,7 @@ export default async function AdminSettingsPage() {
           </p>
         </div>
 
-        <EmailSettingsForm settings={emailSettings} />
+        <EmailSettingsForm settings={emailSettings} canUpdate={canUpdate} />
       </section>
     </div>
   )
