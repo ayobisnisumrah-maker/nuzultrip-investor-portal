@@ -2,6 +2,8 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 
 import { PublicPortalReference } from '@/features/portal/public-portal-reference'
+import { PublicRealtimeSurface } from '@/features/realtime/public-realtime-surface'
+import { getPublicBrandLogo } from '@/server/portal/public-branding'
 import {
   getPublicDocuments,
   getPublishedNavigation,
@@ -68,10 +70,11 @@ export default async function PublicPortalPage({
 }: PageProps) {
   const { slug } = await params
 
-  const [portal, navigation, publicDocuments] = await Promise.all([
+  const [portal, navigation, publicDocuments, brandLogoUrl] = await Promise.all([
     getPublishedPortalPageBySlug(slug),
     getPublishedNavigation(),
     getPublicDocuments(),
+    getPublicBrandLogo(),
   ])
 
   if (!portal) {
@@ -79,14 +82,17 @@ export default async function PublicPortalPage({
   }
 
   return (
-    <PublicPortalReference
-      page={{
-        title: 'Nuzultrip',
-        seo: portal.page.seo,
-      }}
-      sections={portal.sections}
-      navigation={navigation}
-      publicDocuments={publicDocuments}
-    />
+    <PublicRealtimeSurface>
+      <PublicPortalReference
+        page={{
+          title: 'Nuzultrip',
+          seo: portal.page.seo,
+        }}
+        sections={portal.sections}
+        navigation={navigation}
+        publicDocuments={publicDocuments}
+        brandLogoUrl={brandLogoUrl}
+      />
+    </PublicRealtimeSurface>
   )
 }
