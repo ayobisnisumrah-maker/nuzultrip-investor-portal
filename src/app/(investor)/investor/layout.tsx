@@ -29,6 +29,7 @@ export default async function InvestorLayout({ children }: { children: React.Rea
             { href: '/investor/documents', label: 'Dokumen & Data Room' },
             { href: '/investor/ownership', label: 'Kepemilikan' },
             { href: '/investor/financials', label: 'Keuangan' },
+            { href: '/investor/distributions', label: 'Bagi Hasil' },
             { href: '/investor/messages', label: 'Pesan' },
             { href: '/investor/notifications', label: 'Notifikasi' },
           ],
