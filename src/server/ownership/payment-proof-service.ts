@@ -196,6 +196,98 @@ export async function uploadPaymentProof({
   return data
 }
 
+export async function replacePaymentProof({
+  supabase,
+  allocationId,
+  uploadedBy,
+  file,
+  paymentReference,
+}: {
+  supabase: DbClient
+  allocationId: string
+  uploadedBy: string
+  file: File
+  paymentReference?: string | null
+}): Promise<PaymentProof> {
+  assertAllowedFile(file)
+
+  const allocation = await getAllocation(supabase, allocationId)
+
+  if (allocation.status !== 'payable') {
+    throw new Error('Bukti transfer hanya dapat diganti untuk allocation dengan status payable.')
+  }
+
+  const existingProof = await getPaymentProof(supabase, allocationId)
+
+  if (!existingProof) {
+    throw new Error('Bukti transfer belum tersedia. Gunakan aksi upload bukti terlebih dahulu.')
+  }
+
+  const safeFileName = sanitizeFileName(file.name)
+  const storagePath = [
+    allocation.investor_id,
+    allocation.id,
+    `${crypto.randomUUID()}-${safeFileName}`,
+  ].join('/')
+
+  const { error: uploadError } = await supabase.storage
+    .from(PAYMENT_PROOF_BUCKET)
+    .upload(storagePath, file, {
+      contentType: file.type,
+      upsert: false,
+    })
+
+  if (uploadError) {
+    throw new Error(`Gagal mengunggah bukti transfer pengganti: ${uploadError.message}`)
+  }
+
+  const { data, error } = await supabase
+    .from('profit_distribution_payment_proofs')
+    .update({
+      storage_bucket: PAYMENT_PROOF_BUCKET,
+      storage_path: storagePath,
+      original_file_name: file.name,
+      mime_type: file.type,
+      file_size_bytes: file.size,
+      payment_reference: paymentReference?.trim() || null,
+      uploaded_by: uploadedBy,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', existingProof.id)
+    .eq('allocation_id', allocation.id)
+    .select(
+      `
+        id,
+        allocation_id,
+        investor_id,
+        storage_bucket,
+        storage_path,
+        original_file_name,
+        mime_type,
+        file_size_bytes,
+        payment_reference,
+        uploaded_by,
+        uploaded_at,
+        updated_at
+      `,
+    )
+    .single()
+
+  if (error) {
+    await supabase.storage.from(PAYMENT_PROOF_BUCKET).remove([storagePath])
+    throw new Error(`Gagal menyimpan bukti transfer pengganti: ${error.message}`)
+  }
+
+  if (
+    existingProof.storage_bucket === PAYMENT_PROOF_BUCKET &&
+    existingProof.storage_path !== storagePath
+  ) {
+    await supabase.storage.from(PAYMENT_PROOF_BUCKET).remove([existingProof.storage_path])
+  }
+
+  return data
+}
+
 export async function createPaymentProofSignedUrl(
   supabase: DbClient,
   proof: PaymentProof,
