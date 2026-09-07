@@ -1,4 +1,4 @@
-﻿import type { Metadata } from 'next'
+import type { Metadata } from 'next'
 import { ArrowUpRight, FileText, Inbox, UserCheck, Users } from 'lucide-react'
 
 import { INVESTOR_STATUS_LABELS, type InvestorStatus } from '@/core/investors/status'
@@ -24,9 +24,7 @@ export default async function AdminDashboardPage() {
   const supabase = await getServerSupabase()
 
   const canSeeInvestors = hasPermission(principal, 'investors.view')
-
   const canSeeInquiries = hasPermission(principal, 'inquiries.view')
-
   const canSeeDocuments = hasPermission(principal, 'documents.view')
 
   const [investorRows, inquiryCount, documentCount] = await Promise.all([
@@ -36,7 +34,6 @@ export default async function AdminDashboardPage() {
           .select('status')
           .then((result) => result.data ?? [])
       : Promise.resolve(null),
-
     canSeeInquiries
       ? supabase
           .from('portal_inquiries')
@@ -47,7 +44,6 @@ export default async function AdminDashboardPage() {
           .eq('status', 'new')
           .then((result) => result.count ?? 0)
       : Promise.resolve(null),
-
     canSeeDocuments
       ? supabase
           .from('documents')
@@ -64,16 +60,12 @@ export default async function AdminDashboardPage() {
 
   for (const row of investorRows ?? []) {
     const status = row.status
-
     byStatus.set(status, (byStatus.get(status) ?? 0) + 1)
   }
 
   const totalInvestors = investorRows?.length ?? 0
-
   const activeInvestors = byStatus.get('active') ?? 0
-
   const pendingReview = (byStatus.get('submitted') ?? 0) + (byStatus.get('under_review') ?? 0)
-
   const statusEntries = [...byStatus.entries()].sort((a, b) => b[1] - a[1])
 
   return (
@@ -89,7 +81,7 @@ export default async function AdminDashboardPage() {
       />
 
       <PageHeader
-        eyebrow="Investor Relations"
+        eyebrow="Hubungan Investor"
         title={`Selamat datang, ${principal.fullName.split(' ')[0]}`}
         description="Pusat kendali operasional hubungan investor Nuzultrip."
       />
@@ -104,7 +96,6 @@ export default async function AdminDashboardPage() {
               context="seluruh investor terdaftar"
               icon={<Users aria-hidden="true" className="size-4" />}
             />
-
             <StatCard
               label="Investor aktif"
               testId="stat-active-investors"
@@ -112,7 +103,6 @@ export default async function AdminDashboardPage() {
               context="status aktif saat ini"
               icon={<UserCheck aria-hidden="true" className="size-4" />}
             />
-
             <StatCard
               label="Menunggu peninjauan"
               testId="stat-pending-review"
@@ -151,12 +141,10 @@ export default async function AdminDashboardPage() {
               <div className="flex items-center justify-between gap-4">
                 <div>
                   <CardTitle>Sebaran status investor</CardTitle>
-
                   <p className="text-body-sm text-fg-muted mt-1">
                     Kondisi investor berdasarkan status terkini.
                   </p>
                 </div>
-
                 <div className="border-border bg-canvas text-caption text-fg-muted hidden rounded-md border px-2.5 py-1.5 sm:flex sm:items-center sm:gap-1.5">
                   <span className="bg-success-solid size-1.5 rounded-full" />
                   Data realtime
@@ -173,29 +161,23 @@ export default async function AdminDashboardPage() {
               ) : (
                 <div className="space-y-3">
                   {statusEntries.map(([status, count]) => {
-                    const percentage =
-                      totalInvestors > 0 ? Math.round((count / totalInvestors) * 100) : 0
+                    const percentage = totalInvestors > 0 ? Math.round((count / totalInvestors) * 100) : 0
 
                     return (
                       <div key={status} className="space-y-2">
                         <div className="flex items-center justify-between gap-3">
                           <InvestorStatusPill status={status} size="sm" />
-
                           <span className="text-body-sm tabular text-fg font-mono">
                             {formatNumber(count)}
                             <span className="text-caption text-fg-subtle ml-2">{percentage}%</span>
                           </span>
                         </div>
-
                         <div className="bg-surface-muted h-1.5 overflow-hidden rounded-full">
                           <div
                             className="bg-accent-solid h-full rounded-full transition-[width] duration-500"
-                            style={{
-                              width: `${percentage}%`,
-                            }}
+                            style={{ width: `${percentage}%` }}
                           />
                         </div>
-
                         <span className="sr-only">{INVESTOR_STATUS_LABELS[status]}</span>
                       </div>
                     )
@@ -215,7 +197,6 @@ export default async function AdminDashboardPage() {
           <CardHeader>
             <CardTitle>Ringkasan operasional</CardTitle>
           </CardHeader>
-
           <CardBody>
             <div className="space-y-2">
               {canSeeInquiries ? (
@@ -224,13 +205,11 @@ export default async function AdminDashboardPage() {
                     <div className="bg-surface-muted flex size-9 items-center justify-center rounded-lg">
                       <Inbox aria-hidden="true" className="text-fg-muted size-4" />
                     </div>
-
                     <div>
                       <p className="text-body-sm text-fg font-medium">Permintaan portal</p>
                       <p className="text-caption text-fg-subtle">Perlu diperiksa</p>
                     </div>
                   </div>
-
                   <span className="text-body-sm tabular text-fg font-mono">
                     {formatNumber(inquiryCount ?? 0)}
                   </span>
@@ -243,13 +222,11 @@ export default async function AdminDashboardPage() {
                     <div className="bg-surface-muted flex size-9 items-center justify-center rounded-lg">
                       <FileText aria-hidden="true" className="text-fg-muted size-4" />
                     </div>
-
                     <div>
                       <p className="text-body-sm text-fg font-medium">Dokumen investor</p>
                       <p className="text-caption text-fg-subtle">Telah diterbitkan</p>
                     </div>
                   </div>
-
                   <span className="text-body-sm tabular text-fg font-mono">
                     {formatNumber(documentCount ?? 0)}
                   </span>
@@ -262,13 +239,11 @@ export default async function AdminDashboardPage() {
                     <div className="bg-surface-muted flex size-9 items-center justify-center rounded-lg">
                       <ArrowUpRight aria-hidden="true" className="text-fg-muted size-4" />
                     </div>
-
                     <div>
-                      <p className="text-body-sm text-fg font-medium">Review investor</p>
+                      <p className="text-body-sm text-fg font-medium">Peninjauan investor</p>
                       <p className="text-caption text-fg-subtle">Menunggu tindakan</p>
                     </div>
                   </div>
-
                   <span className="text-body-sm tabular text-fg font-mono">
                     {formatNumber(pendingReview)}
                   </span>
