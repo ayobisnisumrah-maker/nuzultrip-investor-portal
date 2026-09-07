@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useMemo, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
@@ -46,12 +46,11 @@ export function RoleEditor({
 }: RoleEditorProps) {
   const router = useRouter()
   const [pending, startTransition] = useTransition()
-
   const [name, setName] = useState(role.name)
   const [description, setDescription] = useState(role.description)
-
-  const [selected, setSelected] = useState<Set<string>>(() => new Set(assignedPermissionIds))
-
+  const [selected, setSelected] = useState<Set<string>>(
+    () => new Set(assignedPermissionIds),
+  )
   const [error, setError] = useState<string | null>(null)
 
   const permissionByKey = useMemo(
@@ -60,11 +59,11 @@ export function RoleEditor({
   )
 
   const selectedCount = selected.size
-
-  const editable = role.key !== 'super_admin'
+  const permissionsEditable = role.key !== 'super_admin'
+  const metadataEditable = permissionsEditable && !role.isSystem
 
   function togglePermission(permissionId: string) {
-    if (!editable || pending) return
+    if (!permissionsEditable || pending) return
 
     setSelected((current) => {
       const next = new Set(current)
@@ -80,10 +79,13 @@ export function RoleEditor({
   }
 
   function toggleModule(group: PermissionGroup) {
-    if (!editable || pending) return
+    if (!permissionsEditable || pending) return
 
     const ids = group.permissions
-      .map((permission) => permissionByKey.get(`${permission.module}.${permission.action}`)?.id)
+      .map(
+        (permission) =>
+          permissionByKey.get(`${permission.module}.${permission.action}`)?.id,
+      )
       .filter((id): id is string => Boolean(id))
 
     setSelected((current) => {
@@ -103,15 +105,15 @@ export function RoleEditor({
   }
 
   function save() {
-    if (!editable || pending) return
+    if (!permissionsEditable || pending) return
 
     setError(null)
 
     startTransition(async () => {
       const result = await updateRole({
         roleId: role.id,
-        name: name.trim(),
-        description: description.trim(),
+        name: metadataEditable ? name.trim() : role.name,
+        description: metadataEditable ? description.trim() : role.description,
         permissionIds: [...selected],
         permissionVersion: role.permissionVersion,
       })
@@ -130,18 +132,18 @@ export function RoleEditor({
       <section className="bg-card rounded-xl border p-5">
         <div className="grid gap-5 md:grid-cols-2">
           <div>
-            <label className="text-sm font-medium">Nama Role</label>
+            <label className="text-sm font-medium">Nama Peran</label>
 
             <input
               value={name}
               onChange={(event) => setName(event.target.value)}
-              disabled={!editable || pending}
-              className="bg-background mt-2 h-10 w-full rounded-lg border px-3 text-sm outline-none focus:ring-2"
+              disabled={!metadataEditable || pending}
+              className="bg-background mt-2 h-10 w-full rounded-lg border px-3 text-sm outline-none focus:ring-2 disabled:cursor-not-allowed disabled:opacity-60"
             />
           </div>
 
           <div>
-            <label className="text-sm font-medium">Role Key</label>
+            <label className="text-sm font-medium">Kunci Peran</label>
 
             <input
               value={role.key}
@@ -157,9 +159,9 @@ export function RoleEditor({
           <textarea
             value={description}
             onChange={(event) => setDescription(event.target.value)}
-            disabled={!editable || pending}
+            disabled={!metadataEditable || pending}
             rows={3}
-            className="bg-background mt-2 w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2"
+            className="bg-background mt-2 w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 disabled:cursor-not-allowed disabled:opacity-60"
           />
         </div>
 
@@ -167,15 +169,14 @@ export function RoleEditor({
           <div className="mt-4 rounded-lg border p-4 text-sm">
             <strong>Super Admin</strong>
             <p className="text-muted-foreground mt-1">
-              Role Super Admin bersifat immutable. Permission, nama, dan deskripsinya tidak dapat
-              diubah melalui Role Editor.
+              Peran Super Admin bersifat tetap. Izin, nama, dan deskripsinya tidak dapat diubah dari editor ini.
             </p>
           </div>
         ) : role.isSystem ? (
           <div className="mt-4 rounded-lg border p-4 text-sm">
-            <strong>System Role</strong>
+            <strong>Peran Sistem</strong>
             <p className="text-muted-foreground mt-1">
-              Identitas role system dilindungi. Permission role ini dapat dikelola oleh Super Admin.
+              Nama dan deskripsi peran sistem dilindungi. Super Admin tetap dapat mengatur daftar izin untuk peran operasional ini.
             </p>
           </div>
         ) : null}
@@ -185,15 +186,15 @@ export function RoleEditor({
         <div className="border-b p-5">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h2 className="font-semibold">Permission</h2>
+              <h2 className="font-semibold">Izin</h2>
 
               <p className="text-muted-foreground mt-1 text-sm">
-                Checklist permission yang boleh digunakan oleh administrator dengan role ini.
+                Pilih izin yang boleh digunakan oleh administrator dengan peran ini.
               </p>
             </div>
 
             <div className="rounded-full border px-3 py-1 text-xs font-medium">
-              {selectedCount} permission dipilih
+              {selectedCount} izin dipilih
             </div>
           </div>
         </div>
@@ -201,15 +202,20 @@ export function RoleEditor({
         <div className="divide-y">
           {permissionGroups.map((group) => {
             const groupPermissions = group.permissions
-              .map((permission) => permissionByKey.get(`${permission.module}.${permission.action}`))
-              .filter((permission): permission is DatabasePermission => Boolean(permission))
+              .map((permission) =>
+                permissionByKey.get(`${permission.module}.${permission.action}`),
+              )
+              .filter(
+                (permission): permission is DatabasePermission => Boolean(permission),
+              )
 
             const selectedInGroup = groupPermissions.filter((permission) =>
               selected.has(permission.id),
             ).length
 
             const allSelected =
-              groupPermissions.length > 0 && selectedInGroup === groupPermissions.length
+              groupPermissions.length > 0 &&
+              selectedInGroup === groupPermissions.length
 
             return (
               <div key={group.module} className="p-5">
@@ -222,7 +228,7 @@ export function RoleEditor({
                     </p>
                   </div>
 
-                  {editable ? (
+                  {permissionsEditable ? (
                     <button
                       type="button"
                       onClick={() => toggleModule(group)}
@@ -243,18 +249,24 @@ export function RoleEditor({
                         key={permission.id}
                         className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 ${
                           checked ? 'bg-muted/50' : ''
-                        } ${!editable || pending ? 'cursor-not-allowed opacity-60' : ''}`}
+                        } ${
+                          !permissionsEditable || pending
+                            ? 'cursor-not-allowed opacity-60'
+                            : ''
+                        }`}
                       >
                         <input
                           type="checkbox"
                           checked={checked}
                           onChange={() => togglePermission(permission.id)}
-                          disabled={!editable || pending}
+                          disabled={!permissionsEditable || pending}
                           className="mt-1 size-4"
                         />
 
                         <span className="min-w-0">
-                          <span className="block text-sm font-medium">{permission.action}</span>
+                          <span className="block text-sm font-medium">
+                            {permission.action}
+                          </span>
 
                           <span className="text-muted-foreground mt-0.5 block text-xs break-all">
                             {permission.key}
@@ -266,7 +278,7 @@ export function RoleEditor({
 
                           {permission.is_dangerous ? (
                             <span className="mt-2 inline-flex rounded-full border px-2 py-0.5 text-[10px] font-medium">
-                              Permission berbahaya
+                              Izin sensitif
                             </span>
                           ) : null}
                         </span>
@@ -287,7 +299,7 @@ export function RoleEditor({
         </div>
       ) : null}
 
-      {editable ? (
+      {permissionsEditable ? (
         <div className="sticky bottom-4 z-10 flex justify-end">
           <button
             type="button"
