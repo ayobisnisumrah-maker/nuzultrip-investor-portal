@@ -47,6 +47,10 @@ function formatReceivedAt(value: string, timezone: string) {
   }
 }
 
+function normalizeEmail(value: string) {
+  return value.trim().toLocaleLowerCase('id-ID')
+}
+
 export function InquiryWorkbench({
   inquiries,
   canHandle,
@@ -63,13 +67,20 @@ export function InquiryWorkbench({
   const [pending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [busyInquiryId, setBusyInquiryId] = useState<string | null>(null)
+  const [selectedInquiryId, setSelectedInquiryId] = useState<string | null>(
+    inquiries[0]?.id ?? null,
+  )
+
   const eligibleEmailSet = useMemo(
-    () => new Set(eligibleEmails.map((email) => email.trim().toLocaleLowerCase('id-ID'))),
+    () => new Set(eligibleEmails.map(normalizeEmail)),
     [eligibleEmails],
   )
 
+  const selectedInquiry =
+    inquiries.find((inquiry) => inquiry.id === selectedInquiryId) ?? inquiries[0] ?? null
+
   function changeStatus(inquiryId: string, status: InquiryStatus) {
-    if (pending) return
+    if (pending || status === 'converted') return
     setError(null)
     setBusyInquiryId(inquiryId)
 
@@ -99,10 +110,10 @@ export function InquiryWorkbench({
       return
     }
 
-    const linkedInvestor = eligibleEmailSet.has(inquiry.email.trim().toLocaleLowerCase('id-ID'))
+    const linkedInvestor = eligibleEmailSet.has(normalizeEmail(inquiry.email))
     if (!linkedInvestor) {
       setError(
-        'Permintaan ini belum terhubung ke akun investor aktif dengan email yang sama. Ubah statusnya untuk tindak lanjut, lalu konversi setelah investor terdaftar/aktif.',
+        'Permintaan ini belum terhubung ke akun investor aktif dengan email yang sama. Isi pesan tetap dapat dibaca dan status dapat diproses dari halaman ini.',
       )
       return
     }
@@ -128,6 +139,24 @@ export function InquiryWorkbench({
     })
   }
 
+  if (!inquiries.length) {
+    return (
+      <div className="border-border bg-surface rounded-2xl border p-8 text-center shadow-sm">
+        <h2 className="text-body text-fg font-semibold">Belum ada permintaan masuk</h2>
+        <p className="text-body-sm text-fg-muted mt-2">
+          Permintaan dari formulir portal publik akan muncul di halaman ini.
+        </p>
+      </div>
+    )
+  }
+
+  const selectedLinkedInvestor = selectedInquiry
+    ? Boolean(selectedInquiry.thread_id) || eligibleEmailSet.has(normalizeEmail(selectedInquiry.email))
+    : false
+  const selectedBusy = Boolean(
+    selectedInquiry && pending && busyInquiryId === selectedInquiry.id,
+  )
+
   return (
     <div className="space-y-4">
       {error ? (
@@ -136,12 +165,12 @@ export function InquiryWorkbench({
         </Alert>
       ) : null}
 
-      <div className="border-border bg-surface rounded-2xl border p-4 shadow-sm sm:p-5">
-        <div className="flex flex-wrap items-end justify-between gap-3">
+      <div className="border-border bg-surface overflow-hidden rounded-2xl border shadow-sm">
+        <div className="border-border flex flex-wrap items-end justify-between gap-3 border-b px-4 py-4 sm:px-5">
           <div>
             <h2 className="text-body text-fg font-semibold">Permintaan dari portal publik</h2>
             <p className="text-caption text-fg-muted mt-1">
-              Tinjau permintaan yang masuk, ubah status, atau lanjutkan menjadi percakapan jika emailnya sudah terhubung ke investor aktif.
+              Pilih permintaan untuk membaca isi pesan lengkap dan melakukan tindak lanjut.
             </p>
           </div>
           <span className="border-border text-caption text-fg-subtle rounded-full border px-2.5 py-1">
@@ -149,101 +178,155 @@ export function InquiryWorkbench({
           </span>
         </div>
 
-        <div className="border-border mt-4 overflow-x-auto rounded-xl border">
-          <table className="w-full min-w-[920px] text-left">
-            <thead className="border-border bg-surface-muted border-b">
-              <tr className="text-caption text-fg-subtle">
-                <th className="px-4 py-3">Pengirim</th>
-                <th className="px-4 py-3">Pesan</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Diterima</th>
-                <th className="px-4 py-3 text-right">Aksi</th>
-              </tr>
-            </thead>
-            <tbody className="divide-border divide-y">
-              {inquiries.length ? (
-                inquiries.map((inquiry) => {
-                  const busy = pending && busyInquiryId === inquiry.id
-                  const linkedInvestor =
-                    Boolean(inquiry.thread_id) ||
-                    eligibleEmailSet.has(inquiry.email.trim().toLocaleLowerCase('id-ID'))
+        <div className="grid min-h-[520px] lg:grid-cols-[minmax(18rem,0.72fr)_minmax(0,1.28fr)]">
+          <aside className="border-border bg-surface-muted/35 border-b lg:border-r lg:border-b-0">
+            <div className="max-h-[520px] overflow-y-auto">
+              {inquiries.map((inquiry) => {
+                const active = selectedInquiry?.id === inquiry.id
+                const linkedInvestor =
+                  Boolean(inquiry.thread_id) || eligibleEmailSet.has(normalizeEmail(inquiry.email))
 
-                  return (
-                    <tr key={inquiry.id}>
-                      <td className="px-4 py-4 align-top">
-                        <p className="text-body-sm text-fg font-medium">{inquiry.name}</p>
-                        <p className="text-caption text-fg-muted mt-0.5">{inquiry.email}</p>
-                        <p className="text-caption text-fg-subtle mt-1">
-                          {inquiry.thread_id
-                            ? 'Percakapan sudah dibuat'
-                            : linkedInvestor
-                              ? 'Terhubung ke investor aktif'
-                              : 'Belum terhubung ke investor aktif'}
-                        </p>
-                        {inquiry.phone ? (
-                          <p className="text-caption text-fg-subtle mt-0.5">{inquiry.phone}</p>
-                        ) : null}
-                        {inquiry.organization ? (
-                          <p className="text-caption text-fg-subtle mt-0.5">{inquiry.organization}</p>
-                        ) : null}
-                      </td>
-                      <td className="text-body-sm text-fg-muted max-w-lg px-4 py-4 align-top">
-                        <p className="whitespace-pre-wrap line-clamp-4">{inquiry.message}</p>
-                      </td>
-                      <td className="px-4 py-4 align-top">
-                        <span className="border-border text-caption text-fg rounded-full border px-2.5 py-1">
-                          {STATUS_LABELS[inquiry.status]}
-                        </span>
-                      </td>
-                      <td className="text-caption text-fg-muted px-4 py-4 align-top">
-                        {formatReceivedAt(inquiry.created_at, timezone)}
-                      </td>
-                      <td className="px-4 py-4 align-top text-right">
-                        {canHandle ? (
-                          <div className="flex justify-end gap-2">
-                            <Button
-                              variant="secondary"
-                              loading={busy}
-                              disabled={(pending && !busy) || (!inquiry.thread_id && !linkedInvestor)}
-                              onClick={() => openConversation(inquiry)}
-                            >
-                              {inquiry.thread_id
-                                ? 'Buka Percakapan'
-                                : linkedInvestor
-                                  ? 'Jadikan Percakapan'
-                                  : 'Menunggu Investor'}
-                            </Button>
-                            <select
-                              value={inquiry.status}
-                              disabled={pending}
-                              onChange={(event) =>
-                                changeStatus(inquiry.id, event.target.value as InquiryStatus)
-                              }
-                              className="border-border bg-canvas text-caption h-9 rounded-lg border px-2"
-                              aria-label={`Status permintaan ${inquiry.name}`}
-                            >
-                              <option value="new">Baru</option>
-                              <option value="in_progress">Diproses</option>
-                              <option value="converted">Dikonversi</option>
-                              <option value="closed">Ditutup</option>
-                            </select>
-                          </div>
-                        ) : (
-                          <span className="text-caption text-fg-subtle">Baca saja</span>
-                        )}
-                      </td>
-                    </tr>
-                  )
-                })
-              ) : (
-                <tr>
-                  <td colSpan={5} className="text-body-sm text-fg-muted px-4 py-10 text-center">
-                    Belum ada permintaan masuk.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                return (
+                  <button
+                    key={inquiry.id}
+                    type="button"
+                    onClick={() => {
+                      setError(null)
+                      setSelectedInquiryId(inquiry.id)
+                    }}
+                    className={`border-border block w-full border-b px-4 py-4 text-left transition-colors last:border-b-0 ${
+                      active ? 'bg-canvas' : 'hover:bg-canvas/70'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-body-sm text-fg truncate font-semibold">{inquiry.name}</p>
+                        <p className="text-caption text-fg-muted mt-0.5 truncate">{inquiry.email}</p>
+                      </div>
+                      <span className="border-border text-caption text-fg shrink-0 rounded-full border px-2 py-0.5">
+                        {STATUS_LABELS[inquiry.status]}
+                      </span>
+                    </div>
+
+                    <p className="text-body-sm text-fg-muted mt-3 line-clamp-2 whitespace-pre-wrap">
+                      {inquiry.message}
+                    </p>
+
+                    <div className="text-caption text-fg-subtle mt-3 flex flex-wrap items-center justify-between gap-2">
+                      <span>{formatReceivedAt(inquiry.created_at, timezone)}</span>
+                      <span>
+                        {inquiry.thread_id
+                          ? 'Percakapan aktif'
+                          : linkedInvestor
+                            ? 'Investor terhubung'
+                            : 'Belum terhubung'}
+                      </span>
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+          </aside>
+
+          <section className="min-w-0 p-4 sm:p-6">
+            {selectedInquiry ? (
+              <div className="mx-auto max-w-4xl">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="min-w-0">
+                    <p className="text-caption text-fg-subtle font-medium tracking-[0.1em] uppercase">
+                      Detail Permintaan
+                    </p>
+                    <h3 className="text-heading-md text-fg mt-1 font-semibold">
+                      {selectedInquiry.name}
+                    </h3>
+                    <p className="text-body-sm text-fg-muted mt-1 break-all">
+                      {selectedInquiry.email}
+                    </p>
+                  </div>
+                  <span className="border-border text-body-sm text-fg self-start rounded-full border px-3 py-1">
+                    {STATUS_LABELS[selectedInquiry.status]}
+                  </span>
+                </div>
+
+                <dl className="border-border bg-surface-muted/35 mt-5 grid gap-0 overflow-hidden rounded-xl border sm:grid-cols-2">
+                  <div className="border-border border-b p-4 sm:border-r">
+                    <dt className="text-caption text-fg-subtle">Nomor telepon</dt>
+                    <dd className="text-body-sm text-fg mt-1 font-medium">
+                      {selectedInquiry.phone || 'Tidak dicantumkan'}
+                    </dd>
+                  </div>
+                  <div className="border-border border-b p-4">
+                    <dt className="text-caption text-fg-subtle">Perusahaan / organisasi</dt>
+                    <dd className="text-body-sm text-fg mt-1 font-medium">
+                      {selectedInquiry.organization || 'Tidak dicantumkan'}
+                    </dd>
+                  </div>
+                  <div className="border-border border-b p-4 sm:border-r sm:border-b-0">
+                    <dt className="text-caption text-fg-subtle">Diterima</dt>
+                    <dd className="text-body-sm text-fg mt-1 font-medium">
+                      {formatReceivedAt(selectedInquiry.created_at, timezone)}
+                    </dd>
+                  </div>
+                  <div className="p-4">
+                    <dt className="text-caption text-fg-subtle">Koneksi investor</dt>
+                    <dd className="text-body-sm text-fg mt-1 font-medium">
+                      {selectedInquiry.thread_id
+                        ? 'Sudah menjadi percakapan investor'
+                        : selectedLinkedInvestor
+                          ? 'Terhubung ke investor aktif'
+                          : 'Belum terhubung ke investor aktif'}
+                    </dd>
+                  </div>
+                </dl>
+
+                <div className="mt-6">
+                  <p className="text-body-sm text-fg font-semibold">Isi pesan</p>
+                  <div className="border-border bg-canvas text-body text-fg mt-2 min-h-40 rounded-xl border p-5 leading-7 whitespace-pre-wrap break-words">
+                    {selectedInquiry.message}
+                  </div>
+                </div>
+
+                {canHandle ? (
+                  <div className="border-border mt-6 flex flex-col gap-3 border-t pt-5 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-caption text-fg-subtle">Status tindak lanjut</span>
+                      <select
+                        value={selectedInquiry.status}
+                        disabled={pending || selectedInquiry.status === 'converted'}
+                        onChange={(event) =>
+                          changeStatus(selectedInquiry.id, event.target.value as InquiryStatus)
+                        }
+                        className="border-border bg-canvas text-body-sm h-10 rounded-lg border px-3"
+                        aria-label={`Status permintaan ${selectedInquiry.name}`}
+                      >
+                        <option value="new">Baru</option>
+                        <option value="in_progress">Diproses</option>
+                        <option value="converted" disabled>
+                          Dikonversi
+                        </option>
+                        <option value="closed">Ditutup</option>
+                      </select>
+                    </div>
+
+                    <Button
+                      variant="primary"
+                      loading={selectedBusy}
+                      disabled={pending && !selectedBusy}
+                      onClick={() => openConversation(selectedInquiry)}
+                    >
+                      {selectedInquiry.thread_id
+                        ? 'Buka Percakapan'
+                        : selectedLinkedInvestor
+                          ? 'Jadikan Percakapan'
+                          : 'Belum Terhubung ke Investor'}
+                    </Button>
+                  </div>
+                ) : (
+                  <p className="text-caption text-fg-subtle mt-6">Akses baca saja.</p>
+                )}
+              </div>
+            ) : null}
+          </section>
         </div>
       </div>
     </div>
