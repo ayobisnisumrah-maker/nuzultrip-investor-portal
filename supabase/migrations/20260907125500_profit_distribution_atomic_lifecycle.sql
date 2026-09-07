@@ -13,6 +13,8 @@ using (
   )
 );
 
+grant insert, update, delete on table public.profit_distribution_allocations to authenticated;
+
 drop policy if exists profit_distribution_allocations_insert_admin on public.profit_distribution_allocations;
 create policy profit_distribution_allocations_insert_admin on public.profit_distribution_allocations
 for insert to authenticated
