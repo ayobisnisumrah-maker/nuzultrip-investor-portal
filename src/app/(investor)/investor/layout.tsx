@@ -2,12 +2,15 @@ import type { Metadata } from 'next'
 import { topics } from '@/core/realtime/events'
 import { AppShell, Brand } from '@/ui/shell'
 import { Avatar } from '@/ui/primitives'
+import { LiveNavBadge } from '@/features/investor/live-nav-badge'
 import { SignOutButton } from '@/features/shell/sign-out-button'
 import { RealtimeProvider } from '@/features/realtime/realtime-provider'
 import { RealtimeStatus } from '@/features/realtime/realtime-status'
 import { NotificationSoundListener } from '@/features/notifications/notification-sound-listener'
 import { requireInvestorPage } from '@/server/auth/page-guards'
+import { getUnreadMessageCount } from '@/server/messaging/lifecycle'
 import { getNotificationSoundSettings } from '@/server/settings/notification-sound'
+import { getServerSupabase } from '@/server/supabase/server'
 import { ToastProvider } from '@/ui/toast'
 import { TooltipProvider } from '@/ui/menu'
 
@@ -19,6 +22,25 @@ export const metadata: Metadata = {
 export default async function InvestorLayout({ children }: { children: React.ReactNode }) {
   const principal = await requireInvestorPage()
   const sound = await getNotificationSoundSettings()
+  const supabase = await getServerSupabase()
+
+  const [unreadMessages, unreadNotificationsResult] = principal.hasDataAccess
+    ? await Promise.all([
+        getUnreadMessageCount(supabase),
+        supabase
+          .from('notifications')
+          .select('id', { count: 'exact', head: true })
+          .eq('recipient_id', principal.userId)
+          .is('read_at', null),
+      ])
+    : [0, { count: 0, error: null }]
+
+  const unreadNotifications = unreadNotificationsResult.error
+    ? 0
+    : (unreadNotificationsResult.count ?? 0)
+
+  const investorTopic = topics.investor(principal.investorId)
+  const userTopic = topics.user(principal.userId)
 
   const sections = principal.hasDataAccess
     ? [
@@ -30,16 +52,36 @@ export default async function InvestorLayout({ children }: { children: React.Rea
             { href: '/investor/ownership', label: 'Kepemilikan' },
             { href: '/investor/financials', label: 'Keuangan' },
             { href: '/investor/distributions', label: 'Bagi Hasil' },
-            { href: '/investor/messages', label: 'Pesan' },
-            { href: '/investor/notifications', label: 'Notifikasi' },
+            {
+              href: '/investor/messages',
+              label: 'Pesan',
+              badge: (
+                <LiveNavBadge
+                  initialCount={unreadMessages}
+                  topic={investorTopic}
+                  eventKind="message.received"
+                />
+              ),
+            },
+            {
+              href: '/investor/notifications',
+              label: 'Notifikasi',
+              badge: (
+                <LiveNavBadge
+                  initialCount={unreadNotifications}
+                  topic={userTopic}
+                  eventKind="notification.created"
+                />
+              ),
+            },
           ],
         },
       ]
     : []
 
   const subscribed = [
-    topics.investor(principal.investorId),
-    topics.user(principal.userId),
+    investorTopic,
+    userTopic,
     ...(principal.hasDataAccess ? [topics.allInvestors()] : []),
   ]
 
