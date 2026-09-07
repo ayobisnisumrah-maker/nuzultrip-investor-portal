@@ -12,6 +12,11 @@ permissions:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  # Messaging acceptance tests intentionally exercise emoji. Keep the runner,
+  # Node and Playwright reporters on UTF-8 so an assertion log cannot crash the
+  # .NET Actions worker with EncoderFallbackException before artifacts upload.
+  LANG: C.UTF-8
+  LC_ALL: C.UTF-8
 
 jobs:
   browser-e2e:
