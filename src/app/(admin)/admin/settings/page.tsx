@@ -1,9 +1,10 @@
 import type { Metadata } from 'next'
+
+import { EmailSettingsForm } from '@/features/admin/email-settings-form'
+import { NotificationSoundSettingsForm } from '@/features/admin/notification-sound-settings-form'
 import { adminWithPermission } from '@/server/auth/page-guards'
 import { getEmailSettings } from '@/server/settings/email'
 import { getNotificationSoundSettings } from '@/server/settings/notification-sound'
-import { EmailSettingsForm } from '@/features/admin/email-settings-form'
-import { NotificationSoundSettingsForm } from '@/features/admin/notification-sound-settings-form'
 
 export const metadata: Metadata = {
   title: 'Pengaturan',
@@ -41,8 +42,7 @@ export default async function AdminSettingsPage() {
           Pengaturan
         </h1>
         <p className="text-body-sm text-fg-muted">
-          Kelola konfigurasi aplikasi yang dapat diubah tanpa mengubah source
-          code.
+          Kelola konfigurasi aplikasi yang dapat diubah tanpa mengubah kode sumber.
         </p>
       </header>
 
@@ -65,11 +65,10 @@ export default async function AdminSettingsPage() {
       <section className="flex flex-col gap-5">
         <div>
           <h2 className="font-display text-heading-md text-fg">
-            Email
+            Surel
           </h2>
           <p className="text-body-sm text-fg-muted mt-1">
-            Konfigurasi identitas pengirim dan perilaku notifikasi email
-            aplikasi.
+            Konfigurasi identitas pengirim dan perilaku notifikasi surel aplikasi.
           </p>
         </div>
 
