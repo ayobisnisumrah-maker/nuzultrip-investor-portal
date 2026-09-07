@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import {
   ArrowLeftRight,
@@ -122,7 +122,14 @@ export function AdminShell({
 
   useEffect(() => {
     const unsubscribe = realtime.subscribe(topics.admin(), (event) => {
-      if (event.kind === 'message.received' || event.kind === 'inquiry.received') router.refresh()
+      if (
+        event.kind === 'message.received' ||
+        event.kind === 'inquiry.received' ||
+        event.kind === 'ownership.changed' ||
+        event.kind === 'profit_distribution.changed'
+      ) {
+        router.refresh()
+      }
     })
     return unsubscribe
   }, [realtime, router])
