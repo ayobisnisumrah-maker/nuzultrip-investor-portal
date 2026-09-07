@@ -72,7 +72,7 @@ export default async function OwnershipPage() {
       ? supabase.from('investors').select('id, legal_name, reference_code, status').in('id', investorIds)
       : Promise.resolve({ data: [] }),
     offeringIds.length
-      ? supabase.from('ownership_offerings').select('id, title, status').in('id', offeringIds)
+      ? supabase.from('ownership_offerings').select('id, name, code, status').in('id', offeringIds)
       : Promise.resolve({ data: [] }),
   ])
 
@@ -115,7 +115,7 @@ export default async function OwnershipPage() {
                     <div>
                       <CardTitle>{investor?.legal_name ?? 'Investor tidak ditemukan'}</CardTitle>
                       <p className="text-body-sm text-fg-muted mt-1">
-                        {investor?.reference_code ?? '—'} · {offering?.title ?? 'Penawaran tidak ditemukan'}
+                        {investor?.reference_code ?? '—'} · {offering?.name ?? 'Penawaran tidak ditemukan'}
                       </p>
                     </div>
                     <span className="border-border rounded-full border px-3 py-1 text-caption font-medium">
