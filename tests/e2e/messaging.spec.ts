@@ -92,9 +92,7 @@ async function openAdminChat(
   await signIn(page, fixture.admin, '/admin')
   await page.goto(`/admin/messages?thread=${fixture.threadId}`)
   await page.waitForLoadState('networkidle')
-  await expect(
-    page.getByRole('paragraph', { name: 'Percakapan pribadi', exact: true }),
-  ).toBeVisible()
+  await expect(page.locator('p').filter({ hasText: /^Percakapan pribadi$/ })).toBeVisible()
   return { context, page }
 }
 
@@ -107,9 +105,7 @@ async function openInvestorChat(
   await signIn(page, fixture.investor, '/investor')
   await page.goto(`/investor/messages/${fixture.threadId}`)
   await page.waitForLoadState('networkidle')
-  await expect(
-    page.getByRole('paragraph', { name: 'Percakapan pribadi', exact: true }),
-  ).toBeVisible()
+  await expect(page.locator('p').filter({ hasText: /^Percakapan pribadi$/ })).toBeVisible()
   return { context, page }
 }
 
