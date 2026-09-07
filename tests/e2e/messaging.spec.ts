@@ -92,7 +92,9 @@ async function openAdminChat(
   await signIn(page, fixture.admin, '/admin')
   await page.goto(`/admin/messages?thread=${fixture.threadId}`)
   await page.waitForLoadState('networkidle')
-  await expect(page.getByText('Percakapan pribadi')).toBeVisible()
+  await expect(
+    page.getByRole('paragraph', { name: 'Percakapan pribadi', exact: true }),
+  ).toBeVisible()
   return { context, page }
 }
 
@@ -105,7 +107,9 @@ async function openInvestorChat(
   await signIn(page, fixture.investor, '/investor')
   await page.goto(`/investor/messages/${fixture.threadId}`)
   await page.waitForLoadState('networkidle')
-  await expect(page.getByText('Percakapan pribadi')).toBeVisible()
+  await expect(
+    page.getByRole('paragraph', { name: 'Percakapan pribadi', exact: true }),
+  ).toBeVisible()
   return { context, page }
 }
 
@@ -166,7 +170,9 @@ test.describe('admin ↔ investor messaging', () => {
     await admin.context.close()
   })
 
-  test('chat exposes no file upload control and keeps document transfer out of messaging', async ({ browser }) => {
+  test('chat exposes no file upload control and keeps document transfer out of messaging', async ({
+    browser,
+  }) => {
     const fixture = await createChatFixture()
     const investor = await openInvestorChat(browser, fixture)
 
