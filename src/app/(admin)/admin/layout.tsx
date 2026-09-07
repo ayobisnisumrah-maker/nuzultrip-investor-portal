@@ -4,7 +4,9 @@ import { topics } from '@/core/realtime/events'
 import { ADMIN_NAVIGATION } from '@/features/admin/navigation'
 import { AdminShell, type SerializableNavSection } from '@/features/admin/admin-shell'
 import { RealtimeProvider } from '@/features/realtime/realtime-provider'
+import { NotificationSoundListener } from '@/features/notifications/notification-sound-listener'
 import { requireAdminPage } from '@/server/auth/page-guards'
+import { getNotificationSoundSettings } from '@/server/settings/notification-sound'
 import { ToastProvider } from '@/ui/toast'
 import { TooltipProvider } from '@/ui/menu'
 
@@ -15,9 +17,8 @@ export const metadata: Metadata = {
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const principal = await requireAdminPage()
+  const sound = await getNotificationSoundSettings()
 
-  // Sections with no visible items are dropped entirely, so a restricted role
-  // does not see an empty heading and wonder what is missing.
   const sections: SerializableNavSection[] = ADMIN_NAVIGATION.map((section) => ({
     ...(section.title ? { title: section.title } : {}),
     items: section.items
@@ -30,8 +31,17 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       })),
   })).filter((section) => section.items.length > 0)
 
+  const subscribed = [topics.admin(), topics.user(principal.userId)]
+
   return (
-    <RealtimeProvider topics={[topics.admin(), topics.user(principal.userId)]}>
+    <RealtimeProvider topics={subscribed}>
+      <NotificationSoundListener
+        topics={subscribed}
+        role="admin"
+        enabled={sound.enabled}
+        soundUrl={sound.publicUrl}
+        volume={sound.volume}
+      />
       <ToastProvider>
         <TooltipProvider delayDuration={200}>
           <AdminShell
