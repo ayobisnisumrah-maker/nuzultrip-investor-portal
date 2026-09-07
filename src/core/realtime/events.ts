@@ -31,6 +31,10 @@ export const EVENT_KINDS = [
   'financial_report.published',
   'financial_report.state_changed',
 
+  // Ownership and distributions
+  'ownership.changed',
+  'profit_distribution.changed',
+
   // Communication
   'message.received',
   'notification.created',
@@ -94,6 +98,8 @@ export const TOPIC_EVENTS: Readonly<Record<string, readonly EventKind[]>> = {
     'investor.status_changed',
     'document.state_changed',
     'financial_report.state_changed',
+    'ownership.changed',
+    'profit_distribution.changed',
     'message.received',
     'inquiry.received',
   ],
@@ -106,6 +112,8 @@ export function eventsForTopic(topic: string): readonly EventKind[] {
       'investor.status_changed',
       'investor.document_shared',
       'investor.document_revoked',
+      'ownership.changed',
+      'profit_distribution.changed',
       'message.received',
       'document.published',
     ]
