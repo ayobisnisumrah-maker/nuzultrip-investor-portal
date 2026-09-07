@@ -1,9 +1,9 @@
-﻿import Link from 'next/link'
+import Link from 'next/link'
 
 import { hasPermission } from '@/core/auth/principal'
+import { AdministratorCreateForm } from '@/features/admin/administrator-create-form'
 import { requireAdminPage } from '@/server/auth/page-guards'
 import { getServerSupabase } from '@/server/supabase/server'
-import { AdministratorCreateForm } from '@/features/admin/administrator-create-form'
 
 export default async function NewAdministratorPage() {
   const principal = await requireAdminPage('/admin/administrators/new')
@@ -13,8 +13,7 @@ export default async function NewAdministratorPage() {
       <main className="p-6">
         <h1 className="text-xl font-semibold">Akses ditolak</h1>
         <p className="text-muted-foreground mt-2 text-sm">
-          Hanya administrator yang memiliki permission admins.create yang dapat membuat
-          administrator baru.
+          Hanya administrator yang memiliki izin untuk membuat administrator baru yang dapat membuka halaman ini.
         </p>
       </main>
     )
@@ -30,7 +29,7 @@ export default async function NewAdministratorPage() {
     .order('name', { ascending: true })
 
   if (error) {
-    throw new Error(`Gagal mengambil role: ${error.message}`)
+    throw new Error(`Gagal mengambil peran: ${error.message}`)
   }
 
   return (
@@ -46,7 +45,7 @@ export default async function NewAdministratorPage() {
         <h1 className="mt-3 text-2xl font-semibold tracking-tight">Tambah Administrator</h1>
 
         <p className="text-muted-foreground mt-1 text-sm">
-          Buat akun administrator internal dan tetapkan role aksesnya.
+          Buat akun administrator internal dan tetapkan peran aksesnya.
         </p>
       </header>
 
