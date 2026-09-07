@@ -682,10 +682,12 @@ export function PublicPortalModel({
   page,
   sections,
   navigation,
+  brandLogoUrl,
 }: {
   page: { title: string; seo: unknown }
   sections: PublicPortalSection[]
   navigation: NavItem[]
+  brandLogoUrl?: string | null
 }) {
   const header = navigation
     .filter((item) => item.location === 'header' && !item.parent_id)
@@ -696,6 +698,7 @@ export function PublicPortalModel({
   const social = navigation
     .filter((item) => item.location === 'social' && !item.parent_id)
     .sort((a, b) => a.position - b.position)
+  const logoSrc = brandLogoUrl || '/brand/nuzultrip-logo-portal.svg'
 
   return (
     <div className={styles.page}>
@@ -703,7 +706,7 @@ export function PublicPortalModel({
         <div className={`${styles.wrap} ${styles.navIn}`}>
           <Link className={styles.brand} href="/" aria-label="Nuzultrip">
             <Image
-              src="/brand/nuzultrip-logo-portal.svg"
+              src={logoSrc}
               alt="Nuzultrip"
               width={162}
               height={50}
@@ -735,7 +738,7 @@ export function PublicPortalModel({
           <div className={styles.footerGrid}>
             <div>
               <Image
-                src="/brand/nuzultrip-logo-portal.svg"
+                src={logoSrc}
                 alt="Nuzultrip"
                 width={162}
                 height={50}
