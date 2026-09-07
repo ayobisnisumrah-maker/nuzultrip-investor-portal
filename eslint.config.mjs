@@ -175,6 +175,24 @@ export default tseslint.config(
   },
 
   // --------------------------------------------------------------------------
+  // Server-snapshot reconciliation
+  //
+  // These two messaging workspaces intentionally reconcile authenticated RSC
+  // snapshots with short-lived optimistic read state. The effect writes are
+  // bounded to read-receipt reconciliation and are not used for derived state.
+  // --------------------------------------------------------------------------
+  {
+    files: [
+      'src/features/admin/communication-workbench.tsx',
+      'src/features/messaging/investor-message-workspace.tsx',
+    ],
+
+    rules: {
+      'react-hooks/set-state-in-effect': 'off',
+    },
+  },
+
+  // --------------------------------------------------------------------------
   // Tests
   // --------------------------------------------------------------------------
   {
