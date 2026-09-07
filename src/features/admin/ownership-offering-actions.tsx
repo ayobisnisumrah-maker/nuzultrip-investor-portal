@@ -1,5 +1,6 @@
 ﻿'use client'
 
+import Link from 'next/link'
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 
@@ -52,7 +53,6 @@ const CONFIG: Record<ActionKey, ActionConfig> = {
       'Penawaran akan menjadi aktif dan dapat diproses sesuai konfigurasi akses investor.',
     variant: 'primary',
   },
-
   pause: {
     label: 'Jeda Penawaran',
     target: 'paused',
@@ -61,7 +61,6 @@ const CONFIG: Record<ActionKey, ActionConfig> = {
       'Penawaran akan dihentikan sementara dan tidak dapat menerima investasi baru sampai dibuka kembali.',
     variant: 'secondary',
   },
-
   resume: {
     label: 'Buka Kembali',
     target: 'open',
@@ -69,7 +68,6 @@ const CONFIG: Record<ActionKey, ActionConfig> = {
     consequence: 'Penawaran akan kembali ke status Open dan dapat diproses kembali.',
     variant: 'primary',
   },
-
   close: {
     label: 'Tutup Penawaran',
     target: 'closed',
@@ -78,7 +76,6 @@ const CONFIG: Record<ActionKey, ActionConfig> = {
       'Penawaran akan ditutup secara permanen dari lifecycle aktif. Pastikan seluruh proses transaksi yang relevan telah selesai.',
     variant: 'danger',
   },
-
   archive: {
     label: 'Arsipkan Penawaran',
     target: 'archived',
@@ -93,12 +90,10 @@ function hasPermission(
   permissions: ReadonlySet<string> | readonly string[],
   permission: string,
 ): boolean {
-  if ('has' in permissions) {
-    return permissions.has(permission)
-  }
-
+  if ('has' in permissions) return permissions.has(permission)
   return permissions.includes(permission)
 }
+
 const HANDLERS = {
   publish: publishOwnershipOffering,
   pause: pauseOwnershipOffering,
@@ -111,19 +106,14 @@ function getAvailableActions(status: OwnershipOfferingStatus): ActionKey[] {
   switch (status) {
     case 'draft':
       return ['publish']
-
     case 'open':
       return ['pause', 'close']
-
     case 'paused':
       return ['resume', 'close']
-
     case 'closed':
       return ['archive']
-
     case 'archived':
       return []
-
     default:
       return []
   }
@@ -144,7 +134,6 @@ export function OwnershipOfferingActions({
 }: OwnershipOfferingActionsProps) {
   const router = useRouter()
   const { push } = useToast()
-
   const [selected, setSelected] = useState<ActionKey | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
@@ -152,58 +141,52 @@ export function OwnershipOfferingActions({
   const availableActions = getAvailableActions(status).filter((key) =>
     hasPermission(permissions, CONFIG[key].permission),
   )
-
-  if (availableActions.length === 0) {
-    return null
-  }
-
   const selectedAction = selected !== null ? CONFIG[selected] : null
+  const canViewAllocations =
+    hasPermission(permissions, 'ownership.view') || hasPermission(permissions, 'ownership.create')
 
   function confirm() {
-    if (selected === null || pending) {
-      return
-    }
+    if (selected === null || pending) return
 
     const actionKey = selected
     const action = CONFIG[actionKey]
     const handler = HANDLERS[actionKey]
-
     setError(null)
 
     startTransition(async () => {
       try {
-        const result = await handler({
-          offeringId,
-        })
-
+        const result = await handler({ offeringId })
         if (!result.ok) {
           setError(result.error.message)
           return
         }
 
         setSelected(null)
-
         push({
           tone: 'success',
           title: 'Status penawaran diperbarui',
           description: `${name} kini ${STATUS_LABELS[action.target]}.`,
         })
-
         router.refresh()
       } catch (cause) {
-        setError(
-          cause instanceof Error ? cause.message : 'Aksi penawaran tidak dapat diselesaikan.',
-        )
+        setError(cause instanceof Error ? cause.message : 'Aksi penawaran tidak dapat diselesaikan.')
       }
     })
   }
 
+  if (availableActions.length === 0 && !canViewAllocations) return null
+
   return (
     <>
       <div className="flex flex-wrap items-center justify-end gap-2">
+        {canViewAllocations ? (
+          <Button asChild variant="secondary">
+            <Link href={`/admin/ownership/offerings/${offeringId}/allocations`}>Kelola Alokasi</Link>
+          </Button>
+        ) : null}
+
         {availableActions.map((key) => {
           const action = CONFIG[key]
-
           return (
             <Button
               key={key}
@@ -233,10 +216,9 @@ export function OwnershipOfferingActions({
             <>
               <DialogHeader>
                 <DialogTitle>{selectedAction.label}?</DialogTitle>
-
                 <DialogDescription>
-                  Anda akan mengubah status <strong>{name}</strong> dari {STATUS_LABELS[status]}{' '}
-                  menjadi {STATUS_LABELS[selectedAction.target]}.
+                  Anda akan mengubah status <strong>{name}</strong> dari {STATUS_LABELS[status]} menjadi{' '}
+                  {STATUS_LABELS[selectedAction.target]}.
                 </DialogDescription>
               </DialogHeader>
 
@@ -252,11 +234,8 @@ export function OwnershipOfferingActions({
 
               <DialogFooter>
                 <DialogClose asChild>
-                  <Button variant="secondary" disabled={pending}>
-                    Batal
-                  </Button>
+                  <Button variant="secondary" disabled={pending}>Batal</Button>
                 </DialogClose>
-
                 <Button variant={selectedAction.variant} loading={pending} onClick={confirm}>
                   {selectedAction.label}
                 </Button>
