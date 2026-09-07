@@ -16,23 +16,27 @@ export function PublicPortalReference({
   sections,
   ...props
 }: PublicPortalReferenceProps) {
-  // Compatibility adapter for the current renderer. The source of document
-  // cards is exclusively the published-document query; CMS `content.items`
-  // and manually entered document URLs are discarded here.
-  const resolvedSections = sections.map((section) =>
-    section.section_kind === 'documents'
-      ? {
-          ...section,
-          content: {
-            ...section.content,
-            items: publicDocuments.map((document) => ({
-              title: document.title,
-              href: document.href,
-            })),
-          },
-        }
-      : section,
-  )
+  // Published CMS document items are legitimate public copy and must remain
+  // visible even when there is not yet a downloadable public file. When real
+  // public documents exist, they become the linked cards. This avoids an empty
+  // "Dokumen Investor" section while still preventing restricted files from
+  // leaking into the public portal.
+  const resolvedSections = sections.map((section) => {
+    if (section.section_kind !== 'documents' || publicDocuments.length === 0) {
+      return section
+    }
+
+    return {
+      ...section,
+      content: {
+        ...section.content,
+        items: publicDocuments.map((document) => ({
+          title: document.title,
+          href: document.href,
+        })),
+      },
+    }
+  })
 
   return <PublicPortalModel {...props} sections={resolvedSections} />
 }
