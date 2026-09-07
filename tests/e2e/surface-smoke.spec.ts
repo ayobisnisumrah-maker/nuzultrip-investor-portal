@@ -50,6 +50,7 @@ const ADMIN_ROUTES = [
 
 const INVESTOR_ROUTES = [
   '/investor',
+  '/investor/distributions',
   '/investor/documents',
   '/investor/financials',
   '/investor/messages',
