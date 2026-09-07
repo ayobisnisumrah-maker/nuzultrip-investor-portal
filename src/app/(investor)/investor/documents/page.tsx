@@ -1,4 +1,6 @@
 import type { Metadata } from 'next'
+import { topics } from '@/core/realtime/events'
+import { RealtimeRefresher } from '@/features/realtime/realtime-refresher'
 import { requireInvestorPage } from '@/server/auth/page-guards'
 import { getServerSupabase } from '@/server/supabase/server'
 import { PageHeader, Stack } from '@/ui/layout'
@@ -8,7 +10,7 @@ import { EmptyState } from '@/ui/states'
 export const metadata: Metadata = { title: 'Dokumen & Data Room' }
 
 export default async function InvestorDocumentsPage() {
-  await requireInvestorPage()
+  const principal = await requireInvestorPage('/investor/documents')
   const supabase = await getServerSupabase()
 
   const { data: documents } = await supabase
@@ -20,6 +22,11 @@ export default async function InvestorDocumentsPage() {
 
   return (
     <Stack gap={8}>
+      <RealtimeRefresher topic={topics.allInvestors()} kinds={['document.published']} />
+      <RealtimeRefresher
+        topic={topics.investor(principal.investorId)}
+        kinds={['investor.document_shared', 'investor.document_revoked']}
+      />
       <PageHeader
         eyebrow="Protected Content"
         title="Dokumen & Data Room"
