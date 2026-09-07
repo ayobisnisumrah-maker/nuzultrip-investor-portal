@@ -41,33 +41,33 @@ export async function submitPortalInquiry(formData: FormData) {
 
   try {
     await enforceRateLimit('portal.inquiry', ip)
-
-    const supabase = await getServerSupabase()
-    const { error } = await supabase.from('portal_inquiries').insert({
-      name: parsed.data.name,
-      email: parsed.data.email,
-      phone: parsed.data.phone ?? null,
-      organization: parsed.data.organization ?? null,
-      message: parsed.data.message,
-      source_page: '/hubungi',
-      ip_hash: rateLimitBucket(getServerEnv().AUDIT_IP_SALT, 'portal.inquiry', ip),
-      user_agent: requestHeaders.get('user-agent'),
-      status: 'new',
-    })
-
-    if (error) {
-      console.error('Portal inquiry insert failed', {
-        code: error.code,
-        details: error.details,
-        hint: error.hint,
-      })
-      redirect('/hubungi?error=server')
-    }
   } catch (error) {
     if (isAppError(error) && error.code === 'rate_limited') {
       redirect('/hubungi?error=rate')
     }
     throw error
+  }
+
+  const supabase = await getServerSupabase()
+  const { error } = await supabase.from('portal_inquiries').insert({
+    name: parsed.data.name,
+    email: parsed.data.email,
+    phone: parsed.data.phone ?? null,
+    organization: parsed.data.organization ?? null,
+    message: parsed.data.message,
+    source_page: '/hubungi',
+    ip_hash: rateLimitBucket(getServerEnv().AUDIT_IP_SALT, 'portal.inquiry', ip),
+    user_agent: requestHeaders.get('user-agent'),
+    status: 'new',
+  })
+
+  if (error) {
+    console.error('Portal inquiry insert failed', {
+      code: error.code,
+      details: error.details,
+      hint: error.hint,
+    })
+    redirect('/hubungi?error=server')
   }
 
   redirect('/hubungi?sent=1')
