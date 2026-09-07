@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 
 import { PublicPortalReference } from '@/features/portal/public-portal-reference'
+import { PublicRealtimeSurface } from '@/features/realtime/public-realtime-surface'
 import { getPublicBrandLogo } from '@/server/portal/public-branding'
 import {
   getPublicDocuments,
@@ -63,35 +64,39 @@ export default async function Home() {
 
   if (!portal) {
     return (
-      <main
-        id="main"
-        className="mx-auto flex min-h-dvh max-w-3xl flex-col justify-center px-6 py-16"
-      >
-        <p className="text-primary text-xs font-semibold tracking-[0.16em] uppercase">
-          Nuzultrip Equity Relations
-        </p>
+      <PublicRealtimeSurface>
+        <main
+          id="main"
+          className="mx-auto flex min-h-dvh max-w-3xl flex-col justify-center px-6 py-16"
+        >
+          <p className="text-primary text-xs font-semibold tracking-[0.16em] uppercase">
+            Nuzultrip Equity Relations
+          </p>
 
-        <h1 className="font-display text-fg mt-3 text-4xl font-semibold">
-          Portal belum diterbitkan
-        </h1>
+          <h1 className="font-display text-fg mt-3 text-4xl font-semibold">
+            Portal belum diterbitkan
+          </h1>
 
-        <p className="text-fg-muted mt-4 max-w-2xl text-lg leading-8">
-          Halaman publik belum tersedia. Konten akan ditampilkan setelah diterbitkan melalui dasbor admin.
-        </p>
-      </main>
+          <p className="text-fg-muted mt-4 max-w-2xl text-lg leading-8">
+            Halaman publik belum tersedia. Konten akan ditampilkan setelah diterbitkan melalui dasbor admin.
+          </p>
+        </main>
+      </PublicRealtimeSurface>
     )
   }
 
   return (
-    <PublicPortalReference
-      page={{
-        title: 'Nuzultrip',
-        seo: portal.page.seo,
-      }}
-      sections={portal.sections}
-      navigation={navigation}
-      publicDocuments={publicDocuments}
-      brandLogoUrl={brandLogoUrl}
-    />
+    <PublicRealtimeSurface>
+      <PublicPortalReference
+        page={{
+          title: 'Nuzultrip',
+          seo: portal.page.seo,
+        }}
+        sections={portal.sections}
+        navigation={navigation}
+        publicDocuments={publicDocuments}
+        brandLogoUrl={brandLogoUrl}
+      />
+    </PublicRealtimeSurface>
   )
 }
