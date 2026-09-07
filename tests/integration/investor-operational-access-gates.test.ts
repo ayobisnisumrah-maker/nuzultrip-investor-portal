@@ -2,7 +2,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import type { Sql } from 'postgres'
 
-import { as, cleanup, closeDb, db } from './helpers/db'
+import { as, cleanup, closeDb, db, expectRejected } from './helpers/db'
 import { createFixtures, destroyFixtures, type Fixtures } from './helpers/fixtures'
 
 type OperationalContent = {
@@ -16,6 +16,11 @@ type OperationalContent = {
   inactiveNotificationId: string
   inactiveReadId: string
   inactiveStorageObjectId: string
+  offeringId: string
+  activeHoldingId: string
+  inactiveHoldingId: string
+  activeTransferId: string
+  inactiveTransferId: string
 }
 
 let fixtures: Fixtures
@@ -86,6 +91,53 @@ async function createOperationalContent(sql: Sql, f: Fixtures): Promise<Operatio
   const active = await createForInvestor(f.investorA.userId, 'active')
   const inactive = await createForInvestor(f.investorInactive.userId, 'inactive')
 
+  const [offering] = await sql<{ id: string }[]>`
+    insert into public.ownership_offerings (
+      name, code, status, total_offered_bps, unit_ownership_bps, unit_price,
+      total_units, distribution_cadence_months, transfer_lock_months
+    ) values (
+      ${`Operational Gate Offering ${f.suffix}`},
+      ${`operational-gate-${f.suffix}`},
+      'open', 200, 100, 100000000, 2, 6, 0
+    )
+    returning id
+  `
+  if (!offering) throw new Error('Failed to create ownership offering.')
+
+  async function createSaleFixture(userId: string, label: string) {
+    const [holding] = await sql<{ id: string }[]>`
+      insert into public.ownership_holdings (
+        offering_id, investor_id, units, ownership_bps, transfer_eligible_at,
+        status, acquisition_reference
+      ) values (
+        ${offering.id}, ${userId}, 1, 100,
+        ${new Date(Date.now() - 60_000).toISOString()},
+        'active', ${`OP-GATE-${label}-${f.suffix}`}
+      )
+      returning id
+    `
+    if (!holding) throw new Error(`Failed to create ${label} holding.`)
+
+    const [transfer] = await sql<{ id: string }[]>`
+      insert into public.ownership_transfers (
+        holding_id, from_investor_id, units, eligible_at, status,
+        transfer_kind, requested_unit_price, notes
+      ) values (
+        ${holding.id}, ${userId}, 1,
+        ${new Date(Date.now() - 60_000).toISOString()},
+        'pending', 'sale', 100000000,
+        ${`Operational sale ${label} ${f.suffix}`}
+      )
+      returning id
+    `
+    if (!transfer) throw new Error(`Failed to create ${label} transfer.`)
+
+    return { holdingId: holding.id, transferId: transfer.id }
+  }
+
+  const activeSale = await createSaleFixture(f.investorA.userId, 'active')
+  const inactiveSale = await createSaleFixture(f.investorInactive.userId, 'inactive')
+
   return {
     activeThreadId: active.threadId,
     activeMessageId: active.messageId,
@@ -97,6 +149,11 @@ async function createOperationalContent(sql: Sql, f: Fixtures): Promise<Operatio
     inactiveNotificationId: inactive.notificationId,
     inactiveReadId: inactive.readId,
     inactiveStorageObjectId: inactive.storageObjectId,
+    offeringId: offering.id,
+    activeHoldingId: activeSale.holdingId,
+    inactiveHoldingId: inactiveSale.holdingId,
+    activeTransferId: activeSale.transferId,
+    inactiveTransferId: inactiveSale.transferId,
   }
 }
 
@@ -110,6 +167,9 @@ afterAll(async () => {
     await tx`delete from storage.objects where id in (${content.activeStorageObjectId}, ${content.inactiveStorageObjectId})`
     await tx`delete from public.notifications where id in (${content.activeNotificationId}, ${content.inactiveNotificationId})`
     await tx`delete from public.message_threads where id in (${content.activeThreadId}, ${content.inactiveThreadId})`
+    await tx`delete from public.ownership_transfers where id in (${content.activeTransferId}, ${content.inactiveTransferId})`
+    await tx`delete from public.ownership_holdings where id in (${content.activeHoldingId}, ${content.inactiveHoldingId})`
+    await tx`delete from public.ownership_offerings where id = ${content.offeringId}`
   })
   await destroyFixtures(fixtures)
   await closeDb()
@@ -148,6 +208,9 @@ describe('investor operational lifecycle gates', () => {
       tx`select id from storage.objects where id = ${content.activeStorageObjectId}`,
     )
     expect(objects).toHaveLength(1)
+
+    const sales = await as(principal, (tx) => tx`select id from app.list_my_ownership_sales()`)
+    expect(sales.map((row) => row['id'])).toContain(content.activeTransferId)
   })
 
   it('revokes all operational data from an inactive investor', async () => {
@@ -185,5 +248,29 @@ describe('investor operational lifecycle gates', () => {
       tx`select id from storage.objects where id = ${content.inactiveStorageObjectId}`,
     )
     expect(objects).toHaveLength(0)
+
+    const sales = await as(principal, (tx) => tx`select id from app.list_my_ownership_sales()`)
+    expect(sales).toHaveLength(0)
+  })
+
+  it('prevents an inactive investor from creating or cancelling a share sale', async () => {
+    const principal = {
+      kind: 'authenticated' as const,
+      userId: fixtures.investorInactive.userId,
+    }
+
+    const createError = await expectRejected(() =>
+      as(principal, (tx) =>
+        tx`select app.create_ownership_sale_request(${content.inactiveHoldingId}, 1, 100000000, 'should fail')`,
+      ),
+    )
+    expect(createError.code).toBe('42501')
+
+    const cancelError = await expectRejected(() =>
+      as(principal, (tx) =>
+        tx`select app.cancel_ownership_sale_request(${content.inactiveTransferId})`,
+      ),
+    )
+    expect(cancelError.code).toBe('42501')
   })
 })
