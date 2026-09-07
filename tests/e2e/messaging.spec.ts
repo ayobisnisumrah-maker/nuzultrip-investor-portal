@@ -121,8 +121,12 @@ test.describe('admin ↔ investor messaging', () => {
     const admin = await openAdminChat(browser, fixture)
     const investor = await openInvestorChat(browser, fixture)
 
-    await expect(admin.page.getByText('Real-time aktif')).toBeVisible({ timeout: 30_000 })
-    await expect(investor.page.getByText('Real-time aktif')).toBeVisible({ timeout: 30_000 })
+    await expect(admin.page.getByText('Real-time aktif')).toHaveText('Real-time aktif', {
+      timeout: 30_000,
+    })
+    await expect(investor.page.getByText('Real-time aktif')).toHaveText('Real-time aktif', {
+      timeout: 30_000,
+    })
 
     const investorComposer = await composer(investor.page)
     await investorComposer.fill('Wa’alaikumussalam. Baik, terima kasih 🙏')
