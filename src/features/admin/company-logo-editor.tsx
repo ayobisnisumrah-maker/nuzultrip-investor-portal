@@ -1,7 +1,8 @@
 'use client'
 
 import Image from 'next/image'
-import { FormEvent, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
+import type { FormEvent } from 'react'
 import { Upload } from 'lucide-react'
 
 import { Alert } from '@/ui/alert'
