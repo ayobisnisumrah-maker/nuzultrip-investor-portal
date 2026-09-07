@@ -1,4 +1,6 @@
 import type { Metadata } from 'next'
+import { topics } from '@/core/realtime/events'
+import { RealtimeRefresher } from '@/features/realtime/realtime-refresher'
 import { requireInvestorPage } from '@/server/auth/page-guards'
 import { getServerSupabase } from '@/server/supabase/server'
 import { PageHeader, Stack } from '@/ui/layout'
@@ -8,7 +10,7 @@ import { EmptyState } from '@/ui/states'
 export const metadata: Metadata = { title: 'Keuangan' }
 
 export default async function InvestorFinancialsPage() {
-  await requireInvestorPage()
+  await requireInvestorPage('/investor/financials')
   const supabase = await getServerSupabase()
 
   const { data: reports } = await supabase
@@ -30,6 +32,7 @@ export default async function InvestorFinancialsPage() {
 
   return (
     <Stack gap={8}>
+      <RealtimeRefresher topic={topics.allInvestors()} kinds={['financial_report.published']} />
       <PageHeader
         eyebrow="Financial Information"
         title="Keuangan"
