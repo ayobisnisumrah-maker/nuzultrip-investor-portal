@@ -1,12 +1,12 @@
 import Link from 'next/link'
 
+import { ProfitDistributionManager } from '@/features/admin/profit-distribution-manager'
 import { adminWithPermission } from '@/server/auth/page-guards'
-import { getServerSupabase } from '@/server/supabase/server'
 import {
   listProfitDistributionAllocations,
   listProfitDistributions,
 } from '@/server/ownership/profit-distribution-service'
-import { ProfitDistributionManager } from '@/features/admin/profit-distribution-manager'
+import { getServerSupabase } from '@/server/supabase/server'
 
 export default async function ProfitDistributionsPage() {
   const principal = await adminWithPermission(
@@ -18,8 +18,12 @@ export default async function ProfitDistributionsPage() {
     return (
       <div className="border-border bg-surface rounded-xl border p-6">
         <h1 className="font-display text-heading-lg text-fg">Akses Ditolak</h1>
-        <p className="text-body-sm text-fg-muted mt-2">Anda tidak memiliki izin untuk melihat distribusi bagi hasil.</p>
-        <p className="text-caption text-fg-subtle mt-3">Permission: <code>profit_distributions.view</code></p>
+        <p className="text-body-sm text-fg-muted mt-2">
+          Anda tidak memiliki izin untuk melihat distribusi bagi hasil.
+        </p>
+        <p className="text-caption text-fg-subtle mt-3">
+          Permission: <code>profit_distributions.view</code>
+        </p>
       </div>
     )
   }
@@ -34,6 +38,18 @@ export default async function ProfitDistributionsPage() {
     }),
   )
   const allocationsByDistribution = Object.fromEntries(allocationsEntries)
+  const allocationIds = allocationsEntries.flatMap(([, allocations]) =>
+    allocations.map((allocation) => allocation.id),
+  )
+
+  const { data: proofRows } = allocationIds.length
+    ? await supabase
+        .from('profit_distribution_payment_proofs')
+        .select('allocation_id')
+        .in('allocation_id', allocationIds)
+    : { data: [] }
+
+  const proofAllocationIds = (proofRows ?? []).map((proof) => proof.allocation_id)
 
   return (
     <div className="space-y-5">
@@ -59,6 +75,7 @@ export default async function ProfitDistributionsPage() {
       <ProfitDistributionManager
         distributions={visibleDistributions}
         allocationsByDistribution={allocationsByDistribution}
+        proofAllocationIds={proofAllocationIds}
         permissions={{
           uploadProof: principal.permissions.has('profit_distribution_payments.upload_proof'),
           replaceProof: principal.permissions.has('profit_distribution_payments.replace_proof'),
