@@ -37,9 +37,7 @@ export default async function MessagesPage({
   const params = await searchParams
   const { data: rawThreads, error } = await supabase
     .from('message_threads')
-    .select(
-      'id, subject, thread_kind, investor_id, last_message_at, is_closed, expires_at, reply_deadline_at, awaiting_admin_reply',
-    )
+    .select('id, subject, thread_kind, investor_id, last_message_at, is_closed')
     .order('last_message_at', { ascending: false, nullsFirst: false })
     .limit(100)
 
@@ -51,17 +49,13 @@ export default async function MessagesPage({
     )
   }
 
-  const now = Date.now()
   const threads = (rawThreads ?? []).map((thread) => ({
     id: thread.id,
     subject: thread.subject,
     thread_kind: thread.thread_kind,
     investor_id: thread.investor_id,
     last_message_at: thread.last_message_at,
-    is_closed:
-      thread.is_closed ||
-      Boolean(thread.expires_at && new Date(thread.expires_at).getTime() <= now) ||
-      Boolean(thread.reply_deadline_at && new Date(thread.reply_deadline_at).getTime() <= now),
+    is_closed: thread.is_closed,
   }))
 
   const selectedId = params.thread ?? threads[0]?.id
