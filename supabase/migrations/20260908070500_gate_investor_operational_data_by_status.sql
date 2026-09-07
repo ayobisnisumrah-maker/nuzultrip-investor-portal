@@ -4,8 +4,8 @@
 --
 -- Keep lifecycle/account rows readable so the UI can explain a rejected or
 -- inactive state, but block operational surfaces such as messaging,
--- notifications, and private payment-proof storage when
--- `current_investor_id()` becomes null.
+-- notifications, private payment-proof storage, and investor share-sale RPCs
+-- when `current_investor_id()` becomes null.
 
 create or replace function app.participates_in_thread(p_thread_id uuid)
 returns boolean
@@ -148,3 +148,167 @@ using (
   and app.current_investor_id() is not null
   and (storage.foldername(name))[1] = app.current_investor_id()::text
 );
+
+-- Share-sale rows are hidden behind SECURITY DEFINER RPCs because the underlying
+-- transfer table is client-denied. Those RPCs must therefore enforce the same
+-- lifecycle boundary themselves rather than relying on auth.uid()/user id only.
+create or replace function app.list_my_ownership_sales()
+returns setof public.ownership_transfers
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select ot.*
+  from public.ownership_transfers ot
+  where ot.transfer_kind = 'sale'
+    and ot.from_investor_id = app.current_investor_id()
+  order by ot.requested_at desc;
+$$;
+
+create or replace function app.create_ownership_sale_request(
+  p_holding_id uuid,
+  p_units integer,
+  p_requested_unit_price numeric,
+  p_notes text default null
+)
+returns uuid
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_investor_id uuid;
+  v_holding public.ownership_holdings;
+  v_reserved_units integer;
+  v_available_units integer;
+  v_transfer_id uuid;
+begin
+  v_investor_id := app.current_investor_id();
+
+  if v_investor_id is null then
+    raise exception 'Investor tidak memiliki akses untuk mengajukan penjualan saham.'
+      using errcode = '42501';
+  end if;
+
+  if p_units is null or p_units <= 0 then
+    raise exception 'Jumlah unit yang dijual harus lebih besar dari 0.'
+      using errcode = '22023';
+  end if;
+
+  if p_requested_unit_price is null or p_requested_unit_price <= 0 then
+    raise exception 'Harga penawaran per unit harus lebih besar dari 0.'
+      using errcode = '22023';
+  end if;
+
+  select h.*
+  into v_holding
+  from public.ownership_holdings h
+  where h.id = p_holding_id
+  for update;
+
+  if not found then
+    raise exception 'Kepemilikan tidak ditemukan.' using errcode = 'P0002';
+  end if;
+
+  if v_holding.investor_id <> v_investor_id then
+    raise exception 'Anda tidak berhak menjual kepemilikan ini.' using errcode = '42501';
+  end if;
+
+  if v_holding.status <> 'active' then
+    raise exception 'Hanya kepemilikan aktif yang dapat dijual.' using errcode = '22023';
+  end if;
+
+  if v_holding.transfer_eligible_at > now() then
+    raise exception 'Kepemilikan ini belum memenuhi tanggal minimum transfer.' using errcode = '22023';
+  end if;
+
+  select coalesce(sum(t.units), 0)::integer
+  into v_reserved_units
+  from public.ownership_transfers t
+  where t.holding_id = p_holding_id
+    and t.transfer_kind = 'sale'
+    and t.status in ('pending', 'approved', 'processing');
+
+  v_available_units := v_holding.units - v_reserved_units;
+
+  if v_available_units <= 0 then
+    raise exception 'Seluruh unit pada kepemilikan ini sedang berada dalam proses penjualan.'
+      using errcode = '22023';
+  end if;
+
+  if p_units > v_available_units then
+    raise exception 'Jumlah unit melebihi unit yang tersedia untuk dijual. Tersedia: % unit.',
+      v_available_units using errcode = '22023';
+  end if;
+
+  insert into public.ownership_transfers (
+    holding_id,
+    from_investor_id,
+    to_investor_id,
+    units,
+    requested_at,
+    eligible_at,
+    status,
+    notes,
+    transfer_kind,
+    requested_unit_price
+  ) values (
+    v_holding.id,
+    v_investor_id,
+    null,
+    p_units,
+    now(),
+    v_holding.transfer_eligible_at,
+    'pending',
+    nullif(btrim(coalesce(p_notes, '')), ''),
+    'sale',
+    p_requested_unit_price
+  ) returning id into v_transfer_id;
+
+  return v_transfer_id;
+end;
+$$;
+
+create or replace function app.cancel_ownership_sale_request(p_transfer_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_investor_id uuid;
+  v_transfer public.ownership_transfers;
+begin
+  v_investor_id := app.current_investor_id();
+
+  if v_investor_id is null then
+    raise exception 'Investor tidak memiliki akses untuk membatalkan permintaan ini.'
+      using errcode = '42501';
+  end if;
+
+  select t.*
+  into v_transfer
+  from public.ownership_transfers t
+  where t.id = p_transfer_id
+  for update;
+
+  if not found then
+    raise exception 'Permintaan penjualan tidak ditemukan.' using errcode = 'P0002';
+  end if;
+
+  if v_transfer.transfer_kind <> 'sale'
+     or v_transfer.from_investor_id <> v_investor_id then
+    raise exception 'Anda tidak berhak membatalkan permintaan ini.' using errcode = '42501';
+  end if;
+
+  if v_transfer.status <> 'pending' then
+    raise exception 'Hanya permintaan yang masih menunggu persetujuan yang dapat dibatalkan.'
+      using errcode = '22023';
+  end if;
+
+  update public.ownership_transfers
+  set status = 'cancelled', updated_at = now()
+  where id = p_transfer_id;
+end;
+$$;
