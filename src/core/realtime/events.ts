@@ -28,6 +28,7 @@ export const EVENT_KINDS = [
 
   // Materials
   'document.state_changed',
+  'financial_period.changed',
   'financial_report.published',
   'financial_report.state_changed',
 
@@ -39,6 +40,7 @@ export const EVENT_KINDS = [
   'message.received',
   'notification.created',
   'inquiry.received',
+  'inquiry.changed',
 ] as const
 
 export type EventKind = (typeof EVENT_KINDS)[number]
@@ -97,11 +99,13 @@ export const TOPIC_EVENTS: Readonly<Record<string, readonly EventKind[]>> = {
     'investor.applied',
     'investor.status_changed',
     'document.state_changed',
+    'financial_period.changed',
     'financial_report.state_changed',
     'ownership.changed',
     'profit_distribution.changed',
     'message.received',
     'inquiry.received',
+    'inquiry.changed',
   ],
 } as const
 
