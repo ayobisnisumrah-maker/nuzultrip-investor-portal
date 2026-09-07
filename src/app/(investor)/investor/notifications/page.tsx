@@ -1,12 +1,15 @@
 import type { Metadata } from 'next'
+
+import { topics } from '@/core/realtime/events'
+import { RealtimeRefresher } from '@/features/realtime/realtime-refresher'
+import { formatDateTime } from '@/lib/format'
 import { requireInvestorPage } from '@/server/auth/page-guards'
 import { markAllNotificationsRead } from '@/server/notifications/read-actions'
 import { getServerSupabase } from '@/server/supabase/server'
-import { PageHeader, Stack } from '@/ui/layout'
-import { Card, CardBody, CardHeader, CardTitle } from '@/ui/card'
-import { EmptyState } from '@/ui/states'
 import { Alert } from '@/ui/alert'
-import { formatDateTime } from '@/lib/format'
+import { Card, CardBody, CardHeader, CardTitle } from '@/ui/card'
+import { PageHeader, Stack } from '@/ui/layout'
+import { EmptyState } from '@/ui/states'
 
 export const metadata: Metadata = { title: 'Notifikasi' }
 
@@ -44,6 +47,8 @@ export default async function InvestorNotificationsPage() {
 
   return (
     <Stack gap={8}>
+      <RealtimeRefresher topic={topics.user(principal.userId)} kinds={['notification.created']} />
+
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <PageHeader
           eyebrow="Aktivitas"
@@ -66,7 +71,7 @@ export default async function InvestorNotificationsPage() {
       {!rows.length ? (
         <EmptyState
           title="Belum ada notifikasi"
-          description="Notifikasi baru akan muncul ketika ada aktivitas penting untuk akun Anda."
+          description="Notifikasi baru akan muncul otomatis ketika ada aktivitas penting untuk akun Anda."
         />
       ) : (
         <div className="grid gap-3">
