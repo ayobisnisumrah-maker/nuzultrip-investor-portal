@@ -162,7 +162,7 @@ function createDefaultContent(kind: SectionKind): ContentRecord {
     case 'business_overview':
       return {
         kind,
-        eyebrow: 'Business Overview',
+        eyebrow: 'Model Bisnis',
         title: '',
         description: '',
         items: [],
@@ -171,7 +171,7 @@ function createDefaultContent(kind: SectionKind): ContentRecord {
     case 'growth_story':
       return {
         kind,
-        eyebrow: 'Growth Story',
+        eyebrow: 'Perkembangan Usaha',
         title: '',
         description: '',
         milestones: [],
@@ -180,7 +180,7 @@ function createDefaultContent(kind: SectionKind): ContentRecord {
     case 'ecosystem':
       return {
         kind,
-        eyebrow: 'Business Ecosystem',
+        eyebrow: 'Ekosistem Bisnis',
         title: '',
         description: '',
         items: [],
@@ -189,7 +189,7 @@ function createDefaultContent(kind: SectionKind): ContentRecord {
     case 'investment_info':
       return {
         kind,
-        eyebrow: 'Kebutuhan Modal',
+        eyebrow: 'Penawaran Equity',
         title: '',
         description: '',
         funding_label: 'Kebutuhan Modal',
@@ -248,7 +248,7 @@ function createDefaultContent(kind: SectionKind): ContentRecord {
     case 'financial_highlights':
       return {
         kind,
-        eyebrow: 'Financial Highlights',
+        eyebrow: 'Sorotan Keuangan',
         title: '',
         description: '',
         metrics: [],
@@ -257,7 +257,7 @@ function createDefaultContent(kind: SectionKind): ContentRecord {
     case 'investor_updates':
       return {
         kind,
-        eyebrow: 'Investor Updates',
+        eyebrow: 'Pembaruan Investor',
         title: '',
         description: '',
         items: [],
@@ -266,7 +266,7 @@ function createDefaultContent(kind: SectionKind): ContentRecord {
     case 'documents':
       return {
         kind,
-        eyebrow: 'Investor Documents',
+        eyebrow: 'Dokumen Investor',
         title: '',
         description: '',
         items: [],
@@ -275,7 +275,7 @@ function createDefaultContent(kind: SectionKind): ContentRecord {
     case 'contact_cta':
       return {
         kind,
-        eyebrow: 'Investor Relations',
+        eyebrow: 'Hubungan Investor',
         title: '',
         description: '',
         primary_cta_label: '',
@@ -285,7 +285,7 @@ function createDefaultContent(kind: SectionKind): ContentRecord {
     case 'legal_notice':
       return {
         kind,
-        eyebrow: 'Legal',
+        eyebrow: 'Faktor Risiko',
         title: '',
         content: '',
       }
@@ -293,7 +293,7 @@ function createDefaultContent(kind: SectionKind): ContentRecord {
     case 'stat_grid':
       return {
         kind,
-        eyebrow: 'Key Metrics',
+        eyebrow: 'Metrik Utama',
         title: '',
         description: '',
         metrics: [],
@@ -302,7 +302,7 @@ function createDefaultContent(kind: SectionKind): ContentRecord {
     case 'logo_wall':
       return {
         kind,
-        eyebrow: 'Partners & Network',
+        eyebrow: 'Mitra & Jaringan',
         title: '',
         logos: [],
       }
@@ -310,7 +310,7 @@ function createDefaultContent(kind: SectionKind): ContentRecord {
     case 'faq':
       return {
         kind,
-        eyebrow: 'FAQ',
+        eyebrow: 'Pertanyaan Umum',
         title: '',
         items: [],
       }
@@ -701,7 +701,7 @@ function VisualEditor({
           label="Eyebrow"
           value={asString(content.eyebrow)}
           onChange={(eyebrow) => update({ eyebrow })}
-          placeholder="Contoh: Kebutuhan Modal"
+          placeholder="Contoh: Penawaran Equity"
         />
 
         <div className="grid gap-4 md:grid-cols-2">
@@ -771,7 +771,7 @@ function VisualEditor({
           label="Eyebrow"
           value={asString(content.eyebrow)}
           onChange={(eyebrow) => update({ eyebrow })}
-          placeholder="Contoh: Strategic Direction"
+          placeholder="Contoh: Arah Strategis"
         />
 
         <Field
@@ -819,7 +819,7 @@ function VisualEditor({
           label="Eyebrow"
           value={asString(content.eyebrow)}
           onChange={(eyebrow) => update({ eyebrow })}
-          placeholder="Contoh: Business Overview"
+          placeholder="Contoh: Model Bisnis"
         />
 
         <Field
@@ -837,7 +837,7 @@ function VisualEditor({
 
         <div className="border-border space-y-4 rounded-xl border p-4">
           {renderArrayHeader(
-            'title',
+            'Daftar Item',
             'Tambahkan dan kelola item yang ditampilkan kepada pengunjung Portal.',
             'items',
           )}
@@ -867,7 +867,7 @@ function VisualEditor({
           label="Eyebrow"
           value={asString(content.eyebrow)}
           onChange={(eyebrow) => update({ eyebrow })}
-          placeholder="Contoh: Growth Story"
+          placeholder="Contoh: Perkembangan Usaha"
         />
 
         <Field
@@ -920,7 +920,7 @@ function VisualEditor({
           label="Eyebrow"
           value={asString(content.eyebrow)}
           onChange={(eyebrow) => update({ eyebrow })}
-          placeholder="Contoh: Milestones"
+          placeholder="Contoh: Tonggak Pencapaian"
         />
 
         <Field
@@ -965,7 +965,7 @@ function VisualEditor({
           label="Eyebrow"
           value={asString(content.eyebrow)}
           onChange={(eyebrow) => update({ eyebrow })}
-          placeholder="Contoh: Financial Highlights"
+          placeholder="Contoh: Sorotan Keuangan"
         />
 
         <Field
@@ -1017,7 +1017,7 @@ function VisualEditor({
           label="Eyebrow"
           value={asString(content.eyebrow)}
           onChange={(eyebrow) => update({ eyebrow })}
-          placeholder="Contoh: Investor Documents"
+          placeholder="Contoh: Dokumen Investor"
         />
 
         <Field
@@ -1070,7 +1070,7 @@ function VisualEditor({
           label="Eyebrow"
           value={asString(content.eyebrow)}
           onChange={(eyebrow) => update({ eyebrow })}
-          placeholder="Contoh: Partners & Network"
+          placeholder="Contoh: Mitra & Jaringan"
         />
 
         <Field
@@ -1116,7 +1116,7 @@ function VisualEditor({
           label="Eyebrow"
           value={asString(content.eyebrow)}
           onChange={(eyebrow) => update({ eyebrow })}
-          placeholder="Contoh: FAQ"
+          placeholder="Contoh: Pertanyaan Umum"
         />
 
         <Field
@@ -1368,7 +1368,7 @@ export function PortalPageEditor({
     const label = SECTION_LABELS[section.section_kind as SectionKind] ?? section.section_kind
 
     const confirmed = window.confirm(
-      `Hapus bagian "${label}" secara permanen?\\n\\nTindakan ini tidak dapat dibatalkan.`,
+      `Hapus bagian "${label}" secara permanen?\n\nTindakan ini tidak dapat dibatalkan.`,
     )
 
     if (!confirmed) return
@@ -1435,10 +1435,7 @@ export function PortalPageEditor({
         const result = await returnPortalPageToDraft({ pageId })
 
         if (!result.ok) {
-          setError(
-            result.error?.message ??
-              'Gagal mengembalikan halaman ke Draf.',
-          )
+          setError(result.error?.message ?? 'Gagal mengembalikan halaman ke Draf.')
           return
         }
 
@@ -1487,7 +1484,7 @@ export function PortalPageEditor({
         </div>
       ) : null}
 
-      {(canPublish || (status === 'archived' && canUpdate)) ? (
+      {canPublish || (status === 'archived' && canUpdate) ? (
         <div className="border-border bg-muted/40 flex flex-wrap items-center gap-2 rounded-xl border p-4">
           <div className="mr-auto min-w-[180px]">
             <p className="text-fg text-sm font-semibold">Siklus Publikasi</p>
@@ -1601,7 +1598,7 @@ export function PortalPageEditor({
             <p className="text-fg text-sm font-semibold">Pembangun Bagian</p>
 
             <p className="text-fg-muted mt-1 text-xs">
-              Tambahkan section visual untuk membangun halaman Hubungan Investor.
+              Tambahkan bagian visual untuk membangun halaman Hubungan Investor.
             </p>
           </div>
 
@@ -1683,7 +1680,7 @@ export function PortalPageEditor({
                     </p>
 
                     <p className="text-fg-muted mt-1 text-xs leading-5">
-                      {SECTION_DESCRIPTIONS[kind] ?? 'Kelola struktur konten section portal.'}
+                      {SECTION_DESCRIPTIONS[kind] ?? 'Kelola struktur konten bagian portal.'}
                     </p>
                   </div>
 
