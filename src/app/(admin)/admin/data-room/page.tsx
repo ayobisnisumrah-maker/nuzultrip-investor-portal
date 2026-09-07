@@ -61,7 +61,7 @@ export default async function DataRoomPage() {
       <PageHeader
         eyebrow="Dokumen"
         title="Data Room"
-        description="Pusat kontrol dokumen yang dapat diakses investor, termasuk dokumen umum investor dan dokumen restricted yang diberikan per akun."
+        description="Pusat kontrol dokumen yang dapat diakses investor, termasuk dokumen untuk seluruh investor dan dokumen dengan akses khusus per akun."
         actions={
           principal.permissions.has('documents.create') ? (
             <Button asChild>
@@ -76,7 +76,7 @@ export default async function DataRoomPage() {
           <CardBody className="flex items-center gap-3 py-5">
             <FileText className="text-fg-muted size-5" aria-hidden="true" />
             <div>
-              <p className="text-caption text-fg-muted">Total Data Room</p>
+              <p className="text-caption text-fg-muted">Total Dokumen</p>
               <p className="text-heading-sm text-fg font-semibold">{rows.length}</p>
             </div>
           </CardBody>
@@ -85,7 +85,7 @@ export default async function DataRoomPage() {
           <CardBody className="flex items-center gap-3 py-5">
             <Users className="text-fg-muted size-5" aria-hidden="true" />
             <div>
-              <p className="text-caption text-fg-muted">Sudah terbit</p>
+              <p className="text-caption text-fg-muted">Sudah Terbit</p>
               <p className="text-heading-sm text-fg font-semibold">{published}</p>
             </div>
           </CardBody>
@@ -94,7 +94,7 @@ export default async function DataRoomPage() {
           <CardBody className="flex items-center gap-3 py-5">
             <LockKeyhole className="text-fg-muted size-5" aria-hidden="true" />
             <div>
-              <p className="text-caption text-fg-muted">Restricted</p>
+              <p className="text-caption text-fg-muted">Akses Khusus</p>
               <p className="text-heading-sm text-fg font-semibold">{restricted}</p>
             </div>
           </CardBody>
@@ -109,7 +109,7 @@ export default async function DataRoomPage() {
           {!rows.length ? (
             <EmptyState
               title="Data Room masih kosong"
-              description="Tambahkan dokumen dengan visibilitas Investor atau Restricted dari modul Dokumen. Tidak ada data dummy yang dibuat otomatis."
+              description="Tambahkan dokumen dengan visibilitas Seluruh Investor atau Akses Khusus dari modul Dokumen. Tidak ada data contoh yang dibuat otomatis."
             />
           ) : (
             <div className="divide-border divide-y">
