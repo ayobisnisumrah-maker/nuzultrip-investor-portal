@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 
 import {
   clearRateLimits,
@@ -22,12 +22,6 @@ test.afterAll(async () => {
   await deleteAccounts(createdAccounts)
   createdAccounts.length = 0
 })
-
-async function openLivePage(page: Page, path: string) {
-  await page.goto(path)
-  await page.waitForLoadState('networkidle')
-  await waitForRealtime(page)
-}
 
 test('notification navigation badge appears automatically without manual refresh', async ({ browser }) => {
   const investor = await createInvestorAccount('active')
