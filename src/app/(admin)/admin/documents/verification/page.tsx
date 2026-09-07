@@ -35,7 +35,7 @@ export default async function DocumentVerificationPage() {
   if (error) {
     return (
       <Alert tone="danger" title="Antrean verifikasi tidak dapat dimuat">
-        Sistem gagal mengambil dokumen yang sedang dalam proses review.
+        Sistem gagal mengambil dokumen yang sedang dalam proses peninjauan.
       </Alert>
     )
   }
@@ -49,7 +49,7 @@ export default async function DocumentVerificationPage() {
       <PageHeader
         eyebrow="Dokumen"
         title="Verifikasi Dokumen"
-        description="Antrean dokumen yang sedang ditinjau atau sudah disetujui dan menunggu publikasi. Tindakan approval/publish tetap dilakukan pada detail dokumen dengan permission masing-masing."
+        description="Antrean dokumen yang sedang ditinjau atau sudah disetujui dan menunggu publikasi. Tindakan persetujuan dan penerbitan tetap dilakukan pada detail dokumen sesuai izin masing-masing."
         actions={
           <Button asChild variant="secondary">
             <Link href="/admin/documents">Semua Dokumen</Link>
@@ -64,12 +64,12 @@ export default async function DocumentVerificationPage() {
       </div>
 
       <Card>
-        <CardHeader><CardTitle>Antrean review</CardTitle></CardHeader>
+        <CardHeader><CardTitle>Antrean Peninjauan</CardTitle></CardHeader>
         <CardBody>
           {!rows.length ? (
             <EmptyState
               title="Tidak ada dokumen menunggu verifikasi"
-              description="Dokumen berstatus Review atau Disetujui akan muncul di sini secara otomatis."
+              description="Dokumen berstatus Ditinjau atau Disetujui akan muncul di sini secara otomatis."
             />
           ) : (
             <div className="divide-border divide-y">
