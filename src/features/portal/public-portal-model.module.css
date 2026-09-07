@@ -208,6 +208,7 @@
 }
 
 .heroCopy {
+  min-width: 0;
   max-width: 36rem;
   display: flex;
   flex-direction: column;
@@ -318,6 +319,7 @@
 
 .heroArt {
   position: relative;
+  min-width: 0;
   max-width: 500px;
   margin-left: auto;
 }
@@ -1307,14 +1309,31 @@
   }
 }
 
-@media (max-width: 900px) {
-  .heroGrid,
-  .contactPanel {
+/* Keep the three-line hero headline intact on tablets and narrow laptops.
+   A split layout below this width leaves either column too narrow and clips
+   the non-wrapping CMS headline inside the decorative hero overflow. */
+@media (max-width: 1100px) {
+  .heroGrid {
     grid-template-columns: 1fr;
   }
+  .heroCopy {
+    max-width: 46rem;
+  }
   .heroArt {
-    margin-inline: auto;
-    max-width: 500px;
+    width: min(100%, 460px);
+    margin: 12px auto 0;
+  }
+  .blob {
+    top: 280px;
+    right: -170px;
+    width: 650px;
+    height: 560px;
+  }
+}
+
+@media (max-width: 900px) {
+  .contactPanel {
+    grid-template-columns: 1fr;
   }
   .contactPanel {
     padding: 30px;
