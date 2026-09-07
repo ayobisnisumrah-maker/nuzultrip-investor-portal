@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useMemo, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 
 import { convertInquiryToThread, updateInquiryStatus } from '@/server/messaging/admin-actions'
@@ -50,10 +50,12 @@ function formatReceivedAt(value: string, timezone: string) {
 export function InquiryWorkbench({
   inquiries,
   canHandle,
+  eligibleEmails,
   timezone,
 }: {
   inquiries: Inquiry[]
   canHandle: boolean
+  eligibleEmails: string[]
   timezone: string
 }) {
   const router = useRouter()
@@ -61,6 +63,10 @@ export function InquiryWorkbench({
   const [pending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [busyInquiryId, setBusyInquiryId] = useState<string | null>(null)
+  const eligibleEmailSet = useMemo(
+    () => new Set(eligibleEmails.map((email) => email.trim().toLocaleLowerCase('id-ID'))),
+    [eligibleEmails],
+  )
 
   function changeStatus(inquiryId: string, status: InquiryStatus) {
     if (pending) return
@@ -90,6 +96,14 @@ export function InquiryWorkbench({
 
     if (inquiry.thread_id) {
       router.push(`/admin/messages?thread=${inquiry.thread_id}`)
+      return
+    }
+
+    const linkedInvestor = eligibleEmailSet.has(inquiry.email.trim().toLocaleLowerCase('id-ID'))
+    if (!linkedInvestor) {
+      setError(
+        'Permintaan ini belum terhubung ke akun investor aktif dengan email yang sama. Ubah statusnya untuk tindak lanjut, lalu konversi setelah investor terdaftar/aktif.',
+      )
       return
     }
 
@@ -127,7 +141,7 @@ export function InquiryWorkbench({
           <div>
             <h2 className="text-body text-fg font-semibold">Permintaan dari portal publik</h2>
             <p className="text-caption text-fg-muted mt-1">
-              Tinjau permintaan yang masuk, ubah status, atau lanjutkan menjadi percakapan.
+              Tinjau permintaan yang masuk, ubah status, atau lanjutkan menjadi percakapan jika emailnya sudah terhubung ke investor aktif.
             </p>
           </div>
           <span className="border-border text-caption text-fg-subtle rounded-full border px-2.5 py-1">
@@ -150,11 +164,22 @@ export function InquiryWorkbench({
               {inquiries.length ? (
                 inquiries.map((inquiry) => {
                   const busy = pending && busyInquiryId === inquiry.id
+                  const linkedInvestor =
+                    Boolean(inquiry.thread_id) ||
+                    eligibleEmailSet.has(inquiry.email.trim().toLocaleLowerCase('id-ID'))
+
                   return (
                     <tr key={inquiry.id}>
                       <td className="px-4 py-4 align-top">
                         <p className="text-body-sm text-fg font-medium">{inquiry.name}</p>
                         <p className="text-caption text-fg-muted mt-0.5">{inquiry.email}</p>
+                        <p className="text-caption text-fg-subtle mt-1">
+                          {inquiry.thread_id
+                            ? 'Percakapan sudah dibuat'
+                            : linkedInvestor
+                              ? 'Terhubung ke investor aktif'
+                              : 'Belum terhubung ke investor aktif'}
+                        </p>
                         {inquiry.phone ? (
                           <p className="text-caption text-fg-subtle mt-0.5">{inquiry.phone}</p>
                         ) : null}
@@ -179,10 +204,14 @@ export function InquiryWorkbench({
                             <Button
                               variant="secondary"
                               loading={busy}
-                              disabled={pending && !busy}
+                              disabled={(pending && !busy) || (!inquiry.thread_id && !linkedInvestor)}
                               onClick={() => openConversation(inquiry)}
                             >
-                              {inquiry.thread_id ? 'Buka Percakapan' : 'Jadikan Percakapan'}
+                              {inquiry.thread_id
+                                ? 'Buka Percakapan'
+                                : linkedInvestor
+                                  ? 'Jadikan Percakapan'
+                                  : 'Menunggu Investor'}
                             </Button>
                             <select
                               value={inquiry.status}
