@@ -1,6 +1,6 @@
-﻿'use client'
+'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, type FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
 
 import { createAdmin } from '@/server/admin/actions'
@@ -20,22 +20,16 @@ type Props = {
 export function AdministratorCreateForm({ roles }: Props) {
   const router = useRouter()
   const [pending, startTransition] = useTransition()
-
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [roleId, setRoleId] = useState('')
   const [title, setTitle] = useState('')
   const [error, setError] = useState<string | null>(null)
 
-  /*
-   * Super Admin adalah system-level designation.
-   *
-   * Role `super_admin` tetap ada di database untuk authorization,
-   * tetapi TIDAK boleh dipilih ketika membuat administrator.
-   */
   const assignableRoles = roles.filter((role) => role.key !== 'super_admin')
 
-  function submit() {
+  function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
     if (pending) return
 
     setError(null)
@@ -46,12 +40,12 @@ export function AdministratorCreateForm({ roles }: Props) {
     }
 
     if (!email.trim()) {
-      setError('Email wajib diisi.')
+      setError('Surel wajib diisi.')
       return
     }
 
     if (!roleId) {
-      setError('Role administrator wajib dipilih.')
+      setError('Peran administrator wajib dipilih.')
       return
     }
 
@@ -72,14 +66,18 @@ export function AdministratorCreateForm({ roles }: Props) {
         router.push('/admin/administrators')
         router.refresh()
       } catch (cause) {
-        setError(cause instanceof Error ? cause.message : 'Gagal membuat administrator.')
+        setError(
+          cause instanceof Error
+            ? cause.message
+            : 'Gagal membuat administrator.',
+        )
       }
     })
   }
 
   return (
     <section className="bg-card max-w-3xl rounded-xl border p-5">
-      <div className="grid gap-5">
+      <form className="grid gap-5" onSubmit={submit}>
         <div>
           <label htmlFor="administrator-full-name" className="text-sm font-medium">
             Nama Lengkap
@@ -92,13 +90,14 @@ export function AdministratorCreateForm({ roles }: Props) {
             disabled={pending}
             autoComplete="name"
             placeholder="Nama administrator"
+            required
             className="bg-background mt-2 h-11 w-full rounded-lg border px-3 text-sm outline-none focus:ring-2"
           />
         </div>
 
         <div>
           <label htmlFor="administrator-email" className="text-sm font-medium">
-            Email
+            Surel
           </label>
 
           <input
@@ -109,27 +108,31 @@ export function AdministratorCreateForm({ roles }: Props) {
             disabled={pending}
             autoComplete="email"
             placeholder="nama@perusahaan.com"
+            required
             className="bg-background mt-2 h-11 w-full rounded-lg border px-3 text-sm outline-none focus:ring-2"
           />
 
           <p className="text-muted-foreground mt-1 text-xs">
-            Email ini digunakan untuk proses provisioning dan akses administrator.
+            Surel ini digunakan untuk proses pembuatan akun dan akses administrator.
           </p>
         </div>
 
         <div>
           <label htmlFor="administrator-role" className="text-sm font-medium">
-            Role Administrator
+            Peran Administrator
           </label>
 
           <select
             id="administrator-role"
             value={roleId}
             onChange={(event) => setRoleId(event.target.value)}
-            disabled={pending}
+            disabled={pending || assignableRoles.length === 0}
+            required
             className="bg-background mt-2 h-11 w-full rounded-lg border px-3 text-sm outline-none focus:ring-2"
           >
-            <option value="">Pilih role administrator</option>
+            <option value="">
+              {assignableRoles.length ? 'Pilih peran administrator' : 'Belum ada peran yang dapat diberikan'}
+            </option>
 
             {assignableRoles.map((role) => (
               <option key={role.id} value={role.id}>
@@ -139,8 +142,7 @@ export function AdministratorCreateForm({ roles }: Props) {
           </select>
 
           <p className="text-muted-foreground mt-2 text-xs">
-            Super Admin tidak tersedia sebagai role yang dapat diberikan. Super Admin adalah akses
-            sistem penuh yang dilindungi.
+            Super Admin tidak dapat diberikan dari formulir ini karena merupakan akses sistem penuh yang dilindungi.
           </p>
 
           {roleId ? (
@@ -148,7 +150,6 @@ export function AdministratorCreateForm({ roles }: Props) {
               <p className="text-xs font-medium">
                 {assignableRoles.find((role) => role.id === roleId)?.name}
               </p>
-
               <p className="text-muted-foreground mt-1 text-xs">
                 {assignableRoles.find((role) => role.id === roleId)?.description}
               </p>
@@ -166,15 +167,14 @@ export function AdministratorCreateForm({ roles }: Props) {
             value={title}
             onChange={(event) => setTitle(event.target.value)}
             disabled={pending}
-            placeholder="Contoh: Investor Relations Manager"
+            placeholder="Contoh: Manajer Hubungan Investor"
             className="bg-background mt-2 h-11 w-full rounded-lg border px-3 text-sm outline-none focus:ring-2"
           />
         </div>
 
         {error ? (
-          <div className="rounded-lg border p-4">
+          <div className="rounded-lg border p-4" role="alert">
             <p className="text-sm font-medium">Gagal membuat administrator</p>
-
             <p className="text-muted-foreground mt-1 text-sm">{error}</p>
           </div>
         ) : null}
@@ -190,15 +190,20 @@ export function AdministratorCreateForm({ roles }: Props) {
           </button>
 
           <button
-            type="button"
-            onClick={submit}
-            disabled={pending || !fullName.trim() || !email.trim() || !roleId}
+            type="submit"
+            disabled={
+              pending ||
+              !fullName.trim() ||
+              !email.trim() ||
+              !roleId ||
+              assignableRoles.length === 0
+            }
             className="bg-background hover:bg-muted rounded-lg border px-5 py-2.5 text-sm font-medium shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
           >
             {pending ? 'Membuat...' : 'Buat Administrator'}
           </button>
         </div>
-      </div>
+      </form>
     </section>
   )
 }
