@@ -79,6 +79,22 @@ export type Database = {
           visibility: Database["public"]["Enums"]["visibility"]
         }[]
       }
+      create_financial_report_with_draft: {
+        Args: {
+          p_financial_period_id: string
+          p_notes?: string
+          p_prepared_by?: string
+          p_source?: Database["public"]["Enums"]["financial_source"]
+          p_summary?: string
+          p_title: string
+          p_visibility?: Database["public"]["Enums"]["visibility"]
+        }
+        Returns: {
+          report_id: string
+          status: Database["public"]["Enums"]["publication_status"]
+          version_id: string
+        }[]
+      }
       create_investor_message_request: {
         Args: { p_body: string; p_subject: string }
         Returns: string
@@ -95,6 +111,25 @@ export type Database = {
           p_units: number
         }
         Returns: string
+      }
+      create_profit_distribution: {
+        Args: {
+          p_company_share_bps?: number
+          p_investor_pool_bps?: number
+          p_notes?: string
+          p_offering_id: string
+          p_opex_amount: number
+          p_period_end: string
+          p_period_start: string
+          p_revenue_amount: number
+        }
+        Returns: Database["public"]["Tables"]["profit_distributions"]["Row"]
+        SetofOptions: {
+          from: "*"
+          to: "profit_distributions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       current_actor_type: { Args: never; Returns: string }
       current_investor_id: { Args: never; Returns: string }
@@ -149,6 +184,16 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      mark_profit_distribution_allocation_paid: {
+        Args: { p_allocation_id: string; p_payment_reference?: string }
+        Returns: {
+          allocation_id: string
+          allocation_status: string
+          distribution_id: string
+          distribution_status: Database["public"]["Enums"]["profit_distribution_status"]
+          paid_at: string
+        }[]
+      }
       participates_in_thread: {
         Args: { p_thread_id: string }
         Returns: boolean
@@ -172,6 +217,16 @@ export type Database = {
         Args: { p_new: Json; p_old: Json }
         Returns: boolean
       }
+      regenerate_profit_distribution_allocations: {
+        Args: { p_distribution_id: string }
+        Returns: Database["public"]["Tables"]["profit_distribution_allocations"]["Row"][]
+        SetofOptions: {
+          from: "*"
+          to: "profit_distribution_allocations"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       reject_ownership_sale: {
         Args: { p_reason: string; p_transfer_id: string }
         Returns: undefined
@@ -185,6 +240,18 @@ export type Database = {
       topic_investor: { Args: { p_investor_id: string }; Returns: string }
       topic_portal: { Args: never; Returns: string }
       topic_user: { Args: { p_user_id: string }; Returns: string }
+      transition_financial_report: {
+        Args: {
+          p_report_id: string
+          p_target: Database["public"]["Enums"]["publication_status"]
+        }
+        Returns: {
+          previous_status: Database["public"]["Enums"]["publication_status"]
+          report_id: string
+          status: Database["public"]["Enums"]["publication_status"]
+          version_id: string
+        }[]
+      }
       transition_portal_page: {
         Args: {
           p_page_id: string
@@ -196,6 +263,19 @@ export type Database = {
           previous_status: Database["public"]["Enums"]["publication_status"]
           status: Database["public"]["Enums"]["publication_status"]
         }[]
+      }
+      transition_profit_distribution: {
+        Args: {
+          p_distribution_id: string
+          p_target: Database["public"]["Enums"]["profit_distribution_status"]
+        }
+        Returns: Database["public"]["Tables"]["profit_distributions"]["Row"]
+        SetofOptions: {
+          from: "*"
+          to: "profit_distributions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       unread_message_count: { Args: never; Returns: number }
     }
