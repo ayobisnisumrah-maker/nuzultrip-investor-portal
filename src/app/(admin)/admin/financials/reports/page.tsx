@@ -2,6 +2,8 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 
 import { PUBLICATION_STATUS_LABELS, VISIBILITY_LABELS } from '@/core/documents/publication'
+import { topics } from '@/core/realtime/events'
+import { RealtimeRefresher } from '@/features/realtime/realtime-refresher'
 import { adminWithPermission } from '@/server/auth/page-guards'
 import { getServerSupabase } from '@/server/supabase/server'
 import { Alert } from '@/ui/alert'
@@ -59,6 +61,7 @@ export default async function FinancialReportsPage() {
 
   return (
     <Stack gap={8}>
+      <RealtimeRefresher topic={topics.admin()} kinds={['financial_report.state_changed']} />
       <PageHeader
         eyebrow="Keuangan"
         title="Laporan Keuangan"
