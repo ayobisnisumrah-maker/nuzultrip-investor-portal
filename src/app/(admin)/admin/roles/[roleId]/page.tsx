@@ -84,6 +84,7 @@ export default async function AdminRoleDetailPage({
       </header>
 
       <RoleEditor
+        key={`${role.id}:${role.permission_version}:${role.name}:${role.description}`}
         role={{
           id: role.id,
           key: role.key,
