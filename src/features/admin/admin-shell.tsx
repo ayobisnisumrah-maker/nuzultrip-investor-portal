@@ -123,10 +123,16 @@ export function AdminShell({
   useEffect(() => {
     const unsubscribe = realtime.subscribe(topics.admin(), (event) => {
       if (
+        event.kind === 'investor.applied' ||
+        event.kind === 'investor.status_changed' ||
+        event.kind === 'document.state_changed' ||
+        event.kind === 'financial_period.changed' ||
+        event.kind === 'financial_report.state_changed' ||
+        event.kind === 'ownership.changed' ||
+        event.kind === 'profit_distribution.changed' ||
         event.kind === 'message.received' ||
         event.kind === 'inquiry.received' ||
-        event.kind === 'ownership.changed' ||
-        event.kind === 'profit_distribution.changed'
+        event.kind === 'inquiry.changed'
       ) {
         router.refresh()
       }
