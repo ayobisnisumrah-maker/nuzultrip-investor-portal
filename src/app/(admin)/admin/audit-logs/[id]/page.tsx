@@ -1,4 +1,4 @@
-﻿import type { Metadata } from 'next'
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ArrowLeft, FileJson, ShieldCheck } from 'lucide-react'
@@ -15,7 +15,7 @@ import { PageHeader, Stack } from '@/ui/layout'
 import { EmptyState } from '@/ui/states'
 
 export const metadata: Metadata = {
-  title: 'Detail Audit Log',
+  title: 'Detail Log Audit',
 }
 
 const uuidSchema = z.string().uuid()
@@ -41,9 +41,9 @@ function actorTypeLabel(value: string) {
     case 'investor':
       return 'Investor'
     case 'system':
-      return 'System'
+      return 'Sistem'
     case 'anonymous':
-      return 'Anonymous'
+      return 'Anonim'
     default:
       return value
   }
@@ -100,20 +100,20 @@ export default async function AdminAuditLogDetailPage({
     return (
       <Stack gap={6}>
         <PageHeader
-          eyebrow="Security"
-          title="Detail Audit Log"
+          eyebrow="Keamanan"
+          title="Detail Log Audit"
           description="Detail aktivitas dan perubahan yang tercatat dalam sistem."
           actions={
             <Button asChild variant="secondary">
               <Link href="/admin/audit-logs">
                 <ArrowLeft aria-hidden="true" />
-                Kembali ke Audit Log
+                Kembali ke Log Audit
               </Link>
             </Button>
           }
         />
 
-        <Alert tone="danger" title="Audit log tidak dapat dimuat">
+        <Alert tone="danger" title="Log audit tidak dapat dimuat">
           Sistem gagal mengambil detail log audit. Silakan coba lagi.
         </Alert>
       </Stack>
@@ -130,8 +130,8 @@ export default async function AdminAuditLogDetailPage({
     <Stack gap={8}>
       <PageHeader
         className="motion-safe:animate-rise"
-        eyebrow="Security"
-        title="Detail Audit Log"
+        eyebrow="Keamanan"
+        title="Detail Log Audit"
         description={
           <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
             <code className="bg-surface-muted text-caption text-fg rounded px-1.5 py-1 font-mono">
@@ -147,7 +147,7 @@ export default async function AdminAuditLogDetailPage({
           <Button asChild variant="secondary">
             <Link href="/admin/audit-logs">
               <ArrowLeft aria-hidden="true" />
-              Kembali ke Audit Log
+              Kembali ke Log Audit
             </Link>
           </Button>
         }
@@ -167,13 +167,13 @@ export default async function AdminAuditLogDetailPage({
               <DetailList>
                 <DetailRow label="Waktu">{formatDateTime(audit.created_at)}</DetailRow>
 
-                <DetailRow label="Action">
+                <DetailRow label="Tindakan">
                   <code className="bg-surface-muted text-caption text-fg rounded px-1.5 py-1 font-mono">
                     {audit.action}
                   </code>
                 </DetailRow>
 
-                <DetailRow label="Actor">
+                <DetailRow label="Pelaku">
                   <div className="flex flex-col gap-1">
                     <span className="text-body-sm text-fg">
                       {audit.actor_label || actorTypeLabel(audit.actor_type)}
@@ -185,13 +185,13 @@ export default async function AdminAuditLogDetailPage({
                   </div>
                 </DetailRow>
 
-                <DetailRow label="Actor ID">
+                <DetailRow label="ID Pelaku">
                   <span className="text-caption font-mono break-all">
                     {displayValue(audit.actor_id)}
                   </span>
                 </DetailRow>
 
-                <DetailRow label="Entity">
+                <DetailRow label="Entitas">
                   <div className="flex flex-col gap-1">
                     <span className="text-body-sm text-fg">{audit.entity_type}</span>
 
@@ -203,7 +203,7 @@ export default async function AdminAuditLogDetailPage({
                   </div>
                 </DetailRow>
 
-                <DetailRow label="Correlation ID">
+                <DetailRow label="ID Korelasi">
                   <span className="text-caption font-mono break-all">
                     {displayValue(audit.correlation_id)}
                   </span>
@@ -247,13 +247,13 @@ export default async function AdminAuditLogDetailPage({
 
             <CardBody>
               <DetailList>
-                <DetailRow label="Log ID">
+                <DetailRow label="ID Log">
                   <span className="text-caption font-mono break-all">{audit.id}</span>
                 </DetailRow>
 
-                <DetailRow label="Entity">{audit.entity_type}</DetailRow>
+                <DetailRow label="Entitas">{audit.entity_type}</DetailRow>
 
-                <DetailRow label="Actor">{actorTypeLabel(audit.actor_type)}</DetailRow>
+                <DetailRow label="Pelaku">{actorTypeLabel(audit.actor_type)}</DetailRow>
 
                 <DetailRow label="Tercatat">{formatDateTime(audit.created_at)}</DetailRow>
               </DetailList>
