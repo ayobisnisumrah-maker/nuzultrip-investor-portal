@@ -95,7 +95,7 @@ export default async function OwnershipInheritancePage() {
           {!rows.length ? (
             <EmptyState
               title="Belum ada pengajuan pewarisan"
-              description="Pengajuan pewarisan yang dibuat melalui workflow kepemilikan akan muncul di sini. Tidak ada pengajuan contoh yang dibuat otomatis."
+              description="Pengajuan pewarisan yang dibuat melalui proses kepemilikan akan muncul di sini. Tidak ada pengajuan contoh yang dibuat otomatis."
             />
           ) : (
             <div className="divide-border divide-y">
@@ -119,16 +119,16 @@ export default async function OwnershipInheritancePage() {
                       {investor ? <p className="text-caption text-fg-muted font-mono">{investor.reference_code}</p> : null}
                       <p className="text-body-sm text-fg-muted mt-2">
                         {request.units} unit diajukan
-                        {holding ? ` dari ${holding.units} unit pada holding` : ''}
+                        {holding ? ` dari ${holding.units} unit kepemilikan` : ''}
                       </p>
-                      {holding?.acquisition_reference ? <p className="text-caption text-fg-subtle mt-1">Ref. {holding.acquisition_reference}</p> : null}
+                      {holding?.acquisition_reference ? <p className="text-caption text-fg-subtle mt-1">Referensi {holding.acquisition_reference}</p> : null}
                     </div>
 
                     <div>
                       <p className="text-caption text-fg-subtle">Calon penerima</p>
                       <p className="text-fg font-semibold">{request.beneficiary_name}</p>
-                      <p className="text-body-sm text-fg-muted">{request.beneficiary_email || 'Email belum diisi'}</p>
-                      <p className="text-body-sm text-fg-muted">{request.beneficiary_phone || 'Telepon belum diisi'}</p>
+                      <p className="text-body-sm text-fg-muted">{request.beneficiary_email || 'Surel belum diisi'}</p>
+                      <p className="text-body-sm text-fg-muted">{request.beneficiary_phone || 'Nomor telepon belum diisi'}</p>
                       {request.notes ? <p className="text-caption text-fg-muted mt-2 whitespace-pre-wrap">{request.notes}</p> : null}
                       {request.rejection_reason ? <p className="text-caption text-danger mt-2">Alasan: {request.rejection_reason}</p> : null}
                     </div>
