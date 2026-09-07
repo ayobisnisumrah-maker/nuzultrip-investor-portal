@@ -9,6 +9,14 @@ export default async function ContactPage({
   searchParams: Promise<{ sent?: string; error?: string }>
 }) {
   const params = await searchParams
+  const errorMessage =
+    params.error === 'invalid'
+      ? 'Data belum lengkap atau formatnya tidak valid. Periksa kembali formulir.'
+      : params.error === 'rate'
+        ? 'Terlalu banyak permintaan dalam waktu singkat. Silakan tunggu beberapa saat lalu coba lagi.'
+        : params.error === 'server'
+          ? 'Permintaan belum berhasil dikirim. Silakan coba kembali.'
+          : null
 
   return (
     <main className="min-h-dvh bg-[#f5faf9] px-6 py-14 text-[#142657] sm:py-20">
@@ -49,12 +57,12 @@ export default async function ContactPage({
             action={submitPortalInquiry}
             className="mt-9 space-y-7 rounded-2xl border border-[#cfe0df] bg-white p-6 shadow-sm sm:p-9"
           >
-            {params.error === 'invalid' ? (
+            {errorMessage ? (
               <div
                 role="alert"
                 className="rounded-xl border border-[#e3b7ae] bg-[#fff4f1] p-4 text-base text-[#8b3c2f]"
               >
-                Data belum lengkap atau formatnya tidak valid. Periksa kembali formulir.
+                {errorMessage}
               </div>
             ) : null}
 
