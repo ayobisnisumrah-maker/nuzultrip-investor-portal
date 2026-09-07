@@ -35,53 +35,35 @@ import {
   WalletCards,
   type LucideIcon,
 } from 'lucide-react'
-import type { ReactNode } from 'react'
+import { useEffect, type ReactNode } from 'react'
+import { useRouter } from 'next/navigation'
 
-import { AppShell, Brand, type NavSection } from '@/ui/shell'
-import { Avatar } from '@/ui/primitives'
-import { SignOutButton } from '@/features/shell/sign-out-button'
+import { topics } from '@/core/realtime/events'
+import { useRealtime } from '@/features/realtime/realtime-provider'
 import { RealtimeStatus } from '@/features/realtime/realtime-status'
-
-/**
- * Admin shell.
- *
- * Important:
- * - Navigation remains permission-aware.
- * - Server authorization remains authoritative.
- * - This component only controls presentation.
- * - No privileged action is performed from this client shell.
- */
+import { SignOutButton } from '@/features/shell/sign-out-button'
+import { Avatar } from '@/ui/primitives'
+import { AppShell, Brand, type NavSection } from '@/ui/shell'
 
 const ICONS: Record<string, LucideIcon> = {
-  // Dashboard
   LayoutDashboard,
-
-  // Investor Relations
   Users,
   UserCheck,
   FileCheck,
   MessagesSquare,
   Inbox,
-
-  // Ownership
   BadgePercent,
   Landmark,
   ArrowLeftRight,
   GitBranch,
   WalletCards,
-
-  // Financials
   ChartNoAxesCombined,
   CalendarRange,
   FileBarChart,
   ChartNoAxesColumnIncreasing,
-
-  // Documents
   Files,
   FileCheck2,
   FolderLock,
-
-  // Portal
   Globe2,
   PanelsTopLeft,
   GalleryHorizontalEnd,
@@ -90,11 +72,7 @@ const ICONS: Record<string, LucideIcon> = {
   CircleHelp,
   Image,
   FileText,
-
-  // Company
   Building2,
-
-  // System / Security
   UserCog,
   ShieldCheck,
   Settings,
@@ -112,17 +90,53 @@ export type SerializableNavSection = {
   }>
 }
 
+function UnreadBadge({ count }: { count: number }) {
+  if (!count) return null
+  return (
+    <span
+      aria-label={`${count} pesan belum dibaca`}
+      className="bg-accent-solid text-on-accent inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-[11px] font-bold"
+    >
+      {count > 99 ? '99+' : count}
+    </span>
+  )
+}
+
 export function AdminShell({
   sections,
   fullName,
   roleName,
+  initialUnreadMessages,
   children,
 }: {
   sections: readonly SerializableNavSection[]
   fullName: string
   roleName: string
+  initialUnreadMessages: number
   children: ReactNode
 }) {
+  const router = useRouter()
+  const realtime = useRealtime()
+
+  useEffect(() => {
+    const unsubscribe = realtime.subscribe(topics.admin(), (event) => {
+      if (event.kind === 'message.received') router.refresh()
+    })
+    return unsubscribe
+  }, [realtime, router])
+
+  useEffect(() => {
+    if (realtime.resumeToken > 0) router.refresh()
+  }, [realtime.resumeToken, router])
+
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') router.refresh()
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
+  }, [router])
+
   const resolved: NavSection[] = sections.map((section) => ({
     ...(section.title ? { title: section.title } : {}),
     items: section.items.map((item) => {
@@ -136,6 +150,9 @@ export function AdminShell({
           ? {
               icon: <Icon aria-hidden="true" className="transition-transform duration-200" />,
             }
+          : {}),
+        ...(item.href === '/admin/messages'
+          ? { badge: <UnreadBadge count={initialUnreadMessages} /> }
           : {}),
       }
     }),
