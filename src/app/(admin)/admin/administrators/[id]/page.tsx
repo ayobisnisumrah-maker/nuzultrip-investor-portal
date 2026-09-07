@@ -1,4 +1,4 @@
-﻿import Link from 'next/link'
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
 import { hasPermission } from '@/core/auth/principal'
@@ -57,7 +57,7 @@ export default async function AdministratorDetailPage({ params }: PageProps) {
         .from('roles')
         .select('id, key, name, description, is_system')
         .neq('key', 'super_admin')
-        .neq('key', 'admin_internal')
+        .order('is_system', { ascending: false })
         .order('name', { ascending: true }),
     ])
 
@@ -70,7 +70,7 @@ export default async function AdministratorDetailPage({ params }: PageProps) {
   }
 
   if (rolesError) {
-    throw new Error(`Gagal mengambil role administrator: ${rolesError.message}`)
+    throw new Error(`Gagal mengambil peran administrator: ${rolesError.message}`)
   }
 
   const currentRole = (roles ?? []).find((role) => role.id === admin.role_id)
@@ -109,13 +109,13 @@ export default async function AdministratorDetailPage({ params }: PageProps) {
         </div>
 
         <div className="bg-card rounded-xl border p-5">
-          <p className="text-muted-foreground text-sm">Email</p>
+          <p className="text-muted-foreground text-sm">Surel</p>
           <p className="mt-2 font-semibold break-all">{account.email}</p>
         </div>
 
         <div className="bg-card rounded-xl border p-5">
-          <p className="text-muted-foreground text-sm">Role</p>
-          <p className="mt-2 font-semibold">{currentRole?.name ?? 'Role tidak tersedia'}</p>
+          <p className="text-muted-foreground text-sm">Peran</p>
+          <p className="mt-2 font-semibold">{currentRole?.name ?? 'Peran tidak tersedia'}</p>
         </div>
 
         <div className="bg-card rounded-xl border p-5">
@@ -156,7 +156,7 @@ export default async function AdministratorDetailPage({ params }: PageProps) {
             </div>
 
             <div>
-              <p className="text-muted-foreground text-xs">Employee Reference</p>
+              <p className="text-muted-foreground text-xs">Referensi Pegawai</p>
               <p className="mt-1 text-sm">{admin.employee_ref || '-'}</p>
             </div>
           </div>
