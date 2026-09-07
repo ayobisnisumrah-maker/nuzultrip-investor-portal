@@ -26,6 +26,10 @@ export const EVENT_KINDS = [
   'investor.document_shared',
   'investor.document_revoked',
 
+  // Administration and RBAC
+  'admin.changed',
+  'rbac.changed',
+
   // Materials
   'document.state_changed',
   'financial_period.changed',
@@ -98,6 +102,8 @@ export const TOPIC_EVENTS: Readonly<Record<string, readonly EventKind[]>> = {
   'admin:global': [
     'investor.applied',
     'investor.status_changed',
+    'admin.changed',
+    'rbac.changed',
     'document.state_changed',
     'financial_period.changed',
     'financial_report.state_changed',
