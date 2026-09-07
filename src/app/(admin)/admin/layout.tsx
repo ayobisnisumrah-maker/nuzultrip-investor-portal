@@ -23,9 +23,18 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const supabase = await getServerSupabase()
 
   await expireMessageThreads(supabase)
-  const initialUnreadMessages = principal.permissions.has('messages.view')
-    ? await getUnreadMessageCount(supabase)
-    : 0
+
+  const [initialUnreadMessages, newInquiryResult] = await Promise.all([
+    principal.permissions.has('messages.view') ? getUnreadMessageCount(supabase) : Promise.resolve(0),
+    principal.permissions.has('inquiries.view')
+      ? supabase
+          .from('portal_inquiries')
+          .select('id', { count: 'exact', head: true })
+          .eq('status', 'new')
+      : Promise.resolve({ count: 0, error: null }),
+  ])
+
+  const initialNewInquiries = newInquiryResult.error ? 0 : (newInquiryResult.count ?? 0)
 
   const sections: SerializableNavSection[] = ADMIN_NAVIGATION.map((section) => ({
     ...(section.title ? { title: section.title } : {}),
@@ -57,6 +66,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             fullName={principal.fullName}
             roleName={principal.roleName}
             initialUnreadMessages={initialUnreadMessages}
+            initialNewInquiries={initialNewInquiries}
           >
             {children}
           </AdminShell>
