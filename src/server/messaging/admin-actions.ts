@@ -40,9 +40,9 @@ export const sendAdminMessage = defineAction({
   audit: { action: 'message.sent', entityType: 'message' },
   handler: async ({ input, supabase, principal, audit }) => {
     const admin = requireAdmin(principal)
-    const { data: thread, error: threadError } = await supabase
+    const { data: rawThread, error: threadError } = await supabase
       .from('message_threads')
-      .select('id, subject, is_closed')
+      .select('id, subject, is_closed, expires_at, reply_deadline_at')
       .eq('id', input.threadId)
       .maybeSingle()
 
@@ -51,8 +51,33 @@ export const sendAdminMessage = defineAction({
         `Failed to read thread: ${threadError.message}`,
         'Percakapan tidak dapat dibaca saat ini.',
       )
-    if (!thread) throw new NotFoundError('Percakapan')
-    if (thread.is_closed) throw new ConflictError('Thread is closed.', 'Percakapan sudah ditutup.')
+    if (!rawThread) throw new NotFoundError('Percakapan')
+
+    const thread = rawThread as unknown as {
+      id: string
+      subject: string
+      is_closed: boolean
+      expires_at: string | null
+      reply_deadline_at: string | null
+    }
+
+    if (thread.is_closed) {
+      throw new ConflictError('Thread is closed.', 'Percakapan sudah ditutup dan hanya dapat dibaca.')
+    }
+
+    const now = Date.now()
+    if (thread.expires_at && new Date(thread.expires_at).getTime() <= now) {
+      throw new ConflictError(
+        'Thread session expired.',
+        'Masa berlaku percakapan telah berakhir. Percakapan sekarang hanya dapat dibaca.',
+      )
+    }
+    if (thread.reply_deadline_at && new Date(thread.reply_deadline_at).getTime() <= now) {
+      throw new ConflictError(
+        'Thread inactivity deadline expired.',
+        'Percakapan ditutup karena tidak ada respons selama 4 jam dan hanya dapat dibaca.',
+      )
+    }
 
     const { data: message, error } = await supabase
       .from('messages')
@@ -72,7 +97,7 @@ export const sendAdminMessage = defineAction({
     if (error || !message)
       throw new ConflictError(
         `Failed to send message: ${error?.message ?? 'no row'}`,
-        'Pesan tidak dapat dikirim saat ini.',
+        'Pesan tidak dapat dikirim saat ini. Masa percakapan mungkin telah berakhir.',
       )
 
     audit({ entityId: message.id, summary: `Pesan dikirim dalam percakapan ${thread.subject}.` })
