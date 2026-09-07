@@ -46,8 +46,8 @@ type Props = {
 function isExpired(thread: Thread, now: number) {
   return Boolean(
     thread.is_closed ||
-      (thread.expires_at && new Date(thread.expires_at).getTime() <= now) ||
-      (thread.reply_deadline_at && new Date(thread.reply_deadline_at).getTime() <= now),
+    (thread.expires_at && new Date(thread.expires_at).getTime() <= now) ||
+    (thread.reply_deadline_at && new Date(thread.reply_deadline_at).getTime() <= now),
   )
 }
 
@@ -83,19 +83,33 @@ export function InvestorMessageWorkspace({
   const [body, setBody] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
+  const [previousInitialState, setPreviousInitialState] = useState({
+    threads: initialThreads,
+    messages: initialMessages,
+    readMessageIds: initialReadMessageIds,
+  })
 
   // RSC refreshes are the source of truth. This keeps local UI state aligned
   // with authenticated server reads and prevents a stale unread count after refresh.
-  useEffect(() => {
+  if (
+    previousInitialState.threads !== initialThreads ||
+    previousInitialState.messages !== initialMessages ||
+    previousInitialState.readMessageIds !== initialReadMessageIds
+  ) {
+    setPreviousInitialState({
+      threads: initialThreads,
+      messages: initialMessages,
+      readMessageIds: initialReadMessageIds,
+    })
     setThreads(initialThreads)
     setMessages(initialMessages)
     setReadMessageIds(new Set(initialReadMessageIds))
     setSelectedId((current) =>
       current && initialThreads.some((thread) => thread.id === current)
         ? current
-        : initialThreads[0]?.id ?? '',
+        : (initialThreads[0]?.id ?? ''),
     )
-  }, [initialMessages, initialReadMessageIds, initialThreads])
+  }
 
   useEffect(() => {
     const unsubscribe = realtime.subscribe(topics.investor(investorId), (event) => {
@@ -129,7 +143,8 @@ export function InvestorMessageWorkspace({
 
   const latestByThread = useMemo(() => {
     const map = new Map<string, Message>()
-    for (const message of messages) if (!map.has(message.thread_id)) map.set(message.thread_id, message)
+    for (const message of messages)
+      if (!map.has(message.thread_id)) map.set(message.thread_id, message)
     return map
   }, [messages])
 
@@ -161,24 +176,15 @@ export function InvestorMessageWorkspace({
     if (!unreadIncoming.length) return
 
     const ids = unreadIncoming.map((message) => message.id)
-    setReadMessageIds((current) => {
-      const next = new Set(current)
-      ids.forEach((id) => next.add(id))
-      return next
-    })
-
     void markThreadRead({ threadId: selectedId }).then((result) => {
       if (result.ok) {
+        setReadMessageIds((current) => {
+          const next = new Set(current)
+          ids.forEach((id) => next.add(id))
+          return next
+        })
         router.refresh()
-        return
       }
-      // Roll back optimistic read state so a failed persistence attempt never
-      // lies to the user and the badge can be retried on the next reconciliation.
-      setReadMessageIds((current) => {
-        const next = new Set(current)
-        ids.forEach((id) => next.delete(id))
-        return next
-      })
     })
   }, [currentUserId, messages, readMessageIds, router, selectedId])
 
@@ -188,9 +194,7 @@ export function InvestorMessageWorkspace({
 
   const pendingRequest = threads.some(
     (thread) =>
-      thread.initiated_by === 'investor' &&
-      thread.awaiting_admin_reply &&
-      !isExpired(thread, now),
+      thread.initiated_by === 'investor' && thread.awaiting_admin_reply && !isExpired(thread, now),
   )
 
   function submitRequest() {
@@ -207,7 +211,11 @@ export function InvestorMessageWorkspace({
       setShowRequest(false)
       setSelectedId(result.data.threadId)
       router.refresh()
-      push({ tone: 'success', title: 'Pertanyaan dikirim', description: 'Menunggu jawaban tim Nuzultrip.' })
+      push({
+        tone: 'success',
+        title: 'Pertanyaan dikirim',
+        description: 'Menunggu jawaban tim Nuzultrip.',
+      })
     })
   }
 
@@ -221,10 +229,15 @@ export function InvestorMessageWorkspace({
             <div>
               <h2 className="text-body text-fg font-semibold">Percakapan</h2>
               <p className="text-caption text-fg-muted">
-                {Array.from(unreadByThread.values()).reduce((sum, count) => sum + count, 0)} pesan belum dibaca
+                {Array.from(unreadByThread.values()).reduce((sum, count) => sum + count, 0)} pesan
+                belum dibaca
               </p>
             </div>
-            <Button variant="secondary" disabled={pendingRequest} onClick={() => setShowRequest(true)}>
+            <Button
+              variant="secondary"
+              disabled={pendingRequest}
+              onClick={() => setShowRequest(true)}
+            >
               <Plus className="size-4" aria-hidden="true" />
               <span className="ml-2">Pertanyaan</span>
             </Button>
@@ -241,40 +254,52 @@ export function InvestorMessageWorkspace({
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto">
-          {filteredThreads.length ? filteredThreads.map((thread) => {
-            const latest = latestByThread.get(thread.id)
-            const expired = isExpired(thread, now)
-            const active = selectedId === thread.id
-            const unread = unreadByThread.get(thread.id) ?? 0
-            return (
-              <button
-                key={thread.id}
-                type="button"
-                onClick={() => setSelectedId(thread.id)}
-                className={`border-border w-full border-b px-4 py-3 text-left transition ${active ? 'bg-accent-soft' : 'hover:bg-surface-muted/60'}`}
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <p className={`text-body-sm text-fg truncate ${unread ? 'font-bold' : 'font-semibold'}`}>{thread.subject}</p>
-                  <div className="flex shrink-0 items-center gap-2">
-                    {unread ? (
-                      <span className="bg-accent-solid text-on-accent inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-[11px] font-bold">
-                        {unread > 99 ? '99+' : unread}
+          {filteredThreads.length ? (
+            filteredThreads.map((thread) => {
+              const latest = latestByThread.get(thread.id)
+              const expired = isExpired(thread, now)
+              const active = selectedId === thread.id
+              const unread = unreadByThread.get(thread.id) ?? 0
+              return (
+                <button
+                  key={thread.id}
+                  type="button"
+                  onClick={() => setSelectedId(thread.id)}
+                  className={`border-border w-full border-b px-4 py-3 text-left transition ${active ? 'bg-accent-soft' : 'hover:bg-surface-muted/60'}`}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <p
+                      className={`text-body-sm text-fg truncate ${unread ? 'font-bold' : 'font-semibold'}`}
+                    >
+                      {thread.subject}
+                    </p>
+                    <div className="flex shrink-0 items-center gap-2">
+                      {unread ? (
+                        <span className="bg-accent-solid text-on-accent inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-[11px] font-bold">
+                          {unread > 99 ? '99+' : unread}
+                        </span>
+                      ) : null}
+                      <span className="text-caption text-fg-subtle">
+                        {expired ? 'Selesai' : thread.awaiting_admin_reply ? 'Menunggu' : 'Aktif'}
                       </span>
-                    ) : null}
-                    <span className="text-caption text-fg-subtle">
-                      {expired ? 'Selesai' : thread.awaiting_admin_reply ? 'Menunggu' : 'Aktif'}
-                    </span>
+                    </div>
                   </div>
-                </div>
-                <p className={`text-caption mt-1 truncate ${unread ? 'text-fg font-medium' : 'text-fg-muted'}`}>
-                  {latest ? `${latest.sender_id === currentUserId ? 'Anda: ' : 'Tim Nuzultrip: '}${latest.body_text}` : 'Belum ada pesan'}
-                </p>
-                <p className="text-caption text-fg-subtle mt-1">
-                  {latest ? formatTime(latest.sent_at, timezone) : formatTime(thread.created_at, timezone)}
-                </p>
-              </button>
-            )
-          }) : (
+                  <p
+                    className={`text-caption mt-1 truncate ${unread ? 'text-fg font-medium' : 'text-fg-muted'}`}
+                  >
+                    {latest
+                      ? `${latest.sender_id === currentUserId ? 'Anda: ' : 'Tim Nuzultrip: '}${latest.body_text}`
+                      : 'Belum ada pesan'}
+                  </p>
+                  <p className="text-caption text-fg-subtle mt-1">
+                    {latest
+                      ? formatTime(latest.sent_at, timezone)
+                      : formatTime(thread.created_at, timezone)}
+                  </p>
+                </button>
+              )
+            })
+          ) : (
             <div className="p-6 text-center">
               <MessageCircleMore className="text-fg-subtle mx-auto size-6" />
               <p className="text-body-sm text-fg-muted mt-2">Belum ada percakapan.</p>
@@ -321,7 +346,9 @@ export function InvestorMessageWorkspace({
             <div>
               <MessageCircleMore className="text-fg-subtle mx-auto size-8" />
               <h2 className="text-body text-fg mt-3 font-semibold">Pilih percakapan</h2>
-              <p className="text-body-sm text-fg-muted mt-1">Riwayat pesan akan tampil di panel ini.</p>
+              <p className="text-body-sm text-fg-muted mt-1">
+                Riwayat pesan akan tampil di panel ini.
+              </p>
             </div>
           </div>
         )}
@@ -331,7 +358,9 @@ export function InvestorMessageWorkspace({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="border-border bg-surface w-full max-w-lg rounded-2xl border p-5 shadow-xl">
             <h2 className="text-heading-sm text-fg font-semibold">Ajukan pertanyaan</h2>
-            <p className="text-body-sm text-fg-muted mt-1">Setelah dikirim, tunggu jawaban admin sebelum mengirim pesan lanjutan.</p>
+            <p className="text-body-sm text-fg-muted mt-1">
+              Setelah dikirim, tunggu jawaban admin sebelum mengirim pesan lanjutan.
+            </p>
             <div className="mt-4 space-y-3">
               <input
                 value={subject}
@@ -348,10 +377,23 @@ export function InvestorMessageWorkspace({
                 placeholder="Tulis pertanyaan Anda..."
                 className="border-border bg-canvas text-body-sm w-full rounded-lg border px-3 py-2"
               />
-              {error ? <Alert tone="danger" title="Pertanyaan gagal dikirim">{error}</Alert> : null}
+              {error ? (
+                <Alert tone="danger" title="Pertanyaan gagal dikirim">
+                  {error}
+                </Alert>
+              ) : null}
               <div className="flex justify-end gap-2">
-                <Button variant="secondary" disabled={pending} onClick={() => setShowRequest(false)}>Batal</Button>
-                <Button disabled={pending || !subject.trim() || !body.trim()} onClick={submitRequest}>
+                <Button
+                  variant="secondary"
+                  disabled={pending}
+                  onClick={() => setShowRequest(false)}
+                >
+                  Batal
+                </Button>
+                <Button
+                  disabled={pending || !subject.trim() || !body.trim()}
+                  onClick={submitRequest}
+                >
                   {pending ? 'Mengirim...' : 'Kirim pertanyaan'}
                 </Button>
               </div>

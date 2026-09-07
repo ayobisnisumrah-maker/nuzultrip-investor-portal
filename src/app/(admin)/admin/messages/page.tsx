@@ -51,17 +51,15 @@ export default async function MessagesPage({
     )
   }
 
-  const now = Date.now()
   const threads = (rawThreads ?? []).map((thread) => ({
     id: thread.id,
     subject: thread.subject,
     thread_kind: thread.thread_kind,
     investor_id: thread.investor_id,
     last_message_at: thread.last_message_at,
-    is_closed:
-      thread.is_closed ||
-      Boolean(thread.expires_at && new Date(thread.expires_at).getTime() <= now) ||
-      Boolean(thread.reply_deadline_at && new Date(thread.reply_deadline_at).getTime() <= now),
+    // expireMessageThreads above reconciles both deadline columns in the
+    // database; use its persisted result as the single render-time authority.
+    is_closed: thread.is_closed,
   }))
 
   const selectedId = params.thread ?? threads[0]?.id

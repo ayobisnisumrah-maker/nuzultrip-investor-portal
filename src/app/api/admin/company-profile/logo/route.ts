@@ -1,19 +1,23 @@
 import 'server-only'
 
 import { randomUUID } from 'node:crypto'
+import { revalidatePath } from 'next/cache'
 import { NextResponse } from 'next/server'
 
 import { hasPermission } from '@/core/auth/principal'
+import { COMPANY_LOGO_MAX_BYTES, detectCompanyLogoMime } from '@/core/media/logo-file'
 import { getServiceRoleClient } from '@/server/admin/service-client'
 import { getPrincipal } from '@/server/auth/session'
 import { writeAudit } from '@/server/audit'
 
 const BUCKET = 'public-media'
-const MAX_BYTES = 5 * 1024 * 1024
-const ALLOWED_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/avif'])
 
 function extensionFor(file: File) {
-  const ext = file.name.split('.').pop()?.toLowerCase().replace(/[^a-z0-9]/g, '')
+  const ext = file.name
+    .split('.')
+    .pop()
+    ?.toLowerCase()
+    .replace(/[^a-z0-9]/g, '')
   if (ext && ['jpg', 'jpeg', 'png', 'webp', 'avif'].includes(ext)) return ext
   if (file.type === 'image/png') return 'png'
   if (file.type === 'image/webp') return 'webp'
@@ -27,7 +31,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Anda harus login.' }, { status: 401 })
   }
   if (principal.kind !== 'admin' || !hasPermission(principal, 'company_profile.update')) {
-    return NextResponse.json({ error: 'Anda tidak memiliki izin mengubah profil perusahaan.' }, { status: 403 })
+    return NextResponse.json(
+      { error: 'Anda tidak memiliki izin mengubah profil perusahaan.' },
+      { status: 403 },
+    )
   }
 
   const formData = await request.formData()
@@ -35,31 +42,44 @@ export async function POST(request: Request) {
   if (!(file instanceof File)) {
     return NextResponse.json({ error: 'Pilih file logo terlebih dahulu.' }, { status: 400 })
   }
-  if (file.size <= 0 || file.size > MAX_BYTES) {
-    return NextResponse.json({ error: 'Ukuran logo harus lebih dari 0 dan maksimal 5 MB.' }, { status: 400 })
+  if (file.size <= 0 || file.size > COMPANY_LOGO_MAX_BYTES) {
+    return NextResponse.json(
+      { error: 'Ukuran logo harus lebih dari 0 dan maksimal 5 MB.' },
+      { status: 400 },
+    )
   }
-  if (!ALLOWED_MIME_TYPES.has(file.type)) {
-    return NextResponse.json({ error: 'Logo harus berformat JPG, PNG, WebP, atau AVIF.' }, { status: 400 })
+
+  const bytes = Buffer.from(await file.arrayBuffer())
+  const detectedMime = detectCompanyLogoMime(bytes)
+  if (!detectedMime || detectedMime !== file.type) {
+    return NextResponse.json(
+      { error: 'Isi file bukan gambar JPG, PNG, WebP, atau AVIF yang valid.' },
+      { status: 400 },
+    )
   }
 
   const serviceClient = getServiceRoleClient()
   const { data: previousSetting } = await serviceClient
     .from('site_settings')
-    .select('value')
+    .select('value, description, is_public, updated_by')
     .eq('key', 'brand.logo')
     .maybeSingle()
 
-  const previous = previousSetting?.value && typeof previousSetting.value === 'object' && !Array.isArray(previousSetting.value)
-    ? (previousSetting.value as Record<string, unknown>)
-    : null
+  const previous =
+    previousSetting?.value &&
+    typeof previousSetting.value === 'object' &&
+    !Array.isArray(previousSetting.value)
+      ? (previousSetting.value as Record<string, unknown>)
+      : null
 
   const objectPath = `brand/logo-${randomUUID()}.${extensionFor(file)}`
-  const bytes = Buffer.from(await file.arrayBuffer())
-  const { error: uploadError } = await serviceClient.storage.from(BUCKET).upload(objectPath, bytes, {
-    contentType: file.type,
-    cacheControl: '3600',
-    upsert: false,
-  })
+  const { error: uploadError } = await serviceClient.storage
+    .from(BUCKET)
+    .upload(objectPath, bytes, {
+      contentType: detectedMime,
+      cacheControl: '3600',
+      upsert: false,
+    })
   if (uploadError) {
     return NextResponse.json({ error: 'Logo gagal diunggah ke storage.' }, { status: 500 })
   }
@@ -70,7 +90,7 @@ export async function POST(request: Request) {
     path: objectPath,
     public_url: publicUrl,
     original_filename: file.name,
-    mime_type: file.type,
+    mime_type: detectedMime,
     byte_size: file.size,
     updated_at: new Date().toISOString(),
   }
@@ -88,26 +108,59 @@ export async function POST(request: Request) {
 
   if (settingError) {
     await serviceClient.storage.from(BUCKET).remove([objectPath])
-    return NextResponse.json({ error: 'Logo terunggah tetapi konfigurasi brand gagal disimpan.' }, { status: 500 })
+    return NextResponse.json(
+      { error: 'Logo terunggah tetapi konfigurasi brand gagal disimpan.' },
+      { status: 500 },
+    )
+  }
+
+  try {
+    await writeAudit(principal, {
+      action: 'company_profile.logo_updated',
+      entityType: 'company_profile',
+      entityId: null,
+      summary: 'Logo perusahaan diperbarui dari Profil Perusahaan.',
+      changes: {
+        logo: {
+          before: previous
+            ? { path: previous.path ?? null, fileName: previous.original_filename ?? null }
+            : null,
+          after: { path: objectPath, fileName: file.name },
+        },
+      },
+    })
+  } catch {
+    if (previousSetting) {
+      await serviceClient.from('site_settings').upsert(
+        {
+          key: 'brand.logo',
+          value: previousSetting.value,
+          description: previousSetting.description,
+          is_public: previousSetting.is_public,
+          updated_by: previousSetting.updated_by,
+        },
+        { onConflict: 'key' },
+      )
+    } else {
+      await serviceClient.from('site_settings').delete().eq('key', 'brand.logo')
+    }
+    await serviceClient.storage.from(BUCKET).remove([objectPath])
+    return NextResponse.json(
+      { error: 'Logo tidak diterapkan karena audit perubahan gagal dicatat.' },
+      { status: 500 },
+    )
   }
 
   const previousPath = previous?.path
-  if (previous?.bucket === BUCKET && typeof previousPath === 'string' && previousPath && previousPath !== objectPath) {
+  if (
+    previous?.bucket === BUCKET &&
+    typeof previousPath === 'string' &&
+    previousPath &&
+    previousPath !== objectPath
+  ) {
     await serviceClient.storage.from(BUCKET).remove([previousPath])
   }
 
-  await writeAudit(principal, {
-    action: 'company_profile.logo_updated',
-    entityType: 'company_profile',
-    entityId: null,
-    summary: 'Logo perusahaan diperbarui dari Profil Perusahaan.',
-    changes: {
-      logo: {
-        before: previous ? { path: previous.path ?? null, fileName: previous.original_filename ?? null } : null,
-        after: { path: objectPath, fileName: file.name },
-      },
-    },
-  })
-
+  revalidatePath('/', 'layout')
   return NextResponse.json({ ok: true, logo: value })
 }

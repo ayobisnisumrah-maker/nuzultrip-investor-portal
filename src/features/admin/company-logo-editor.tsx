@@ -1,7 +1,7 @@
 'use client'
 
 import Image from 'next/image'
-import { FormEvent, useRef, useState } from 'react'
+import { useRef, useState, type FormEvent } from 'react'
 import { Upload } from 'lucide-react'
 
 import { Alert } from '@/ui/alert'
@@ -45,9 +45,15 @@ export function CompanyLogoEditor({
       setLogoUrl(result.logo?.public_url ?? null)
       setFileName(result.logo?.original_filename ?? file.name)
       if (inputRef.current) inputRef.current.value = ''
-      setMessage({ tone: 'success', text: 'Logo perusahaan berhasil diperbarui dan akan digunakan oleh portal publik.' })
+      setMessage({
+        tone: 'success',
+        text: 'Logo perusahaan berhasil diperbarui dan akan digunakan oleh portal publik.',
+      })
     } catch (error) {
-      setMessage({ tone: 'danger', text: error instanceof Error ? error.message : 'Logo gagal disimpan.' })
+      setMessage({
+        tone: 'danger',
+        text: error instanceof Error ? error.message : 'Logo gagal disimpan.',
+      })
     } finally {
       setUploading(false)
     }
@@ -67,12 +73,18 @@ export function CompanyLogoEditor({
         ) : (
           <div className="text-center">
             <p className="text-body-sm text-fg font-medium">Logo default masih digunakan</p>
-            <p className="text-caption text-fg-muted mt-1">Unggah logo resmi agar portal mengambil brand asset dari dashboard.</p>
+            <p className="text-caption text-fg-muted mt-1">
+              Unggah logo resmi agar portal mengambil brand asset dari dashboard.
+            </p>
           </div>
         )}
       </div>
 
-      {fileName ? <p className="text-caption text-fg-muted">File aktif: <span className="text-fg font-medium">{fileName}</span></p> : null}
+      {fileName ? (
+        <p className="text-caption text-fg-muted">
+          File aktif: <span className="text-fg font-medium">{fileName}</span>
+        </p>
+      ) : null}
       {message ? <Alert tone={message.tone}>{message.text}</Alert> : null}
 
       <form onSubmit={submit} className="flex flex-col gap-3 sm:flex-row sm:items-end">
@@ -85,7 +97,9 @@ export function CompanyLogoEditor({
             disabled={!canUpdate || uploading}
             className="border-border bg-canvas text-body-sm w-full rounded-lg border px-3 py-2.5"
           />
-          <span className="text-caption text-fg-subtle mt-1.5 block">JPG, PNG, WebP, atau AVIF. Maksimal 5 MB.</span>
+          <span className="text-caption text-fg-subtle mt-1.5 block">
+            JPG, PNG, WebP, atau AVIF. Maksimal 5 MB.
+          </span>
         </label>
         <Button type="submit" disabled={!canUpdate || uploading}>
           <Upload className="size-4" aria-hidden="true" />

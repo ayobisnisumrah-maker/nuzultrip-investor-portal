@@ -16,10 +16,12 @@ export function LiveNavBadge({ initialCount, topic, eventKind }: LiveNavBadgePro
   const router = useRouter()
   const realtime = useRealtime()
   const [count, setCount] = useState(initialCount)
+  const [previousInitialCount, setPreviousInitialCount] = useState(initialCount)
 
-  useEffect(() => {
+  if (previousInitialCount !== initialCount) {
+    setPreviousInitialCount(initialCount)
     setCount(initialCount)
-  }, [initialCount])
+  }
 
   useEffect(() => {
     return realtime.subscribe(topic, (event) => {
@@ -38,7 +40,7 @@ export function LiveNavBadge({ initialCount, topic, eventKind }: LiveNavBadgePro
 
   return (
     <span
-      className="bg-danger text-danger-fg inline-flex min-w-5 items-center justify-center rounded-full px-1.5 text-[0.6875rem] font-semibold tabular"
+      className="bg-danger text-danger-fg tabular inline-flex min-w-5 items-center justify-center rounded-full px-1.5 text-[0.6875rem] font-semibold"
       aria-label={`${count} belum dibaca`}
     >
       {count > 99 ? '99+' : count}
