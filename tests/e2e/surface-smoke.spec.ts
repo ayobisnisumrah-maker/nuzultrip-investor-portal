@@ -100,6 +100,21 @@ test('public portal and authentication routes render cleanly', async ({ page }) 
   const failures = runtimeFailures(page)
   await expectHealthyRoutes(page, PUBLIC_ROUTES, 'public')
 
+  await page.goto('/')
+  const clippedHeadlineLines = await page.locator('h1 span').evaluateAll((lines) =>
+    lines
+      .filter((line) => {
+        const bounds = line.getBoundingClientRect()
+        return (
+          line.scrollWidth > line.clientWidth + 1 ||
+          bounds.left < -1 ||
+          bounds.right > document.documentElement.clientWidth + 1
+        )
+      })
+      .map((line) => line.textContent?.trim()),
+  )
+  expect(clippedHeadlineLines, 'public: hero headline is clipped by the viewport').toEqual([])
+
   await page.goto('/hubungi')
   await expect(page.getByLabel('Nama lengkap')).toBeVisible()
   await expect(page.getByLabel('Email')).toBeVisible()
