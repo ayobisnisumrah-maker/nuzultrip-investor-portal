@@ -57,6 +57,10 @@ export type Database = {
         Args: { p_transfer_id: string }
         Returns: string
       }
+      convert_portal_inquiry_to_thread: {
+        Args: { p_inquiry_id: string; p_subject?: string }
+        Returns: string
+      }
       create_document_with_draft: {
         Args: {
           p_file_asset_id?: string
