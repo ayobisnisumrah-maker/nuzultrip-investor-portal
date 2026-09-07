@@ -33,6 +33,8 @@ export const markThreadRead = defineAction({
 
     if (!incoming?.length) return { read: 0 }
 
+    // Read receipts are append-only. Existing receipts are ignored so this
+    // never requires an UPDATE policy and refreshing the page remains idempotent.
     const { error: readError } = await supabase
       .from('message_reads')
       .upsert(
@@ -41,7 +43,7 @@ export const markThreadRead = defineAction({
           user_id: user.userId,
           read_at: new Date().toISOString(),
         })),
-        { onConflict: 'message_id,user_id', ignoreDuplicates: false },
+        { onConflict: 'message_id,user_id', ignoreDuplicates: true },
       )
 
     if (readError) {
