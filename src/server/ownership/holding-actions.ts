@@ -78,15 +78,16 @@ export const createOwnershipHoldingAction = defineAction({
     audit({
       entityId: holdingId ?? input.investor_id,
       summary: 'Alokasi kepemilikan investor berhasil dibuat.',
-      metadata: {
-        offeringId: input.offering_id,
-        investorId: input.investor_id,
-        units: input.units,
+      changes: {
+        offeringId: { before: null, after: input.offering_id },
+        investorId: { before: null, after: input.investor_id },
+        units: { before: null, after: input.units },
       },
     })
 
     revalidatePath('/admin/ownership')
     revalidatePath(`/admin/ownership/offerings/${input.offering_id}`)
+    revalidatePath(`/admin/ownership/offerings/${input.offering_id}/allocations`)
     revalidatePath('/investor')
     revalidatePath('/investor/ownership')
 
