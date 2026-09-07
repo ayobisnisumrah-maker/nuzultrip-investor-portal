@@ -6,7 +6,9 @@ import { AdminShell, type SerializableNavSection } from '@/features/admin/admin-
 import { RealtimeProvider } from '@/features/realtime/realtime-provider'
 import { NotificationSoundListener } from '@/features/notifications/notification-sound-listener'
 import { requireAdminPage } from '@/server/auth/page-guards'
+import { expireMessageThreads, getUnreadMessageCount } from '@/server/messaging/lifecycle'
 import { getNotificationSoundSettings } from '@/server/settings/notification-sound'
+import { getServerSupabase } from '@/server/supabase/server'
 import { ToastProvider } from '@/ui/toast'
 import { TooltipProvider } from '@/ui/menu'
 
@@ -18,6 +20,12 @@ export const metadata: Metadata = {
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const principal = await requireAdminPage()
   const sound = await getNotificationSoundSettings()
+  const supabase = await getServerSupabase()
+
+  await expireMessageThreads(supabase)
+  const initialUnreadMessages = principal.permissions.has('messages.view')
+    ? await getUnreadMessageCount(supabase)
+    : 0
 
   const sections: SerializableNavSection[] = ADMIN_NAVIGATION.map((section) => ({
     ...(section.title ? { title: section.title } : {}),
@@ -48,6 +56,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             sections={sections}
             fullName={principal.fullName}
             roleName={principal.roleName}
+            initialUnreadMessages={initialUnreadMessages}
           >
             {children}
           </AdminShell>
