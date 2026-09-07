@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import { expect, test, type BrowserContext, type Page } from '@playwright/test'
 import {
   advanceInvestor,
@@ -5,6 +6,7 @@ import {
   createAdminAccount,
   createInvestorAccount,
   deleteAccounts,
+  serviceClient,
   signIn,
   waitForRealtime,
   type TestAccount,
@@ -145,6 +147,213 @@ test.describe('realtime propagation between browsers', () => {
       .toBe(true)
 
     await investorContext.close()
+  })
+
+  test('a new ownership holding appears on the investor page without reload', async ({ browser }) => {
+    const investor = await createInvestorAccount('active')
+    created.push(investor.userId)
+
+    const supabase = serviceClient()
+    const token = randomUUID().slice(0, 8)
+    const offeringName = `Penawaran Kepemilikan E2E ${token}`
+    let offeringId: string | null = null
+    let holdingId: string | null = null
+
+    const investorContext = await browser.newContext()
+    const investorPage = await investorContext.newPage()
+    const investorFrames = captureReceivedWebSocketFrames(investorPage)
+
+    try {
+      await signIn(investorPage, investor, '/investor/ownership')
+      await openContext(investorPage)
+      await waitForRealtime(investorPage)
+      await expect(investorPage.locator('main')).toContainText('Belum ada kepemilikan')
+
+      const { data: offering, error: offeringError } = await supabase
+        .from('ownership_offerings')
+        .insert({
+          name: offeringName,
+          code: `e2e-${token}`,
+          status: 'draft',
+          total_offered_bps: 100,
+          unit_ownership_bps: 100,
+          unit_price: 100_000_000,
+          total_units: 1,
+          distribution_cadence_months: 6,
+          transfer_lock_months: 36,
+        })
+        .select('id')
+        .single()
+      if (offeringError || !offering) {
+        throw new Error(`ownership offering setup failed: ${offeringError?.message}`)
+      }
+      offeringId = offering.id as string
+
+      const { data: holding, error: holdingError } = await supabase
+        .from('ownership_holdings')
+        .insert({
+          offering_id: offeringId,
+          investor_id: investor.userId,
+          units: 1,
+          ownership_bps: 100,
+          transfer_eligible_at: new Date(Date.now() + 36 * 31 * 24 * 60 * 60 * 1000).toISOString(),
+          status: 'active',
+          acquisition_reference: `E2E-${token}`,
+        })
+        .select('id')
+        .single()
+      if (holdingError || !holding) {
+        throw new Error(`ownership holding setup failed: ${holdingError?.message}`)
+      }
+      holdingId = holding.id as string
+
+      await expect(investorPage.locator('main')).toContainText(offeringName, { timeout: 30_000 })
+      await expect(investorPage.locator('main')).toContainText('1%')
+      await expect
+        .poll(
+          () =>
+            investorFrames.some(
+              (frame) =>
+                frame.includes(`investor:${investor.userId}`) &&
+                frame.includes('ownership.changed') &&
+                frame.includes(holdingId ?? ''),
+            ),
+          { message: 'investor must receive ownership.changed on its private Realtime channel' },
+        )
+        .toBe(true)
+    } finally {
+      if (holdingId) await supabase.from('ownership_holdings').delete().eq('id', holdingId)
+      if (offeringId) await supabase.from('ownership_offerings').delete().eq('id', offeringId)
+      await investorContext.close()
+    }
+  })
+
+  test('a payable profit allocation appears on the investor page without reload', async ({ browser }) => {
+    const investor = await createInvestorAccount('active')
+    created.push(investor.userId)
+
+    const supabase = serviceClient()
+    const token = randomUUID().slice(0, 8)
+    let offeringId: string | null = null
+    let holdingId: string | null = null
+    let distributionId: string | null = null
+    let allocationId: string | null = null
+
+    const investorContext = await browser.newContext()
+    const investorPage = await investorContext.newPage()
+    const investorFrames = captureReceivedWebSocketFrames(investorPage)
+
+    try {
+      const { data: offering, error: offeringError } = await supabase
+        .from('ownership_offerings')
+        .insert({
+          name: `Distribusi E2E ${token}`,
+          code: `dist-e2e-${token}`,
+          status: 'draft',
+          total_offered_bps: 100,
+          unit_ownership_bps: 100,
+          unit_price: 100_000_000,
+          total_units: 1,
+          distribution_cadence_months: 6,
+          transfer_lock_months: 36,
+        })
+        .select('id')
+        .single()
+      if (offeringError || !offering) {
+        throw new Error(`distribution offering setup failed: ${offeringError?.message}`)
+      }
+      offeringId = offering.id as string
+
+      const { data: holding, error: holdingError } = await supabase
+        .from('ownership_holdings')
+        .insert({
+          offering_id: offeringId,
+          investor_id: investor.userId,
+          units: 1,
+          ownership_bps: 100,
+          transfer_eligible_at: new Date(Date.now() + 36 * 31 * 24 * 60 * 60 * 1000).toISOString(),
+          status: 'active',
+        })
+        .select('id')
+        .single()
+      if (holdingError || !holding) {
+        throw new Error(`distribution holding setup failed: ${holdingError?.message}`)
+      }
+      holdingId = holding.id as string
+
+      await signIn(investorPage, investor, '/investor/distributions')
+      await openContext(investorPage)
+      await waitForRealtime(investorPage)
+      await expect(investorPage.locator('main')).toContainText('Belum ada bagi hasil')
+
+      const { data: distribution, error: distributionError } = await supabase
+        .from('profit_distributions')
+        .insert({
+          offering_id: offeringId,
+          period_start: '2026-01-01',
+          period_end: '2026-06-30',
+          revenue_amount: 100_000_000,
+          opex_amount: 75_000_000,
+          profit_amount: 25_000_000,
+          company_share_bps: 6000,
+          investor_pool_bps: 4000,
+          investor_pool_amount: 10_000_000,
+          status: 'payable',
+          approved_at: new Date().toISOString(),
+        })
+        .select('id')
+        .single()
+      if (distributionError || !distribution) {
+        throw new Error(`profit distribution setup failed: ${distributionError?.message}`)
+      }
+      distributionId = distribution.id as string
+
+      const { data: allocation, error: allocationError } = await supabase
+        .from('profit_distribution_allocations')
+        .insert({
+          distribution_id: distributionId,
+          holding_id: holdingId,
+          investor_id: investor.userId,
+          ownership_bps: 100,
+          investor_pool_share_bps: 10_000,
+          allocation_amount: 10_000_000,
+          status: 'payable',
+        })
+        .select('id')
+        .single()
+      if (allocationError || !allocation) {
+        throw new Error(`profit allocation setup failed: ${allocationError?.message}`)
+      }
+      allocationId = allocation.id as string
+
+      await expect(investorPage.locator('main')).toContainText('10.000.000', { timeout: 30_000 })
+      await expect(investorPage.locator('main')).toContainText('Siap Dibayar')
+      await expect
+        .poll(
+          () =>
+            investorFrames.some(
+              (frame) =>
+                frame.includes(`investor:${investor.userId}`) &&
+                frame.includes('profit_distribution.changed') &&
+                frame.includes(allocationId ?? ''),
+            ),
+          {
+            message:
+              'investor must receive profit_distribution.changed on its private Realtime channel',
+          },
+        )
+        .toBe(true)
+    } finally {
+      if (allocationId) {
+        await supabase.from('profit_distribution_allocations').delete().eq('id', allocationId)
+      }
+      if (distributionId) {
+        await supabase.from('profit_distributions').delete().eq('id', distributionId)
+      }
+      if (holdingId) await supabase.from('ownership_holdings').delete().eq('id', holdingId)
+      if (offeringId) await supabase.from('ownership_offerings').delete().eq('id', offeringId)
+      await investorContext.close()
+    }
   })
 
   test('an unrelated investor receives nothing', async ({ browser }) => {
