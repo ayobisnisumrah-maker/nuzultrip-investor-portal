@@ -17,7 +17,7 @@ function formatDate(value: string) {
 
 function formatPeriod(period: { period_type: string; fiscal_year: number; period_index: number | null } | undefined) {
   if (!period) return 'Periode tidak ditemukan'
-  const typeLabel: Record<string, string> = { yearly: 'Tahunan', quarterly: 'Kuartal', monthly: 'Bulanan' }
+  const typeLabel: Record<string, string> = { yearly: 'Tahunan', quarterly: 'Triwulanan', monthly: 'Bulanan' }
   const prefix = typeLabel[period.period_type] ?? period.period_type
   return `${prefix}${period.period_index ? ` ${period.period_index}` : ''} / ${period.fiscal_year}`
 }
@@ -32,7 +32,7 @@ export default async function FinancialReportsPage() {
     .select('id, financial_period_id, title, summary, visibility, status, current_version_id, published_version_id, created_at, updated_at')
     .order('updated_at', { ascending: false })
 
-  if (error) return <Stack gap={6}><PageHeader eyebrow="Keuangan" title="Laporan Keuangan" description="Kelola laporan keuangan dan lifecycle publikasinya untuk investor." /><Alert tone="danger" title="Laporan tidak dapat dimuat">Sistem gagal mengambil laporan keuangan. Silakan coba lagi.</Alert></Stack>
+  if (error) return <Stack gap={6}><PageHeader eyebrow="Keuangan" title="Laporan Keuangan" description="Kelola laporan keuangan dan proses publikasinya untuk investor." /><Alert tone="danger" title="Laporan tidak dapat dimuat">Sistem gagal mengambil laporan keuangan. Silakan coba lagi.</Alert></Stack>
 
   const periodIds = [...new Set((reports ?? []).map((report) => report.financial_period_id))]
   const { data: periods } = periodIds.length
@@ -50,7 +50,7 @@ export default async function FinancialReportsPage() {
       <PageHeader
         eyebrow="Keuangan"
         title="Laporan Keuangan"
-        description="Pantau seluruh laporan, periode, visibilitas, dan status review sampai publikasi kepada investor."
+        description="Pantau seluruh laporan, periode, visibilitas, dan status peninjauan hingga publikasi kepada investor."
         actions={principal.permissions.has('financial_reports.create') ? <Link href="/admin/financials/reports/new" className="bg-primary-solid text-primary-fg inline-flex h-10 items-center rounded-lg px-4 text-sm font-medium">+ Laporan Baru</Link> : undefined}
       />
 
@@ -62,7 +62,7 @@ export default async function FinancialReportsPage() {
       </div>
 
       {!rows.length ? (
-        <EmptyState title="Belum ada laporan keuangan" description="Buat periode keuangan terlebih dahulu, lalu buat laporan draft dari halaman ini." />
+        <EmptyState title="Belum ada laporan keuangan" description="Buat periode keuangan terlebih dahulu, lalu buat laporan draf dari halaman ini." />
       ) : (
         <div className="grid gap-4">
           {rows.map((report) => {
