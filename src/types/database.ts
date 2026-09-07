@@ -63,6 +63,10 @@ export type Database = {
           visibility: Database["public"]["Enums"]["visibility"]
         }[]
       }
+      create_investor_message_request: {
+        Args: { p_body: string; p_subject: string }
+        Returns: string
+      }
       create_investor_message_thread: {
         Args: { p_body: string; p_investor_id: string; p_subject: string }
         Returns: string
@@ -154,6 +158,10 @@ export type Database = {
       reject_ownership_sale: {
         Args: { p_reason: string; p_transfer_id: string }
         Returns: undefined
+      }
+      thread_accepts_investor_reply: {
+        Args: { p_thread_id: string }
+        Returns: boolean
       }
       topic_admin: { Args: never; Returns: string }
       topic_all_investors: { Args: never; Returns: string }
@@ -1839,43 +1847,58 @@ export type Database = {
       }
       message_threads: {
         Row: {
+          awaiting_admin_reply: boolean
           broadcast_id: string | null
           closed_at: string | null
           closed_by: string | null
           created_at: string
           created_by: string | null
+          expires_at: string | null
           id: string
+          initiated_by: string
           investor_id: string | null
           is_closed: boolean
           last_message_at: string | null
+          opened_at: string | null
+          reply_deadline_at: string | null
           subject: string
           thread_kind: Database["public"]["Enums"]["thread_kind"]
           updated_at: string
         }
         Insert: {
+          awaiting_admin_reply?: boolean
           broadcast_id?: string | null
           closed_at?: string | null
           closed_by?: string | null
           created_at?: string
           created_by?: string | null
+          expires_at?: string | null
           id?: string
+          initiated_by?: string
           investor_id?: string | null
           is_closed?: boolean
           last_message_at?: string | null
+          opened_at?: string | null
+          reply_deadline_at?: string | null
           subject: string
           thread_kind?: Database["public"]["Enums"]["thread_kind"]
           updated_at?: string
         }
         Update: {
+          awaiting_admin_reply?: boolean
           broadcast_id?: string | null
           closed_at?: string | null
           closed_by?: string | null
           created_at?: string
           created_by?: string | null
+          expires_at?: string | null
           id?: string
+          initiated_by?: string
           investor_id?: string | null
           is_closed?: boolean
           last_message_at?: string | null
+          opened_at?: string | null
+          reply_deadline_at?: string | null
           subject?: string
           thread_kind?: Database["public"]["Enums"]["thread_kind"]
           updated_at?: string
