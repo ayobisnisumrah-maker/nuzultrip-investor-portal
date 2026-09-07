@@ -17,9 +17,21 @@ function formatDate(value: string) {
 
 function formatPeriod(period: { period_type: string; fiscal_year: number; period_index: number | null } | undefined) {
   if (!period) return 'Periode tidak ditemukan'
-  const typeLabel: Record<string, string> = { yearly: 'Tahunan', quarterly: 'Triwulanan', monthly: 'Bulanan' }
+
+  const typeLabel: Record<string, string> = {
+    annual: 'Tahunan',
+    yearly: 'Tahunan',
+    quarterly: 'Triwulanan',
+    monthly: 'Bulanan',
+  }
+
   const prefix = typeLabel[period.period_type] ?? period.period_type
-  return `${prefix}${period.period_index ? ` ${period.period_index}` : ''} / ${period.fiscal_year}`
+
+  if (period.period_type === 'annual' || period.period_type === 'yearly' || period.period_index == null) {
+    return `${prefix} ${period.fiscal_year}`
+  }
+
+  return `${prefix} ${period.period_index} / ${period.fiscal_year}`
 }
 
 export default async function FinancialReportsPage() {
@@ -56,7 +68,7 @@ export default async function FinancialReportsPage() {
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Card><CardBody><div className="text-caption text-fg-subtle">Draf</div><div className="text-heading-lg mt-1 font-semibold">{draftCount}</div></CardBody></Card>
-        <Card><CardBody><div className="text-caption text-fg-subtle">Ditinjau</div><div className="text-heading-lg mt-1 font-semibold">{reviewCount}</div></CardBody></Card>
+        <Card><CardBody><div className="text-caption text-fg-subtle">Dalam Peninjauan</div><div className="text-heading-lg mt-1 font-semibold">{reviewCount}</div></CardBody></Card>
         <Card><CardBody><div className="text-caption text-fg-subtle">Disetujui</div><div className="text-heading-lg mt-1 font-semibold">{approvedCount}</div></CardBody></Card>
         <Card><CardBody><div className="text-caption text-fg-subtle">Terbit</div><div className="text-heading-lg mt-1 font-semibold">{publishedCount}</div></CardBody></Card>
       </div>
