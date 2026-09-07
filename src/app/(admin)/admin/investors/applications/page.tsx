@@ -1,4 +1,4 @@
-﻿import type { Metadata } from 'next'
+import type { Metadata } from 'next'
 
 import { InvestorApplicationsManager } from '@/features/admin/investors/investor-applications-manager'
 import { requireAdminPage } from '@/server/auth/page-guards'
@@ -56,7 +56,7 @@ export default async function InvestorApplicationsPage() {
         <PageHeader
           eyebrow="Hubungan Investor"
           title="Pengajuan Investor"
-          description="Kelola seluruh pengajuan investor dari submission sampai keputusan."
+          description="Kelola seluruh pengajuan investor sejak diajukan hingga keputusan akhir."
         />
 
         <Alert tone="danger" title="Pengajuan tidak dapat dimuat">
@@ -81,12 +81,12 @@ export default async function InvestorApplicationsPage() {
       <PageHeader
         eyebrow="Hubungan Investor"
         title="Pengajuan Investor"
-        description="Kelola submission investor, review, persetujuan, penolakan, dan aktivasi."
+        description="Kelola pengajuan investor, proses peninjauan, persetujuan, penolakan, dan aktivasi akun."
       />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="border-border bg-surface rounded-2xl border p-5">
-          <div className="text-fg-muted text-sm">Menunggu Review</div>
+          <div className="text-fg-muted text-sm">Menunggu Peninjauan</div>
           <div className="text-fg mt-2 text-3xl font-semibold">{submitted}</div>
         </div>
 
