@@ -18,11 +18,18 @@ export default async function InquiriesPage() {
   }
 
   const supabase = await getServerSupabase()
-  const { data: inquiries, error } = await supabase
-    .from('portal_inquiries')
-    .select('id, name, email, phone, organization, message, status, thread_id, created_at')
-    .order('created_at', { ascending: false })
-    .limit(100)
+  const [{ data: inquiries, error }, { data: eligibleInvestors }] = await Promise.all([
+    supabase
+      .from('portal_inquiries')
+      .select('id, name, email, phone, organization, message, status, thread_id, created_at')
+      .order('created_at', { ascending: false })
+      .limit(100),
+    supabase
+      .from('investors')
+      .select('id')
+      .in('status', ['approved', 'active'])
+      .limit(500),
+  ])
 
   if (error) {
     return (
@@ -31,6 +38,17 @@ export default async function InquiriesPage() {
       </Alert>
     )
   }
+
+  const investorIds = (eligibleInvestors ?? []).map((row) => row.id)
+  const { data: investorAccounts } = investorIds.length
+    ? await supabase
+        .from('user_accounts')
+        .select('id, email, status')
+        .in('id', investorIds)
+        .eq('status', 'active')
+    : { data: [] }
+
+  const eligibleEmails = (investorAccounts ?? []).map((row) => row.email.toLocaleLowerCase('id-ID'))
 
   return (
     <div className="space-y-6">
@@ -47,6 +65,7 @@ export default async function InquiriesPage() {
       <InquiryWorkbench
         inquiries={inquiries ?? []}
         canHandle={principal.permissions.has('inquiries.handle')}
+        eligibleEmails={eligibleEmails}
         timezone={principal.timezone}
       />
     </div>
