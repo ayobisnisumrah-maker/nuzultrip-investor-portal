@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 
 import { PublicPortalReference } from '@/features/portal/public-portal-reference'
 import {
+  getPublicDocuments,
   getPublishedNavigation,
   getPublishedPortalPageBySlug,
 } from '@/server/portal/public-queries'
@@ -67,9 +68,10 @@ export default async function PublicPortalPage({
 }: PageProps) {
   const { slug } = await params
 
-  const [portal, navigation] = await Promise.all([
+  const [portal, navigation, publicDocuments] = await Promise.all([
     getPublishedPortalPageBySlug(slug),
     getPublishedNavigation(),
+    getPublicDocuments(),
   ])
 
   if (!portal) {
@@ -84,6 +86,7 @@ export default async function PublicPortalPage({
       }}
       sections={portal.sections}
       navigation={navigation}
+      publicDocuments={publicDocuments}
     />
   )
 }

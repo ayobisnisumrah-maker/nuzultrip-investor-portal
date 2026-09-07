@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 
 import { PublicPortalReference } from '@/features/portal/public-portal-reference'
 import {
+  getPublicDocuments,
   getPublishedHomePage,
   getPublishedNavigation,
 } from '@/server/portal/public-queries'
@@ -52,9 +53,10 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function Home() {
-  const [portal, navigation] = await Promise.all([
+  const [portal, navigation, publicDocuments] = await Promise.all([
     getPublishedHomePage(),
     getPublishedNavigation(),
+    getPublicDocuments(),
   ])
 
   if (!portal) {
@@ -86,6 +88,7 @@ export default async function Home() {
       }}
       sections={portal.sections}
       navigation={navigation}
+      publicDocuments={publicDocuments}
     />
   )
 }
