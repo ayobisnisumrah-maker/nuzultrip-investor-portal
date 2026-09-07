@@ -1,7 +1,7 @@
-﻿import type { Metadata } from 'next'
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { ArrowLeft, FileText, History, MapPin, ShieldCheck } from 'lucide-react'
+import { ArrowLeft, CreditCard, FileText, History, MapPin, ShieldCheck, UserRound } from 'lucide-react'
 import { z } from 'zod'
 
 import { INVESTOR_STATUS_LABELS } from '@/core/investors/status'
@@ -40,10 +40,17 @@ type InvestorDocumentGrantResult = {
 }
 
 function date(value: string | null) {
-  return value ? formatDateTime(value) : 'â€”'
+  return value ? formatDateTime(value) : '—'
 }
+
 function value(value: string | null) {
-  return value?.trim() || 'â€”'
+  return value?.trim() || '—'
+}
+
+function formatBytes(value: number | null) {
+  if (!value) return '—'
+  if (value < 1024 * 1024) return `${Math.ceil(value / 1024)} KB`
+  return `${(value / (1024 * 1024)).toFixed(1)} MB`
 }
 
 export default async function AdminInvestorDetailPage({
@@ -67,7 +74,7 @@ export default async function AdminInvestorDetailPage({
   const { data: investor, error } = await supabase
     .from('investors')
     .select(
-      'id, reference_code, status, investor_type, legal_name, organization_name, organization_role, country, city, address, application_note, rejection_reason, applied_at, reviewed_at, approved_at, activated_at, deactivated_at, created_at, updated_at',
+      'id, reference_code, status, investor_type, legal_name, organization_name, organization_role, country, city, address, whatsapp_number, bank_name, bank_account_name, bank_account_number, ktp_original_file_name, ktp_mime_type, ktp_file_size_bytes, ktp_uploaded_at, application_note, rejection_reason, applied_at, reviewed_at, approved_at, activated_at, deactivated_at, created_at, updated_at',
     )
     .eq('id', id)
     .maybeSingle()
@@ -99,9 +106,7 @@ export default async function AdminInvestorDetailPage({
     principal.permissions.has('investor_documents.view')
       ? supabase
           .from('document_access_grants')
-          .select(
-            'id, granted_at, note, document_id, documents(id, title, kind, visibility, status)',
-          )
+          .select('id, granted_at, note, document_id, documents(id, title, kind, visibility, status)')
           .eq('investor_id', id)
           .is('revoked_at', null)
           .order('granted_at', { ascending: false })
@@ -113,7 +118,7 @@ export default async function AdminInvestorDetailPage({
     investor.investor_type === 'institution'
       ? investor.organization_name || investor.legal_name
       : investor.legal_name
-  const location = [investor.city, investor.country].filter(Boolean).join(', ') || 'â€”'
+  const location = [investor.city, investor.country].filter(Boolean).join(', ') || '—'
   const permissions = [...principal.permissions]
 
   return (
@@ -150,11 +155,15 @@ export default async function AdminInvestorDetailPage({
         <Stack gap={6}>
           <Card className="motion-safe:animate-rise">
             <CardHeader>
-              <CardTitle>Profil investor</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <UserRound className="size-5" aria-hidden="true" />
+                Profil investor
+              </CardTitle>
             </CardHeader>
             <CardBody>
               <DetailList>
                 <DetailRow label="Nama legal">{investor.legal_name}</DetailRow>
+                <DetailRow label="WhatsApp">{value(investor.whatsapp_number)}</DetailRow>
                 {investor.organization_name ? (
                   <DetailRow label="Nama organisasi">{investor.organization_name}</DetailRow>
                 ) : null}
@@ -195,6 +204,61 @@ export default async function AdminInvestorDetailPage({
           <Card className="motion-safe:animate-rise">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
+                <CreditCard className="size-5" aria-hidden="true" />
+                Rekening pembayaran
+              </CardTitle>
+            </CardHeader>
+            <CardBody>
+              <DetailList>
+                <DetailRow label="Bank">{value(investor.bank_name)}</DetailRow>
+                <DetailRow label="Nama pemilik rekening">{value(investor.bank_account_name)}</DetailRow>
+                <DetailRow label="Nomor rekening">
+                  <span className="font-mono">{value(investor.bank_account_number)}</span>
+                </DetailRow>
+              </DetailList>
+            </CardBody>
+          </Card>
+
+          <Card className="motion-safe:animate-rise">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="size-5" aria-hidden="true" />
+                Dokumen identitas investor
+              </CardTitle>
+            </CardHeader>
+            <CardBody>
+              {investor.ktp_original_file_name ? (
+                <div className="grid gap-4">
+                  <DetailList>
+                    <DetailRow label="Nama file">{investor.ktp_original_file_name}</DetailRow>
+                    <DetailRow label="Format">{value(investor.ktp_mime_type)}</DetailRow>
+                    <DetailRow label="Ukuran">{formatBytes(investor.ktp_file_size_bytes)}</DetailRow>
+                    <DetailRow label="Diunggah">{date(investor.ktp_uploaded_at)}</DetailRow>
+                  </DetailList>
+                  <div>
+                    <Button asChild variant="secondary">
+                      <a
+                        href={`/api/admin/investors/${id}/identity-document`}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        Buka dokumen identitas
+                      </a>
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <EmptyState
+                  title="Belum ada dokumen identitas"
+                  description="Investor belum mengunggah dokumen identitas pada profilnya."
+                />
+              )}
+            </CardBody>
+          </Card>
+
+          <Card className="motion-safe:animate-rise">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
                 <History className="size-5" aria-hidden="true" />
                 Riwayat Status
               </CardTitle>
@@ -219,7 +283,7 @@ export default async function AdminInvestorDetailPage({
                       </div>
                       <p className="text-caption text-fg-subtle mt-1">
                         {date(entry.created_at)}
-                        {entry.changed_by_label ? ` Â· ${entry.changed_by_label}` : ''}
+                        {entry.changed_by_label ? ` · ${entry.changed_by_label}` : ''}
                       </p>
                       {entry.reason ? (
                         <p className="text-body-sm text-fg-muted mt-1">{entry.reason}</p>
@@ -228,10 +292,7 @@ export default async function AdminInvestorDetailPage({
                   ))}
                 </ol>
               ) : (
-                <EmptyState
-                  title="Belum ada riwayat"
-                  description="Perubahan lifecycle investor akan tampil di sini."
-                />
+                <EmptyState title="Belum ada riwayat" description="Perubahan lifecycle investor akan tampil di sini." />
               )}
             </CardBody>
           </Card>
@@ -241,7 +302,7 @@ export default async function AdminInvestorDetailPage({
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <FileText className="size-5" aria-hidden="true" />
-                  Dokumen Investor
+                  Dokumen yang dibagikan ke Investor
                 </CardTitle>
               </CardHeader>
               <CardBody>
@@ -252,24 +313,13 @@ export default async function AdminInvestorDetailPage({
                 ) : grantsResult.data?.length ? (
                   <ul className="divide-border divide-y">
                     {grantsResult.data.map((grant) => {
-                      const document = Array.isArray(grant.documents)
-                        ? grant.documents[0]
-                        : grant.documents
+                      const document = Array.isArray(grant.documents) ? grant.documents[0] : grant.documents
                       return (
-                        <li
-                          key={grant.id}
-                          className="flex flex-wrap items-center justify-between gap-3 py-3 first:pt-0"
-                        >
+                        <li key={grant.id} className="flex flex-wrap items-center justify-between gap-3 py-3 first:pt-0">
                           <div>
-                            <p className="text-fg font-medium">
-                              {document?.title ?? 'Dokumen tidak tersedia'}
-                            </p>
-                            <p className="text-caption text-fg-subtle mt-1">
-                              Diberikan {date(grant.granted_at)}
-                            </p>
-                            {grant.note ? (
-                              <p className="text-body-sm text-fg-muted mt-1">{grant.note}</p>
-                            ) : null}
+                            <p className="text-fg font-medium">{document?.title ?? 'Dokumen tidak tersedia'}</p>
+                            <p className="text-caption text-fg-subtle mt-1">Diberikan {date(grant.granted_at)}</p>
+                            {grant.note ? <p className="text-body-sm text-fg-muted mt-1">{grant.note}</p> : null}
                           </div>
                           {document ? (
                             <Link
@@ -284,10 +334,7 @@ export default async function AdminInvestorDetailPage({
                     })}
                   </ul>
                 ) : (
-                  <EmptyState
-                    title="Belum ada dokumen"
-                    description="Belum ada dokumen yang diberikan secara khusus kepada investor ini."
-                  />
+                  <EmptyState title="Belum ada dokumen" description="Belum ada dokumen yang diberikan secara khusus kepada investor ini." />
                 )}
               </CardBody>
             </Card>
@@ -313,16 +360,13 @@ export default async function AdminInvestorDetailPage({
                         <p className="text-body-sm text-fg">{entry.summary || entry.action}</p>
                         <p className="text-caption text-fg-subtle mt-1">
                           {date(entry.created_at)}
-                          {entry.actor_label ? ` Â· ${entry.actor_label}` : ''}
+                          {entry.actor_label ? ` · ${entry.actor_label}` : ''}
                         </p>
                       </li>
                     ))}
                   </ol>
                 ) : (
-                  <EmptyState
-                    title="Belum ada aktivitas"
-                    description="Aktivitas terkait investor ini akan tampil di sini."
-                  />
+                  <EmptyState title="Belum ada aktivitas" description="Aktivitas terkait investor ini akan tampil di sini." />
                 )}
               </CardBody>
             </Card>
@@ -337,9 +381,7 @@ export default async function AdminInvestorDetailPage({
             <CardBody>
               <div className="flex flex-col gap-4">
                 <InvestorStatusPill status={investor.status} />
-                <p className="text-body-sm text-fg-muted">
-                  {INVESTOR_STATUS_LABELS[investor.status]}
-                </p>
+                <p className="text-body-sm text-fg-muted">{INVESTOR_STATUS_LABELS[investor.status]}</p>
                 <InvestorReviewActions
                   investorId={id}
                   investorName={name}
