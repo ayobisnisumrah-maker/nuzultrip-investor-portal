@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition, type FormEvent } from 'react'
+import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 
 import { createAdmin } from '@/server/admin/actions'
@@ -17,19 +17,26 @@ type Props = {
   roles: RoleOption[]
 }
 
+const ASSIGNABLE_OPERATIONAL_ROLE_KEYS = new Set([
+  'admin_investor_relations',
+  'admin_document_verification',
+  'admin_finance_reporting',
+  'admin_portal_communications',
+])
+
 export function AdministratorCreateForm({ roles }: Props) {
   const router = useRouter()
   const [pending, startTransition] = useTransition()
+
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [roleId, setRoleId] = useState('')
   const [title, setTitle] = useState('')
   const [error, setError] = useState<string | null>(null)
 
-  const assignableRoles = roles.filter((role) => role.key !== 'super_admin')
+  const assignableRoles = roles.filter((role) => ASSIGNABLE_OPERATIONAL_ROLE_KEYS.has(role.key))
 
-  function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
+  function submit() {
     if (pending) return
 
     setError(null)
@@ -66,18 +73,20 @@ export function AdministratorCreateForm({ roles }: Props) {
         router.push('/admin/administrators')
         router.refresh()
       } catch (cause) {
-        setError(
-          cause instanceof Error
-            ? cause.message
-            : 'Gagal membuat administrator.',
-        )
+        setError(cause instanceof Error ? cause.message : 'Gagal membuat administrator.')
       }
     })
   }
 
   return (
-    <section className="bg-card max-w-3xl rounded-xl border p-5">
-      <form className="grid gap-5" onSubmit={submit}>
+    <form
+      className="bg-card max-w-3xl rounded-xl border p-5"
+      onSubmit={(event) => {
+        event.preventDefault()
+        submit()
+      }}
+    >
+      <div className="grid gap-5">
         <div>
           <label htmlFor="administrator-full-name" className="text-sm font-medium">
             Nama Lengkap
@@ -89,8 +98,8 @@ export function AdministratorCreateForm({ roles }: Props) {
             onChange={(event) => setFullName(event.target.value)}
             disabled={pending}
             autoComplete="name"
-            placeholder="Nama administrator"
             required
+            placeholder="Nama administrator"
             className="bg-background mt-2 h-11 w-full rounded-lg border px-3 text-sm outline-none focus:ring-2"
           />
         </div>
@@ -107,13 +116,13 @@ export function AdministratorCreateForm({ roles }: Props) {
             onChange={(event) => setEmail(event.target.value)}
             disabled={pending}
             autoComplete="email"
-            placeholder="nama@perusahaan.com"
             required
+            placeholder="nama@perusahaan.com"
             className="bg-background mt-2 h-11 w-full rounded-lg border px-3 text-sm outline-none focus:ring-2"
           />
 
           <p className="text-muted-foreground mt-1 text-xs">
-            Surel ini digunakan untuk proses pembuatan akun dan akses administrator.
+            Surel ini digunakan untuk pembuatan akun dan akses administrator.
           </p>
         </div>
 
@@ -130,9 +139,7 @@ export function AdministratorCreateForm({ roles }: Props) {
             required
             className="bg-background mt-2 h-11 w-full rounded-lg border px-3 text-sm outline-none focus:ring-2"
           >
-            <option value="">
-              {assignableRoles.length ? 'Pilih peran administrator' : 'Belum ada peran yang dapat diberikan'}
-            </option>
+            <option value="">Pilih peran administrator</option>
 
             {assignableRoles.map((role) => (
               <option key={role.id} value={role.id}>
@@ -142,7 +149,8 @@ export function AdministratorCreateForm({ roles }: Props) {
           </select>
 
           <p className="text-muted-foreground mt-2 text-xs">
-            Super Admin tidak dapat diberikan dari formulir ini karena merupakan akses sistem penuh yang dilindungi.
+            Hanya peran operasional yang dapat diberikan dari halaman ini. Super Admin dan peran
+            sistem internal dilindungi dan tidak tersedia untuk penetapan baru.
           </p>
 
           {roleId ? (
@@ -150,6 +158,7 @@ export function AdministratorCreateForm({ roles }: Props) {
               <p className="text-xs font-medium">
                 {assignableRoles.find((role) => role.id === roleId)?.name}
               </p>
+
               <p className="text-muted-foreground mt-1 text-xs">
                 {assignableRoles.find((role) => role.id === roleId)?.description}
               </p>
@@ -179,6 +188,12 @@ export function AdministratorCreateForm({ roles }: Props) {
           </div>
         ) : null}
 
+        {assignableRoles.length === 0 ? (
+          <div className="rounded-lg border p-4" role="status">
+            <p className="text-sm font-medium">Belum ada peran operasional yang dapat diberikan.</p>
+          </div>
+        ) : null}
+
         <div className="flex justify-end gap-3">
           <button
             type="button"
@@ -191,19 +206,13 @@ export function AdministratorCreateForm({ roles }: Props) {
 
           <button
             type="submit"
-            disabled={
-              pending ||
-              !fullName.trim() ||
-              !email.trim() ||
-              !roleId ||
-              assignableRoles.length === 0
-            }
+            disabled={pending || !fullName.trim() || !email.trim() || !roleId}
             className="bg-background hover:bg-muted rounded-lg border px-5 py-2.5 text-sm font-medium shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
           >
             {pending ? 'Membuat...' : 'Buat Administrator'}
           </button>
         </div>
-      </form>
-    </section>
+      </div>
+    </form>
   )
 }
