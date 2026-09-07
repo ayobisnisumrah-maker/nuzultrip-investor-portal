@@ -1,5 +1,7 @@
 import type { Metadata } from 'next'
 
+import { topics } from '@/core/realtime/events'
+import { RealtimeRefresher } from '@/features/realtime/realtime-refresher'
 import { SaleHistory } from '@/features/investor/ownership/sale-history'
 import { SellSharesForm } from '@/features/investor/ownership/sell-shares-form'
 import { requireInvestorPage } from '@/server/auth/page-guards'
@@ -39,7 +41,7 @@ function formatRupiah(value: number) {
 }
 
 export default async function InvestorOwnershipPage() {
-  const principal = await requireInvestorPage()
+  const principal = await requireInvestorPage('/investor/ownership')
   const supabase = await getServerSupabase()
 
   const [{ data: holdings }, saleTransfers] = await Promise.all([
@@ -116,6 +118,10 @@ export default async function InvestorOwnershipPage() {
 
   return (
     <Stack gap={8}>
+      <RealtimeRefresher
+        topic={topics.investor(principal.investorId)}
+        kinds={['ownership.changed']}
+      />
       <PageHeader
         eyebrow="Kepemilikan"
         title="Kepemilikan Saham"
