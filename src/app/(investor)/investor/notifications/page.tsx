@@ -14,13 +14,22 @@ import { EmptyState } from '@/ui/states'
 export const metadata: Metadata = { title: 'Notifikasi' }
 
 const KIND_LABELS: Record<string, string> = {
-  message: 'Pesan',
-  document: 'Dokumen',
-  financial_report: 'Laporan keuangan',
-  profit_distribution: 'Bagi hasil',
-  ownership: 'Kepemilikan',
-  account: 'Akun',
-  security: 'Keamanan',
+  investor_application_received: 'Pengajuan investor',
+  investor_approved: 'Persetujuan akun',
+  investor_rejected: 'Status pengajuan',
+  investor_deactivated: 'Status akun',
+  document_published: 'Dokumen',
+  document_shared: 'Dokumen khusus',
+  financial_report_published: 'Laporan keuangan',
+  investor_report_published: 'Laporan investor',
+  company_update: 'Pembaruan perusahaan',
+  message_received: 'Pesan',
+  inquiry_received: 'Permintaan informasi',
+  account_invited: 'Undangan akun',
+}
+
+function notificationKindLabel(kind: string) {
+  return KIND_LABELS[kind] ?? kind.replaceAll('_', ' ')
 }
 
 export default async function InvestorNotificationsPage() {
@@ -91,7 +100,7 @@ export default async function InvestorNotificationsPage() {
                 <div className="flex flex-col gap-2">
                   <p className="text-body-sm text-fg-muted">{notification.body}</p>
                   <div className="text-caption text-fg-subtle flex flex-wrap items-center gap-3">
-                    <span>{KIND_LABELS[notification.kind] ?? notification.kind}</span>
+                    <span>{notificationKindLabel(notification.kind)}</span>
                     <span>•</span>
                     <time dateTime={notification.created_at}>
                       {formatDateTime(notification.created_at, { timeZone: principal.timezone })}
