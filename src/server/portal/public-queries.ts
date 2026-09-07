@@ -10,6 +10,15 @@ export type PublicPortalSection = {
   content: Record<string, unknown>
 }
 
+export type PublicPortalDocument = {
+  id: string
+  title: string
+  summary: string | null
+  kind: string
+  published_at: string
+  href: string
+}
+
 function isNonEmptyString(value: unknown) {
   return typeof value === 'string' && value.trim().length > 0
 }
@@ -214,6 +223,67 @@ export async function getPublishedNavigation(): Promise<PublicPortalNavigationIt
   }
 
   return data ?? []
+}
+
+export async function getPublicDocuments(): Promise<PublicPortalDocument[]> {
+  const supabase = await getServerSupabase()
+
+  // RLS is the first boundary: anonymous visitors can only see published rows
+  // whose visibility is exactly `public`.
+  const { data: documents, error: documentError } = await supabase
+    .from('documents')
+    .select('id, title, summary, kind, published_version_id')
+    .eq('status', 'published')
+    .eq('visibility', 'public')
+    .not('published_version_id', 'is', null)
+
+  if (documentError) {
+    throw new Error(`Failed to load public documents: ${documentError.message}`)
+  }
+
+  const versionIds = (documents ?? [])
+    .map((document) => document.published_version_id)
+    .filter((id): id is string => Boolean(id))
+
+  if (versionIds.length === 0) return []
+
+  const { data: versions, error: versionError } = await supabase
+    .from('document_versions')
+    .select('id, document_id, file_asset_id, published_at, status')
+    .in('id', versionIds)
+    .eq('status', 'published')
+    .not('published_at', 'is', null)
+    .not('file_asset_id', 'is', null)
+
+  if (versionError) {
+    throw new Error(`Failed to load public document versions: ${versionError.message}`)
+  }
+
+  const versionById = new Map((versions ?? []).map((version) => [version.id, version]))
+
+  return (documents ?? [])
+    .flatMap((document) => {
+      if (!document.published_version_id) return []
+      const version = versionById.get(document.published_version_id)
+      if (
+        !version ||
+        version.document_id !== document.id ||
+        !version.file_asset_id ||
+        !version.published_at
+      ) {
+        return []
+      }
+
+      return [{
+        id: document.id,
+        title: document.title,
+        summary: document.summary,
+        kind: document.kind,
+        published_at: version.published_at,
+        href: `/dokumen/${document.id}`,
+      }]
+    })
+    .sort((a, b) => b.published_at.localeCompare(a.published_at))
 }
 
 export async function getActivePortalTheme() {
