@@ -25,6 +25,22 @@ export type Database = {
     }
     Functions: {
       admin_role_key: { Args: never; Returns: string }
+      allocate_ownership_holding: {
+        Args: {
+          p_acquisition_reference?: string
+          p_investor_id: string
+          p_notes?: string
+          p_offering_id: string
+          p_units: number
+        }
+        Returns: Database["public"]["Tables"]["ownership_holdings"]["Row"]
+        SetofOptions: {
+          from: "*"
+          to: "ownership_holdings"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       approve_ownership_sale: {
         Args: { p_transfer_id: string }
         Returns: undefined
