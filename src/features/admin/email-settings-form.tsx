@@ -1,9 +1,10 @@
-﻿'use client'
+'use client'
 
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import type { EmailSettings } from '@/server/settings/email'
+
 import { updateAdminEmailSettings } from '@/server/admin/settings-actions'
+import type { EmailSettings } from '@/server/settings/email'
 import { Alert } from '@/ui/alert'
 import { Button } from '@/ui/button'
 import { Field } from '@/ui/field'
@@ -31,9 +32,17 @@ function readCheckbox(form: FormData, name: string): boolean {
   return form.get(name) === 'on'
 }
 
-export function EmailSettingsForm({ settings }: { settings: EmailSettings }) {
+export function EmailSettingsForm({
+  settings,
+  canUpdate,
+}: {
+  settings: EmailSettings
+  canUpdate: boolean
+}) {
   const router = useRouter()
-  const { pending, data, errorMessage, fieldError, run } = useAction(updateAdminEmailSettings)
+  const { pending, data, errorMessage, fieldError, run } = useAction(
+    updateAdminEmailSettings,
+  )
 
   useEffect(() => {
     if (data?.updated) {
@@ -41,11 +50,14 @@ export function EmailSettingsForm({ settings }: { settings: EmailSettings }) {
     }
   }, [data, router])
 
+  const disabled = pending || !canUpdate
+
   return (
     <form
       noValidate
       onSubmit={(event) => {
         event.preventDefault()
+        if (!canUpdate || pending) return
 
         const form = new FormData(event.currentTarget)
 
@@ -63,24 +75,33 @@ export function EmailSettingsForm({ settings }: { settings: EmailSettings }) {
       }}
     >
       <Stack gap={6}>
+        {!canUpdate ? (
+          <Alert tone="info">
+            Anda memiliki akses baca saja. Perubahan pengaturan surel memerlukan izin pengaturan sistem.
+          </Alert>
+        ) : null}
+
         {errorMessage ? <Alert tone="danger">{errorMessage}</Alert> : null}
 
-        {data?.updated ? <Alert tone="success">Pengaturan email berhasil disimpan.</Alert> : null}
+        {data?.updated ? (
+          <Alert tone="success">Pengaturan surel berhasil disimpan.</Alert>
+        ) : null}
 
         <section className="border-border bg-surface rounded-2xl border p-6">
           <Stack gap={5}>
             <div>
-              <h3 className="font-display text-heading-sm text-fg">Provider</h3>
+              <h3 className="font-display text-heading-sm text-fg">Penyedia Layanan</h3>
               <p className="text-body-sm text-fg-muted mt-1">
-                Provider yang digunakan oleh lapisan email aplikasi.
+                Pilih layanan yang digunakan untuk autentikasi dan pengiriman surel aplikasi.
               </p>
             </div>
 
-            <Field label="Provider" required>
+            <Field label="Penyedia" required>
               <select
                 name="provider"
                 defaultValue={settings.provider.type}
-                className="border-border bg-surface text-body-sm text-fg w-full rounded-xl border px-4 py-3 outline-none"
+                disabled={disabled}
+                className="border-border bg-surface text-body-sm text-fg w-full rounded-xl border px-4 py-3 outline-none disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <option value="supabase_auth">Supabase Auth</option>
                 <option value="smtp">SMTP</option>
@@ -93,8 +114,9 @@ export function EmailSettingsForm({ settings }: { settings: EmailSettings }) {
                 type="checkbox"
                 name="providerEnabled"
                 defaultChecked={settings.provider.enabled}
+                disabled={disabled}
               />
-              Provider email aktif
+              Layanan surel aktif
             </label>
           </Stack>
         </section>
@@ -104,7 +126,7 @@ export function EmailSettingsForm({ settings }: { settings: EmailSettings }) {
             <div>
               <h3 className="font-display text-heading-sm text-fg">Identitas Pengirim</h3>
               <p className="text-body-sm text-fg-muted mt-1">
-                Identitas yang akan digunakan ketika email aplikasi dikirim.
+                Identitas yang digunakan ketika surel aplikasi dikirim.
               </p>
             </div>
 
@@ -114,6 +136,7 @@ export function EmailSettingsForm({ settings }: { settings: EmailSettings }) {
                 defaultValue={settings.sender.name}
                 autoComplete="organization"
                 required
+                disabled={disabled}
               />
             </Field>
 
@@ -124,16 +147,18 @@ export function EmailSettingsForm({ settings }: { settings: EmailSettings }) {
                 defaultValue={settings.sender.address}
                 autoComplete="email"
                 required
+                disabled={disabled}
               />
             </Field>
 
-            <Field label="Reply-To" error={fieldError('replyTo')} required>
+            <Field label="Alamat balasan" error={fieldError('replyTo')} required>
               <Input
                 name="replyTo"
                 type="email"
                 defaultValue={settings.sender.reply_to}
                 autoComplete="email"
                 required
+                disabled={disabled}
               />
             </Field>
           </Stack>
@@ -142,9 +167,9 @@ export function EmailSettingsForm({ settings }: { settings: EmailSettings }) {
         <section className="border-border bg-surface rounded-2xl border p-6">
           <Stack gap={5}>
             <div>
-              <h3 className="font-display text-heading-sm text-fg">Notifikasi</h3>
+              <h3 className="font-display text-heading-sm text-fg">Notifikasi Surel</h3>
               <p className="text-body-sm text-fg-muted mt-1">
-                Tentukan jenis email aplikasi yang diaktifkan.
+                Tentukan jenis surel aplikasi yang diaktifkan.
               </p>
             </div>
 
@@ -153,8 +178,9 @@ export function EmailSettingsForm({ settings }: { settings: EmailSettings }) {
                 type="checkbox"
                 name="notificationsEnabled"
                 defaultChecked={settings.notifications.enabled}
+                disabled={disabled}
               />
-              Notifikasi email aktif
+              Notifikasi surel aktif
             </label>
 
             <label className="text-body-sm text-fg flex items-center gap-3">
@@ -162,8 +188,9 @@ export function EmailSettingsForm({ settings }: { settings: EmailSettings }) {
                 type="checkbox"
                 name="passwordReset"
                 defaultChecked={settings.notifications.password_reset}
+                disabled={disabled}
               />
-              Password reset
+              Pengaturan ulang kata sandi
             </label>
 
             <label className="text-body-sm text-fg flex items-center gap-3">
@@ -171,6 +198,7 @@ export function EmailSettingsForm({ settings }: { settings: EmailSettings }) {
                 type="checkbox"
                 name="investorInvitation"
                 defaultChecked={settings.notifications.investor_invitation}
+                disabled={disabled}
               />
               Undangan investor
             </label>
@@ -180,17 +208,20 @@ export function EmailSettingsForm({ settings }: { settings: EmailSettings }) {
                 type="checkbox"
                 name="securityAlert"
                 defaultChecked={settings.notifications.security_alert}
+                disabled={disabled}
               />
-              Security alert
+              Peringatan keamanan
             </label>
           </Stack>
         </section>
 
-        <div className="flex justify-end">
-          <Button type="submit" size="lg" loading={pending}>
-            Simpan pengaturan
-          </Button>
-        </div>
+        {canUpdate ? (
+          <div className="flex justify-end">
+            <Button type="submit" size="lg" loading={pending} disabled={pending}>
+              Simpan pengaturan
+            </Button>
+          </div>
+        ) : null}
       </Stack>
     </form>
   )
