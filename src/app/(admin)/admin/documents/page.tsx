@@ -1,4 +1,4 @@
-﻿import type { Metadata } from 'next'
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { FileText, Search } from 'lucide-react'
 import {
@@ -207,7 +207,7 @@ export default async function AdminDocumentsPage({
           {totalPages > 1 ? (
             <div className="mt-5 flex items-center justify-between">
               <p className="text-caption text-fg-subtle">
-                Menampilkan {(page - 1) * PAGE_SIZE + 1}â€“{Math.min(page * PAGE_SIZE, total)} dari{' '}
+                Menampilkan {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, total)} dari{' '}
                 {total} dokumen
               </p>
               <div className="flex gap-2">
