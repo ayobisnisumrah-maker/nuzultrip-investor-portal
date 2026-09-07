@@ -90,11 +90,11 @@ export type SerializableNavSection = {
   }>
 }
 
-function UnreadBadge({ count }: { count: number }) {
+function CountBadge({ count, label }: { count: number; label: string }) {
   if (!count) return null
   return (
     <span
-      aria-label={`${count} pesan belum dibaca`}
+      aria-label={`${count} ${label}`}
       className="bg-accent-solid text-on-accent inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-[11px] font-bold"
     >
       {count > 99 ? '99+' : count}
@@ -107,12 +107,14 @@ export function AdminShell({
   fullName,
   roleName,
   initialUnreadMessages,
+  initialNewInquiries,
   children,
 }: {
   sections: readonly SerializableNavSection[]
   fullName: string
   roleName: string
   initialUnreadMessages: number
+  initialNewInquiries: number
   children: ReactNode
 }) {
   const router = useRouter()
@@ -120,7 +122,7 @@ export function AdminShell({
 
   useEffect(() => {
     const unsubscribe = realtime.subscribe(topics.admin(), (event) => {
-      if (event.kind === 'message.received') router.refresh()
+      if (event.kind === 'message.received' || event.kind === 'inquiry.received') router.refresh()
     })
     return unsubscribe
   }, [realtime, router])
@@ -152,7 +154,16 @@ export function AdminShell({
             }
           : {}),
         ...(item.href === '/admin/messages'
-          ? { badge: <UnreadBadge count={initialUnreadMessages} /> }
+          ? {
+              badge: (
+                <CountBadge count={initialUnreadMessages} label="pesan belum dibaca" />
+              ),
+            }
+          : {}),
+        ...(item.href === '/admin/inquiries'
+          ? {
+              badge: <CountBadge count={initialNewInquiries} label="permintaan baru" />,
+            }
           : {}),
       }
     }),
