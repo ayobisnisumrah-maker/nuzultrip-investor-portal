@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef, useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import { Play, Upload } from 'lucide-react'
 
 import { getBrowserSupabase } from '@/lib/supabase-browser'
@@ -29,6 +30,7 @@ export function NotificationSoundSettingsForm({
   settings: NotificationSoundSettings
   canUpdate: boolean
 }) {
+  const router = useRouter()
   const supabase = getBrowserSupabase()
   const { push } = useToast()
   const [enabled, setEnabled] = useState(settings.enabled)
@@ -83,7 +85,8 @@ export function NotificationSoundSettingsForm({
         setError(result.error.message)
         return
       }
-      push({ tone: 'success', title: 'Pengaturan disimpan', description: 'Suara baru digunakan pada notifikasi berikutnya.' })
+      router.refresh()
+      push({ tone: 'success', title: 'Pengaturan disimpan', description: 'Suara baru langsung digunakan pada notifikasi berikutnya.' })
     })
   }
 
