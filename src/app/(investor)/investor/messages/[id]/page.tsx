@@ -4,10 +4,8 @@ import { notFound } from 'next/navigation'
 import { LiveMessageThread } from '@/features/messaging/live-message-thread'
 import { requireInvestorPage } from '@/server/auth/page-guards'
 import { getServerSupabase } from '@/server/supabase/server'
-import { Card } from '@/ui/card'
-import { PageHeader, Stack } from '@/ui/layout'
 
-export const metadata: Metadata = { title: 'Percakapan' }
+export const metadata: Metadata = { title: 'Pesan' }
 
 export default async function InvestorMessageThreadPage({
   params,
@@ -34,18 +32,18 @@ export default async function InvestorMessageThreadPage({
     .order('sent_at', { ascending: true })
 
   return (
-    <Stack gap={6}>
-      <PageHeader
-        eyebrow="Pesan"
-        title={thread.subject}
-        description={
-          thread.is_closed
+    <div className="min-w-0 space-y-4">
+      <div>
+        <p className="text-caption text-fg-subtle font-medium tracking-[0.14em] uppercase">Pesan</p>
+        <h1 className="font-display text-heading-lg text-fg mt-1">Percakapan dengan Tim Nuzultrip</h1>
+        <p className="text-body-sm text-fg-muted mt-2 max-w-3xl">
+          {thread.is_closed
             ? 'Percakapan ini telah ditutup.'
-            : 'Percakapan aktif dengan tim Nuzultrip.'
-        }
-      />
+            : 'Pesan dari tim Nuzultrip dan balasan Anda ditampilkan sebagai percakapan terpisah dan real-time.'}
+        </p>
+      </div>
 
-      <Card className="overflow-hidden p-0">
+      <section className="border-border bg-surface min-w-0 overflow-hidden rounded-2xl border shadow-sm">
         <LiveMessageThread
           threadId={thread.id}
           initialMessages={messages ?? []}
@@ -56,7 +54,7 @@ export default async function InvestorMessageThreadPage({
           isClosed={thread.is_closed}
           counterpartLabel="Tim Nuzultrip"
         />
-      </Card>
-    </Stack>
+      </section>
+    </div>
   )
 }
