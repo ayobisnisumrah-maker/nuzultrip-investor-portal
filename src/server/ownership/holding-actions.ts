@@ -1,17 +1,12 @@
-﻿'use server'
+'use server'
 
 import { revalidatePath } from 'next/cache'
-
-import {
-  createOwnershipHolding,
-  getOwnershipHolding,
-  listOwnershipHoldings,
-  type CreateOwnershipHoldingInput,
-} from '@/server/ownership/holding-service'
-
-import { defineAction, requirePermission } from '@/server/auth/guards'
-
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { z } from 'zod'
+
+import { listOwnershipHoldings, getOwnershipHolding } from '@/server/ownership/holding-service'
+import { defineAction, requirePermission } from '@/server/auth/guards'
+import type { Database } from '@/types/database'
 
 const holdingIdSchema = z.object({
   holdingId: z.uuid(),
@@ -24,6 +19,17 @@ const createOwnershipHoldingSchema = z.object({
   acquisition_reference: z.string().trim().max(255).optional(),
   notes: z.string().trim().max(5000).optional(),
 })
+
+type AppRpcClient = {
+  rpc: (
+    name: string,
+    args: Record<string, string | number | null>,
+  ) => Promise<{ data: unknown; error: { message: string } | null }>
+}
+
+function appRpcClient(supabase: SupabaseClient<Database>) {
+  return supabase.schema('app') as unknown as AppRpcClient
+}
 
 export const listOwnershipHoldingsAction = defineAction({
   access: { permission: 'ownership.view' },
@@ -49,21 +55,41 @@ export const createOwnershipHoldingAction = defineAction({
     summary: 'Membuat alokasi kepemilikan investor.',
   },
   handler: async ({ principal, supabase, input, audit }) => {
-    const admin = requirePermission(principal, 'ownership.create')
+    requirePermission(principal, 'ownership.create')
 
-    const holding = await createOwnershipHolding(supabase, {
-      ...input,
-      created_by: admin.userId,
-    } satisfies CreateOwnershipHoldingInput)
+    const { data, error } = await appRpcClient(supabase).rpc('allocate_ownership_holding', {
+      p_offering_id: input.offering_id,
+      p_investor_id: input.investor_id,
+      p_units: input.units,
+      p_acquisition_reference: input.acquisition_reference?.trim() || null,
+      p_notes: input.notes?.trim() || null,
+    })
+
+    if (error) {
+      throw new Error(`Gagal membuat kepemilikan investor: ${error.message}`)
+    }
+
+    const holding = Array.isArray(data) ? data[0] : data
+    const holdingId =
+      holding && typeof holding === 'object' && 'id' in holding && typeof holding.id === 'string'
+        ? holding.id
+        : null
 
     audit({
-      entityId: holding.id,
+      entityId: holdingId ?? input.investor_id,
       summary: 'Alokasi kepemilikan investor berhasil dibuat.',
+      metadata: {
+        offeringId: input.offering_id,
+        investorId: input.investor_id,
+        units: input.units,
+      },
     })
 
     revalidatePath('/admin/ownership')
-    revalidatePath('/admin/ownership/holdings')
+    revalidatePath(`/admin/ownership/offerings/${input.offering_id}`)
+    revalidatePath('/investor')
+    revalidatePath('/investor/ownership')
 
-    return holding
+    return { id: holdingId, allocated: true }
   },
 })
