@@ -32,8 +32,6 @@ const createThreadSchema = z.object({
   body: z.string().trim().min(1).max(20000),
 })
 
-const inquiryIdSchema = z.object({ inquiryId: z.string().uuid() })
-
 export const sendAdminMessage = defineAction({
   access: { permission: 'messages.send' },
   input: sendMessageSchema,
@@ -148,36 +146,11 @@ export const markMessageRead = defineAction({
   },
 })
 
-export const convertInquiryToThread = defineAction({
-  access: { permission: 'inquiries.handle' },
-  input: z.object({
-    inquiryId: inquiryIdSchema.shape.inquiryId,
-    subject: z.string().trim().max(200).optional(),
-  }),
-  audit: { action: 'inquiry.converted_to_thread', entityType: 'portal_inquiry' },
-  handler: async ({ input, supabase, audit }) => {
-    const result = await appRpc(supabase, 'convert_portal_inquiry_to_thread', {
-      p_inquiry_id: input.inquiryId,
-      p_subject: input.subject || undefined,
-    })
-
-    if (result.error || typeof result.data !== 'string') {
-      throw new ConflictError(
-        `Failed to convert inquiry: ${result.error?.message ?? 'no thread returned'}`,
-        'Permintaan tidak dapat dikonversi saat ini.',
-      )
-    }
-
-    audit({ entityId: input.inquiryId, summary: 'Permintaan masuk dikonversi menjadi percakapan.' })
-    return { threadId: result.data }
-  },
-})
-
 export const updateInquiryStatus = defineAction({
   access: { permission: 'inquiries.handle' },
   input: z.object({
     inquiryId: z.string().uuid(),
-    status: z.enum(['new', 'in_progress', 'converted', 'closed']),
+    status: z.enum(['new', 'in_progress', 'closed']),
   }),
   audit: { action: 'inquiry.status_changed', entityType: 'portal_inquiry' },
   handler: async ({ input, supabase, audit }) => {
