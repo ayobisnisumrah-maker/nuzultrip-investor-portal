@@ -78,6 +78,7 @@ export default async function InvestorMessagesPage() {
         initialThreads={threads}
         initialMessages={messages}
         initialReadMessageIds={(readRows ?? []).map((row) => row.message_id)}
+        investorId={principal.investorId}
         currentUserId={principal.userId}
         timezone={principal.timezone}
       />
