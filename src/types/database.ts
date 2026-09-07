@@ -240,6 +240,18 @@ export type Database = {
       topic_investor: { Args: { p_investor_id: string }; Returns: string }
       topic_portal: { Args: never; Returns: string }
       topic_user: { Args: { p_user_id: string }; Returns: string }
+      transition_document_publication: {
+        Args: {
+          p_document_id: string
+          p_target: Database["public"]["Enums"]["publication_status"]
+        }
+        Returns: {
+          document_id: string
+          previous_status: Database["public"]["Enums"]["publication_status"]
+          status: Database["public"]["Enums"]["publication_status"]
+          title: string
+        }[]
+      }
       transition_financial_report: {
         Args: {
           p_report_id: string
