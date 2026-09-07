@@ -22,13 +22,15 @@ function realtimeWebSocketOrigin(supabaseUrl: string): string {
 }
 
 function buildCsp(nonce: string, isDev: boolean, supabaseUrl: string): string {
+  const supabaseOrigin = new URL(supabaseUrl).origin
+
   return [
     `default-src 'self'`,
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ''}`,
     `style-src 'self' 'unsafe-inline'`,
     `img-src 'self' data: blob: https:`,
     `font-src 'self' data:`,
-    `connect-src 'self' https: wss: ${realtimeWebSocketOrigin(supabaseUrl)}`,
+    `connect-src 'self' https: wss: ${supabaseOrigin} ${realtimeWebSocketOrigin(supabaseUrl)}`,
     `worker-src 'self' blob:`,
     `media-src 'self' https:`,
     `object-src 'none'`,
