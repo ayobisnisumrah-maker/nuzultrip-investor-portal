@@ -80,6 +80,9 @@ async function expectHealthyRoutes(page: Page, routes: readonly string[], area: 
       /Application error|Internal Server Error|Kesalahan aplikasi/i,
     )
 
+    const bodyText = (await page.locator('body').innerText()).replace(/\s+/g, ' ').trim()
+    expect(bodyText.length, `${area}: ${route} rendered a blank or near-empty page`).toBeGreaterThan(20)
+
     const overflows = await page.evaluate(
       () => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
     )
