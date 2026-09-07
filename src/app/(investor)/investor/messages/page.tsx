@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 
 import { InvestorMessageWorkspace } from '@/features/messaging/investor-message-workspace'
 import { requireInvestorPage } from '@/server/auth/page-guards'
+import { expireMessageThreads } from '@/server/messaging/lifecycle'
 import { getServerSupabase } from '@/server/supabase/server'
 import { PageHeader, Stack } from '@/ui/layout'
 
@@ -31,6 +32,7 @@ type Message = {
 export default async function InvestorMessagesPage() {
   const principal = await requireInvestorPage()
   const supabase = await getServerSupabase()
+  await expireMessageThreads(supabase)
 
   const { data: rawThreads } = await supabase
     .from('message_threads')
