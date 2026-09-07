@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 
 import type { EventKind } from '@/core/realtime/events'
@@ -15,16 +15,10 @@ type LiveNavBadgeProps = {
 export function LiveNavBadge({ initialCount, topic, eventKind }: LiveNavBadgeProps) {
   const router = useRouter()
   const realtime = useRealtime()
-  const [count, setCount] = useState(initialCount)
-
-  useEffect(() => {
-    setCount(initialCount)
-  }, [initialCount])
 
   useEffect(() => {
     return realtime.subscribe(topic, (event) => {
       if (event.kind !== eventKind) return
-      setCount((current) => current + 1)
       router.refresh()
     })
   }, [eventKind, realtime, router, topic])
@@ -34,14 +28,14 @@ export function LiveNavBadge({ initialCount, topic, eventKind }: LiveNavBadgePro
     router.refresh()
   }, [realtime.resumeToken, router])
 
-  if (count <= 0) return null
+  if (initialCount <= 0) return null
 
   return (
     <span
       className="bg-danger text-danger-fg inline-flex min-w-5 items-center justify-center rounded-full px-1.5 text-[0.6875rem] font-semibold tabular"
-      aria-label={`${count} belum dibaca`}
+      aria-label={`${initialCount} belum dibaca`}
     >
-      {count > 99 ? '99+' : count}
+      {initialCount > 99 ? '99+' : initialCount}
     </span>
   )
 }
