@@ -1,5 +1,7 @@
 import type { Metadata } from 'next'
 
+import { topics } from '@/core/realtime/events'
+import { RealtimeRefresher } from '@/features/realtime/realtime-refresher'
 import { adminWithPermission } from '@/server/auth/page-guards'
 import { getServerSupabase } from '@/server/supabase/server'
 import { Alert } from '@/ui/alert'
@@ -51,6 +53,7 @@ export default async function OwnershipPage() {
   if (error) {
     return (
       <Stack gap={6}>
+        <RealtimeRefresher topic={topics.admin()} kinds={['ownership.changed']} />
         <PageHeader
           eyebrow="Kepemilikan"
           title="Kepemilikan Investor"
@@ -85,6 +88,7 @@ export default async function OwnershipPage() {
 
   return (
     <Stack gap={8}>
+      <RealtimeRefresher topic={topics.admin()} kinds={['ownership.changed']} />
       <PageHeader
         eyebrow="Kepemilikan"
         title="Kepemilikan Investor"
