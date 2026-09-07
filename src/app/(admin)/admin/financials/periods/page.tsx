@@ -1,5 +1,7 @@
 import Link from 'next/link'
 
+import { topics } from '@/core/realtime/events'
+import { RealtimeRefresher } from '@/features/realtime/realtime-refresher'
 import { adminWithPermission } from '@/server/auth/page-guards'
 import { getServerSupabase } from '@/server/supabase/server'
 
@@ -93,6 +95,7 @@ export default async function FinancialPeriodsPage() {
 
   return (
     <div className="space-y-6">
+      <RealtimeRefresher topic={topics.admin()} kinds={['financial_period.changed']} />
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-fg-subtle text-sm font-medium">Keuangan</p>
