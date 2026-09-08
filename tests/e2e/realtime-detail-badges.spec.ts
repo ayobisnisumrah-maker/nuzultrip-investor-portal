@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import { expect, test, type Locator } from '@playwright/test'
+import { expect, test, type Locator, type Page } from '@playwright/test'
 
 import {
   advanceInvestor,
@@ -24,6 +24,17 @@ test.afterAll(async () => {
   await deleteAccounts(createdAccounts)
   createdAccounts.length = 0
 })
+
+async function navigationLink(page: Page, name: RegExp) {
+  if ((page.viewportSize()?.width ?? 1440) < 1024) {
+    await page.getByRole('button', { name: 'Buka navigasi' }).click()
+    const navigation = page.getByRole('navigation', { name: 'Navigasi utama' })
+    await expect(navigation).toBeVisible()
+    return navigation.getByRole('link', { name })
+  }
+
+  return page.getByRole('link', { name })
+}
 
 async function unreadBadgeCount(link: Locator, suffix: string): Promise<number> {
   const badge = link.locator(`[aria-label$="${suffix}"]`)
@@ -51,14 +62,13 @@ test('message badges on investor and admin navigation update automatically', asy
   try {
     await signIn(adminPage, admin, '/admin')
     await signIn(investorPage, investor, '/investor/profile')
-    await Promise.all([
-      adminPage.waitForLoadState('networkidle'),
-      investorPage.waitForLoadState('networkidle'),
-    ])
     await Promise.all([waitForRealtime(adminPage), waitForRealtime(investorPage)])
 
-    const adminMessagesLink = adminPage.getByRole('link', { name: /Pesan/ })
-    const investorMessagesLink = investorPage.getByRole('link', { name: /Pesan/ })
+    const adminMessagesLink = await navigationLink(adminPage, /Pesan/)
+    const investorMessagesLink = await navigationLink(investorPage, /Pesan/)
+    await expect(adminMessagesLink).toBeVisible()
+    await expect(investorMessagesLink).toBeVisible()
+
     const adminBaseline = await unreadBadgeCount(adminMessagesLink, 'pesan belum dibaca')
     const investorBaseline = await unreadBadgeCount(investorMessagesLink, 'belum dibaca')
 
@@ -128,7 +138,6 @@ test('admin investor detail updates status and history automatically without rel
 
   try {
     await signIn(page, admin, `/admin/investors/${investor.userId}`)
-    await page.waitForLoadState('networkidle')
     await waitForRealtime(page)
 
     await expect(page.locator('main#main')).toContainText('Aktif')
