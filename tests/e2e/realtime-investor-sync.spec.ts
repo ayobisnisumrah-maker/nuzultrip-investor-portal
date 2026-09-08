@@ -116,14 +116,14 @@ test('published document and financial report appear to investor automatically',
     }
 
     for (const target of ['review', 'approved', 'published'] as const) {
-      const { error } = await adminClient.rpc('transition_document_publication', {
+      const { error } = await adminClient.schema('app').rpc('transition_document_publication', {
         p_document_id: documentId,
         p_target: target,
       })
       if (error) throw new Error(`document transition to ${target} failed: ${error.message}`)
     }
 
-    await expect(documentsPage.locator('main')).toContainText(documentTitle, { timeout: 30_000 })
+    await expect(documentsPage.locator('main#main')).toContainText(documentTitle, { timeout: 30_000 })
 
     const { data: period, error: periodError } = await supabase
       .from('financial_periods')
@@ -179,15 +179,15 @@ test('published document and financial report appear to investor automatically',
     }
 
     for (const target of ['review', 'approved', 'published'] as const) {
-      const { error } = await adminClient.rpc('transition_financial_report', {
+      const { error } = await adminClient.schema('app').rpc('transition_financial_report', {
         p_report_id: reportId,
         p_target: target,
       })
       if (error) throw new Error(`financial report transition to ${target} failed: ${error.message}`)
     }
 
-    await expect(financialsPage.locator('main')).toContainText(reportTitle, { timeout: 30_000 })
-    await expect(financialsPage.locator('main')).toContainText(`Tahunan ${year}`)
+    await expect(financialsPage.locator('main#main')).toContainText(reportTitle, { timeout: 30_000 })
+    await expect(financialsPage.locator('main#main')).toContainText(`Tahunan ${year}`)
   } finally {
     if (reportId) await supabase.from('financial_reports').delete().eq('id', reportId)
     if (reportVersionId) await supabase.from('financial_report_versions').delete().eq('id', reportVersionId)
@@ -244,10 +244,10 @@ test('admin and investor chat stay synchronized automatically in separate browse
     })
     if (adminMessageError) throw new Error(`admin message setup failed: ${adminMessageError.message}`)
 
-    await expect(adminPage.locator('main')).toContainText(subject, { timeout: 30_000 })
-    await expect(adminPage.locator('main')).toContainText(adminMessage, { timeout: 30_000 })
-    await expect(investorPage.locator('main')).toContainText(subject, { timeout: 30_000 })
-    await expect(investorPage.locator('main')).toContainText(adminMessage, { timeout: 30_000 })
+    await expect(adminPage.locator('main#main')).toContainText(subject, { timeout: 30_000 })
+    await expect(adminPage.locator('main#main')).toContainText(adminMessage, { timeout: 30_000 })
+    await expect(investorPage.locator('main#main')).toContainText(subject, { timeout: 30_000 })
+    await expect(investorPage.locator('main#main')).toContainText(adminMessage, { timeout: 30_000 })
 
     const { error: investorReplyError } = await supabase.from('messages').insert({
       thread_id: threadId,
@@ -257,8 +257,8 @@ test('admin and investor chat stay synchronized automatically in separate browse
     })
     if (investorReplyError) throw new Error(`investor reply setup failed: ${investorReplyError.message}`)
 
-    await expect(adminPage.locator('main')).toContainText(investorReply, { timeout: 30_000 })
-    await expect(investorPage.locator('main')).toContainText(investorReply, { timeout: 30_000 })
+    await expect(adminPage.locator('main#main')).toContainText(investorReply, { timeout: 30_000 })
+    await expect(investorPage.locator('main#main')).toContainText(investorReply, { timeout: 30_000 })
   } finally {
     await adminContext.close()
     await investorContext.close()
