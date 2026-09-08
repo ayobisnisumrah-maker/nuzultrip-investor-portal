@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import { createClient } from '@supabase/supabase-js'
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type BrowserContext, type Page } from '@playwright/test'
 
 import {
   clearRateLimits,
@@ -213,20 +213,22 @@ test('admin and investor chat stay synchronized automatically in separate browse
   const investorReply = `Balasan investor realtime ${token}`
 
   let threadId: string | null = null
+  let investorContext: BrowserContext | null = null
 
   const adminContext = await browser.newContext()
-  const investorContext = await browser.newContext()
   const adminPage = await adminContext.newPage()
-  const investorPage = await investorContext.newPage()
 
   try {
-    // Establish each authenticated private-channel socket before opening the
-    // second browser context. This avoids a startup race where a backgrounded
-    // page can miss the private-channel replication-ready handshake.
+    // Establish the first authenticated private-channel socket before even
+    // creating the second browser context. This mirrors two independent users
+    // coming online and avoids background-context startup contention in the
+    // local multi-browser E2E environment.
     await signIn(adminPage, admin, '/admin/messages')
     await adminPage.waitForLoadState('networkidle')
     await waitForRealtime(adminPage)
 
+    investorContext = await browser.newContext()
+    const investorPage = await investorContext.newPage()
     await signIn(investorPage, investor, '/investor/messages')
     await investorPage.waitForLoadState('networkidle')
     await waitForRealtime(investorPage)
@@ -278,6 +280,6 @@ test('admin and investor chat stay synchronized automatically in separate browse
   } finally {
     if (threadId) await supabase.from('message_threads').delete().eq('id', threadId)
     await adminContext.close()
-    await investorContext.close()
+    if (investorContext) await investorContext.close()
   }
 })
