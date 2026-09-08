@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test, type Page } from '@playwright/test'
 
 import {
   clearRateLimits,
@@ -21,7 +21,7 @@ test.afterAll(async () => {
   createdAccounts.length = 0
 })
 
-async function expectNoHorizontalOverflow(page: import('@playwright/test').Page) {
+async function expectNoHorizontalOverflow(page: Page) {
   const dimensions = await page.evaluate(() => ({
     viewportWidth: window.innerWidth,
     documentWidth: document.documentElement.scrollWidth,
@@ -32,7 +32,7 @@ async function expectNoHorizontalOverflow(page: import('@playwright/test').Page)
   expect(dimensions.bodyWidth).toBeLessThanOrEqual(dimensions.viewportWidth + 1)
 }
 
-async function expectResponsiveAppShell(page: import('@playwright/test').Page) {
+async function expectResponsiveAppShell(page: Page) {
   await expect(page.locator('main#main')).toHaveCount(1)
   await expectNoHorizontalOverflow(page)
 
