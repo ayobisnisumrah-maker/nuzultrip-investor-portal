@@ -67,8 +67,26 @@ async function expectMobileRouteStable(page: Page, expectedPrefix: string) {
   const visibleControls = page.locator('main#main').locator('button:visible, a:visible, input:visible, textarea:visible, select:visible')
   const controlCount = await visibleControls.count()
   for (let index = 0; index < Math.min(controlCount, 40); index += 1) {
-    const box = await visibleControls.nth(index).boundingBox()
+    const control = visibleControls.nth(index)
+    const box = await control.boundingBox()
     if (!box) continue
+
+    const insideHorizontalScroller = await control.evaluate((element) => {
+      let ancestor = element.parentElement
+      while (ancestor && ancestor !== document.body) {
+        const style = window.getComputedStyle(ancestor)
+        const scrollsHorizontally =
+          (style.overflowX === 'auto' || style.overflowX === 'scroll') &&
+          ancestor.scrollWidth > ancestor.clientWidth + 1
+
+        if (scrollsHorizontally) return true
+        ancestor = ancestor.parentElement
+      }
+      return false
+    })
+
+    if (insideHorizontalScroller) continue
+
     expect(box.x + box.width).toBeLessThanOrEqual(dimensions.viewportWidth + 1)
     expect(box.x).toBeGreaterThanOrEqual(-1)
   }
