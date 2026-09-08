@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import { expect, test } from '@playwright/test'
+import { expect, test, type Locator, type Page } from '@playwright/test'
 
 import {
   advanceInvestor,
@@ -25,6 +25,26 @@ test.afterAll(async () => {
   createdAccounts.length = 0
 })
 
+async function navigationLink(page: Page, name: RegExp) {
+  if ((page.viewportSize()?.width ?? 1440) < 1024) {
+    await page.getByRole('button', { name: 'Buka navigasi' }).click()
+    const navigation = page.getByRole('navigation', { name: 'Navigasi utama' })
+    await expect(navigation).toBeVisible()
+    return navigation.getByRole('link', { name })
+  }
+
+  return page.getByRole('link', { name })
+}
+
+async function unreadBadgeCount(link: Locator, suffix: string): Promise<number> {
+  const badge = link.locator(`[aria-label$="${suffix}"]`)
+  if ((await badge.count()) === 0) return 0
+
+  const label = await badge.first().getAttribute('aria-label')
+  const match = label?.match(/^(\d+)/)
+  return match ? Number.parseInt(match[1] ?? '0', 10) : 0
+}
+
 test('message badges on investor and admin navigation update automatically', async ({ browser }) => {
   const admin = await createAdminAccount({ roleKey: 'super_admin' })
   const investor = await createInvestorAccount('active')
@@ -42,17 +62,15 @@ test('message badges on investor and admin navigation update automatically', asy
   try {
     await signIn(adminPage, admin, '/admin')
     await signIn(investorPage, investor, '/investor/profile')
-    await Promise.all([
-      adminPage.waitForLoadState('networkidle'),
-      investorPage.waitForLoadState('networkidle'),
-    ])
     await Promise.all([waitForRealtime(adminPage), waitForRealtime(investorPage)])
 
-    const adminMessagesLink = adminPage.getByRole('link', { name: /Pesan/ })
-    const investorMessagesLink = investorPage.getByRole('link', { name: /Pesan/ })
+    const adminMessagesLink = await navigationLink(adminPage, /Pesan/)
+    const investorMessagesLink = await navigationLink(investorPage, /Pesan/)
+    await expect(adminMessagesLink).toBeVisible()
+    await expect(investorMessagesLink).toBeVisible()
 
-    await expect(adminMessagesLink.locator('[aria-label$="pesan belum dibaca"]')).toHaveCount(0)
-    await expect(investorMessagesLink.locator('[aria-label$="belum dibaca"]')).toHaveCount(0)
+    const adminBaseline = await unreadBadgeCount(adminMessagesLink, 'pesan belum dibaca')
+    const investorBaseline = await unreadBadgeCount(investorMessagesLink, 'belum dibaca')
 
     const { data: thread, error: threadError } = await supabase
       .from('message_threads')
@@ -68,6 +86,14 @@ test('message badges on investor and admin navigation update automatically', asy
     if (threadError || !thread) throw new Error(`message thread setup failed: ${threadError?.message}`)
     threadId = thread.id as string
 
+    const { error: participantsError } = await supabase.from('thread_participants').insert([
+      { thread_id: threadId, user_id: investor.userId, role: 'investor' },
+      { thread_id: threadId, user_id: admin.userId, role: 'admin' },
+    ])
+    if (participantsError) {
+      throw new Error(`message participant setup failed: ${participantsError.message}`)
+    }
+
     const { error: adminMessageError } = await supabase.from('messages').insert({
       thread_id: threadId,
       sender_id: admin.userId,
@@ -76,9 +102,9 @@ test('message badges on investor and admin navigation update automatically', asy
     })
     if (adminMessageError) throw new Error(`admin message setup failed: ${adminMessageError.message}`)
 
-    await expect(investorMessagesLink.locator('[aria-label="1 belum dibaca"]')).toBeVisible({
-      timeout: 30_000,
-    })
+    await expect
+      .poll(() => unreadBadgeCount(investorMessagesLink, 'belum dibaca'), { timeout: 30_000 })
+      .toBe(investorBaseline + 1)
     await expect(investorPage).toHaveURL(/\/investor\/profile$/)
 
     const { error: investorMessageError } = await supabase.from('messages').insert({
@@ -91,9 +117,9 @@ test('message badges on investor and admin navigation update automatically', asy
       throw new Error(`investor message setup failed: ${investorMessageError.message}`)
     }
 
-    await expect(adminMessagesLink.locator('[aria-label="1 pesan belum dibaca"]')).toBeVisible({
-      timeout: 30_000,
-    })
+    await expect
+      .poll(() => unreadBadgeCount(adminMessagesLink, 'pesan belum dibaca'), { timeout: 30_000 })
+      .toBe(adminBaseline + 1)
     await expect(adminPage).toHaveURL(/\/admin$/)
   } finally {
     if (threadId) await supabase.from('message_threads').delete().eq('id', threadId)
@@ -112,15 +138,14 @@ test('admin investor detail updates status and history automatically without rel
 
   try {
     await signIn(page, admin, `/admin/investors/${investor.userId}`)
-    await page.waitForLoadState('networkidle')
     await waitForRealtime(page)
 
-    await expect(page.locator('main')).toContainText('Aktif')
+    await expect(page.locator('main#main')).toContainText('Aktif')
 
     await advanceInvestor(investor.userId, ['inactive'])
 
-    await expect(page.locator('main')).toContainText('Nonaktif', { timeout: 30_000 })
-    await expect(page.locator('main')).toContainText('Riwayat Status')
+    await expect(page.locator('main#main')).toContainText('Nonaktif', { timeout: 30_000 })
+    await expect(page.locator('main#main')).toContainText('Riwayat Status')
     await expect(page).toHaveURL(new RegExp(`/admin/investors/${investor.userId}$`))
   } finally {
     await context.close()

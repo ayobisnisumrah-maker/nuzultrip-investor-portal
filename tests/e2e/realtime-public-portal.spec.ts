@@ -1,23 +1,29 @@
 import { randomUUID } from 'node:crypto'
 import { expect, test } from '@playwright/test'
 
-import { serviceClient, waitForRealtime } from './helpers/accounts'
+import {
+  createAdminAccount,
+  deleteAccounts,
+  serviceClient,
+  waitForRealtime,
+} from './helpers/accounts'
+import { createPublishedHomePortal } from './helpers/portal'
+
+const createdAccounts: string[] = []
+
+test.afterAll(async () => {
+  await deleteAccounts(createdAccounts)
+  createdAccounts.length = 0
+})
 
 test('public portal logo updates automatically without manual reload', async ({ page }) => {
+  const admin = await createAdminAccount({ roleKey: 'super_admin', fullName: 'Portal Realtime Admin E2E' })
+  createdAccounts.push(admin.userId)
+  const portal = await createPublishedHomePortal(admin)
+
   const supabase = serviceClient()
   const token = randomUUID().slice(0, 8)
   const publicUrl = `/brand/nuzultrip-logo-portal.svg?realtime=${token}`
-
-  const { data: home, error: homeError } = await supabase
-    .from('portal_pages')
-    .select('id')
-    .eq('is_home', true)
-    .eq('status', 'published')
-    .maybeSingle()
-
-  if (homeError || !home) {
-    throw new Error(`published home fixture is required: ${homeError?.message ?? 'not found'}`)
-  }
 
   const { data: previous, error: previousError } = await supabase
     .from('site_settings')
@@ -25,17 +31,20 @@ test('public portal logo updates automatically without manual reload', async ({ 
     .eq('key', 'brand.logo')
     .maybeSingle()
 
-  if (previousError) throw new Error(`brand logo lookup failed: ${previousError.message}`)
-
-  await page.goto('/')
-  await page.waitForLoadState('networkidle')
-  await waitForRealtime(page)
-
-  const headerLogo = page.locator('header img[alt="Nuzultrip"]').first()
-  await expect(headerLogo).toBeVisible()
-  await expect(headerLogo).not.toHaveAttribute('src', new RegExp(token))
+  if (previousError) {
+    await portal.cleanup()
+    throw new Error(`brand logo lookup failed: ${previousError.message}`)
+  }
 
   try {
+    await page.goto('/')
+    await page.waitForLoadState('networkidle')
+    await waitForRealtime(page)
+
+    const headerLogo = page.locator('header img[alt="Nuzultrip"]').first()
+    await expect(headerLogo).toBeVisible()
+    await expect(headerLogo).not.toHaveAttribute('src', new RegExp(token))
+
     const { error: updateError } = await supabase.from('site_settings').upsert({
       key: 'brand.logo',
       value: { public_url: publicUrl },
@@ -59,5 +68,6 @@ test('public portal logo updates automatically without manual reload', async ({ 
     } else {
       await supabase.from('site_settings').delete().eq('key', 'brand.logo')
     }
+    await portal.cleanup()
   }
 })

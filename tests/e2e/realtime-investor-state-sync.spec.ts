@@ -1,8 +1,10 @@
 import { randomUUID } from 'node:crypto'
+import { createClient } from '@supabase/supabase-js'
 import { expect, test } from '@playwright/test'
 
 import {
   clearRateLimits,
+  createAdminAccount,
   createInvestorAccount,
   deleteAccounts,
   serviceClient,
@@ -23,11 +25,59 @@ test.afterAll(async () => {
   createdAccounts.length = 0
 })
 
+async function authenticatedClient(account: { email: string; password: string }) {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  if (!url || !key) throw new Error('Local Supabase public credentials are required for E2E.')
+
+  const client = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } })
+  const { error } = await client.auth.signInWithPassword(account)
+  if (error) throw new Error(`authenticated client sign-in failed: ${error.message}`)
+  return client
+}
+
+async function advanceDocumentToPublished(
+  client: Awaited<ReturnType<typeof authenticatedClient>>,
+  documentId: string,
+  versionId: string,
+) {
+  const { error: currentVersionError } = await client
+    .from('documents')
+    .update({ current_version_id: versionId })
+    .eq('id', documentId)
+  if (currentVersionError) throw new Error(`current document version setup failed: ${currentVersionError.message}`)
+
+  for (const status of ['review', 'approved'] as const) {
+    const { error: versionError } = await client
+      .from('document_versions')
+      .update({ status })
+      .eq('id', versionId)
+    if (versionError) throw new Error(`document version transition to ${status} failed: ${versionError.message}`)
+
+    const { error: documentError } = await client.from('documents').update({ status }).eq('id', documentId)
+    if (documentError) throw new Error(`document transition to ${status} failed: ${documentError.message}`)
+  }
+
+  const { error: publishVersionError } = await client
+    .from('document_versions')
+    .update({ status: 'published' })
+    .eq('id', versionId)
+  if (publishVersionError) throw new Error(`document version publish failed: ${publishVersionError.message}`)
+
+  const { error: publishDocumentError } = await client
+    .from('documents')
+    .update({ status: 'published', published_version_id: versionId })
+    .eq('id', documentId)
+  if (publishDocumentError) throw new Error(`document publish failed: ${publishDocumentError.message}`)
+}
+
 test('restricted document grant and revoke update the open investor page automatically', async ({ browser }) => {
+  const admin = await createAdminAccount({ roleKey: 'super_admin' })
   const investor = await createInvestorAccount('active')
-  createdAccounts.push(investor.userId)
+  createdAccounts.push(admin.userId, investor.userId)
 
   const supabase = serviceClient()
+  const adminClient = await authenticatedClient(admin)
   const token = randomUUID().slice(0, 8)
   const title = `Dokumen Akses Realtime ${token}`
   let documentId: string | null = null
@@ -60,51 +110,50 @@ test('restricted document grant and revoke update the open investor page automat
         version_number: 1,
         title,
         content: { type: 'doc', content: [] },
-        status: 'published',
-        published_at: new Date().toISOString(),
+        status: 'draft',
       })
       .select('id')
       .single()
     if (versionError || !version) throw new Error(`document version setup failed: ${versionError?.message}`)
     versionId = version.id as string
 
-    const { error: publishError } = await supabase
-      .from('documents')
-      .update({
-        status: 'published',
-        current_version_id: versionId,
-        published_version_id: versionId,
-      })
-      .eq('id', documentId)
-    if (publishError) throw new Error(`document publish setup failed: ${publishError.message}`)
+    await advanceDocumentToPublished(adminClient, documentId, versionId)
 
     await signIn(page, investor, '/investor/documents')
     await page.waitForLoadState('networkidle')
     await waitForRealtime(page)
-    await expect(page.locator('main')).not.toContainText(title)
+    await expect(page.locator('main#main')).not.toContainText(title)
 
     const { data: grant, error: grantError } = await supabase
       .from('document_access_grants')
-      .insert({ document_id: documentId, investor_id: investor.userId })
+      .insert({
+        document_id: documentId,
+        investor_id: investor.userId,
+        granted_by: admin.userId,
+      })
       .select('id')
       .single()
     if (grantError || !grant) throw new Error(`grant setup failed: ${grantError?.message}`)
     grantId = grant.id as string
 
-    await expect(page.locator('main')).toContainText(title, { timeout: 30_000 })
-    await expect(page.locator('main')).toContainText('Akses khusus')
+    await expect(page.locator('main#main')).toContainText(title, { timeout: 30_000 })
+    await expect(page.locator('main#main')).toContainText('Akses khusus')
 
     const { error: revokeError } = await supabase
       .from('document_access_grants')
-      .update({ revoked_at: new Date().toISOString() })
+      .update({
+        revoked_at: new Date().toISOString(),
+        revoked_by: admin.userId,
+      })
       .eq('id', grantId)
     if (revokeError) throw new Error(`grant revoke failed: ${revokeError.message}`)
 
-    await expect(page.locator('main')).not.toContainText(title, { timeout: 30_000 })
+    await expect(page.locator('main#main')).not.toContainText(title, { timeout: 30_000 })
   } finally {
     if (grantId) await supabase.from('document_access_grants').delete().eq('id', grantId)
     if (documentId) await supabase.from('documents').delete().eq('id', documentId)
     if (versionId) await supabase.from('document_versions').delete().eq('id', versionId)
+    await adminClient.auth.signOut()
     await context.close()
   }
 })
@@ -197,7 +246,7 @@ test('payable allocation changing to paid updates the open investor page automat
     await signIn(page, investor, '/investor/distributions')
     await page.waitForLoadState('networkidle')
     await waitForRealtime(page)
-    await expect(page.locator('main')).toContainText('Siap Dibayar')
+    await expect(page.locator('main#main')).toContainText('Siap Dibayar')
 
     const { error: paidError } = await supabase
       .from('profit_distribution_allocations')
@@ -209,8 +258,8 @@ test('payable allocation changing to paid updates the open investor page automat
       .eq('id', allocationId)
     if (paidError) throw new Error(`allocation paid update failed: ${paidError.message}`)
 
-    await expect(page.locator('main')).toContainText(paymentReference, { timeout: 30_000 })
-    await expect(page.locator('main')).toContainText('Sudah Dibayar')
+    await expect(page.locator('main#main')).toContainText(paymentReference, { timeout: 30_000 })
+    await expect(page.locator('main#main')).toContainText('Sudah Dibayar')
   } finally {
     if (allocationId) await supabase.from('profit_distribution_allocations').delete().eq('id', allocationId)
     if (distributionId) await supabase.from('profit_distributions').delete().eq('id', distributionId)

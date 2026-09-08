@@ -17,12 +17,12 @@ export default async function AdministratorDetailPage({ params }: PageProps) {
 
   if (!hasPermission(principal, 'admins.view')) {
     return (
-      <main className="p-6">
+      <div className="p-6">
         <h1 className="text-xl font-semibold">Akses ditolak</h1>
         <p className="text-muted-foreground mt-2 text-sm">
           Anda tidak memiliki izin untuk melihat administrator.
         </p>
-      </main>
+      </div>
     )
   }
 
@@ -80,7 +80,7 @@ export default async function AdministratorDetailPage({ params }: PageProps) {
   const canDelete = principal.roleKey === 'super_admin'
 
   return (
-    <main className="flex flex-col gap-6 p-6">
+    <div className="flex flex-col gap-6 p-6">
       <header>
         <Link
           href="/admin/administrators"
@@ -162,6 +162,6 @@ export default async function AdministratorDetailPage({ params }: PageProps) {
           </div>
         </section>
       )}
-    </main>
+    </div>
   )
 }

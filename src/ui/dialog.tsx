@@ -48,8 +48,8 @@ export function DialogContent({
       <DialogPrimitive.Content
         className={cn(
           'z-modal border-border bg-elevated shadow-modal fixed flex flex-col gap-4 border',
-          // Mobile: a bottom sheet, which is where thumbs are.
-          'inset-x-0 bottom-0 max-h-[85dvh] rounded-t-xl p-5',
+          // Mobile: a bottom sheet, which is where thumbs are. Long forms remain scrollable.
+          'inset-x-0 bottom-0 max-h-[85dvh] overflow-y-auto overscroll-contain rounded-t-xl p-5',
           // Larger viewports: a centred dialog.
           'sm:inset-x-auto sm:top-1/2 sm:bottom-auto sm:left-1/2 sm:w-full sm:-translate-x-1/2 sm:-translate-y-1/2',
           'sm:rounded-lg sm:p-6',
@@ -133,7 +133,9 @@ export function DrawerContent({
       <Overlay />
       <DialogPrimitive.Content
         className={cn(
-          'z-drawer fixed inset-y-0 flex w-[min(22rem,88vw)] flex-col gap-4',
+          // A drawer is modal too: its interactive panel must sit above the
+          // z-overlay backdrop, never underneath it.
+          'z-modal fixed inset-y-0 flex w-[min(22rem,88vw)] flex-col gap-4',
           'border-border bg-surface shadow-modal p-5',
           side === 'right' ? 'right-0 border-l' : 'left-0 border-r',
           className,

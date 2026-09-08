@@ -25,8 +25,8 @@ test.afterAll(async () => {
 })
 
 async function openLivePage(page: Page, path: string) {
-  await page.goto(path)
-  await page.waitForLoadState('networkidle')
+  await page.goto(path, { waitUntil: 'domcontentloaded' })
+  await expect(page.locator('main')).toBeVisible()
   await waitForRealtime(page)
 }
 
@@ -58,12 +58,16 @@ test('admin operational pages update automatically without manual refresh', asyn
     const documentsPage = await context.newPage()
     const inquiriesPage = await context.newPage()
 
-    await Promise.all([
-      openLivePage(periodsPage, '/admin/financials/periods'),
-      openLivePage(reportsPage, '/admin/financials/reports'),
-      openLivePage(documentsPage, '/admin/documents'),
-      openLivePage(inquiriesPage, '/admin/inquiries'),
-    ])
+    // Establish each authenticated private-channel subscriber serially. All
+    // four pages remain open afterwards, so the assertions still prove that
+    // independent operational surfaces receive updates without manual reload.
+    // Starting four RSC navigations and four private Realtime handshakes at the
+    // same instant only stress-tests the local E2E stack rather than a real
+    // user interaction pattern.
+    await openLivePage(periodsPage, '/admin/financials/periods')
+    await openLivePage(reportsPage, '/admin/financials/reports')
+    await openLivePage(documentsPage, '/admin/documents')
+    await openLivePage(inquiriesPage, '/admin/inquiries')
 
     const { data: period, error: periodError } = await supabase
       .from('financial_periods')
@@ -167,7 +171,7 @@ test('investor notification list updates automatically without manual refresh', 
 
   try {
     await signIn(page, investor, '/investor/notifications')
-    await page.waitForLoadState('networkidle')
+    await expect(page.locator('main')).toBeVisible()
     await waitForRealtime(page)
 
     const { data: notification, error } = await supabase

@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto'
-import { expect, test, type Page } from '@playwright/test'
+import { createClient } from '@supabase/supabase-js'
+import { expect, test, type BrowserContext, type Page } from '@playwright/test'
 
 import {
   clearRateLimits,
@@ -30,19 +31,34 @@ async function openLivePage(page: Page, path: string) {
   await waitForRealtime(page)
 }
 
+async function authenticatedClient(account: { email: string; password: string }) {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  if (!url || !key) throw new Error('Local Supabase public credentials are required for E2E.')
+
+  const client = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } })
+  const { error } = await client.auth.signInWithPassword(account)
+  if (error) throw new Error(`authenticated client sign-in failed: ${error.message}`)
+  return client
+}
+
 test('published document and financial report appear to investor automatically', async ({ browser }) => {
+  const admin = await createAdminAccount({ roleKey: 'super_admin' })
   const investor = await createInvestorAccount('active')
-  createdAccounts.push(investor.userId)
+  createdAccounts.push(admin.userId, investor.userId)
 
   const supabase = serviceClient()
+  const adminClient = await authenticatedClient(admin)
   const token = randomUUID().slice(0, 8)
-  const year = 2080 + (Number.parseInt(token.slice(0, 1), 16) % 10)
+  const year = 2100 + (Number.parseInt(token.slice(0, 4), 16) % 100)
   const documentTitle = `Dokumen Investor Realtime ${token}`
   const reportTitle = `Laporan Investor Realtime ${token}`
 
   let documentId: string | null = null
+  let documentVersionId: string | null = null
   let periodId: string | null = null
   let reportId: string | null = null
+  let reportVersionId: string | null = null
 
   const context = await browser.newContext()
   const loginPage = await context.newPage()
@@ -66,16 +82,48 @@ test('published document and financial report appear to investor automatically',
         slug: `investor-realtime-${token}`,
         summary: 'Dokumen ini harus muncul tanpa reload manual.',
         visibility: 'investors',
-        status: 'published',
+        status: 'draft',
       })
       .select('id')
       .single()
     if (documentError || !document) {
-      throw new Error(`published document setup failed: ${documentError?.message}`)
+      throw new Error(`document setup failed: ${documentError?.message}`)
     }
     documentId = document.id as string
 
-    await expect(documentsPage.locator('main')).toContainText(documentTitle, { timeout: 30_000 })
+    const { data: documentVersion, error: documentVersionError } = await supabase
+      .from('document_versions')
+      .insert({
+        document_id: documentId,
+        version_number: 1,
+        title: documentTitle,
+        content: { type: 'doc', content: [] },
+        status: 'draft',
+      })
+      .select('id')
+      .single()
+    if (documentVersionError || !documentVersion) {
+      throw new Error(`document version setup failed: ${documentVersionError?.message}`)
+    }
+    documentVersionId = documentVersion.id as string
+
+    const { error: currentDocumentVersionError } = await adminClient
+      .from('documents')
+      .update({ current_version_id: documentVersionId })
+      .eq('id', documentId)
+    if (currentDocumentVersionError) {
+      throw new Error(`document current version setup failed: ${currentDocumentVersionError.message}`)
+    }
+
+    for (const target of ['review', 'approved', 'published'] as const) {
+      const { error } = await adminClient.schema('app').rpc('transition_document_publication', {
+        p_document_id: documentId,
+        p_target: target,
+      })
+      if (error) throw new Error(`document transition to ${target} failed: ${error.message}`)
+    }
+
+    await expect(documentsPage.locator('main#main')).toContainText(documentTitle, { timeout: 30_000 })
 
     const { data: period, error: periodError } = await supabase
       .from('financial_periods')
@@ -100,19 +148,55 @@ test('published document and financial report appear to investor automatically',
         title: reportTitle,
         summary: 'Laporan ini harus muncul tanpa reload manual.',
         visibility: 'investors',
-        status: 'published',
+        status: 'draft',
       })
       .select('id')
       .single()
-    if (reportError || !report) throw new Error(`published report setup failed: ${reportError?.message}`)
+    if (reportError || !report) throw new Error(`report setup failed: ${reportError?.message}`)
     reportId = report.id as string
 
-    await expect(financialsPage.locator('main')).toContainText(reportTitle, { timeout: 30_000 })
-    await expect(financialsPage.locator('main')).toContainText(`Tahunan ${year}`)
+    const { data: reportVersion, error: reportVersionError } = await supabase
+      .from('financial_report_versions')
+      .insert({
+        financial_report_id: reportId,
+        source: 'internal',
+        status: 'draft',
+        prepared_by: 'E2E',
+      })
+      .select('id')
+      .single()
+    if (reportVersionError || !reportVersion) {
+      throw new Error(`financial report version setup failed: ${reportVersionError?.message}`)
+    }
+    reportVersionId = reportVersion.id as string
+
+    const { error: currentReportVersionError } = await adminClient
+      .from('financial_reports')
+      .update({ current_version_id: reportVersionId })
+      .eq('id', reportId)
+    if (currentReportVersionError) {
+      throw new Error(`financial report current version setup failed: ${currentReportVersionError.message}`)
+    }
+
+    for (const target of ['review', 'approved', 'published'] as const) {
+      const { error } = await adminClient.schema('app').rpc('transition_financial_report', {
+        p_report_id: reportId,
+        p_target: target,
+      })
+      if (error) throw new Error(`financial report transition to ${target} failed: ${error.message}`)
+    }
+
+    await expect(financialsPage.locator('main#main')).toContainText(reportTitle, { timeout: 30_000 })
+    await expect(financialsPage.locator('main#main')).toContainText(`Tahunan ${year}`)
   } finally {
+    // Delete children before parents so a failed/retried run cannot leave a
+    // financial period behind and collide with the next fixture.
+    if (reportVersionId) await supabase.from('financial_report_versions').delete().eq('id', reportVersionId)
     if (reportId) await supabase.from('financial_reports').delete().eq('id', reportId)
     if (periodId) await supabase.from('financial_periods').delete().eq('id', periodId)
+    if (documentVersionId) await supabase.from('document_versions').delete().eq('id', documentVersionId)
     if (documentId) await supabase.from('documents').delete().eq('id', documentId)
+    await adminClient.auth.signOut()
     await context.close()
   }
 })
@@ -129,17 +213,25 @@ test('admin and investor chat stay synchronized automatically in separate browse
   const investorReply = `Balasan investor realtime ${token}`
 
   let threadId: string | null = null
+  let investorContext: BrowserContext | null = null
 
   const adminContext = await browser.newContext()
-  const investorContext = await browser.newContext()
   const adminPage = await adminContext.newPage()
-  const investorPage = await investorContext.newPage()
 
   try {
+    // Establish the first authenticated private-channel socket before even
+    // creating the second browser context. This mirrors two independent users
+    // coming online and avoids background-context startup contention in the
+    // local multi-browser E2E environment.
     await signIn(adminPage, admin, '/admin/messages')
+    await adminPage.waitForLoadState('networkidle')
+    await waitForRealtime(adminPage)
+
+    investorContext = await browser.newContext()
+    const investorPage = await investorContext.newPage()
     await signIn(investorPage, investor, '/investor/messages')
-    await Promise.all([adminPage.waitForLoadState('networkidle'), investorPage.waitForLoadState('networkidle')])
-    await Promise.all([waitForRealtime(adminPage), waitForRealtime(investorPage)])
+    await investorPage.waitForLoadState('networkidle')
+    await waitForRealtime(investorPage)
 
     const { data: thread, error: threadError } = await supabase
       .from('message_threads')
@@ -154,6 +246,14 @@ test('admin and investor chat stay synchronized automatically in separate browse
     if (threadError || !thread) throw new Error(`message thread setup failed: ${threadError?.message}`)
     threadId = thread.id as string
 
+    const { error: participantError } = await supabase.from('thread_participants').insert([
+      { thread_id: threadId, user_id: investor.userId, role: 'investor' },
+      { thread_id: threadId, user_id: admin.userId, role: 'admin' },
+    ])
+    if (participantError) {
+      throw new Error(`message participant setup failed: ${participantError.message}`)
+    }
+
     const { error: adminMessageError } = await supabase.from('messages').insert({
       thread_id: threadId,
       sender_id: admin.userId,
@@ -162,10 +262,10 @@ test('admin and investor chat stay synchronized automatically in separate browse
     })
     if (adminMessageError) throw new Error(`admin message setup failed: ${adminMessageError.message}`)
 
-    await expect(adminPage.locator('main')).toContainText(subject, { timeout: 30_000 })
-    await expect(adminPage.locator('main')).toContainText(adminMessage, { timeout: 30_000 })
-    await expect(investorPage.locator('main')).toContainText(subject, { timeout: 30_000 })
-    await expect(investorPage.locator('main')).toContainText(adminMessage, { timeout: 30_000 })
+    await expect(adminPage.locator('main#main')).toContainText(subject, { timeout: 30_000 })
+    await expect(adminPage.locator('main#main')).toContainText(adminMessage, { timeout: 30_000 })
+    await expect(investorPage.locator('main#main')).toContainText(subject, { timeout: 30_000 })
+    await expect(investorPage.locator('main#main')).toContainText(adminMessage, { timeout: 30_000 })
 
     const { error: investorReplyError } = await supabase.from('messages').insert({
       thread_id: threadId,
@@ -175,10 +275,11 @@ test('admin and investor chat stay synchronized automatically in separate browse
     })
     if (investorReplyError) throw new Error(`investor reply setup failed: ${investorReplyError.message}`)
 
-    await expect(adminPage.locator('main')).toContainText(investorReply, { timeout: 30_000 })
-    await expect(investorPage.locator('main')).toContainText(investorReply, { timeout: 30_000 })
+    await expect(adminPage.locator('main#main')).toContainText(investorReply, { timeout: 30_000 })
+    await expect(investorPage.locator('main#main')).toContainText(investorReply, { timeout: 30_000 })
   } finally {
+    if (threadId) await supabase.from('message_threads').delete().eq('id', threadId)
     await adminContext.close()
-    await investorContext.close()
+    if (investorContext) await investorContext.close()
   }
 })

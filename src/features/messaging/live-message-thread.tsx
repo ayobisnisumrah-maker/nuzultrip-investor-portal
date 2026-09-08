@@ -71,14 +71,7 @@ export function LiveMessageThread({
   useEffect(() => {
     const supabase = getBrowserSupabase()
     let active = true
-    let broadcastReady = false
-    let postgresReady = false
     let syncInFlight = false
-
-    function updateConnectionState() {
-      if (!active) return
-      setConnected(broadcastReady || postgresReady)
-    }
 
     async function syncMessages() {
       if (!active || syncInFlight) return
@@ -98,13 +91,6 @@ export function LiveMessageThread({
         return [...data, ...optimistic]
       })
     }
-
-    const topic = actor === 'admin' ? 'admin:global' : `investor:${currentUserId}`
-    const broadcastChannel = supabase
-      .channel(topic, { config: { private: true } })
-      .on('broadcast', { event: 'message.received' }, () => {
-        void syncMessages()
-      })
 
     const postgresChannel = supabase
       .channel(`message-thread-db:${threadId}`)
@@ -132,18 +118,11 @@ export function LiveMessageThread({
       }
       if (!active) return
 
-      broadcastChannel.subscribe((status) => {
-        if (!active) return
-        broadcastReady = status === 'SUBSCRIBED'
-        updateConnectionState()
-        if (broadcastReady) void syncMessages()
-      })
-
       postgresChannel.subscribe((status) => {
         if (!active) return
-        postgresReady = status === 'SUBSCRIBED'
-        updateConnectionState()
-        if (postgresReady) void syncMessages()
+        const ready = status === 'SUBSCRIBED'
+        setConnected(ready)
+        if (ready) void syncMessages()
       })
     }
 
@@ -179,10 +158,9 @@ export function LiveMessageThread({
       authSubscription.unsubscribe()
       document.removeEventListener('visibilitychange', syncWhenVisible)
       window.removeEventListener('online', syncWhenOnline)
-      void supabase.removeChannel(broadcastChannel)
       void supabase.removeChannel(postgresChannel)
     }
-  }, [actor, currentUserId, threadId])
+  }, [threadId])
 
   const sortedMessages = useMemo(
     () => [...messages].sort((a, b) => new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime()),

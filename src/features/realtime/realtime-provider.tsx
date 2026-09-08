@@ -110,6 +110,21 @@ export function RealtimeProvider({
     const expectedTopicCount = new Set(topics).size
     let cancelled = false
 
+    const markTopicReady = (topic: string) => {
+      const alreadySubscribed = subscribedTopics.current.has(topic)
+      subscribedTopics.current.add(topic)
+      if (alreadySubscribed || subscribedTopics.current.size !== expectedTopicCount) return
+
+      const isRecovery = hasConnected.current
+      hasConnected.current = true
+      setState('connected')
+      if (isRecovery) {
+        // A socket that was down may have missed events, so recovery is
+        // "assume stale" rather than "assume caught up".
+        setResumeToken((token) => token + 1)
+      }
+    }
+
     const openChannels = async () => {
       // Private channels are authorised by RLS on realtime.messages, which
       // needs the session token attached to the socket.
@@ -134,19 +149,13 @@ export function RealtimeProvider({
           .on('system', {}, (message) => {
             if (cancelled || message['extension'] !== 'system') return
 
+            // `SUBSCRIBED` is the transport-level readiness signal and is
+            // emitted reliably by all supported browser engines. A system `ok`
+            // can arrive later when replication_ready is enabled, so accept it
+            // as corroborating readiness rather than making it the only path to
+            // `connected`.
             if (message['status'] === 'ok') {
-              const alreadySubscribed = subscribedTopics.current.has(topic)
-              subscribedTopics.current.add(topic)
-              if (!alreadySubscribed && subscribedTopics.current.size === expectedTopicCount) {
-                const isRecovery = hasConnected.current
-                hasConnected.current = true
-                setState('connected')
-                if (isRecovery) {
-                  // A socket that was down may have missed events, so recovery
-                  // is "assume stale" rather than "assume caught up".
-                  setResumeToken((token) => token + 1)
-                }
-              }
+              markTopicReady(topic)
             } else if (message['status'] === 'error') {
               subscribedTopics.current.delete(topic)
               setState('degraded')
@@ -157,6 +166,7 @@ export function RealtimeProvider({
             if (cancelled) return
             if (status === REALTIME_SUBSCRIBE_STATES.SUBSCRIBED) {
               attempt.current = 0
+              markTopicReady(topic)
             } else if (
               status === REALTIME_SUBSCRIBE_STATES.CHANNEL_ERROR ||
               status === REALTIME_SUBSCRIBE_STATES.TIMED_OUT
@@ -253,7 +263,10 @@ export function RealtimeProvider({
 
   return (
     <QueryClientProvider client={queryClient}>
-      <RealtimeContext value={value}>{children}</RealtimeContext>
+      <RealtimeContext value={value}>
+        <span hidden aria-hidden="true" data-testid="realtime-readiness" data-state={state} />
+        {children}
+      </RealtimeContext>
     </QueryClientProvider>
   )
 }

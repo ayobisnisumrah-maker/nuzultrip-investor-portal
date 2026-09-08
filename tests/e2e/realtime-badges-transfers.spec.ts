@@ -1,8 +1,9 @@
 import { randomUUID } from 'node:crypto'
-import { expect, test } from '@playwright/test'
+import { expect, test, type Page } from '@playwright/test'
 
 import {
   clearRateLimits,
+  createAdminAccount,
   createInvestorAccount,
   deleteAccounts,
   serviceClient,
@@ -23,6 +24,17 @@ test.afterAll(async () => {
   createdAccounts.length = 0
 })
 
+async function navigationLink(page: Page, name: RegExp) {
+  if ((page.viewportSize()?.width ?? 1440) < 1024) {
+    await page.getByRole('button', { name: 'Buka navigasi' }).click()
+    const navigation = page.getByRole('navigation', { name: 'Navigasi utama' })
+    await expect(navigation).toBeVisible()
+    return navigation.getByRole('link', { name })
+  }
+
+  return page.getByRole('link', { name })
+}
+
 test('notification navigation badge appears automatically without manual refresh', async ({ browser }) => {
   const investor = await createInvestorAccount('active')
   createdAccounts.push(investor.userId)
@@ -36,10 +48,9 @@ test('notification navigation badge appears automatically without manual refresh
 
   try {
     await signIn(page, investor, '/investor/profile')
-    await page.waitForLoadState('networkidle')
     await waitForRealtime(page)
 
-    const notificationsLink = page.getByRole('link', { name: /Notifikasi/ })
+    const notificationsLink = await navigationLink(page, /Notifikasi/)
     await expect(notificationsLink).toBeVisible()
     await expect(notificationsLink.locator('[aria-label$="belum dibaca"]')).toHaveCount(0)
 
@@ -59,7 +70,6 @@ test('notification navigation badge appears automatically without manual refresh
     }
     notificationId = notification.id as string
 
-    // The investor stays on /investor/profile. No reload, navigation, or click.
     await expect(notificationsLink.locator('[aria-label="1 belum dibaca"]')).toBeVisible({
       timeout: 30_000,
     })
@@ -72,7 +82,8 @@ test('notification navigation badge appears automatically without manual refresh
 
 test('ownership transfer lifecycle changes appear automatically on investor page', async ({ browser }) => {
   const investor = await createInvestorAccount('active')
-  createdAccounts.push(investor.userId)
+  const admin = await createAdminAccount({ roleKey: 'super_admin', fullName: 'Transfer Realtime Admin E2E' })
+  createdAccounts.push(investor.userId, admin.userId)
 
   const supabase = serviceClient()
   const token = randomUUID().slice(0, 8)
@@ -106,6 +117,8 @@ test('ownership transfer lifecycle changes appear automatically on investor page
     }
     offeringId = offering.id as string
 
+    const acquisitionAt = new Date(Date.now() - 120_000).toISOString()
+    const transferEligibleAt = new Date(Date.now() - 60_000).toISOString()
     const { data: holding, error: holdingError } = await supabase
       .from('ownership_holdings')
       .insert({
@@ -113,7 +126,8 @@ test('ownership transfer lifecycle changes appear automatically on investor page
         investor_id: investor.userId,
         units: 1,
         ownership_bps: 100,
-        transfer_eligible_at: new Date(Date.now() - 60_000).toISOString(),
+        acquisition_at: acquisitionAt,
+        transfer_eligible_at: transferEligibleAt,
         status: 'active',
         acquisition_reference: `TRANSFER-${token}`,
       })
@@ -126,10 +140,9 @@ test('ownership transfer lifecycle changes appear automatically on investor page
     holdingId = holding.id as string
 
     await signIn(page, investor, '/investor/ownership')
-    await page.waitForLoadState('networkidle')
     await waitForRealtime(page)
-    await expect(page.locator('main')).toContainText(offeringName)
-    await expect(page.locator('main')).toContainText('Belum ada pengajuan penjualan saham.')
+    await expect(page.locator('main#main')).toContainText(offeringName)
+    await expect(page.locator('main#main')).toContainText('Belum ada pengajuan penjualan saham.')
 
     const { data: transfer, error: transferError } = await supabase
       .from('ownership_transfers')
@@ -137,7 +150,7 @@ test('ownership transfer lifecycle changes appear automatically on investor page
         holding_id: holdingId,
         from_investor_id: investor.userId,
         units: 1,
-        eligible_at: new Date(Date.now() - 60_000).toISOString(),
+        eligible_at: transferEligibleAt,
         status: 'pending',
         transfer_kind: 'sale',
         requested_unit_price: 100_000_000,
@@ -151,23 +164,28 @@ test('ownership transfer lifecycle changes appear automatically on investor page
     }
     transferId = transfer.id as string
 
-    await expect(page.locator('main')).toContainText('Menunggu Persetujuan', { timeout: 30_000 })
-    await expect(page.locator('main')).toContainText(`Transfer lifecycle ${token}`)
+    await expect(page.locator('main#main')).toContainText('Menunggu Persetujuan', { timeout: 30_000 })
+    await expect(page.locator('main#main')).toContainText(`Transfer lifecycle ${token}`)
 
     const { error: approveError } = await supabase
       .from('ownership_transfers')
-      .update({ status: 'approved', approved_at: new Date().toISOString() })
+      .update({
+        status: 'approved',
+        approved_at: new Date().toISOString(),
+        approved_by: admin.userId,
+      })
       .eq('id', transferId)
     if (approveError) throw new Error(`transfer approval failed: ${approveError.message}`)
 
-    await expect(page.locator('main')).toContainText('Disetujui', { timeout: 30_000 })
-    await expect(page.locator('main')).not.toContainText('Menunggu Persetujuan')
+    await expect(page.locator('main#main')).toContainText('Disetujui', { timeout: 30_000 })
+    await expect(page.locator('main#main')).not.toContainText('Menunggu Persetujuan')
 
     const { error: processingError } = await supabase
       .from('ownership_transfers')
       .update({
         status: 'processing',
         processing_at: new Date().toISOString(),
+        processing_by: admin.userId,
         agreed_unit_price: 100_000_000,
       })
       .eq('id', transferId)
@@ -175,7 +193,7 @@ test('ownership transfer lifecycle changes appear automatically on investor page
       throw new Error(`transfer processing failed: ${processingError.message}`)
     }
 
-    await expect(page.locator('main')).toContainText('Dalam Proses', { timeout: 30_000 })
+    await expect(page.locator('main#main')).toContainText('Dalam Proses', { timeout: 30_000 })
     await expect(page).toHaveURL(/\/investor\/ownership$/)
   } finally {
     if (transferId) await supabase.from('ownership_transfers').delete().eq('id', transferId)
