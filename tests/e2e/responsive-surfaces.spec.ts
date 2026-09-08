@@ -7,6 +7,7 @@ import {
   deleteAccounts,
   signIn,
 } from './helpers/accounts'
+import { createPublishedHomePortal } from './helpers/portal'
 
 const createdAccounts: string[] = []
 
@@ -51,12 +52,23 @@ async function expectResponsiveAppShell(page: Page) {
 }
 
 test('public portal remains usable without horizontal overflow', async ({ page }) => {
-  await page.goto('/')
-  await page.waitForLoadState('networkidle')
+  const admin = await createAdminAccount({ roleKey: 'super_admin', fullName: 'Portal Responsive Admin E2E' })
+  createdAccounts.push(admin.userId)
+  const portal = await createPublishedHomePortal(admin)
 
-  await expect(page.locator('header')).toBeVisible()
-  await expect(page.locator('main')).toBeVisible()
-  await expectNoHorizontalOverflow(page)
+  try {
+    await page.goto('/')
+    await page.waitForLoadState('networkidle')
+
+    await expect(page.locator('header')).toBeVisible()
+    await expect(page.locator('main')).toBeVisible()
+    await expect(page.getByRole('heading', { level: 1 })).toContainText('Membangun Nilai')
+    await expect(page.getByRole('link', { name: 'Penawaran Equity' })).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Tentang Nuzultrip' })).toBeVisible()
+    await expectNoHorizontalOverflow(page)
+  } finally {
+    await portal.cleanup()
+  }
 })
 
 test('investor dashboard shell remains usable across responsive breakpoints', async ({ page }) => {
