@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import { expect, test } from '@playwright/test'
+import { expect, test, type Locator } from '@playwright/test'
 
 import {
   advanceInvestor,
@@ -24,6 +24,15 @@ test.afterAll(async () => {
   await deleteAccounts(createdAccounts)
   createdAccounts.length = 0
 })
+
+async function unreadBadgeCount(link: Locator, suffix: string): Promise<number> {
+  const badge = link.locator(`[aria-label$="${suffix}"]`)
+  if ((await badge.count()) === 0) return 0
+
+  const label = await badge.first().getAttribute('aria-label')
+  const match = label?.match(/^(\d+)/)
+  return match ? Number.parseInt(match[1] ?? '0', 10) : 0
+}
 
 test('message badges on investor and admin navigation update automatically', async ({ browser }) => {
   const admin = await createAdminAccount({ roleKey: 'super_admin' })
@@ -50,9 +59,8 @@ test('message badges on investor and admin navigation update automatically', asy
 
     const adminMessagesLink = adminPage.getByRole('link', { name: /Pesan/ })
     const investorMessagesLink = investorPage.getByRole('link', { name: /Pesan/ })
-
-    await expect(adminMessagesLink.locator('[aria-label$="pesan belum dibaca"]')).toHaveCount(0)
-    await expect(investorMessagesLink.locator('[aria-label$="belum dibaca"]')).toHaveCount(0)
+    const adminBaseline = await unreadBadgeCount(adminMessagesLink, 'pesan belum dibaca')
+    const investorBaseline = await unreadBadgeCount(investorMessagesLink, 'belum dibaca')
 
     const { data: thread, error: threadError } = await supabase
       .from('message_threads')
@@ -76,9 +84,9 @@ test('message badges on investor and admin navigation update automatically', asy
     })
     if (adminMessageError) throw new Error(`admin message setup failed: ${adminMessageError.message}`)
 
-    await expect(investorMessagesLink.locator('[aria-label="1 belum dibaca"]')).toBeVisible({
-      timeout: 30_000,
-    })
+    await expect
+      .poll(() => unreadBadgeCount(investorMessagesLink, 'belum dibaca'), { timeout: 30_000 })
+      .toBe(investorBaseline + 1)
     await expect(investorPage).toHaveURL(/\/investor\/profile$/)
 
     const { error: investorMessageError } = await supabase.from('messages').insert({
@@ -91,9 +99,9 @@ test('message badges on investor and admin navigation update automatically', asy
       throw new Error(`investor message setup failed: ${investorMessageError.message}`)
     }
 
-    await expect(adminMessagesLink.locator('[aria-label="1 pesan belum dibaca"]')).toBeVisible({
-      timeout: 30_000,
-    })
+    await expect
+      .poll(() => unreadBadgeCount(adminMessagesLink, 'pesan belum dibaca'), { timeout: 30_000 })
+      .toBe(adminBaseline + 1)
     await expect(adminPage).toHaveURL(/\/admin$/)
   } finally {
     if (threadId) await supabase.from('message_threads').delete().eq('id', threadId)
