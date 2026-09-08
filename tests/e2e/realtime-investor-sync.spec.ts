@@ -236,6 +236,14 @@ test('admin and investor chat stay synchronized automatically in separate browse
     if (threadError || !thread) throw new Error(`message thread setup failed: ${threadError?.message}`)
     threadId = thread.id as string
 
+    const { error: participantError } = await supabase.from('thread_participants').insert([
+      { thread_id: threadId, user_id: investor.userId, role: 'investor' },
+      { thread_id: threadId, user_id: admin.userId, role: 'admin' },
+    ])
+    if (participantError) {
+      throw new Error(`message participant setup failed: ${participantError.message}`)
+    }
+
     const { error: adminMessageError } = await supabase.from('messages').insert({
       thread_id: threadId,
       sender_id: admin.userId,
@@ -260,6 +268,7 @@ test('admin and investor chat stay synchronized automatically in separate browse
     await expect(adminPage.locator('main#main')).toContainText(investorReply, { timeout: 30_000 })
     await expect(investorPage.locator('main#main')).toContainText(investorReply, { timeout: 30_000 })
   } finally {
+    if (threadId) await supabase.from('message_threads').delete().eq('id', threadId)
     await adminContext.close()
     await investorContext.close()
   }
