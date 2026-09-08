@@ -10,7 +10,7 @@ export type PublishedPortalFixture = {
   cleanup: () => Promise<void>
 }
 
-function authenticatedClient(account: TestAccount) {
+function authenticatedClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   if (!url || !key) throw new Error('Local Supabase public credentials are required for E2E.')
@@ -24,7 +24,7 @@ export async function createPublishedHomePortal(
   admin: TestAccount,
 ): Promise<PublishedPortalFixture> {
   const supabase = serviceClient()
-  const adminClient = authenticatedClient(admin)
+  const adminClient = authenticatedClient()
   const { error: signInError } = await adminClient.auth.signInWithPassword({
     email: admin.email,
     password: admin.password,
