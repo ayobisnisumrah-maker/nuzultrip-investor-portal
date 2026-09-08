@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test, type Page } from '@playwright/test'
 
 import {
   clearRateLimits,
@@ -21,7 +21,7 @@ test.afterAll(async () => {
   createdAccounts.length = 0
 })
 
-async function expectMobileNavigationTouchTargets(page: import('@playwright/test').Page) {
+async function expectMobileNavigationTouchTargets(page: Page) {
   const width = page.viewportSize()?.width ?? 1440
   test.skip(width >= 1024, 'Mobile navigation touch targets only exist below lg.')
 
