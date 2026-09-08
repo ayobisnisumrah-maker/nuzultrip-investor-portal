@@ -21,9 +21,16 @@ test.afterAll(async () => {
   createdAccounts.length = 0
 })
 
+async function expectRealtimeConnected(page: Page) {
+  await expect(page.locator('[data-testid="realtime-readiness"][data-state="connected"]')).toHaveCount(1)
+}
+
 async function expectMobileNavigationTouchTargets(page: Page) {
   const width = page.viewportSize()?.width ?? 1440
   test.skip(width >= 1024, 'Mobile navigation touch targets only exist below lg.')
+
+  await expect(page.locator('main#main')).toHaveCount(1)
+  await expectRealtimeConnected(page)
 
   const openButton = page.getByRole('button', { name: 'Buka navigasi' })
   await expect(openButton).toBeVisible()
@@ -57,7 +64,6 @@ test('investor mobile navigation keeps usable touch targets', async ({ page }) =
   createdAccounts.push(investor.userId)
 
   await signIn(page, investor, '/investor')
-  await page.waitForLoadState('networkidle')
   await expectMobileNavigationTouchTargets(page)
 })
 
@@ -66,6 +72,5 @@ test('admin mobile navigation keeps usable touch targets', async ({ page }) => {
   createdAccounts.push(admin.userId)
 
   await signIn(page, admin, '/admin')
-  await page.waitForLoadState('networkidle')
   await expectMobileNavigationTouchTargets(page)
 })
