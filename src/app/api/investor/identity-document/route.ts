@@ -28,6 +28,12 @@ export async function POST(request: Request) {
   if (principal.kind !== 'investor') {
     return NextResponse.json({ error: 'Endpoint ini khusus investor.' }, { status: 403 })
   }
+  if (!principal.hasDataAccess) {
+    return NextResponse.json(
+      { error: 'Akses unggah dokumen tidak tersedia untuk status investor saat ini.' },
+      { status: 403 },
+    )
+  }
 
   const formData = await request.formData()
   const file = formData.get('file')
