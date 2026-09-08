@@ -17,12 +17,12 @@ export default async function AdminRoleDetailPage({
 
   if (!hasPermission(principal, 'roles.view')) {
     return (
-      <main className="p-6">
+      <div className="p-6">
         <h1 className="text-xl font-semibold">Akses ditolak</h1>
         <p className="text-muted-foreground mt-2 text-sm">
           Anda tidak memiliki izin untuk melihat Peran & Izin.
         </p>
-      </main>
+      </div>
     )
   }
 
@@ -66,7 +66,7 @@ export default async function AdminRoleDetailPage({
   )
 
   return (
-    <main className="flex flex-col gap-6 p-6">
+    <div className="flex flex-col gap-6 p-6">
       <header className="flex flex-col gap-1">
         <div className="text-muted-foreground flex items-center gap-2 text-sm">
           <Link href="/admin/roles" className="hover:text-foreground">
@@ -97,6 +97,6 @@ export default async function AdminRoleDetailPage({
         assignedPermissionIds={assignedPermissionIds}
         permissionGroups={permissionsByModule()}
       />
-    </main>
+    </div>
   )
 }
