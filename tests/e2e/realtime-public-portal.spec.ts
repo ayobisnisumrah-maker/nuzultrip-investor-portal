@@ -8,17 +8,6 @@ test('public portal logo updates automatically without manual reload', async ({ 
   const token = randomUUID().slice(0, 8)
   const publicUrl = `/brand/nuzultrip-logo-portal.svg?realtime=${token}`
 
-  const { data: home, error: homeError } = await supabase
-    .from('portal_pages')
-    .select('id')
-    .eq('is_home', true)
-    .eq('status', 'published')
-    .maybeSingle()
-
-  if (homeError || !home) {
-    throw new Error(`published home fixture is required: ${homeError?.message ?? 'not found'}`)
-  }
-
   const { data: previous, error: previousError } = await supabase
     .from('site_settings')
     .select('key, value, description, updated_by, is_public')
