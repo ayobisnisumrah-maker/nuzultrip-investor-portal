@@ -59,7 +59,6 @@ test('notification navigation badge appears automatically without manual refresh
     }
     notificationId = notification.id as string
 
-    // The investor stays on /investor/profile. No reload, navigation, or click.
     await expect(notificationsLink.locator('[aria-label="1 belum dibaca"]')).toBeVisible({
       timeout: 30_000,
     })
@@ -106,6 +105,8 @@ test('ownership transfer lifecycle changes appear automatically on investor page
     }
     offeringId = offering.id as string
 
+    const acquisitionAt = new Date(Date.now() - 120_000).toISOString()
+    const transferEligibleAt = new Date(Date.now() - 60_000).toISOString()
     const { data: holding, error: holdingError } = await supabase
       .from('ownership_holdings')
       .insert({
@@ -113,7 +114,8 @@ test('ownership transfer lifecycle changes appear automatically on investor page
         investor_id: investor.userId,
         units: 1,
         ownership_bps: 100,
-        transfer_eligible_at: new Date(Date.now() - 60_000).toISOString(),
+        acquisition_at: acquisitionAt,
+        transfer_eligible_at: transferEligibleAt,
         status: 'active',
         acquisition_reference: `TRANSFER-${token}`,
       })
@@ -137,7 +139,7 @@ test('ownership transfer lifecycle changes appear automatically on investor page
         holding_id: holdingId,
         from_investor_id: investor.userId,
         units: 1,
-        eligible_at: new Date(Date.now() - 60_000).toISOString(),
+        eligible_at: transferEligibleAt,
         status: 'pending',
         transfer_kind: 'sale',
         requested_unit_price: 100_000_000,
