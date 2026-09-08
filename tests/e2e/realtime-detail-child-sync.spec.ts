@@ -215,6 +215,7 @@ test('offering metadata changes sync automatically to admin detail and investor 
     await expect(adminPage.locator('main')).toContainText(originalName)
     await expect(investorPage.locator('main')).toContainText(originalName)
 
+    // Holdings lock economic terms, but descriptive metadata must remain editable and realtime.
     const { error: updateError } = await supabase
       .from('ownership_offerings')
       .update({ name: updatedName })
