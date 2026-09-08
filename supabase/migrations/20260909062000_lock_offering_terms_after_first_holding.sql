@@ -2,6 +2,7 @@
 -- remain stable. Holdings snapshot ownership BPS, while other surfaces continue
 -- to read offering-level price/cadence metadata; changing those terms later
 -- would make historical and current records disagree.
+-- This guard is intentionally installed before the defensive production reconciliation.
 create or replace function app.guard_ownership_offering_terms()
 returns trigger
 language plpgsql
