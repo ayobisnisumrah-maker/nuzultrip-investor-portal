@@ -76,6 +76,14 @@ test('message badges on investor and admin navigation update automatically', asy
     if (threadError || !thread) throw new Error(`message thread setup failed: ${threadError?.message}`)
     threadId = thread.id as string
 
+    const { error: participantsError } = await supabase.from('thread_participants').insert([
+      { thread_id: threadId, user_id: investor.userId, role: 'investor' },
+      { thread_id: threadId, user_id: admin.userId, role: 'admin' },
+    ])
+    if (participantsError) {
+      throw new Error(`message participant setup failed: ${participantsError.message}`)
+    }
+
     const { error: adminMessageError } = await supabase.from('messages').insert({
       thread_id: threadId,
       sender_id: admin.userId,
@@ -123,12 +131,12 @@ test('admin investor detail updates status and history automatically without rel
     await page.waitForLoadState('networkidle')
     await waitForRealtime(page)
 
-    await expect(page.locator('main')).toContainText('Aktif')
+    await expect(page.locator('main#main')).toContainText('Aktif')
 
     await advanceInvestor(investor.userId, ['inactive'])
 
-    await expect(page.locator('main')).toContainText('Nonaktif', { timeout: 30_000 })
-    await expect(page.locator('main')).toContainText('Riwayat Status')
+    await expect(page.locator('main#main')).toContainText('Nonaktif', { timeout: 30_000 })
+    await expect(page.locator('main#main')).toContainText('Riwayat Status')
     await expect(page).toHaveURL(new RegExp(`/admin/investors/${investor.userId}$`))
   } finally {
     await context.close()
