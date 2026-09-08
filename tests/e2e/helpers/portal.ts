@@ -4,8 +4,8 @@ import { serviceClient, type TestAccount } from './accounts'
 
 export type PublishedPortalFixture = {
   pageId: string
-  sectionId: string
-  versionId: string
+  sectionId: string | null
+  versionId: string | null
   navigationIds: string[]
   cleanup: () => Promise<void>
 }
@@ -36,27 +36,54 @@ export async function createPublishedHomePortal(
   let versionId: string | null = null
   const navigationIds: string[] = []
 
+  // Browser E2E runs against an isolated local database that is discarded after
+  // the job. A published home page cannot be treated like an ordinary disposable
+  // row because publication guards intentionally protect its lifecycle. Keep a
+  // valid existing home as a shared fixture across serial tests/retries instead
+  // of trying to delete and recreate it behind those guards.
   const cleanup = async () => {
-    if (navigationIds.length) {
-      await supabase.from('portal_navigation').delete().in('id', navigationIds)
-    }
-    if (pageId) {
-      await supabase.from('portal_pages').delete().eq('id', pageId)
-    }
     await adminClient.auth.signOut()
   }
 
   try {
     const { data: existingHome, error: existingHomeError } = await supabase
       .from('portal_pages')
-      .select('id')
+      .select('id, status')
       .eq('page_kind', 'home')
       .maybeSingle()
     if (existingHomeError) {
       throw new Error(`home portal lookup failed: ${existingHomeError.message}`)
     }
+
     if (existingHome) {
-      throw new Error('E2E expected an empty local portal database but a home page already exists.')
+      if (existingHome.status !== 'published') {
+        throw new Error(`existing E2E home portal is not published (status=${existingHome.status})`)
+      }
+
+      pageId = existingHome.id as string
+      const { data: existingSection, error: existingSectionError } = await supabase
+        .from('portal_sections')
+        .select('id, published_version_id')
+        .eq('page_id', pageId)
+        .eq('is_visible', true)
+        .eq('status', 'published')
+        .order('position', { ascending: true })
+        .limit(1)
+        .maybeSingle()
+      if (existingSectionError) {
+        throw new Error(`existing home section lookup failed: ${existingSectionError.message}`)
+      }
+
+      sectionId = (existingSection?.id as string | undefined) ?? null
+      versionId = (existingSection?.published_version_id as string | undefined) ?? null
+
+      return {
+        pageId,
+        sectionId,
+        versionId,
+        navigationIds,
+        cleanup,
+      }
     }
 
     const { data: page, error: pageError } = await supabase
