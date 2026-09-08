@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import { createClient } from '@supabase/supabase-js'
 
 import { serviceClient, type TestAccount } from './accounts'
@@ -37,9 +38,8 @@ export async function createPublishedHomePortal(
   const navigationIds: string[] = []
 
   // Browser E2E runs against an isolated local database that is discarded after
-  // the job. A home page with published_at set still has a valid public snapshot
-  // while its editorial status is draft during a live revision. Reuse that live
-  // snapshot instead of mistaking the editorial state for an unpublished page.
+  // the job. Reuse an existing seeded home page when present, and promote it to
+  // a live snapshot through the same authenticated lifecycle used by production.
   const cleanup = async () => {
     await adminClient.auth.signOut()
   }
@@ -84,35 +84,49 @@ export async function createPublishedHomePortal(
       }
     }
 
-    if (existingHome) {
-      throw new Error(
-        `existing E2E home portal has no live snapshot (status=${existingHome.status}, published_at=${existingHome.published_at ?? 'null'})`,
-      )
+    if (existingHome?.status === 'archived') {
+      throw new Error('existing E2E home portal is archived and cannot be reused')
     }
 
-    const { data: page, error: pageError } = await supabase
-      .from('portal_pages')
-      .insert({
-        slug: 'home',
-        title: 'Nuzultrip Equity Relations',
-        page_kind: 'home',
-        status: 'draft',
-        is_system: false,
-        seo: {},
-      })
-      .select('id')
-      .single()
-    if (pageError || !page) throw new Error(`portal page setup failed: ${pageError?.message}`)
-    pageId = page.id as string
+    if (existingHome) {
+      pageId = existingHome.id as string
+    } else {
+      const { data: page, error: pageError } = await supabase
+        .from('portal_pages')
+        .insert({
+          slug: 'home',
+          title: 'Nuzultrip Equity Relations',
+          page_kind: 'home',
+          status: 'draft',
+          is_system: false,
+          seo: {},
+        })
+        .select('id')
+        .single()
+      if (pageError || !page) throw new Error(`portal page setup failed: ${pageError?.message}`)
+      pageId = page.id as string
+    }
 
+    const { data: latestSection, error: latestSectionError } = await supabase
+      .from('portal_sections')
+      .select('position')
+      .eq('page_id', pageId)
+      .order('position', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+    if (latestSectionError) {
+      throw new Error(`portal section position lookup failed: ${latestSectionError.message}`)
+    }
+
+    const token = randomUUID().slice(0, 8)
     const { data: section, error: sectionError } = await supabase
       .from('portal_sections')
       .insert({
         page_id: pageId,
         section_kind: 'hero_3d',
-        position: 0,
+        position: (latestSection?.position ?? -1) + 1,
         is_visible: true,
-        anchor_id: 'beranda',
+        anchor_id: `beranda-e2e-${token}`,
         status: 'draft',
       })
       .select('id')
@@ -157,13 +171,40 @@ export async function createPublishedHomePortal(
       throw new Error(`portal current version setup failed: ${currentVersionError.message}`)
     }
 
-    for (const target of ['review', 'approved', 'published'] as const) {
+    const currentStatus = existingHome?.status ?? 'draft'
+    const transitions =
+      currentStatus === 'draft'
+        ? (['review', 'approved', 'published'] as const)
+        : currentStatus === 'review'
+          ? (['approved', 'published'] as const)
+          : currentStatus === 'approved'
+            ? (['published'] as const)
+            : ([] as const)
+
+    if (currentStatus === 'published' && !existingHome?.published_at) {
+      throw new Error('existing E2E home portal is published without a published_at snapshot')
+    }
+
+    for (const target of transitions) {
       const { error } = await adminClient.schema('app').rpc('transition_portal_page', {
         p_page_id: pageId,
         p_to_status: target,
       })
       if (error) throw new Error(`portal transition to ${target} failed: ${error.message}`)
     }
+
+    const { data: publishedSection, error: publishedSectionError } = await supabase
+      .from('portal_sections')
+      .select('published_version_id, status')
+      .eq('id', sectionId)
+      .single()
+    if (publishedSectionError) {
+      throw new Error(`published portal section lookup failed: ${publishedSectionError.message}`)
+    }
+    if (publishedSection.status !== 'published' || !publishedSection.published_version_id) {
+      throw new Error('portal lifecycle did not create a published section snapshot')
+    }
+    versionId = publishedSection.published_version_id as string
 
     const { data: navigation, error: navigationError } = await supabase
       .from('portal_navigation')
