@@ -215,9 +215,10 @@ test('offering metadata changes sync automatically to admin detail and investor 
     await expect(adminPage.locator('main')).toContainText(originalName)
     await expect(investorPage.locator('main')).toContainText(originalName)
 
+    // Economic terms are immutable after the first holding; descriptive metadata remains mutable.
     const { error: updateError } = await supabase
       .from('ownership_offerings')
-      .update({ name: updatedName, unit_price: 110_000_000 })
+      .update({ name: updatedName })
       .eq('id', offeringId)
     if (updateError) throw new Error(`offering update failed: ${updateError.message}`)
 
