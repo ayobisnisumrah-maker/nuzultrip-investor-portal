@@ -35,24 +35,24 @@ describe('investor lifecycle', () => {
   })
 
   it.each([
-    ['prospective', 'submitted', true],
-    ['submitted', 'under_review', true],
-    ['submitted', 'rejected', true],
-    ['under_review', 'approved', true],
-    ['approved', 'active', true],
-    ['active', 'inactive', true],
-    ['inactive', 'active', true],
-    ['rejected', 'under_review', true],
-  ] as const)('permits %s → %s', (from, to, expected) => {
-    expect(canTransition(from, to)).toBe(expected)
+    ['prospective', 'submitted'],
+    ['submitted', 'under_review'],
+    ['submitted', 'rejected'],
+    ['under_review', 'approved'],
+    ['approved', 'active'],
+    ['active', 'inactive'],
+    ['inactive', 'active'],
+  ] as const)('permits %s → %s', (from, to) => {
+    expect(canTransition(from, to)).toBe(true)
   })
 
   it.each([
-    // The escalation shortcuts that must never exist.
+    // Escalation shortcuts and terminal-rejection reopening must never exist.
     ['prospective', 'approved'],
     ['prospective', 'active'],
     ['submitted', 'active'],
     ['under_review', 'active'],
+    ['rejected', 'under_review'],
     ['rejected', 'active'],
     ['rejected', 'approved'],
     ['inactive', 'approved'],
