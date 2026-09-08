@@ -50,7 +50,7 @@ test('published document and financial report appear to investor automatically',
   const supabase = serviceClient()
   const adminClient = await authenticatedClient(admin)
   const token = randomUUID().slice(0, 8)
-  const year = 2080 + (Number.parseInt(token.slice(0, 1), 16) % 10)
+  const year = 2200 + (Number.parseInt(token.slice(0, 4), 16) % 700)
   const documentTitle = `Dokumen Investor Realtime ${token}`
   const reportTitle = `Laporan Investor Realtime ${token}`
 
@@ -189,11 +189,13 @@ test('published document and financial report appear to investor automatically',
     await expect(financialsPage.locator('main#main')).toContainText(reportTitle, { timeout: 30_000 })
     await expect(financialsPage.locator('main#main')).toContainText(`Tahunan ${year}`)
   } finally {
-    if (reportId) await supabase.from('financial_reports').delete().eq('id', reportId)
+    // Delete children before parents so a failed/retried run cannot leave a
+    // financial period behind and collide with the next fixture.
     if (reportVersionId) await supabase.from('financial_report_versions').delete().eq('id', reportVersionId)
+    if (reportId) await supabase.from('financial_reports').delete().eq('id', reportId)
     if (periodId) await supabase.from('financial_periods').delete().eq('id', periodId)
-    if (documentId) await supabase.from('documents').delete().eq('id', documentId)
     if (documentVersionId) await supabase.from('document_versions').delete().eq('id', documentVersionId)
+    if (documentId) await supabase.from('documents').delete().eq('id', documentId)
     await adminClient.auth.signOut()
     await context.close()
   }
@@ -218,10 +220,16 @@ test('admin and investor chat stay synchronized automatically in separate browse
   const investorPage = await investorContext.newPage()
 
   try {
+    // Establish each authenticated private-channel socket before opening the
+    // second browser context. This avoids a startup race where a backgrounded
+    // page can miss the private-channel replication-ready handshake.
     await signIn(adminPage, admin, '/admin/messages')
+    await adminPage.waitForLoadState('networkidle')
+    await waitForRealtime(adminPage)
+
     await signIn(investorPage, investor, '/investor/messages')
-    await Promise.all([adminPage.waitForLoadState('networkidle'), investorPage.waitForLoadState('networkidle')])
-    await Promise.all([waitForRealtime(adminPage), waitForRealtime(investorPage)])
+    await investorPage.waitForLoadState('networkidle')
+    await waitForRealtime(investorPage)
 
     const { data: thread, error: threadError } = await supabase
       .from('message_threads')
