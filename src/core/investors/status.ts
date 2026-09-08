@@ -27,9 +27,9 @@ export const INVESTOR_TRANSITIONS: Readonly<Record<InvestorStatus, readonly Inve
   approved: ['active', 'rejected'],
   active: ['inactive'],
   inactive: ['active'],
-  // A rejected application can be reopened for review rather than recreated,
-  // so the applicant's history and documents stay attached to one record.
-  rejected: ['under_review'],
+  // Rejection is terminal for an application. A future registration must create
+  // a fresh application after the rejected-candidate retention window expires.
+  rejected: [],
 }
 
 export function canTransition(from: InvestorStatus, to: InvestorStatus): boolean {
@@ -67,7 +67,8 @@ export const INVESTOR_STATUS_DESCRIPTIONS: Readonly<Record<InvestorStatus, strin
   submitted: 'Pengajuan telah dikirim dan menunggu antrean peninjauan.',
   under_review: 'Tim hubungan investor sedang meninjau pengajuan ini.',
   approved: 'Pengajuan disetujui. Akses ke materi investor telah dibuka.',
-  rejected: 'Pengajuan tidak dilanjutkan. Dapat ditinjau ulang bila diperlukan.',
+  rejected:
+    'Pengajuan tidak dilanjutkan. Data calon investor mengikuti masa retensi penolakan sebelum dapat mendaftar kembali.',
   active: 'Investor aktif dengan akses penuh sesuai izin yang diberikan.',
   inactive: 'Akses dihentikan sementara. Riwayat dan dokumen tetap tersimpan.',
 }
