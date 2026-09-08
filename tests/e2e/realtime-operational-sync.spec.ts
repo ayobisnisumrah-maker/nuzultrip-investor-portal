@@ -25,8 +25,8 @@ test.afterAll(async () => {
 })
 
 async function openLivePage(page: Page, path: string) {
-  await page.goto(path)
-  await page.waitForLoadState('networkidle')
+  await page.goto(path, { waitUntil: 'domcontentloaded' })
+  await expect(page.locator('main')).toBeVisible()
   await waitForRealtime(page)
 }
 
@@ -171,7 +171,7 @@ test('investor notification list updates automatically without manual refresh', 
 
   try {
     await signIn(page, investor, '/investor/notifications')
-    await page.waitForLoadState('networkidle')
+    await expect(page.locator('main')).toBeVisible()
     await waitForRealtime(page)
 
     const { data: notification, error } = await supabase
