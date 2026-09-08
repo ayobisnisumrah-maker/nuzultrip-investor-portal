@@ -6,6 +6,7 @@ import {
   createInvestorAccount,
   deleteAccounts,
   signIn,
+  waitForRealtime,
 } from './helpers/accounts'
 
 const createdAccounts: string[] = []
@@ -49,9 +50,9 @@ test.afterAll(async () => {
 })
 
 async function expectMobileRouteStable(page: Page, expectedPrefix: string) {
-  await page.waitForLoadState('networkidle')
   await expect(page).toHaveURL(new RegExp(`^https?://[^/]+${expectedPrefix.replaceAll('/', '\\/')}`))
   await expect(page.locator('main#main')).toHaveCount(1)
+  await waitForRealtime(page)
   await expect(page.getByRole('button', { name: 'Buka navigasi' })).toBeVisible()
 
   const dimensions = await page.evaluate(() => ({
@@ -82,7 +83,7 @@ test('investor dashboard routes stay usable on mobile', async ({ page }) => {
   await signIn(page, investor, '/investor')
 
   for (const route of investorRoutes) {
-    await page.goto(route)
+    await page.goto(route, { waitUntil: 'domcontentloaded' })
     await expectMobileRouteStable(page, '/investor')
   }
 })
@@ -96,7 +97,7 @@ test('super admin dashboard routes stay usable on mobile', async ({ page }) => {
   await signIn(page, admin, '/admin')
 
   for (const route of adminRoutes) {
-    await page.goto(route)
+    await page.goto(route, { waitUntil: 'domcontentloaded' })
     await expectMobileRouteStable(page, '/admin')
   }
 })
