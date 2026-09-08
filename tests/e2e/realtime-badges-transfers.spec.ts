@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import { expect, test } from '@playwright/test'
+import { expect, test, type Page } from '@playwright/test'
 
 import {
   clearRateLimits,
@@ -24,6 +24,17 @@ test.afterAll(async () => {
   createdAccounts.length = 0
 })
 
+async function navigationLink(page: Page, name: RegExp) {
+  if ((page.viewportSize()?.width ?? 1440) < 1024) {
+    await page.getByRole('button', { name: 'Buka navigasi' }).click()
+    const navigation = page.getByRole('navigation', { name: 'Navigasi utama' })
+    await expect(navigation).toBeVisible()
+    return navigation.getByRole('link', { name })
+  }
+
+  return page.getByRole('link', { name })
+}
+
 test('notification navigation badge appears automatically without manual refresh', async ({ browser }) => {
   const investor = await createInvestorAccount('active')
   createdAccounts.push(investor.userId)
@@ -37,10 +48,9 @@ test('notification navigation badge appears automatically without manual refresh
 
   try {
     await signIn(page, investor, '/investor/profile')
-    await page.waitForLoadState('networkidle')
     await waitForRealtime(page)
 
-    const notificationsLink = page.getByRole('link', { name: /Notifikasi/ })
+    const notificationsLink = await navigationLink(page, /Notifikasi/)
     await expect(notificationsLink).toBeVisible()
     await expect(notificationsLink.locator('[aria-label$="belum dibaca"]')).toHaveCount(0)
 
@@ -130,7 +140,6 @@ test('ownership transfer lifecycle changes appear automatically on investor page
     holdingId = holding.id as string
 
     await signIn(page, investor, '/investor/ownership')
-    await page.waitForLoadState('networkidle')
     await waitForRealtime(page)
     await expect(page.locator('main#main')).toContainText(offeringName)
     await expect(page.locator('main#main')).toContainText('Belum ada pengajuan penjualan saham.')
