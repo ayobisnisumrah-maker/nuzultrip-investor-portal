@@ -1,0 +1,55 @@
+name: One-shot Next 16.3.4 lock refresh
+
+on:
+  push:
+    branches:
+      - fix/ownership-p0-reconcile-20260909
+    paths:
+      - .github/workflows/one-shot-next-16-3-4-lock-refresh.yml
+
+permissions:
+  contents: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  refresh:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: fix/ownership-p0-reconcile-20260909
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.28.1
+          run_install: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Resolve secure framework patch
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm add next@16.3.4
+          pnpm add -D eslint-config-next@16.3.4
+          pnpm audit --prod --audit-level high
+
+      - name: Remove one-shot workflow
+        run: rm .github/workflows/one-shot-next-16-3-4-lock-refresh.yml
+
+      - name: Commit resolved manifest and lockfile
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json pnpm-lock.yaml .github/workflows/one-shot-next-16-3-4-lock-refresh.yml
+          git commit -m "chore(deps): upgrade Next.js to 16.3.4"
+          git push origin HEAD:fix/ownership-p0-reconcile-20260909
