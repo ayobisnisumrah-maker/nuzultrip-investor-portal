@@ -68,7 +68,7 @@ export async function createPublishedHomePortal(
   }
 
   async function ensureDraftSection(options: {
-    kind: string
+    kind: 'hero_3d' | 'investment_info' | 'intro'
     anchorId: string
     content: Record<string, unknown>
   }): Promise<{ sectionId: string; versionId: string }> {
