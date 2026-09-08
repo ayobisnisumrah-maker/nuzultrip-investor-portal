@@ -133,7 +133,9 @@ export function DrawerContent({
       <Overlay />
       <DialogPrimitive.Content
         className={cn(
-          'z-drawer fixed inset-y-0 flex w-[min(22rem,88vw)] flex-col gap-4',
+          // A drawer is modal too: its interactive panel must sit above the
+          // z-overlay backdrop, never underneath it.
+          'z-modal fixed inset-y-0 flex w-[min(22rem,88vw)] flex-col gap-4',
           'border-border bg-surface shadow-modal p-5',
           side === 'right' ? 'right-0 border-l' : 'left-0 border-r',
           className,
