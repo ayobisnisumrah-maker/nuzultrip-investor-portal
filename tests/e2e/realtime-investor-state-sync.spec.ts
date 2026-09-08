@@ -122,26 +122,33 @@ test('restricted document grant and revoke update the open investor page automat
     await signIn(page, investor, '/investor/documents')
     await page.waitForLoadState('networkidle')
     await waitForRealtime(page)
-    await expect(page.locator('main')).not.toContainText(title)
+    await expect(page.locator('main#main')).not.toContainText(title)
 
     const { data: grant, error: grantError } = await supabase
       .from('document_access_grants')
-      .insert({ document_id: documentId, investor_id: investor.userId })
+      .insert({
+        document_id: documentId,
+        investor_id: investor.userId,
+        granted_by: admin.userId,
+      })
       .select('id')
       .single()
     if (grantError || !grant) throw new Error(`grant setup failed: ${grantError?.message}`)
     grantId = grant.id as string
 
-    await expect(page.locator('main')).toContainText(title, { timeout: 30_000 })
-    await expect(page.locator('main')).toContainText('Akses khusus')
+    await expect(page.locator('main#main')).toContainText(title, { timeout: 30_000 })
+    await expect(page.locator('main#main')).toContainText('Akses khusus')
 
     const { error: revokeError } = await supabase
       .from('document_access_grants')
-      .update({ revoked_at: new Date().toISOString() })
+      .update({
+        revoked_at: new Date().toISOString(),
+        revoked_by: admin.userId,
+      })
       .eq('id', grantId)
     if (revokeError) throw new Error(`grant revoke failed: ${revokeError.message}`)
 
-    await expect(page.locator('main')).not.toContainText(title, { timeout: 30_000 })
+    await expect(page.locator('main#main')).not.toContainText(title, { timeout: 30_000 })
   } finally {
     if (grantId) await supabase.from('document_access_grants').delete().eq('id', grantId)
     if (documentId) await supabase.from('documents').delete().eq('id', documentId)
@@ -239,7 +246,7 @@ test('payable allocation changing to paid updates the open investor page automat
     await signIn(page, investor, '/investor/distributions')
     await page.waitForLoadState('networkidle')
     await waitForRealtime(page)
-    await expect(page.locator('main')).toContainText('Siap Dibayar')
+    await expect(page.locator('main#main')).toContainText('Siap Dibayar')
 
     const { error: paidError } = await supabase
       .from('profit_distribution_allocations')
@@ -251,8 +258,8 @@ test('payable allocation changing to paid updates the open investor page automat
       .eq('id', allocationId)
     if (paidError) throw new Error(`allocation paid update failed: ${paidError.message}`)
 
-    await expect(page.locator('main')).toContainText(paymentReference, { timeout: 30_000 })
-    await expect(page.locator('main')).toContainText('Sudah Dibayar')
+    await expect(page.locator('main#main')).toContainText(paymentReference, { timeout: 30_000 })
+    await expect(page.locator('main#main')).toContainText('Sudah Dibayar')
   } finally {
     if (allocationId) await supabase.from('profit_distribution_allocations').delete().eq('id', allocationId)
     if (distributionId) await supabase.from('profit_distributions').delete().eq('id', distributionId)
