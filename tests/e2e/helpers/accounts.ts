@@ -238,9 +238,9 @@ export async function exhaustRateLimit(scope: RateLimitScope, identifier: string
   await spend(rateLimitBucket(salt, scope, `ip:${ipHash}`))
 }
 
-/** Waits until the live-data indicator reports a working socket. */
+/** Wait until the underlying RealtimeProvider reports every channel ready. */
 export async function waitForRealtime(page: Page): Promise<void> {
   await page
-    .locator('[data-testid="realtime-status"][data-state="connected"]')
+    .locator('[data-testid="realtime-readiness"][data-state="connected"]')
     .waitFor({ state: 'attached', timeout: 60_000 })
 }
