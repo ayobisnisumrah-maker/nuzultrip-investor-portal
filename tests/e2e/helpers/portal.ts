@@ -38,10 +38,102 @@ export async function createPublishedHomePortal(
   const navigationIds: string[] = []
 
   // Browser E2E runs against an isolated local database that is discarded after
-  // the job. Reuse an existing seeded home page when present, and promote it to
-  // a live snapshot through the same authenticated lifecycle used by production.
+  // the job, so fixture rows do not need destructive cleanup. We still use the
+  // authenticated publication lifecycle so constraints and permissions match
+  // production behavior.
   const cleanup = async () => {
     await adminClient.auth.signOut()
+  }
+
+  async function transition(target: 'draft' | 'review' | 'approved' | 'published') {
+    if (!pageId) throw new Error('portal page id is missing')
+    const { error } = await adminClient.schema('app').rpc('transition_portal_page', {
+      p_page_id: pageId,
+      p_to_status: target,
+    })
+    if (error) throw new Error(`portal transition to ${target} failed: ${error.message}`)
+  }
+
+  async function nextPosition(): Promise<number> {
+    if (!pageId) throw new Error('portal page id is missing')
+    const { data, error } = await supabase
+      .from('portal_sections')
+      .select('position')
+      .eq('page_id', pageId)
+      .order('position', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+    if (error) throw new Error(`portal section position lookup failed: ${error.message}`)
+    return (data?.position ?? -1) + 1
+  }
+
+  async function ensureDraftSection(options: {
+    kind: string
+    anchorId: string
+    content: Record<string, unknown>
+  }): Promise<{ sectionId: string; versionId: string }> {
+    if (!pageId) throw new Error('portal page id is missing')
+
+    const { data: existing, error: existingError } = await supabase
+      .from('portal_sections')
+      .select('id, current_version_id')
+      .eq('page_id', pageId)
+      .eq('anchor_id', options.anchorId)
+      .maybeSingle()
+    if (existingError) {
+      throw new Error(`portal target ${options.anchorId} lookup failed: ${existingError.message}`)
+    }
+    if (existing?.current_version_id) {
+      return {
+        sectionId: existing.id as string,
+        versionId: existing.current_version_id as string,
+      }
+    }
+
+    const { data: section, error: sectionError } = await supabase
+      .from('portal_sections')
+      .insert({
+        page_id: pageId,
+        section_kind: options.kind,
+        position: await nextPosition(),
+        is_visible: true,
+        anchor_id: options.anchorId,
+        status: 'draft',
+      })
+      .select('id')
+      .single()
+    if (sectionError || !section) {
+      throw new Error(`portal section ${options.anchorId} setup failed: ${sectionError?.message}`)
+    }
+
+    const newSectionId = section.id as string
+    const { data: version, error: versionError } = await supabase
+      .from('portal_section_versions')
+      .insert({
+        section_id: newSectionId,
+        version_number: 1,
+        status: 'draft',
+        created_by: admin.userId,
+        content: options.content,
+      })
+      .select('id')
+      .single()
+    if (versionError || !version) {
+      throw new Error(`portal version ${options.anchorId} setup failed: ${versionError?.message}`)
+    }
+
+    const newVersionId = version.id as string
+    const { error: currentVersionError } = await supabase
+      .from('portal_sections')
+      .update({ current_version_id: newVersionId })
+      .eq('id', newSectionId)
+    if (currentVersionError) {
+      throw new Error(
+        `portal current version ${options.anchorId} setup failed: ${currentVersionError.message}`,
+      )
+    }
+
+    return { sectionId: newSectionId, versionId: newVersionId }
   }
 
   try {
@@ -52,36 +144,6 @@ export async function createPublishedHomePortal(
       .maybeSingle()
     if (existingHomeError) {
       throw new Error(`home portal lookup failed: ${existingHomeError.message}`)
-    }
-
-    if (existingHome?.published_at && existingHome.status !== 'archived') {
-      pageId = existingHome.id as string
-      const { data: existingSection, error: existingSectionError } = await supabase
-        .from('portal_sections')
-        .select('id, published_version_id')
-        .eq('page_id', pageId)
-        .eq('is_visible', true)
-        .eq('status', 'published')
-        .order('position', { ascending: true })
-        .limit(1)
-        .maybeSingle()
-      if (existingSectionError) {
-        throw new Error(`existing home section lookup failed: ${existingSectionError.message}`)
-      }
-      if (!existingSection?.published_version_id) {
-        throw new Error('existing live home portal has no published section snapshot')
-      }
-
-      sectionId = existingSection.id as string
-      versionId = existingSection.published_version_id as string
-
-      return {
-        pageId,
-        sectionId,
-        versionId,
-        navigationIds,
-        cleanup,
-      }
     }
 
     if (existingHome?.status === 'archived') {
@@ -107,42 +169,23 @@ export async function createPublishedHomePortal(
       pageId = page.id as string
     }
 
-    const { data: latestSection, error: latestSectionError } = await supabase
-      .from('portal_sections')
-      .select('position')
-      .eq('page_id', pageId)
-      .order('position', { ascending: false })
-      .limit(1)
-      .maybeSingle()
-    if (latestSectionError) {
-      throw new Error(`portal section position lookup failed: ${latestSectionError.message}`)
+    // A live revision returns only the editor state to Draft. `published_at` and
+    // each published_version_id keep the previous public snapshot online until
+    // the replacement revision is published atomically.
+    let currentStatus = existingHome?.status ?? 'draft'
+    if (currentStatus === 'published') {
+      await transition('draft')
+      currentStatus = 'draft'
+    } else if (currentStatus === 'review' || currentStatus === 'approved') {
+      await transition('draft')
+      currentStatus = 'draft'
     }
 
-    const token = randomUUID().slice(0, 8)
-    const { data: section, error: sectionError } = await supabase
-      .from('portal_sections')
-      .insert({
-        page_id: pageId,
-        section_kind: 'hero_3d',
-        position: (latestSection?.position ?? -1) + 1,
-        is_visible: true,
-        anchor_id: `beranda-e2e-${token}`,
-        status: 'draft',
-      })
-      .select('id')
-      .single()
-    if (sectionError || !section) {
-      throw new Error(`portal section setup failed: ${sectionError?.message}`)
-    }
-    sectionId = section.id as string
-
-    const { data: version, error: versionError } = await supabase
-      .from('portal_section_versions')
-      .insert({
-        section_id: sectionId,
-        version_number: 1,
-        status: 'draft',
-        created_by: admin.userId,
+    if (!existingHome?.published_at) {
+      const token = randomUUID().slice(0, 8)
+      const hero = await ensureDraftSection({
+        kind: 'hero_3d',
+        anchorId: `beranda-e2e-${token}`,
         content: {
           kind: 'hero_3d',
           eyebrow: 'Nuzultrip Equity Relations',
@@ -156,55 +199,79 @@ export async function createPublishedHomePortal(
           footnote: 'Informasi disusun terstruktur dan diperbarui melalui portal resmi Nuzultrip.',
         },
       })
-      .select('id')
-      .single()
-    if (versionError || !version) {
-      throw new Error(`portal version setup failed: ${versionError?.message}`)
+      sectionId = hero.sectionId
+      versionId = hero.versionId
+    } else {
+      const { data: firstPublished, error: firstPublishedError } = await supabase
+        .from('portal_sections')
+        .select('id, published_version_id')
+        .eq('page_id', pageId)
+        .not('published_version_id', 'is', null)
+        .order('position', { ascending: true })
+        .limit(1)
+        .maybeSingle()
+      if (firstPublishedError) {
+        throw new Error(`existing home section lookup failed: ${firstPublishedError.message}`)
+      }
+      sectionId = (firstPublished?.id as string | undefined) ?? null
+      versionId = (firstPublished?.published_version_id as string | undefined) ?? null
     }
-    versionId = version.id as string
 
-    const { error: currentVersionError } = await supabase
+    await ensureDraftSection({
+      kind: 'investment_info',
+      anchorId: 'penawaran',
+      content: {
+        kind: 'investment_info',
+        eyebrow: 'Penawaran Equity',
+        title: 'Penawaran Equity Nuzultrip',
+        description: 'Ringkasan struktur kepemilikan dan proses penawaran Equity Nuzultrip.',
+        funding_label: 'Target penawaran',
+        funding_currency: 'Rp',
+        funding_target: '5.000.000.000',
+        terms: [
+          { label: 'Kepemilikan ditawarkan', value: '40%' },
+          { label: 'Jumlah unit', value: '50 unit' },
+          { label: 'Kepemilikan per unit', value: '0,8%' },
+          { label: 'Nilai per unit', value: 'Rp100.000.000' },
+        ],
+      },
+    })
+
+    await ensureDraftSection({
+      kind: 'intro',
+      anchorId: 'tentang',
+      content: {
+        kind: 'intro',
+        eyebrow: 'Tentang Nuzultrip',
+        title: 'Mengenal Nuzultrip',
+        description: 'Informasi perusahaan dan fondasi bisnis Nuzultrip.',
+        features: [
+          {
+            title: 'Hubungan Equity',
+            description: 'Informasi kepemilikan, perkembangan, dan dokumen tersaji terstruktur.',
+          },
+        ],
+      },
+    })
+
+    await transition('review')
+    await transition('approved')
+    await transition('published')
+
+    const { data: targetSections, error: targetSectionsError } = await supabase
       .from('portal_sections')
-      .update({ current_version_id: versionId })
-      .eq('id', sectionId)
-    if (currentVersionError) {
-      throw new Error(`portal current version setup failed: ${currentVersionError.message}`)
+      .select('anchor_id, status, published_version_id')
+      .eq('page_id', pageId)
+      .in('anchor_id', ['penawaran', 'tentang'])
+    if (targetSectionsError) {
+      throw new Error(`published CTA targets lookup failed: ${targetSectionsError.message}`)
     }
-
-    const currentStatus = existingHome?.status ?? 'draft'
-    const transitions =
-      currentStatus === 'draft'
-        ? (['review', 'approved', 'published'] as const)
-        : currentStatus === 'review'
-          ? (['approved', 'published'] as const)
-          : currentStatus === 'approved'
-            ? (['published'] as const)
-            : ([] as const)
-
-    if (currentStatus === 'published' && !existingHome?.published_at) {
-      throw new Error('existing E2E home portal is published without a published_at snapshot')
+    for (const anchor of ['penawaran', 'tentang']) {
+      const target = targetSections?.find((item) => item.anchor_id === anchor)
+      if (target?.status !== 'published' || !target.published_version_id) {
+        throw new Error(`portal CTA target #${anchor} was not published`)
+      }
     }
-
-    for (const target of transitions) {
-      const { error } = await adminClient.schema('app').rpc('transition_portal_page', {
-        p_page_id: pageId,
-        p_to_status: target,
-      })
-      if (error) throw new Error(`portal transition to ${target} failed: ${error.message}`)
-    }
-
-    const { data: publishedSection, error: publishedSectionError } = await supabase
-      .from('portal_sections')
-      .select('published_version_id, status')
-      .eq('id', sectionId)
-      .single()
-    if (publishedSectionError) {
-      throw new Error(`published portal section lookup failed: ${publishedSectionError.message}`)
-    }
-    if (publishedSection.status !== 'published' || !publishedSection.published_version_id) {
-      throw new Error('portal lifecycle did not create a published section snapshot')
-    }
-    versionId = publishedSection.published_version_id as string
 
     const { data: navigation, error: navigationError } = await supabase
       .from('portal_navigation')
