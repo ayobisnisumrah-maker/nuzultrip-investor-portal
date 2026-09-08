@@ -15,10 +15,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   if (principal.kind === 'anonymous') {
     return NextResponse.json({ error: 'Anda harus login.' }, { status: 401 })
   }
-  if (
-    principal.kind !== 'admin' ||
-    (!hasPermission(principal, 'investors.view') && !hasPermission(principal, 'investor_documents.view'))
-  ) {
+  if (principal.kind !== 'admin' || !hasPermission(principal, 'investor_documents.view')) {
     return NextResponse.json({ error: 'Anda tidak memiliki izin melihat dokumen ini.' }, { status: 403 })
   }
 
