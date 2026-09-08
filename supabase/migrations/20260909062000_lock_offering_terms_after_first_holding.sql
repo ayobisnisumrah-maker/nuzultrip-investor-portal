@@ -2,7 +2,8 @@
 -- remain stable. Holdings snapshot ownership BPS, while other surfaces continue
 -- to read offering-level price/cadence metadata; changing those terms later
 -- would make historical and current records disagree.
--- This guard is intentionally installed before the defensive production reconciliation.
+-- Install this guard before the defensive production reconciliation so any
+-- subsequent allocation immediately freezes the reconciled economic contract.
 create or replace function app.guard_ownership_offering_terms()
 returns trigger
 language plpgsql
