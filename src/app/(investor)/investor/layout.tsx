@@ -100,6 +100,11 @@ export default async function InvestorLayout({ children }: { children: React.Rea
             homeHref="/investor"
             sections={sections}
             brand={<Brand sublabel="Investor" />}
+            mobileSidebarFooter={
+              <div className="[&>button]:w-full [&>button]:justify-start">
+                <SignOutButton />
+              </div>
+            }
             topbarActions={
               <div className="flex items-center gap-3">
                 <div className="hidden flex-col items-end leading-tight sm:flex">
@@ -110,7 +115,9 @@ export default async function InvestorLayout({ children }: { children: React.Rea
                 </div>
                 <RealtimeStatus />
                 <Avatar name={principal.fullName} size="sm" />
-                <SignOutButton compact />
+                <div className="hidden lg:block">
+                  <SignOutButton compact />
+                </div>
               </div>
             }
           >
