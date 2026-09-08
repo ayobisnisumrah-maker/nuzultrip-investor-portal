@@ -31,7 +31,6 @@ export function NotificationSoundSettingsForm({
   canUpdate: boolean
 }) {
   const router = useRouter()
-  const supabase = getBrowserSupabase()
   const { push } = useToast()
   const [enabled, setEnabled] = useState(settings.enabled)
   const [volume, setVolume] = useState(Math.round(settings.volume * 100))
@@ -53,6 +52,7 @@ export function NotificationSoundSettingsForm({
       return
     }
 
+    const supabase = getBrowserSupabase()
     setUploading(true)
     const nextPath = `chime/${crypto.randomUUID()}.${extensionFor(file)}`
     const { error: uploadError } = await supabase.storage
