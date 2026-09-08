@@ -37,12 +37,14 @@ export function AppShell({
   sections,
   brand,
   topbarActions,
+  mobileSidebarFooter,
   children,
   homeHref = '/',
 }: {
   sections: readonly NavSection[]
   brand: React.ReactNode
   topbarActions?: React.ReactNode
+  mobileSidebarFooter?: React.ReactNode
   children: React.ReactNode
   homeHref?: string
 }) {
@@ -85,14 +87,19 @@ export function AppShell({
                 className="-mx-2 flex-1 overflow-y-auto"
                 onNavigate={() => setDrawerOpen(false)}
               />
+              {mobileSidebarFooter ? (
+                <div className="border-border mt-auto shrink-0 border-t pt-3">
+                  {mobileSidebarFooter}
+                </div>
+              ) : null}
             </DrawerContent>
           </Drawer>
 
-          <Link href={homeHref} className="flex items-center gap-2.5 lg:hidden">
+          <Link href={homeHref} className="flex min-w-0 items-center gap-2.5 lg:hidden">
             {brand}
           </Link>
 
-          <div className="ml-auto flex items-center gap-2">
+          <div className="ml-auto flex min-w-0 items-center gap-2">
             {topbarActions}
             <ThemeToggle />
           </div>
@@ -178,8 +185,8 @@ export function Brand({
     <>
       <KhatimStar variant="filled" className="text-accent-solid size-6 shrink-0" />
       <span className="flex min-w-0 flex-col leading-tight">
-        <span className="font-display text-heading-sm text-fg">{label}</span>
-        <span className="text-fg-subtle text-[0.6875rem] tracking-[0.1em] uppercase">
+        <span className="font-display text-heading-sm text-fg truncate">{label}</span>
+        <span className="text-fg-subtle truncate text-[0.6875rem] tracking-[0.1em] uppercase">
           {sublabel}
         </span>
       </span>

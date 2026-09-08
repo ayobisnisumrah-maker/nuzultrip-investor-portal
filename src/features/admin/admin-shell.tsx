@@ -190,6 +190,11 @@ export function AdminShell({
       homeHref="/admin"
       sections={resolved}
       brand={<Brand sublabel="Admin Console" />}
+      mobileSidebarFooter={
+        <div className="[&>button]:w-full [&>button]:justify-start">
+          <SignOutButton />
+        </div>
+      }
       topbarActions={
         <div className="flex items-center gap-2 sm:gap-3">
           <div className="border-border bg-surface hidden h-8 items-center rounded-full border px-3 sm:flex">
@@ -208,7 +213,9 @@ export function AdminShell({
 
           <Avatar name={fullName} size="sm" />
 
-          <SignOutButton compact />
+          <div className="hidden lg:block">
+            <SignOutButton compact />
+          </div>
         </div>
       }
     >
