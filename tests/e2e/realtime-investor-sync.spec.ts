@@ -50,7 +50,7 @@ test('published document and financial report appear to investor automatically',
   const supabase = serviceClient()
   const adminClient = await authenticatedClient(admin)
   const token = randomUUID().slice(0, 8)
-  const year = 2200 + (Number.parseInt(token.slice(0, 4), 16) % 700)
+  const year = 2100 + (Number.parseInt(token.slice(0, 4), 16) % 100)
   const documentTitle = `Dokumen Investor Realtime ${token}`
   const reportTitle = `Laporan Investor Realtime ${token}`
 
