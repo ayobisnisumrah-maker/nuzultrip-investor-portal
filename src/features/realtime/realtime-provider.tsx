@@ -253,7 +253,15 @@ export function RealtimeProvider({
 
   return (
     <QueryClientProvider client={queryClient}>
-      <RealtimeContext value={value}>{children}</RealtimeContext>
+      <RealtimeContext value={value}>
+        <span
+          hidden
+          aria-hidden="true"
+          data-testid="realtime-readiness"
+          data-state={state}
+        />
+        {children}
+      </RealtimeContext>
     </QueryClientProvider>
   )
 }
