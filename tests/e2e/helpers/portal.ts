@@ -37,10 +37,9 @@ export async function createPublishedHomePortal(
   const navigationIds: string[] = []
 
   // Browser E2E runs against an isolated local database that is discarded after
-  // the job. A published home page cannot be treated like an ordinary disposable
-  // row because publication guards intentionally protect its lifecycle. Keep a
-  // valid existing home as a shared fixture across serial tests/retries instead
-  // of trying to delete and recreate it behind those guards.
+  // the job. A home page with published_at set still has a valid public snapshot
+  // while its editorial status is draft during a live revision. Reuse that live
+  // snapshot instead of mistaking the editorial state for an unpublished page.
   const cleanup = async () => {
     await adminClient.auth.signOut()
   }
@@ -48,18 +47,14 @@ export async function createPublishedHomePortal(
   try {
     const { data: existingHome, error: existingHomeError } = await supabase
       .from('portal_pages')
-      .select('id, status')
+      .select('id, status, published_at')
       .eq('page_kind', 'home')
       .maybeSingle()
     if (existingHomeError) {
       throw new Error(`home portal lookup failed: ${existingHomeError.message}`)
     }
 
-    if (existingHome) {
-      if (existingHome.status !== 'published') {
-        throw new Error(`existing E2E home portal is not published (status=${existingHome.status})`)
-      }
-
+    if (existingHome?.published_at && existingHome.status !== 'archived') {
       pageId = existingHome.id as string
       const { data: existingSection, error: existingSectionError } = await supabase
         .from('portal_sections')
@@ -73,9 +68,12 @@ export async function createPublishedHomePortal(
       if (existingSectionError) {
         throw new Error(`existing home section lookup failed: ${existingSectionError.message}`)
       }
+      if (!existingSection?.published_version_id) {
+        throw new Error('existing live home portal has no published section snapshot')
+      }
 
-      sectionId = (existingSection?.id as string | undefined) ?? null
-      versionId = (existingSection?.published_version_id as string | undefined) ?? null
+      sectionId = existingSection.id as string
+      versionId = existingSection.published_version_id as string
 
       return {
         pageId,
@@ -84,6 +82,12 @@ export async function createPublishedHomePortal(
         navigationIds,
         cleanup,
       }
+    }
+
+    if (existingHome) {
+      throw new Error(
+        `existing E2E home portal has no live snapshot (status=${existingHome.status}, published_at=${existingHome.published_at ?? 'null'})`,
+      )
     }
 
     const { data: page, error: pageError } = await supabase
