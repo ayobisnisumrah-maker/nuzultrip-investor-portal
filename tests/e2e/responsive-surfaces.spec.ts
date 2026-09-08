@@ -22,6 +22,10 @@ test.afterAll(async () => {
   createdAccounts.length = 0
 })
 
+async function expectRealtimeConnected(page: Page) {
+  await expect(page.locator('[data-testid="realtime-readiness"][data-state="connected"]')).toHaveCount(1)
+}
+
 async function expectNoHorizontalOverflow(page: Page) {
   const dimensions = await page.evaluate(() => ({
     viewportWidth: window.innerWidth,
@@ -35,6 +39,7 @@ async function expectNoHorizontalOverflow(page: Page) {
 
 async function expectResponsiveAppShell(page: Page) {
   await expect(page.locator('main#main')).toHaveCount(1)
+  await expectRealtimeConnected(page)
   await expectNoHorizontalOverflow(page)
 
   const width = page.viewportSize()?.width ?? 1440
@@ -57,11 +62,11 @@ test('public portal remains usable without horizontal overflow', async ({ page }
   const portal = await createPublishedHomePortal(admin)
 
   try {
-    await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.goto('/', { waitUntil: 'domcontentloaded' })
 
     await expect(page.locator('header')).toBeVisible()
     await expect(page.locator('main')).toBeVisible()
+    await expectRealtimeConnected(page)
     await expect(page.getByRole('heading', { level: 1 })).toContainText('Membangun Nilai')
     await expect(page.getByRole('link', { name: 'Penawaran Equity' })).toBeVisible()
     await expect(page.getByRole('link', { name: 'Tentang Nuzultrip' })).toBeVisible()
@@ -76,7 +81,6 @@ test('investor dashboard shell remains usable across responsive breakpoints', as
   createdAccounts.push(investor.userId)
 
   await signIn(page, investor, '/investor')
-  await page.waitForLoadState('networkidle')
 
   await expectResponsiveAppShell(page)
   await expect(page.locator('main#main')).toContainText('Investor')
@@ -87,7 +91,6 @@ test('super admin dashboard shell remains usable across responsive breakpoints',
   createdAccounts.push(admin.userId)
 
   await signIn(page, admin, '/admin')
-  await page.waitForLoadState('networkidle')
 
   await expectResponsiveAppShell(page)
   await expect(page.locator('main#main')).toContainText('Admin Console')
