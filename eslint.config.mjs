@@ -193,6 +193,25 @@ export default tseslint.config(
   },
 
   // --------------------------------------------------------------------------
+  // CMS-rendered public portal media
+  //
+  // These assets are stored in CMS/Supabase public-media and may use
+  // project-specific public hostnames that are not known at build time.
+  // Native img rendering is intentional for this CMS surface.
+  // --------------------------------------------------------------------------
+  {
+    files: ['src/features/portal/public-portal-exact.tsx'],
+
+    linterOptions: {
+      reportUnusedDisableDirectives: 'off',
+    },
+
+    rules: {
+      '@next/next/no-img-element': 'off',
+    },
+  },
+
+  // --------------------------------------------------------------------------
   // Tests
   // --------------------------------------------------------------------------
   {

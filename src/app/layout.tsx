@@ -17,6 +17,7 @@ import { ThemeProvider } from '@/ui/theme/theme-provider'
 import { THEME_COOKIE, resolveInitialTheme, themeAttribute } from '@/ui/theme/theme'
 
 const env = getClientEnv()
+const browserIcon = '/brand/nuzultrip-browser-icon.png'
 
 export async function generateMetadata(): Promise<Metadata> {
   const [brandName, brandLogoUrl] = await Promise.all([
@@ -33,15 +34,11 @@ export async function generateMetadata(): Promise<Metadata> {
       'Platform resmi untuk informasi perusahaan, pengelolaan equity, kepemilikan, dan komunikasi pemangku kepentingan.',
     applicationName: brandName,
     metadataBase: new URL(env.NEXT_PUBLIC_SITE_URL),
-    ...(brandLogoUrl
-      ? {
-          icons: {
-            icon: brandLogoUrl,
-            shortcut: brandLogoUrl,
-            apple: brandLogoUrl,
-          },
-        }
-      : {}),
+    icons: {
+      icon: browserIcon,
+      shortcut: browserIcon,
+      apple: browserIcon,
+    },
     openGraph: {
       type: 'website',
       siteName: brandName,

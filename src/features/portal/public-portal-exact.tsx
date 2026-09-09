@@ -46,6 +46,24 @@ function CmsImage({ src, alt, className }: { src?: string; alt?: string; classNa
   return <img src={src} alt={alt ?? ''} className={className} />
 }
 
+function CmsIcon({ item, fallback }: { item: Record<string, unknown>; fallback: string }) {
+  const iconUrl = text(item.icon_url)
+  if (iconUrl) {
+    // CMS icon media can be hosted by Supabase Storage or another approved HTTPS origin.
+    // eslint-disable-next-line @next/next/no-img-element
+    return (
+      <img
+        src={iconUrl}
+        alt=""
+        aria-hidden="true"
+        style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
+      />
+    )
+  }
+
+  return <>{text(item.icon) || fallback}</>
+}
+
 function Arrow() {
   return <span aria-hidden="true">→</span>
 }
@@ -68,8 +86,7 @@ function Header({ navigation, logoSrc }: { navigation: NavItem[]; logoSrc: strin
           ))}
         </nav>
         <div className={styles.headerActions}>
-          <Link href="/hubungi" className={styles.headerCta}>Ajukan Minat <Arrow /></Link>
-          <span className={styles.lang} aria-label="Bahasa Indonesia">◎ ID</span>
+          <Link href="/masuk" className={styles.headerCta}>Masuk</Link>
         </div>
       </div>
     </header>
@@ -235,9 +252,12 @@ function Services({ section }: { section?: Section }) {
             <div className={styles.serviceCards}>
               {items.slice(0, 4).map((item, index) => {
                 const href = usableHref(item.href)
+                const fallbackIcon = ['✈', '◇', '▢', '⌘'][index] || '•'
                 return (
                   <article key={`${text(item.title)}-${index}`}>
-                    <span className={styles.serviceIcon}>{['✈', '◇', '▢', '⌘'][index]}</span>
+                    <span className={styles.serviceIcon}>
+                      <CmsIcon item={item} fallback={fallbackIcon} />
+                    </span>
                     <h3>{text(item.title)}</h3>
                     {text(item.description) ? <p>{text(item.description)}</p> : null}
                     {href ? <Link href={href} className={styles.cardArrow} aria-label={`Buka ${text(item.title)}`}>→</Link> : null}
