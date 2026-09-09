@@ -33,6 +33,12 @@ export async function PATCH(request: Request) {
   if (principal.kind !== 'investor') {
     return NextResponse.json({ error: 'Endpoint ini khusus investor.' }, { status: 403 })
   }
+  if (!principal.hasDataAccess) {
+    return NextResponse.json(
+      { error: 'Akses perubahan profil tidak tersedia untuk status investor saat ini.' },
+      { status: 403 },
+    )
+  }
 
   let payload: unknown
   try {
