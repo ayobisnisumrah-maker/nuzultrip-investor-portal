@@ -12,13 +12,22 @@ import {
 const HOME_SECTION_KINDS = new Set([
   'hero_3d',
   'intro',
-  'stat_grid',
-  'financial_highlights',
-  'investment_info',
+  'vision_mission',
   'business_overview',
+  'growth_story',
   'ecosystem',
-  'logo_wall',
+  'investment_info',
+  'milestones',
+  'strategic_direction',
+  'financial_highlights',
+  'investor_updates',
+  'documents',
+  'contact_cta',
+  'legal_notice',
   'rich_content',
+  'stat_grid',
+  'logo_wall',
+  'faq',
 ])
 
 export async function generateMetadata(): Promise<Metadata> {
