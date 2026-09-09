@@ -49,6 +49,7 @@ describe('rejected investor retention', () => {
     const [row] = await sql<{ rejected_at: Date }[]>`
       update public.investors
       set status = 'rejected'::public.investor_status,
+          rejection_reason = 'Dokumen tidak memenuhi persyaratan.',
           rejected_at = now() - interval '30 days'
       where id = ${investorId}
       returning rejected_at
@@ -81,6 +82,8 @@ describe('rejected investor retention', () => {
   it('selects the applicant after 72 hours and reports durable ownership blockers', async () => {
     const sql = db()
 
+    // Test-only time travel. cleanup() suspends user triggers on this isolated
+    // database connection so production's immutable rejection timestamp stays intact.
     await cleanup(async (tx) => {
       await tx`
         update public.investors
