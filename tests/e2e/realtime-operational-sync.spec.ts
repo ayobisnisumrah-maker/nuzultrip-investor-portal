@@ -141,11 +141,18 @@ test('admin operational pages update automatically without manual refresh', asyn
     const status = inquiriesPage.getByLabel(new RegExp(`Status permintaan Pemohon ${token}`))
     await expect(status).toHaveValue('new')
 
-    const { error: updateError } = await supabase
-      .from('portal_inquiries')
-      .update({ status: 'in_progress' })
-      .eq('id', inquiryId)
-    if (updateError) throw new Error(`inquiry update failed: ${updateError.message}`)
+    // Change the lifecycle through a second authenticated Admin surface rather
+    // than bypassing the application with the service-role client. The handler
+    // attribution trigger intentionally requires auth.uid(), and the first
+    // page must still receive the resulting change through Realtime.
+    await loginPage.goto('/admin/inquiries', { waitUntil: 'domcontentloaded' })
+    await expect(loginPage.locator('main')).toBeVisible()
+    const writerInquiryButton = loginPage.getByRole('button').filter({ hasText: inquiryEmail })
+    await expect(writerInquiryButton).toBeVisible({ timeout: 30_000 })
+    await writerInquiryButton.click()
+    const writerStatus = loginPage.getByLabel(new RegExp(`Status permintaan Pemohon ${token}`))
+    await writerStatus.selectOption('in_progress')
+    await expect(writerStatus).toHaveValue('in_progress')
 
     await expect(status).toHaveValue('in_progress', { timeout: 30_000 })
   } finally {
