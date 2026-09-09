@@ -145,12 +145,20 @@ test('admin operational pages update automatically without manual refresh', asyn
     // than bypassing the application with the service-role client. The handler
     // attribution trigger intentionally requires auth.uid(), and the first
     // page must still receive the resulting change through Realtime.
-    await loginPage.goto('/admin/inquiries', { waitUntil: 'domcontentloaded' })
-    await expect(loginPage.locator('main')).toBeVisible()
-    const writerInquiryButton = loginPage.getByRole('button').filter({ hasText: inquiryEmail })
+    //
+    // Use a fresh page in the already-authenticated browser context instead of
+    // reusing the bootstrap login page. Firefox can abort a later RSC
+    // navigation on a long-lived bootstrap page with NS_BINDING_ABORTED even
+    // though the session is valid; a dedicated writer surface mirrors the
+    // actual multi-tab workflow and avoids coupling this assertion to that
+    // browser-specific navigation race.
+    const writerPage = await context.newPage()
+    await writerPage.goto('/admin/inquiries', { waitUntil: 'domcontentloaded' })
+    await expect(writerPage.locator('main')).toBeVisible()
+    const writerInquiryButton = writerPage.getByRole('button').filter({ hasText: inquiryEmail })
     await expect(writerInquiryButton).toBeVisible({ timeout: 30_000 })
     await writerInquiryButton.click()
-    const writerStatus = loginPage.getByLabel(new RegExp(`Status permintaan Pemohon ${token}`))
+    const writerStatus = writerPage.getByLabel(new RegExp(`Status permintaan Pemohon ${token}`))
     await writerStatus.selectOption('in_progress')
     await expect(writerStatus).toHaveValue('in_progress')
 
