@@ -218,7 +218,7 @@ begin
 
   perform cron.schedule(
     'purge-rejected-investors',
-    '17 * * * *',
+    '*/5 * * * *',
     $cron$
       select net.http_post(
         url := (
