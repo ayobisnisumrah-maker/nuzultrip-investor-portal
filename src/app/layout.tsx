@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react'
 import type { Metadata, Viewport } from 'next'
 import { cookies } from 'next/headers'
 
@@ -5,8 +6,10 @@ import '@/styles/globals.css'
 import '@/styles/public-portal-rounded.css'
 import '@/styles/public-portal-hero-title.css'
 import '@/styles/public-portal-functional.css'
+import '@/styles/global-typography.css'
 
 import { getClientEnv } from '@/lib/env'
+import { getTypographySettings, typographyCssVariables } from '@/server/settings/typography'
 import { fontVariables } from '@/ui/fonts'
 import { ThemeProvider } from '@/ui/theme/theme-provider'
 import { THEME_COOKIE, resolveInitialTheme, themeAttribute } from '@/ui/theme/theme'
@@ -50,11 +53,20 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  const cookieStore = await cookies()
+  const [cookieStore, typographySettings] = await Promise.all([
+    cookies(),
+    getTypographySettings(),
+  ])
   const initialTheme = resolveInitialTheme(cookieStore.get(THEME_COOKIE)?.value)
+  const typographyStyle = typographyCssVariables(typographySettings) as CSSProperties
 
   return (
-    <html lang="id" data-theme={themeAttribute(initialTheme)} suppressHydrationWarning>
+    <html
+      lang="id"
+      data-theme={themeAttribute(initialTheme)}
+      style={typographyStyle}
+      suppressHydrationWarning
+    >
       <body
         className={`${fontVariables} bg-background text-foreground min-h-dvh font-sans antialiased`}
       >
