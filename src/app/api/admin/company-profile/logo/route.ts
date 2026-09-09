@@ -7,6 +7,7 @@ import { hasPermission } from '@/core/auth/principal'
 import { getServiceRoleClient } from '@/server/admin/service-client'
 import { getPrincipal } from '@/server/auth/session'
 import { writeAudit } from '@/server/audit'
+import { emitBrandRefresh } from '@/server/realtime/brand-refresh'
 
 const BUCKET = 'public-media'
 const MAX_BYTES = 5 * 1024 * 1024
@@ -98,7 +99,7 @@ export async function POST(request: Request) {
       key: 'brand.logo',
       value,
       description:
-        'Logo utama Nuzultrip untuk portal publik, autentikasi, dasbor Admin, dan dasbor Investor.',
+        'Logo utama perusahaan untuk portal publik, autentikasi, dasbor Admin, dasbor Investor, dan metadata browser.',
       is_public: true,
       updated_by: principal.userId,
     },
@@ -137,6 +138,8 @@ export async function POST(request: Request) {
       },
     },
   })
+
+  await emitBrandRefresh()
 
   return NextResponse.json({ ok: true, logo: value })
 }
