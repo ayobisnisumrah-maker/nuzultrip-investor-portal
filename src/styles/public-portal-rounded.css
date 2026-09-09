@@ -1,0 +1,111 @@
+/*
+ * Public portal rounding layer.
+ *
+ * This file is intentionally scoped to the public Nuzultrip portal shell so
+ * dashboard/admin component geometry is not changed by the editorial landing
+ * page treatment. CSS-module class names retain their local token in Next.js,
+ * which lets these selectors remain stable while the actual hash changes.
+ */
+
+body:has(header a[aria-label='Nuzultrip'][href='/'] + nav[aria-label='Navigasi utama']) {
+  --portal-radius-control: 0.7rem;
+  --portal-radius-card: 0.9rem;
+  --portal-radius-media: 1rem;
+}
+
+/* Force the public portal to inherit the product-wide Figtree family even
+ * where the editorial CSS previously declared Arial explicitly. */
+body:has(header a[aria-label='Nuzultrip'][href='/'] + nav[aria-label='Navigasi utama'])
+  main,
+body:has(header a[aria-label='Nuzultrip'][href='/'] + nav[aria-label='Navigasi utama'])
+  main * {
+  font-family: var(--font-sans) !important;
+}
+
+/* Primary CTAs and filled controls. */
+body:has(header a[aria-label='Nuzultrip'][href='/'] + nav[aria-label='Navigasi utama'])
+  [class*='headerCta'],
+body:has(header a[aria-label='Nuzultrip'][href='/'] + nav[aria-label='Navigasi utama'])
+  [class*='lightButton'] {
+  border-radius: var(--portal-radius-control) !important;
+}
+
+/* Keep compact icon controls circular, but soften their focus treatment. */
+body:has(header a[aria-label='Nuzultrip'][href='/'] + nav[aria-label='Navigasi utama'])
+  [class*='circleArrow'],
+body:has(header a[aria-label='Nuzultrip'][href='/'] + nav[aria-label='Navigasi utama'])
+  [class*='mediaArrow'],
+body:has(header a[aria-label='Nuzultrip'][href='/'] + nav[aria-label='Navigasi utama'])
+  [class*='smallCircle'] {
+  border-radius: 999px !important;
+}
+
+/* Statistics work as one grouped card. */
+body:has(header a[aria-label='Nuzultrip'][href='/'] + nav[aria-label='Navigasi utama'])
+  [class*='statsGrid'] {
+  border-radius: var(--portal-radius-card) !important;
+  overflow: hidden;
+}
+
+/* Equity terms and the dark investment CTA are separate rounded surfaces. */
+body:has(header a[aria-label='Nuzultrip'][href='/'] + nav[aria-label='Navigasi utama'])
+  [class*='offerTable'],
+body:has(header a[aria-label='Nuzultrip'][href='/'] + nav[aria-label='Navigasi utama'])
+  [class*='offerCard'] {
+  border-radius: var(--portal-radius-card) !important;
+  overflow: hidden;
+}
+
+/* Company and editorial imagery. */
+body:has(header a[aria-label='Nuzultrip'][href='/'] + nav[aria-label='Navigasi utama'])
+  [class*='companyMedia'] {
+  border-radius: var(--portal-radius-media) !important;
+  overflow: hidden;
+}
+
+/* Service cards should read as four distinct products instead of a single
+ * segmented table. */
+body:has(header a[aria-label='Nuzultrip'][href='/'] + nav[aria-label='Navigasi utama'])
+  [class*='serviceCards'] {
+  gap: 0.75rem;
+}
+
+body:has(header a[aria-label='Nuzultrip'][href='/'] + nav[aria-label='Navigasi utama'])
+  [class*='serviceCards'] article {
+  border: 1px solid var(--line, #e1e1df) !important;
+  border-radius: var(--portal-radius-card) !important;
+  overflow: hidden;
+}
+
+/* Article cards mirror the rounded visual language while retaining the dark
+ * editorial section. */
+body:has(header a[aria-label='Nuzultrip'][href='/'] + nav[aria-label='Navigasi utama'])
+  [class*='articleCards'] article {
+  border-radius: var(--portal-radius-card) !important;
+  overflow: hidden;
+}
+
+body:has(header a[aria-label='Nuzultrip'][href='/'] + nav[aria-label='Navigasi utama'])
+  [class*='articleCards'] img {
+  border-radius: var(--portal-radius-card) var(--portal-radius-card) 0 0;
+}
+
+/* Newsletter field and submit affordance. */
+body:has(header a[aria-label='Nuzultrip'][href='/'] + nav[aria-label='Navigasi utama'])
+  [class*='newsletter'] > div {
+  border-radius: var(--portal-radius-control) !important;
+  overflow: hidden;
+}
+
+body:has(header a[aria-label='Nuzultrip'][href='/'] + nav[aria-label='Navigasi utama'])
+  [class*='newsletter'] button {
+  border-radius: 0 var(--portal-radius-control) var(--portal-radius-control) 0;
+}
+
+@media (max-width: 40rem) {
+  body:has(header a[aria-label='Nuzultrip'][href='/'] + nav[aria-label='Navigasi utama']) {
+    --portal-radius-control: 0.65rem;
+    --portal-radius-card: 0.8rem;
+    --portal-radius-media: 0.9rem;
+  }
+}
