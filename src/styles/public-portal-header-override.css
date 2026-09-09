@@ -1,0 +1,3 @@
+.portal-header-override > div > header:first-child {
+  display: none !important;
+}
