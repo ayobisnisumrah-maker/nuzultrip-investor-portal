@@ -9,12 +9,10 @@ type OperationalContent = {
   activeThreadId: string
   activeMessageId: string
   activeNotificationId: string
-  activeReadId: string
   activeStorageObjectId: string
   inactiveThreadId: string
   inactiveMessageId: string
   inactiveNotificationId: string
-  inactiveReadId: string
   inactiveStorageObjectId: string
   offeringId: string
   activeHoldingId: string
@@ -23,8 +21,8 @@ type OperationalContent = {
   inactiveTransferId: string
 }
 
-let fixtures: Fixtures
-let content: OperationalContent
+let fixtures: Fixtures | undefined
+let content: OperationalContent | undefined
 
 async function createOperationalContent(sql: Sql, f: Fixtures): Promise<OperationalContent> {
   const owner = f.internalAdmin.userId
@@ -50,12 +48,10 @@ async function createOperationalContent(sql: Sql, f: Fixtures): Promise<Operatio
     `
     if (!message) throw new Error(`Failed to create ${label} message.`)
 
-    const [read] = await sql<{ id: string }[]>`
+    await sql`
       insert into public.message_reads (message_id, user_id)
       values (${message.id}, ${userId})
-      returning id
     `
-    if (!read) throw new Error(`Failed to create ${label} read receipt.`)
 
     const [notification] = await sql<{ id: string }[]>`
       insert into public.notifications (recipient_id, kind, title, body)
@@ -83,7 +79,6 @@ async function createOperationalContent(sql: Sql, f: Fixtures): Promise<Operatio
       threadId: thread.id,
       messageId: message.id,
       notificationId: notification.id,
-      readId: read.id,
       storageObjectId: object.id,
     }
   }
@@ -143,12 +138,10 @@ async function createOperationalContent(sql: Sql, f: Fixtures): Promise<Operatio
     activeThreadId: active.threadId,
     activeMessageId: active.messageId,
     activeNotificationId: active.notificationId,
-    activeReadId: active.readId,
     activeStorageObjectId: active.storageObjectId,
     inactiveThreadId: inactive.threadId,
     inactiveMessageId: inactive.messageId,
     inactiveNotificationId: inactive.notificationId,
-    inactiveReadId: inactive.readId,
     inactiveStorageObjectId: inactive.storageObjectId,
     offeringId,
     activeHoldingId: activeSale.holdingId,
@@ -164,26 +157,29 @@ beforeAll(async () => {
 }, 60_000)
 
 afterAll(async () => {
-  await cleanup(async (tx) => {
-    await tx`delete from storage.objects where id in (${content.activeStorageObjectId}, ${content.inactiveStorageObjectId})`
-    await tx`delete from public.notifications where id in (${content.activeNotificationId}, ${content.inactiveNotificationId})`
-    await tx`delete from public.message_threads where id in (${content.activeThreadId}, ${content.inactiveThreadId})`
-    await tx`delete from public.ownership_transfers where id in (${content.activeTransferId}, ${content.inactiveTransferId})`
-    await tx`delete from public.ownership_holdings where id in (${content.activeHoldingId}, ${content.inactiveHoldingId})`
-    await tx`delete from public.ownership_offerings where id = ${content.offeringId}`
-  })
-  await destroyFixtures(fixtures)
+  if (content) {
+    await cleanup(async (tx) => {
+      await tx`delete from storage.objects where id in (${content.activeStorageObjectId}, ${content.inactiveStorageObjectId})`
+      await tx`delete from public.notifications where id in (${content.activeNotificationId}, ${content.inactiveNotificationId})`
+      await tx`delete from public.message_threads where id in (${content.activeThreadId}, ${content.inactiveThreadId})`
+      await tx`delete from public.ownership_transfers where id in (${content.activeTransferId}, ${content.inactiveTransferId})`
+      await tx`delete from public.ownership_holdings where id in (${content.activeHoldingId}, ${content.inactiveHoldingId})`
+      await tx`delete from public.ownership_offerings where id = ${content.offeringId}`
+    })
+  }
+  if (fixtures) await destroyFixtures(fixtures)
   await closeDb()
 })
 
 describe('investor operational lifecycle gates', () => {
   it('keeps operational data available to an active investor', async () => {
+    if (!fixtures || !content) throw new Error('Operational gate fixtures were not initialized.')
     const principal = { kind: 'authenticated' as const, userId: fixtures.investorA.userId }
 
     expect(await as(principal, (tx) => tx`select id from public.message_threads where id = ${content.activeThreadId}`)).toHaveLength(1)
     expect(await as(principal, (tx) => tx`select id from public.messages where id = ${content.activeMessageId}`)).toHaveLength(1)
     expect(await as(principal, (tx) => tx`select user_id from public.thread_participants where thread_id = ${content.activeThreadId} and user_id = ${fixtures.investorA.userId}`)).toHaveLength(1)
-    expect(await as(principal, (tx) => tx`select id from public.message_reads where id = ${content.activeReadId}`)).toHaveLength(1)
+    expect(await as(principal, (tx) => tx`select message_id from public.message_reads where message_id = ${content.activeMessageId} and user_id = ${fixtures.investorA.userId}`)).toHaveLength(1)
     expect(await as(principal, (tx) => tx`select id from public.notifications where id = ${content.activeNotificationId}`)).toHaveLength(1)
     expect(await as(principal, (tx) => tx`select id from storage.objects where id = ${content.activeStorageObjectId}`)).toHaveLength(1)
 
@@ -192,18 +188,20 @@ describe('investor operational lifecycle gates', () => {
   })
 
   it('revokes all operational data from an inactive investor', async () => {
+    if (!fixtures || !content) throw new Error('Operational gate fixtures were not initialized.')
     const principal = { kind: 'authenticated' as const, userId: fixtures.investorInactive.userId }
 
     expect(await as(principal, (tx) => tx`select id from public.message_threads where id = ${content.inactiveThreadId}`)).toHaveLength(0)
     expect(await as(principal, (tx) => tx`select id from public.messages where id = ${content.inactiveMessageId}`)).toHaveLength(0)
     expect(await as(principal, (tx) => tx`select user_id from public.thread_participants where thread_id = ${content.inactiveThreadId} and user_id = ${fixtures.investorInactive.userId}`)).toHaveLength(0)
-    expect(await as(principal, (tx) => tx`select id from public.message_reads where id = ${content.inactiveReadId}`)).toHaveLength(0)
+    expect(await as(principal, (tx) => tx`select message_id from public.message_reads where message_id = ${content.inactiveMessageId} and user_id = ${fixtures.investorInactive.userId}`)).toHaveLength(0)
     expect(await as(principal, (tx) => tx`select id from public.notifications where id = ${content.inactiveNotificationId}`)).toHaveLength(0)
     expect(await as(principal, (tx) => tx`select id from storage.objects where id = ${content.inactiveStorageObjectId}`)).toHaveLength(0)
     expect(await as(principal, (tx) => tx`select id from app.list_my_ownership_sales()`)).toHaveLength(0)
   })
 
   it('prevents an inactive investor from creating or cancelling a share sale', async () => {
+    if (!fixtures || !content) throw new Error('Operational gate fixtures were not initialized.')
     const principal = { kind: 'authenticated' as const, userId: fixtures.investorInactive.userId }
 
     const createError = await expectRejected(() =>
