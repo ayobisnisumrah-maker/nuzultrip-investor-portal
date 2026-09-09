@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 
 import { PublicPortalExact } from '@/features/portal/public-portal-exact'
-import { PublicPortalHeaderOverride } from '@/features/portal/public-portal-header-override'
 import { PublicRealtimeSurface } from '@/features/realtime/public-realtime-surface'
 import { getPublicBrandLogo } from '@/server/portal/public-branding'
 import {
@@ -117,23 +116,18 @@ export default async function Home() {
     return Boolean(href && href !== '#') && label !== 'artikel' && label !== 'artikel & berita'
   })
 
-  const logoSrc = brandLogoUrl || '/brand/nuzultrip-logo-portal.svg'
-
   return (
     <PublicRealtimeSurface>
-      <div className="portal-header-override">
-        <PublicPortalHeaderOverride navigation={functionalNavigation} logoSrc={logoSrc} />
-        <PublicPortalExact
-          page={{
-            title: 'Nuzultrip',
-            seo: portal.page.seo,
-          }}
-          sections={homepageSections}
-          navigation={functionalNavigation}
-          publicDocuments={publicDocuments}
-          brandLogoUrl={brandLogoUrl}
-        />
-      </div>
+      <PublicPortalExact
+        page={{
+          title: 'Nuzultrip',
+          seo: portal.page.seo,
+        }}
+        sections={homepageSections}
+        navigation={functionalNavigation}
+        publicDocuments={publicDocuments}
+        brandLogoUrl={brandLogoUrl}
+      />
     </PublicRealtimeSurface>
   )
 }
