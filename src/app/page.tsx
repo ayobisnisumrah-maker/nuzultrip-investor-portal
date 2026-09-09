@@ -9,6 +9,18 @@ import {
   getPublishedNavigation,
 } from '@/server/portal/public-queries'
 
+const HOME_SECTION_KINDS = new Set([
+  'hero_3d',
+  'intro',
+  'stat_grid',
+  'financial_highlights',
+  'investment_info',
+  'business_overview',
+  'ecosystem',
+  'logo_wall',
+  'rich_content',
+])
+
 export async function generateMetadata(): Promise<Metadata> {
   const portal = await getPublishedHomePage()
 
@@ -85,6 +97,10 @@ export default async function Home() {
     )
   }
 
+  const homepageSections = portal.sections.filter((section) =>
+    HOME_SECTION_KINDS.has(section.section_kind),
+  )
+
   return (
     <PublicRealtimeSurface>
       <PublicPortalExact
@@ -92,7 +108,7 @@ export default async function Home() {
           title: 'Nuzultrip',
           seo: portal.page.seo,
         }}
-        sections={portal.sections}
+        sections={homepageSections}
         navigation={navigation}
         publicDocuments={publicDocuments}
         brandLogoUrl={brandLogoUrl}
