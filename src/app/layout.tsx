@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 
 import '@/styles/globals.css'
 import '@/styles/public-portal-rounded.css'
+import '@/styles/public-portal-hero-title.css'
 
 import { getClientEnv } from '@/lib/env'
 import { fontVariables } from '@/ui/fonts'

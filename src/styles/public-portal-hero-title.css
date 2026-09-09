@@ -1,0 +1,23 @@
+/* Keep the CMS-authored six-part Nuzultrip hero headline in three editorial rows on desktop. */
+@media (min-width: 51.25rem) {
+  body:has(header a[aria-label='Nuzultrip'][href='/'] + nav[aria-label='Navigasi utama'])
+    main
+    > section:first-child
+    h1:has(> span:nth-child(6)):not(:has(> span:nth-child(7))) {
+    display: grid;
+    grid-template-columns: max-content max-content;
+    column-gap: 0.22em;
+    row-gap: 0;
+    width: max-content;
+    max-width: 100%;
+  }
+
+  body:has(header a[aria-label='Nuzultrip'][href='/'] + nav[aria-label='Navigasi utama'])
+    main
+    > section:first-child
+    h1:has(> span:nth-child(6)):not(:has(> span:nth-child(7)))
+    > span {
+    display: block;
+    white-space: nowrap;
+  }
+}
