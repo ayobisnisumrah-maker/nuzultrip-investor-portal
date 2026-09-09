@@ -6,12 +6,15 @@
 alter table public.investors
   add column if not exists rejected_at timestamptz;
 
+comment on table public.investors is
+  'Investor records are retained for approved, active, and inactive investors. Rejected pre-investment applicants may be purged after 72 hours when no ownership or financial references exist.';
+
 -- Backfill any pre-existing rejected rows from their durable status history,
 -- falling back to the row update timestamp for legacy data.
 update public.investors i
 set rejected_at = coalesce(
   (
-    select max(h.changed_at)
+    select max(h.created_at)
     from public.investor_status_history h
     where h.investor_id = i.id
       and h.to_status = 'rejected'
