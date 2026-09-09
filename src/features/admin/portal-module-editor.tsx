@@ -35,6 +35,8 @@ function Field({
   multiline = false,
   placeholder,
   disabled,
+  maxLength,
+  hint,
 }: {
   label: string
   value: string
@@ -42,6 +44,8 @@ function Field({
   multiline?: boolean
   placeholder?: string
   disabled?: boolean
+  maxLength?: number
+  hint?: string
 }) {
   return (
     <label className="block">
@@ -52,6 +56,7 @@ function Field({
           onChange={(event) => onChange(event.target.value)}
           placeholder={placeholder}
           disabled={disabled}
+          maxLength={maxLength}
           className="border-border bg-background text-fg placeholder:text-fg-subtle focus:border-primary mt-1.5 min-h-28 w-full rounded-lg border px-3 py-2.5 text-sm outline-none disabled:cursor-not-allowed disabled:opacity-60"
         />
       ) : (
@@ -60,9 +65,11 @@ function Field({
           onChange={(event) => onChange(event.target.value)}
           placeholder={placeholder}
           disabled={disabled}
+          maxLength={maxLength}
           className="border-border bg-background text-fg placeholder:text-fg-subtle focus:border-primary mt-1.5 h-10 w-full rounded-lg border px-3 text-sm outline-none disabled:cursor-not-allowed disabled:opacity-60"
         />
       )}
+      {hint ? <span className="text-fg-subtle mt-1 block text-xs">{hint}</span> : null}
     </label>
   )
 }
@@ -102,6 +109,33 @@ export function PortalModuleEditor({
     return Array.isArray(value) ? value.filter(isRecord) : []
   }
 
+  function heroTitleLines() {
+    const source = asString(content.title)
+      .split('|')
+      .map((line) => line.trim())
+      .slice(0, 3)
+    return [source[0] ?? '', source[1] ?? '', source[2] ?? '']
+  }
+
+  function updateHeroTitleLine(index: number, value: string) {
+    const next = heroTitleLines()
+    next[index] = value.slice(0, 20)
+    update({ title: next.join('|') })
+  }
+
+  function heroTags() {
+    const source = Array.isArray(content.tags)
+      ? content.tags.filter((item): item is string => typeof item === 'string').slice(0, 6)
+      : []
+    return [source[0] ?? '', source[1] ?? '', source[2] ?? '', source[3] ?? '', source[4] ?? '', source[5] ?? '']
+  }
+
+  function updateHeroTag(index: number, value: string) {
+    const next = heroTags()
+    next[index] = value
+    update({ tags: next })
+  }
+
   function updateItem(index: number, fields: ContentRecord) {
     const next = [...items('items')]
     next[index] = { ...(next[index] ?? {}), ...fields }
@@ -135,6 +169,18 @@ export function PortalModuleEditor({
   function save() {
     setError(null)
     setMessage(null)
+
+    if (kind === 'hero_3d') {
+      const lines = heroTitleLines()
+      if (lines.some((line) => !line.trim())) {
+        setError('Headline Hero wajib terdiri dari tepat 3 baris.')
+        return
+      }
+      if (lines.some((line) => line.length > 20)) {
+        setError('Setiap baris Headline Hero maksimal 20 karakter.')
+        return
+      }
+    }
 
     startTransition(async () => {
       try {
@@ -188,16 +234,55 @@ export function PortalModuleEditor({
 
       <div className="border-border bg-surface rounded-xl border p-5 sm:p-6">
         {kind === 'hero_3d' ? (
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="space-y-5">
             <Field label="Eyebrow" value={asString(content.eyebrow)} onChange={(eyebrow) => update({ eyebrow })} disabled={!editable} />
-            <Field label="Judul Utama" value={asString(content.title)} onChange={(title) => update({ title })} disabled={!editable} />
-            <div className="md:col-span-2">
-              <Field label="Deskripsi" value={asString(content.description)} onChange={(description) => update({ description })} multiline disabled={!editable} />
+
+            <div className="border-border rounded-xl border p-4">
+              <div className="mb-4">
+                <p className="text-fg text-sm font-semibold">Headline Hero</p>
+                <p className="text-fg-muted mt-1 text-xs">Tepat 3 baris. Maksimal 20 karakter untuk setiap baris.</p>
+              </div>
+              <div className="grid gap-4 md:grid-cols-3">
+                {heroTitleLines().map((line, index) => (
+                  <Field
+                    key={index}
+                    label={`Baris ${index + 1}`}
+                    value={line}
+                    onChange={(value) => updateHeroTitleLine(index, value)}
+                    maxLength={20}
+                    hint={`${line.length}/20 karakter`}
+                    disabled={!editable}
+                  />
+                ))}
+              </div>
             </div>
-            <Field label="CTA Utama" value={asString(content.primary_cta_label)} onChange={(primary_cta_label) => update({ primary_cta_label })} disabled={!editable} />
-            <Field label="Tautan CTA Utama" value={asString(content.primary_cta_href)} onChange={(primary_cta_href) => update({ primary_cta_href })} placeholder="/equity-offering" disabled={!editable} />
-            <Field label="CTA Sekunder" value={asString(content.secondary_cta_label)} onChange={(secondary_cta_label) => update({ secondary_cta_label })} disabled={!editable} />
-            <Field label="Tautan CTA Sekunder" value={asString(content.secondary_cta_href)} onChange={(secondary_cta_href) => update({ secondary_cta_href })} placeholder="/about" disabled={!editable} />
+
+            <Field label="Deskripsi" value={asString(content.description)} onChange={(description) => update({ description })} multiline disabled={!editable} />
+
+            <div className="border-border rounded-xl border p-4">
+              <div className="mb-4">
+                <p className="text-fg text-sm font-semibold">Micro-tag Hero</p>
+                <p className="text-fg-muted mt-1 text-xs">Enam teks kecil di bagian bawah Hero. Perubahan disimpan bersama konten Hero.</p>
+              </div>
+              <div className="grid gap-4 md:grid-cols-3">
+                {heroTags().map((tag, index) => (
+                  <Field
+                    key={index}
+                    label={`Tag ${index + 1}`}
+                    value={tag}
+                    onChange={(value) => updateHeroTag(index, value)}
+                    disabled={!editable}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <Field label="CTA Utama" value={asString(content.primary_cta_label)} onChange={(primary_cta_label) => update({ primary_cta_label })} disabled={!editable} />
+              <Field label="Tautan CTA Utama" value={asString(content.primary_cta_href)} onChange={(primary_cta_href) => update({ primary_cta_href })} placeholder="/equity-offering" disabled={!editable} />
+              <Field label="CTA Sekunder" value={asString(content.secondary_cta_label)} onChange={(secondary_cta_label) => update({ secondary_cta_label })} disabled={!editable} />
+              <Field label="Tautan CTA Sekunder" value={asString(content.secondary_cta_href)} onChange={(secondary_cta_href) => update({ secondary_cta_href })} placeholder="/about" disabled={!editable} />
+            </div>
           </div>
         ) : null}
 
