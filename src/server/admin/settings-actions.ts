@@ -1,9 +1,10 @@
-﻿'use server'
+'use server'
 
 import { z } from 'zod'
 import { defineAction } from '@/server/auth/guards'
 import { getEmailSettings } from '@/server/settings/email'
 import { getNotificationSoundSettings } from '@/server/settings/notification-sound'
+import { getTypographySettings } from '@/server/settings/typography'
 import { getServerSupabase } from '@/server/supabase/server'
 
 const emailSettingsSchema = z.object({
@@ -22,6 +23,13 @@ const notificationSoundSchema = z.object({
   enabled: z.boolean(),
   path: z.string().trim().max(500).nullable(),
   volume: z.number().min(0).max(1),
+})
+
+const typographySettingsSchema = z.object({
+  fontFamily: z.enum(['figtree', 'system', 'arial', 'georgia']),
+  fontSizePercent: z.number().min(85).max(125),
+  letterSpacingEm: z.number().min(-0.03).max(0.08),
+  lineHeight: z.number().min(1.2).max(1.9),
 })
 
 export const getAdminEmailSettings = defineAction({
@@ -126,6 +134,39 @@ export const updateAdminNotificationSoundSettings = defineAction({
     )
 
     if (error) throw new Error(`Gagal menyimpan suara notifikasi: ${error.message}`)
+    return { updated: true }
+  },
+})
+
+export const getAdminTypographySettings = defineAction({
+  access: { permission: 'settings.view' },
+  handler: async () => {
+    return await getTypographySettings()
+  },
+})
+
+export const updateAdminTypographySettings = defineAction({
+  access: { permission: 'settings.update' },
+  input: typographySettingsSchema,
+  handler: async ({ input, principal }) => {
+    const supabase = await getServerSupabase()
+    const { error } = await supabase.from('site_settings').upsert(
+      {
+        key: 'appearance.typography',
+        value: {
+          font_family: input.fontFamily,
+          font_size_percent: input.fontSizePercent,
+          letter_spacing_em: input.letterSpacingEm,
+          line_height: input.lineHeight,
+        },
+        description: 'Global typography configuration for public portal, auth, Admin, Investor, and application UI.',
+        is_public: true,
+        updated_by: principal.kind === 'anonymous' ? null : principal.userId,
+      },
+      { onConflict: 'key' },
+    )
+
+    if (error) throw new Error(`Gagal menyimpan tipografi global: ${error.message}`)
     return { updated: true }
   },
 })
