@@ -1,6 +1,7 @@
 import Link from 'next/link'
 
 import type { Permission } from '@/core/rbac/permissions'
+import { PortalCreateModuleButton } from '@/features/admin/portal-create-module-button'
 import { PortalModuleEditor } from '@/features/admin/portal-module-editor'
 import { adminWithPermission } from '@/server/auth/page-guards'
 import { listPortalPages, listPortalPageSections } from '@/server/portal/queries'
@@ -52,6 +53,7 @@ export async function PortalModulePage({
 
   const sections = await listPortalPageSections(home.id)
   const section = sections.find((item) => item.section_kind === kind)
+  const canUpdate = principal.permissions.has('portal.update')
 
   return (
     <div className="space-y-6">
@@ -70,13 +72,22 @@ export async function PortalModulePage({
 
       {!section ? (
         <div className="border-border bg-surface rounded-xl border p-6">
-          <p className="text-fg font-semibold">Bagian {title} belum tersedia pada halaman aktif.</p>
-          <p className="text-body-sm text-fg-muted mt-2">
-            Tambahkan bagian ini terlebih dahulu dari editor Halaman.
+          <p className="text-fg font-semibold">Bagian {title} belum aktif.</p>
+          <p className="text-body-sm text-fg-muted mt-2 max-w-2xl">
+            Aktifkan bagian ini langsung dari halaman ini. Sistem akan membuat section dan versi draf pertama pada halaman portal aktif tanpa data contoh.
           </p>
-          <Link href={`/admin/portal/pages/${home.id}`} className="text-primary mt-4 inline-flex text-sm font-semibold hover:underline">
-            Buka editor Halaman →
-          </Link>
+          {home.status === 'draft' && canUpdate ? (
+            <PortalCreateModuleButton pageId={home.id} kind={kind} label={title} />
+          ) : (
+            <div className="mt-4 space-y-2">
+              <p className="text-body-sm text-fg-muted">
+                Halaman harus berstatus Draf dan akun Anda memerlukan izin pembaruan portal sebelum section baru dapat dibuat.
+              </p>
+              <Link href={`/admin/portal/pages/${home.id}`} className="text-primary inline-flex text-sm font-semibold hover:underline">
+                Buka editor Halaman →
+              </Link>
+            </div>
+          )}
         </div>
       ) : (
         <PortalModuleEditor
@@ -84,7 +95,7 @@ export async function PortalModulePage({
           pageStatus={home.status}
           section={section}
           kind={kind}
-          canUpdate={principal.permissions.has('portal.update')}
+          canUpdate={canUpdate}
         />
       )}
     </div>
