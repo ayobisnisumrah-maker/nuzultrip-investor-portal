@@ -87,6 +87,73 @@ begin
 end;
 $$;
 
+-- The destructive worker and integration tests share one database-owned blocker
+-- contract so a future table/policy change cannot silently weaken purge safety.
+create or replace function app.rejected_investor_purge_blockers(p_investor_id uuid)
+returns text[]
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select array_remove(array[
+    case when exists (
+      select 1 from public.ownership_holdings h where h.investor_id = p_investor_id
+    ) then 'ownership_holdings' end,
+    case when exists (
+      select 1 from public.ownership_inheritance i where i.current_investor_id = p_investor_id
+    ) then 'ownership_inheritance' end,
+    case when exists (
+      select 1
+      from public.ownership_transfers t
+      where t.from_investor_id = p_investor_id or t.to_investor_id = p_investor_id
+    ) then 'ownership_transfers' end,
+    case when exists (
+      select 1 from public.profit_distribution_allocations a where a.investor_id = p_investor_id
+    ) then 'profit_distribution_allocations' end,
+    case when exists (
+      select 1 from public.profit_distribution_payment_proofs p where p.investor_id = p_investor_id
+    ) then 'profit_distribution_payment_proofs' end
+  ]::text[], null);
+$$;
+
+create or replace function app.list_rejected_investor_purge_candidates(p_limit integer default 50)
+returns table (
+  id uuid,
+  reference_code text,
+  rejected_at timestamptz,
+  ktp_storage_bucket text,
+  ktp_storage_path text
+)
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select
+    i.id,
+    i.reference_code,
+    i.rejected_at,
+    i.ktp_storage_bucket,
+    i.ktp_storage_path
+  from public.investors i
+  where i.status = 'rejected'
+    and i.rejected_at is not null
+    and i.rejected_at <= now() - interval '72 hours'
+  order by i.rejected_at asc, i.id asc
+  limit greatest(1, least(coalesce(p_limit, 50), 50));
+$$;
+
+revoke all on function app.rejected_investor_purge_blockers(uuid) from public;
+revoke all on function app.rejected_investor_purge_blockers(uuid) from anon;
+revoke all on function app.rejected_investor_purge_blockers(uuid) from authenticated;
+grant execute on function app.rejected_investor_purge_blockers(uuid) to service_role;
+
+revoke all on function app.list_rejected_investor_purge_candidates(integer) from public;
+revoke all on function app.list_rejected_investor_purge_candidates(integer) from anon;
+revoke all on function app.list_rejected_investor_purge_candidates(integer) from authenticated;
+grant execute on function app.list_rejected_investor_purge_candidates(integer) to service_role;
+
 -- Service-role-only helper used by the Edge Function to validate the scheduler
 -- bearer token against Supabase Vault. The secret value never appears in Git.
 create or replace function app.authorize_rejected_purge_scheduler(p_token text)
