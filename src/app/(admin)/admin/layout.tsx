@@ -8,21 +8,23 @@ import { NotificationSoundListener } from '@/features/notifications/notification
 import { requireAdminPage } from '@/server/auth/page-guards'
 import { expireMessageThreads, getUnreadMessageCount } from '@/server/messaging/lifecycle'
 import { getNotificationSoundSettings } from '@/server/settings/notification-sound'
+import { getPublicBrandName } from '@/server/settings/brand'
 import { getServerSupabase } from '@/server/supabase/server'
 import { getPublicBrandLogo } from '@/server/portal/public-branding'
 import { ToastProvider } from '@/ui/toast'
 import { TooltipProvider } from '@/ui/menu'
 
 export const metadata: Metadata = {
-  title: { default: 'Admin', template: '%s · Admin Nuzultrip' },
+  title: { default: 'Admin', template: '%s · Admin' },
   robots: { index: false, follow: false },
 }
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const principal = await requireAdminPage()
-  const [sound, brandLogoUrl] = await Promise.all([
+  const [sound, brandLogoUrl, brandName] = await Promise.all([
     getNotificationSoundSettings(),
     getPublicBrandLogo(),
+    getPublicBrandName(),
   ])
   const supabase = await getServerSupabase()
 
@@ -74,6 +76,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             initialUnreadMessages={initialUnreadMessages}
             initialNewInquiries={initialNewInquiries}
             brandLogoUrl={brandLogoUrl}
+            brandName={brandName}
           >
             {children}
           </AdminShell>
