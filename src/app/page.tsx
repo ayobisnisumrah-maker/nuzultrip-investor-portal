@@ -110,6 +110,13 @@ export default async function Home() {
     HOME_SECTION_KINDS.has(section.section_kind),
   )
 
+  const functionalNavigation = navigation.filter((item) => {
+    const href = item.href.trim()
+    const label = item.label.trim().toLocaleLowerCase('id-ID')
+
+    return Boolean(href && href !== '#') && label !== 'artikel' && label !== 'artikel & berita'
+  })
+
   return (
     <PublicRealtimeSurface>
       <PublicPortalExact
@@ -118,7 +125,7 @@ export default async function Home() {
           seo: portal.page.seo,
         }}
         sections={homepageSections}
-        navigation={navigation}
+        navigation={functionalNavigation}
         publicDocuments={publicDocuments}
         brandLogoUrl={brandLogoUrl}
       />
