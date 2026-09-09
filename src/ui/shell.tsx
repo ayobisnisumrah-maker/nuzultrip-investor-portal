@@ -124,6 +124,14 @@ function Navigation({
   onNavigate?: () => void
 }) {
   const pathname = usePathname()
+  const activeHref = sections
+    .flatMap((section) => section.items)
+    .filter((item) =>
+      item.exact
+        ? pathname === item.href
+        : pathname === item.href || pathname.startsWith(`${item.href}/`),
+    )
+    .sort((left, right) => right.href.length - left.href.length)[0]?.href
 
   return (
     <nav aria-label="Navigasi utama" className={cn('flex flex-col gap-6 pt-2', className)}>
@@ -134,9 +142,7 @@ function Navigation({
           ) : null}
           <ul className="flex flex-col gap-0.5">
             {section.items.map((item) => {
-              const active = item.exact
-                ? pathname === item.href
-                : pathname === item.href || pathname.startsWith(`${item.href}/`)
+              const active = item.href === activeHref
               return (
                 <li key={item.href}>
                   <Link
