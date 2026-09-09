@@ -12,13 +12,22 @@ import {
 const HOME_SECTION_KINDS = new Set([
   'hero_3d',
   'intro',
-  'stat_grid',
-  'financial_highlights',
-  'investment_info',
+  'vision_mission',
   'business_overview',
+  'growth_story',
   'ecosystem',
-  'logo_wall',
+  'investment_info',
+  'milestones',
+  'strategic_direction',
+  'financial_highlights',
+  'investor_updates',
+  'documents',
+  'contact_cta',
+  'legal_notice',
   'rich_content',
+  'stat_grid',
+  'logo_wall',
+  'faq',
 ])
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -101,6 +110,13 @@ export default async function Home() {
     HOME_SECTION_KINDS.has(section.section_kind),
   )
 
+  const functionalNavigation = navigation.filter((item) => {
+    const href = item.href.trim()
+    const label = item.label.trim().toLocaleLowerCase('id-ID')
+
+    return Boolean(href && href !== '#') && label !== 'artikel' && label !== 'artikel & berita'
+  })
+
   return (
     <PublicRealtimeSurface>
       <PublicPortalExact
@@ -109,7 +125,7 @@ export default async function Home() {
           seo: portal.page.seo,
         }}
         sections={homepageSections}
-        navigation={navigation}
+        navigation={functionalNavigation}
         publicDocuments={publicDocuments}
         brandLogoUrl={brandLogoUrl}
       />

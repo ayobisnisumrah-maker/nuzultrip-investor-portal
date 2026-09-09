@@ -1,4 +1,4 @@
-import type { ComponentProps } from 'react'
+import type { ComponentProps, ReactNode } from 'react'
 import Link from 'next/link'
 
 import type { PublicPortalModel } from '@/features/portal/public-portal-model'
@@ -34,6 +34,11 @@ function sectionByKind(sections: Section[], kind: string) {
   return sections.find((section) => section.section_kind === kind)
 }
 
+function usableHref(value: unknown): string | null {
+  const href = text(value)
+  return href && href !== '#' ? href : null
+}
+
 function CmsImage({ src, alt, className }: { src?: string; alt?: string; className?: string }) {
   if (!src) return null
   // Published portal media can be hosted by Supabase Storage or another approved HTTPS origin.
@@ -47,7 +52,7 @@ function Arrow() {
 
 function Header({ navigation, logoSrc }: { navigation: NavItem[]; logoSrc: string }) {
   const header = navigation
-    .filter((item) => item.location === 'header' && !item.parent_id)
+    .filter((item) => item.location === 'header' && !item.parent_id && usableHref(item.href))
     .sort((a, b) => a.position - b.position)
 
   return (
@@ -64,7 +69,7 @@ function Header({ navigation, logoSrc }: { navigation: NavItem[]; logoSrc: strin
         </nav>
         <div className={styles.headerActions}>
           <Link href="/hubungi" className={styles.headerCta}>Ajukan Minat <Arrow /></Link>
-          <span className={styles.lang}>◎ ID⌄</span>
+          <span className={styles.lang} aria-label="Bahasa Indonesia">◎ ID</span>
         </div>
       </div>
     </header>
@@ -74,35 +79,42 @@ function Header({ navigation, logoSrc }: { navigation: NavItem[]; logoSrc: strin
 function Hero({ section }: { section?: Section }) {
   if (!section) return null
   const c = section.content
-  const titleLines = text(c.title).split('|').map((item) => item.trim()).filter(Boolean)
+  const titleLines = text(c.title).split('|').map((item) => item.trim()).filter(Boolean).slice(0, 3)
   const tags = strings(c.tags)
-  const image = text(c.image_url) || 'https://commons.wikimedia.org/wiki/Special:Redirect/file/Kaaba-Masjid_al-Haram.JPG?width=1800'
-  const imageAlt = text(c.image_alt) || 'Masjid al-Haram dan Kaabah'
+  const image = text(c.image_url)
+  const imageAlt = text(c.image_alt) || 'Nuzultrip Equity'
   const primaryLabel = text(c.primary_cta_label) || 'Ajukan Minat Equity'
-  const primaryHref = text(c.primary_cta_href) || '/hubungi'
+  const primaryHref = usableHref(c.primary_cta_href) || '/hubungi'
   const secondaryLabel = text(c.secondary_cta_label) || 'Pelajari Lebih Lanjut'
-  const secondaryHref = text(c.secondary_cta_href) || '#tentang-nuzultrip'
+  const secondaryHref = usableHref(c.secondary_cta_href) || '#tentang-nuzultrip'
 
   return (
     <section className={styles.hero} id={section.anchor_id ?? 'beranda'}>
       <div className={styles.heroInner}>
         <div className={styles.heroCopy}>
           <div className={styles.eyebrow}>{text(c.eyebrow) || 'NUZULTRIP EQUITY'}</div>
-          <h1>{titleLines.length ? titleLines.map((line) => <span key={line}>{line}</span>) : 'Membangun Nilai dan Kepemilikan Bersama Nuzultrip'}</h1>
-          <p>{text(c.description)}</p>
+          <h1>
+            {titleLines.length
+              ? titleLines.map((line) => <span key={line}>{line}</span>)
+              : <><span>Membangun Nilai</span><span>dan Kepemilikan Bersama</span><span>Nuzultrip</span></>}
+          </h1>
+          {text(c.description) ? <p>{text(c.description)}</p> : null}
           <div className={styles.heroButtons}>
             <Link href={primaryHref} className={styles.lightButton}>{primaryLabel} <Arrow /></Link>
             <Link href={secondaryHref} className={styles.textButton}>{secondaryLabel} <Arrow /></Link>
           </div>
-          <div className={styles.heroTags}>
-            {(tags.length ? tags : ['Perjalanan', 'Lebih Bermakna', 'Investasi', 'Lebih Berdampak', 'Umat', 'Lebih Dekat']).slice(0, 6).map((tag) => <span key={tag}>{tag}</span>)}
+          {tags.length ? (
+            <div className={styles.heroTags}>
+              {tags.slice(0, 6).map((tag) => <span key={tag}>{tag}</span>)}
+            </div>
+          ) : null}
+        </div>
+        {image ? (
+          <div className={styles.heroMedia}>
+            <CmsImage src={image} alt={imageAlt} className={styles.heroImage} />
+            {text(c.image_caption) ? <div className={styles.heroMediaCaption}>{text(c.image_caption)}</div> : null}
           </div>
-        </div>
-        <div className={styles.heroMedia}>
-          <CmsImage src={image} alt={imageAlt} className={styles.heroImage} />
-          <div className={styles.heroMediaCaption}>{text(c.image_caption) || 'Untuk Umat,\nUntuk Masa Depan.'}</div>
-          <div className={styles.circleArrow}>↗</div>
-        </div>
+        ) : null}
       </div>
     </section>
   )
@@ -117,31 +129,28 @@ function AboutAndStats({ intro, stats }: { intro?: Section; stats?: Section }) {
       <div className={styles.shell}>
         <div className={styles.aboutGrid}>
           <div className={styles.eyebrowDark}>{text(c.eyebrow) || 'TENTANG KAMI'}</div>
-          <h2>{text(c.title) || 'Kami bekerja dengan teknologi untuk membentuk masa depan perjalanan ibadah.'}</h2>
+          <h2>{text(c.title) || 'Nuzultrip'}</h2>
           <div className={styles.aboutText}>
-            <p>{text(c.description)}</p>
+            {text(c.description) ? <p>{text(c.description)}</p> : null}
             <Link href="#bisnis" className={styles.inlineLink}>Lebih tentang kami <Arrow /></Link>
           </div>
         </div>
-        <div className={styles.statsGrid}>
-          {(metrics.length ? metrics : [
-            { value: '70 Juta+', label: 'Muslim Indonesia', description: 'Potensi Pasar' },
-            { value: '2024', label: 'Tahun Berdiri' },
-            { value: '56', label: 'Produk & Layanan' },
-            { value: '24', label: 'Tim Profesional' },
-          ]).slice(0, 4).map((metric, index) => (
-            <article key={`${text(metric.label)}-${index}`}>
-              <strong>{text(metric.value)}</strong>
-              <span>{text(metric.label)}</span>
-              {text(metric.description) ? <small>{text(metric.description)}</small> : null}
-            </article>
-          ))}
-          <article className={styles.statsCta}>
-            <span className={styles.chartMark}>▥</span>
-            <b>Bersama<br />Membangun<br />Dampak Lebih Besar</b>
-            <span className={styles.smallCircle}>→</span>
-          </article>
-        </div>
+        {metrics.length ? (
+          <div className={styles.statsGrid}>
+            {metrics.slice(0, 4).map((metric, index) => (
+              <article key={`${text(metric.label)}-${index}`}>
+                <strong>{text(metric.value)}</strong>
+                <span>{text(metric.label)}</span>
+                {text(metric.description) ? <small>{text(metric.description)}</small> : null}
+              </article>
+            ))}
+            <Link href="/hubungi" className={styles.statsCta}>
+              <span className={styles.chartMark}>▥</span>
+              <b>Bersama<br />Membangun<br />Dampak Lebih Besar</b>
+              <span className={styles.smallCircle}>→</span>
+            </Link>
+          </div>
+        ) : null}
       </div>
     </section>
   )
@@ -158,16 +167,18 @@ function Offering({ section }: { section?: Section }) {
           <div className={styles.offerIntro}>
             <div className={styles.eyebrowDark}>{text(c.eyebrow) || 'PELUANG EQUITY'}</div>
             <h2>{text(c.title) || 'Kesempatan Bertumbuh Bersama'}</h2>
-            <p>{text(c.description)}</p>
+            {text(c.description) ? <p>{text(c.description)}</p> : null}
             <Link href="/hubungi" className={styles.inlineLink}>Lihat Detail Penawaran <Arrow /></Link>
           </div>
-          <div className={styles.offerTable}>
-            {rows.slice(0, 7).map((row, index) => (
-              <div className={styles.offerRow} key={`${text(row.label)}-${index}`}>
-                <span>{text(row.label)}</span><strong>{text(row.value)}</strong>
-              </div>
-            ))}
-          </div>
+          {rows.length ? (
+            <div className={styles.offerTable}>
+              {rows.slice(0, 7).map((row, index) => (
+                <div className={styles.offerRow} key={`${text(row.label)}-${index}`}>
+                  <span>{text(row.label)}</span><strong>{text(row.value)}</strong>
+                </div>
+              ))}
+            </div>
+          ) : null}
           <aside className={styles.offerCard}>
             <h3>Investasi Hari Ini,<br />Untuk Masa Depan<br />yang Lebih Baik.</h3>
             <div className={styles.offerRule} />
@@ -183,22 +194,23 @@ function Offering({ section }: { section?: Section }) {
 function CompanyStory({ section }: { section?: Section }) {
   if (!section) return null
   const c = section.content
-  const image = text(c.image_url) || 'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=1600&q=82'
+  const image = text(c.image_url)
   return (
-    <section className={styles.section} id="perusahaan">
+    <section className={styles.section} id={section.anchor_id ?? 'bisnis'}>
       <div className={styles.shell}>
         <div className={styles.companyGrid}>
           <div>
-            <div className={styles.eyebrowDark}>PERUSAHAAN</div>
-            <h2>{text(c.title) || 'Perjalanan Muslim yang Bertumbuh'}</h2>
-            <p>{text(c.description)}</p>
-            <Link href="#perkembangan" className={styles.inlineLink}>Kenali Nuzultrip <Arrow /></Link>
+            <div className={styles.eyebrowDark}>{text(c.eyebrow) || 'PERUSAHAAN'}</div>
+            <h2>{text(c.title) || 'Nuzultrip'}</h2>
+            {text(c.description) ? <p>{text(c.description)}</p> : null}
+            <Link href="#informasi-investor" className={styles.inlineLink}>Kenali Nuzultrip <Arrow /></Link>
           </div>
-          <div className={styles.companyMedia}>
-            <CmsImage src={image} alt={text(c.image_alt) || 'Perjalanan Nuzultrip'} />
-            <h3>Lebih dari<br />Sekadar Perjalanan.<br />Ini tentang Makna.</h3>
-            <span className={styles.mediaArrow}>→</span>
-          </div>
+          {image ? (
+            <div className={styles.companyMedia}>
+              <CmsImage src={image} alt={text(c.image_alt) || 'Nuzultrip'} />
+              {text(c.image_caption) ? <h3>{text(c.image_caption)}</h3> : null}
+            </div>
+          ) : null}
         </div>
       </div>
     </section>
@@ -209,24 +221,31 @@ function Services({ section }: { section?: Section }) {
   if (!section) return null
   const c = section.content
   const items = records(c.items)
+  if (!items.length && !text(c.title)) return null
+
   return (
     <section className={styles.section} id={section.anchor_id ?? 'ekosistem'}>
       <div className={styles.shell}>
         <div className={styles.serviceLayout}>
           <div>
-            <div className={styles.eyebrowDark}>LAYANAN UTAMA</div>
-            <h2>{text(c.title) || 'Ekosistem Layanan untuk Umat'}</h2>
+            <div className={styles.eyebrowDark}>{text(c.eyebrow) || 'LAYANAN UTAMA'}</div>
+            <h2>{text(c.title) || 'Ekosistem Layanan'}</h2>
           </div>
-          <div className={styles.serviceCards}>
-            {items.slice(0, 4).map((item, index) => (
-              <article key={`${text(item.title)}-${index}`}>
-                <span className={styles.serviceIcon}>{['✈', '◇', '▢', '⌘'][index]}</span>
-                <h3>{text(item.title)}</h3>
-                <p>{text(item.description)}</p>
-                <span className={styles.cardArrow}>→</span>
-              </article>
-            ))}
-          </div>
+          {items.length ? (
+            <div className={styles.serviceCards}>
+              {items.slice(0, 4).map((item, index) => {
+                const href = usableHref(item.href)
+                return (
+                  <article key={`${text(item.title)}-${index}`}>
+                    <span className={styles.serviceIcon}>{['✈', '◇', '▢', '⌘'][index]}</span>
+                    <h3>{text(item.title)}</h3>
+                    {text(item.description) ? <p>{text(item.description)}</p> : null}
+                    {href ? <Link href={href} className={styles.cardArrow} aria-label={`Buka ${text(item.title)}`}>→</Link> : null}
+                  </article>
+                )
+              })}
+            </div>
+          ) : null}
         </div>
       </div>
     </section>
@@ -250,7 +269,7 @@ function Process({ offering }: { offering?: Section }) {
               <article key={`${text(step.title)}-${index}`}>
                 <span className={styles.stepNumber}>0{index + 1}</span>
                 <h3>{text(step.title)}</h3>
-                <p>{text(step.description)}</p>
+                {text(step.description) ? <p>{text(step.description)}</p> : null}
               </article>
             ))}
           </div>
@@ -264,24 +283,25 @@ function Partners({ section }: { section?: Section }) {
   if (!section) return null
   const c = section.content
   const logos = records(c.logos)
+  if (!logos.length && !text(c.title)) return null
+
   return (
     <section className={styles.partnerSection} id={section.anchor_id ?? 'mitra'}>
       <div className={styles.shell}>
         <div className={styles.partnerLayout}>
           <div>
-            <div className={styles.eyebrowDark}>{text(c.eyebrow) || 'DIPERCAYA OLEH'}</div>
+            <div className={styles.eyebrowDark}>{text(c.eyebrow) || 'MITRA'}</div>
             <h2>{text(c.title) || 'Mitra yang Tumbuh Bersama'}</h2>
           </div>
-          <div className={styles.partnerLogos}>
-            {(logos.length ? logos : [
-              { name: 'Saudia' }, { name: 'Garuda Indonesia' }, { name: 'Turkish Airlines' }, { name: 'Accor' }, { name: 'Hilton' },
-            ]).slice(0, 5).map((logo, index) => (
-              <div key={`${text(logo.name)}-${index}`}>
-                {text(logo.image_url) ? <CmsImage src={text(logo.image_url)} alt={text(logo.name)} /> : <span>{text(logo.name)}</span>}
-              </div>
-            ))}
-            <span className={styles.partnerArrows}>← &nbsp; →</span>
-          </div>
+          {logos.length ? (
+            <div className={styles.partnerLogos}>
+              {logos.slice(0, 5).map((logo, index) => (
+                <div key={`${text(logo.name)}-${index}`}>
+                  {text(logo.image_url) ? <CmsImage src={text(logo.image_url)} alt={text(logo.name)} /> : <span>{text(logo.name)}</span>}
+                </div>
+              ))}
+            </div>
+          ) : null}
         </div>
       </div>
     </section>
@@ -291,6 +311,7 @@ function Partners({ section }: { section?: Section }) {
 function InvestorInfo({ growth, funds, governance, risks, documents }: { growth?: Section; funds?: Section; governance?: Section; risks?: Section; documents?: Section }) {
   const blocks = [growth, funds, governance, risks, documents].filter(Boolean) as Section[]
   if (!blocks.length) return null
+
   return (
     <section className={styles.infoSection} id="informasi-investor">
       <div className={styles.shell}>
@@ -301,51 +322,29 @@ function InvestorInfo({ growth, funds, governance, risks, documents }: { growth?
         <div className={styles.infoGrid}>
           {blocks.map((section) => {
             const c = section.content
-            const items = records(c.items).length ? records(c.items) : records(c.pillars).length ? records(c.pillars) : records(c.milestones)
+            const items = records(c.items).length
+              ? records(c.items)
+              : records(c.pillars).length
+                ? records(c.pillars)
+                : records(c.milestones)
+
             return (
               <article key={section.id}>
-                <small>{text(c.eyebrow)}</small>
+                {text(c.eyebrow) ? <small>{text(c.eyebrow)}</small> : null}
                 <h3>{text(c.title)}</h3>
-                <p>{text(c.description)}</p>
-                {items.length ? <ul>{items.slice(0, 4).map((item, index) => <li key={`${section.id}-${index}`}>{text(item.title) || text(item.label)}</li>)}</ul> : null}
+                {text(c.description) ? <p>{text(c.description)}</p> : null}
+                {items.length ? (
+                  <ul>
+                    {items.slice(0, 6).map((item, index) => {
+                      const label = text(item.title) || text(item.label)
+                      const href = usableHref(item.href)
+                      return <li key={`${section.id}-${index}`}>{href ? <Link href={href}>{label}</Link> : label}</li>
+                    })}
+                  </ul>
+                ) : null}
               </article>
             )
           })}
-        </div>
-      </div>
-    </section>
-  )
-}
-
-function Articles({ section }: { section?: Section }) {
-  if (!section) return null
-  const c = section.content
-  const items = records(c.items)
-  const fallback = [
-    { title: 'Tren Perjalanan Umrah 2026: Peluang dan Tantangan', date: '12 Sep 2026', image_url: 'https://commons.wikimedia.org/wiki/Special:Redirect/file/Kaaba-Masjid_al-Haram.JPG?width=1200' },
-    { title: 'Strategi Investasi di Tengah Pertumbuhan Ekonomi Global', date: '5 Sep 2026', image_url: 'https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1200&q=82' },
-  ]
-  const articles = items.length ? items : fallback
-  return (
-    <section className={styles.articleSection} id={section.anchor_id ?? 'artikel'}>
-      <div className={styles.shell}>
-        <div className={styles.articleLayout}>
-          <div className={styles.articleIntro}>
-            <div className={styles.eyebrowLight}>{text(c.eyebrow) || 'ARTIKEL & BERITA'}</div>
-            <h2>{text(c.title) || 'Wawasan untuk Keputusan yang Lebih Baik'}</h2>
-            <p>{text(c.description) || 'Ikuti perkembangan terbaru seputar industri perjalanan Muslim, insight investasi, dan kegiatan Nuzultrip.'}</p>
-            <Link href="#">Lihat Semua Artikel <Arrow /></Link>
-          </div>
-          <div className={styles.articleCards}>
-            {articles.slice(0, 2).map((item, index) => (
-              <article key={`${text(item.title)}-${index}`}>
-                <CmsImage src={text(item.image_url)} alt={text(item.title)} />
-                <h3>{text(item.title)}</h3>
-                <small>{text(item.date)}</small>
-                <span>→</span>
-              </article>
-            ))}
-          </div>
         </div>
       </div>
     </section>
@@ -361,17 +360,98 @@ function Faq({ section }: { section?: Section }) {
     <section className={styles.section} id={section.anchor_id ?? 'faq'}>
       <div className={styles.shell}>
         <div className={styles.faqLayout}>
-          <div><div className={styles.eyebrowDark}>{text(c.eyebrow) || 'FAQ'}</div><h2>{text(c.title) || 'Pertanyaan yang Sering Diajukan'}</h2></div>
-          <div>{items.map((item, index) => <details key={`${text(item.question)}-${index}`}><summary>{text(item.question) || text(item.title)}</summary><p>{text(item.answer) || text(item.description)}</p></details>)}</div>
+          <div>
+            <div className={styles.eyebrowDark}>{text(c.eyebrow) || 'FAQ'}</div>
+            <h2>{text(c.title) || 'Pertanyaan yang Sering Diajukan'}</h2>
+          </div>
+          <div>
+            {items.map((item, index) => (
+              <details key={`${text(item.question)}-${index}`}>
+                <summary>{text(item.question) || text(item.title)}</summary>
+                <p>{text(item.answer) || text(item.description)}</p>
+              </details>
+            ))}
+          </div>
         </div>
       </div>
     </section>
   )
 }
 
+function Articles({ section }: { section?: Section }) {
+  if (!section) return null
+  const c = section.content
+  const items = records(c.items)
+  if (!items.length) return null
+  const ctaHref = usableHref(c.cta_href)
+
+  return (
+    <section className={styles.articleSection} id={section.anchor_id ?? 'wawasan'}>
+      <div className={styles.shell}>
+        <div className={styles.articleLayout}>
+          <div className={styles.articleIntro}>
+            <div className={styles.eyebrowLight}>{text(c.eyebrow) || 'WAWASAN'}</div>
+            <h2>{text(c.title) || 'Wawasan untuk Keputusan yang Lebih Baik'}</h2>
+            {text(c.description) ? <p>{text(c.description)}</p> : null}
+            {ctaHref ? <Link href={ctaHref}>{text(c.cta_label) || 'Lihat Selengkapnya'} <Arrow /></Link> : null}
+          </div>
+          <div className={styles.articleCards}>
+            {items.slice(0, 2).map((item, index) => {
+              const href = usableHref(item.href)
+              const card: ReactNode = (
+                <>
+                  <CmsImage src={text(item.image_url)} alt={text(item.title)} />
+                  <h3>{text(item.title)}</h3>
+                  {text(item.date) ? <small>{text(item.date)}</small> : null}
+                  {href ? <span aria-hidden="true">→</span> : null}
+                </>
+              )
+
+              return href ? (
+                <article key={`${text(item.title)}-${index}`}>
+                  <Link href={href} aria-label={`Buka ${text(item.title)}`}>{card}</Link>
+                </article>
+              ) : (
+                <article key={`${text(item.title)}-${index}`}>{card}</article>
+              )
+            })}
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function ContactCta({ section }: { section?: Section }) {
+  if (!section) return null
+  const c = section.content
+  const href = usableHref(c.primary_cta_href) || '/hubungi'
+  const label = text(c.primary_cta_label) || 'Hubungi Investor Relations'
+
+  return (
+    <section className="bg-[#0b7374] px-6 py-16 text-white sm:py-20" id={section.anchor_id ?? 'kontak-investor'}>
+      <div className="mx-auto flex max-w-7xl flex-col gap-8 sm:flex-row sm:items-end sm:justify-between">
+        <div className="max-w-3xl">
+          <p className="text-sm font-semibold tracking-[0.16em] uppercase text-white/70">{text(c.eyebrow) || 'INVESTOR RELATIONS'}</p>
+          <h2 className="font-display mt-3 text-3xl font-semibold sm:text-5xl">{text(c.title) || 'Siap mempelajari Nuzultrip Equity lebih lanjut?'}</h2>
+          {text(c.description) ? <p className="mt-4 max-w-2xl text-base leading-7 text-white/80 sm:text-lg">{text(c.description)}</p> : null}
+        </div>
+        <Link href={href} className="inline-flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-full bg-white px-6 py-3 font-semibold text-[#0b7374]">
+          {label} <Arrow />
+        </Link>
+      </div>
+    </section>
+  )
+}
+
 function Footer({ navigation, logoSrc, pageTitle }: { navigation: NavItem[]; logoSrc: string; pageTitle: string }) {
-  const footer = navigation.filter((item) => item.location === 'footer' && !item.parent_id).sort((a, b) => a.position - b.position)
-  const social = navigation.filter((item) => item.location === 'social' && !item.parent_id).sort((a, b) => a.position - b.position)
+  const footer = navigation
+    .filter((item) => item.location === 'footer' && !item.parent_id && usableHref(item.href))
+    .sort((a, b) => a.position - b.position)
+  const social = navigation
+    .filter((item) => item.location === 'social' && !item.parent_id && usableHref(item.href))
+    .sort((a, b) => a.position - b.position)
+
   return (
     <footer className={styles.footer} id="kontak">
       <div className={styles.shell}>
@@ -380,16 +460,22 @@ function Footer({ navigation, logoSrc, pageTitle }: { navigation: NavItem[]; log
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={logoSrc} alt="Nuzultrip" />
             <p>Melayani perjalanan Muslim Indonesia dengan hati, profesionalisme, dan teknologi.</p>
-            <div>{social.slice(0, 3).map((item) => <Link key={item.id} href={item.href} target={item.target}>{item.label}</Link>)}</div>
+            {social.length ? (
+              <div>{social.slice(0, 5).map((item) => <Link key={item.id} href={item.href} target={item.target}>{item.label}</Link>)}</div>
+            ) : null}
           </div>
-          <nav className={styles.footerNav}>{footer.slice(0, 6).map((item) => <Link key={item.id} href={item.href}>{item.label}</Link>)}</nav>
+          {footer.length ? (
+            <nav className={styles.footerNav}>{footer.slice(0, 8).map((item) => <Link key={item.id} href={item.href}>{item.label}</Link>)}</nav>
+          ) : null}
           <div className={styles.newsletter}>
-            <h4>Dapatkan informasi terbaru</h4>
-            <div><span>Masukkan email Anda</span><button type="button" aria-label="Berlangganan">→</button></div>
-            <small>Dengan berlangganan, Anda menyetujui Kebijakan Privasi kami.</small>
+            <h4>Butuh informasi terbaru?</h4>
+            <p>Hubungi tim Investor Relations untuk informasi, dokumen, atau pembaruan resmi Nuzultrip Equity.</p>
+            <Link href="/hubungi">Hubungi Investor Relations <Arrow /></Link>
           </div>
         </div>
-        <div className={styles.footerBottom}><span>© {new Date().getFullYear()} {pageTitle}. All rights reserved.</span><span>Syarat & Ketentuan &nbsp;&nbsp; | &nbsp;&nbsp; Kebijakan Privasi</span></div>
+        <div className={styles.footerBottom}>
+          <span>© {new Date().getFullYear()} {pageTitle}. All rights reserved.</span>
+        </div>
       </div>
     </footer>
   )
@@ -415,6 +501,7 @@ export function PublicPortalExact({ page, sections, navigation, publicDocuments,
   const logos = sectionByKind(resolved, 'logo_wall')
   const articles = sectionByKind(resolved, 'rich_content')
   const faq = sectionByKind(resolved, 'faq')
+  const contactCta = sectionByKind(resolved, 'contact_cta')
   const logoSrc = brandLogoUrl || '/brand/nuzultrip-logo-portal.svg'
 
   return (
@@ -431,6 +518,7 @@ export function PublicPortalExact({ page, sections, navigation, publicDocuments,
         <InvestorInfo growth={growth} funds={funds} governance={governance} risks={risks} documents={documents} />
         <Faq section={faq} />
         <Articles section={articles} />
+        <ContactCta section={contactCta} />
       </main>
       <Footer navigation={navigation} logoSrc={logoSrc} pageTitle={page.title} />
     </div>
