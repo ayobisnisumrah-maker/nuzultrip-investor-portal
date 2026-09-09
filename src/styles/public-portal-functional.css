@@ -143,6 +143,141 @@ a[class*='statsCta'] {
   font-weight: 600;
 }
 
+/* -------------------------------------------------------------------------- */
+/* Global icon synchronization                                                */
+/* -------------------------------------------------------------------------- */
+
+:root {
+  --app-icon-stroke: 1.8;
+  --app-icon-sm: 1rem;
+  --app-icon-md: 1.125rem;
+  --app-icon-lg: 1.5rem;
+}
+
+/* Lucide is the primary system icon language across Admin, Investor, Auth,
+ * forms, tables, dialogs, navigation, notifications, and action buttons. */
+svg.lucide {
+  stroke-width: var(--app-icon-stroke);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex: 0 0 auto;
+}
+
+button svg.lucide,
+a svg.lucide,
+[role='button'] svg.lucide {
+  width: var(--app-icon-md);
+  height: var(--app-icon-md);
+}
+
+/* Keep icon-only controls optically centred and prevent typography settings
+ * from altering SVG geometry. */
+button:has(> svg.lucide):not(:has(> span)):not(:has(> p)),
+a:has(> svg.lucide):not(:has(> span)):not(:has(> p)) {
+  align-items: center;
+  justify-content: center;
+}
+
+/* Portal service cards still emit legacy text glyphs from CMS renderer.
+ * Hide the glyph and render one consistent line-icon family instead. */
+[class*='serviceIcon'] {
+  width: 28px;
+  height: 28px;
+  display: block !important;
+  font-size: 0 !important;
+  color: currentColor;
+  background-color: currentColor;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+}
+
+/* Plane */
+[class*='serviceCards'] article:nth-child(1) [class*='serviceIcon'] {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M17.8 19 14 12.5l-4 1.5-1 3-2 1 1-4-3-2 2-1 3 1 2.5-4.5L10 3l2-1 4 5 4-1.5c1.7-.6 3 .3 3.4 1.3.4 1-.2 2.4-1.9 3L17 11.5 19.8 18z' fill='black'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M17.8 19 14 12.5l-4 1.5-1 3-2 1 1-4-3-2 2-1 3 1 2.5-4.5L10 3l2-1 4 5 4-1.5c1.7-.6 3 .3 3.4 1.3.4 1-.2 2.4-1.9 3L17 11.5 19.8 18z' fill='black'/%3E%3C/svg%3E");
+}
+
+/* Map / land arrangement */
+[class*='serviceCards'] article:nth-child(2) [class*='serviceIcon'] {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='m9 18-6 3V6l6-3 6 3 6-3v15l-6 3-6-3Zm0-2.2 5 2.5V7.2L9 4.7v11.1Zm7 2.5 3-1.5V6.2l-3 1.5v10.6ZM5 7.2v10.6l2-1V6.2l-2 1Z' fill='black'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='m9 18-6 3V6l6-3 6 3 6-3v15l-6 3-6-3Zm0-2.2 5 2.5V7.2L9 4.7v11.1Zm7 2.5 3-1.5V6.2l-3 1.5v10.6ZM5 7.2v10.6l2-1V6.2l-2 1Z' fill='black'/%3E%3C/svg%3E");
+}
+
+/* Suitcase / halal tour */
+[class*='serviceCards'] article:nth-child(3) [class*='serviceIcon'] {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M9 4V2h6v2h3a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3h3Zm2 0h2V3h-2v1ZM6 6a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h1V6H6Zm3 14h6V6H9v14Zm8 0h1a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1h-1v14Z' fill='black'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M9 4V2h6v2h3a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3h3Zm2 0h2V3h-2v1ZM6 6a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h1V6H6Zm3 14h6V6H9v14Zm8 0h1a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1h-1v14Z' fill='black'/%3E%3C/svg%3E");
+}
+
+/* Network / travel ecosystem */
+[class*='serviceCards'] article:nth-child(4) [class*='serviceIcon'] {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2a3 3 0 1 1-1 5.83V10H7.83A3 3 0 1 1 6 8.17V7h4V7.83A3 3 0 0 1 12 2Zm6 9a3 3 0 1 1-1 5.83V18h-4v-2h4v-1.17A3 3 0 0 1 18 11ZM6 15a3 3 0 1 1-1 5.83V22h8v-2H7v-.17A3 3 0 0 1 6 15Zm6-11a1 1 0 1 0 0 2 1 1 0 0 0 0-2ZM6 10a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm12 3a1 1 0 1 0 0 2 1 1 0 0 0 0-2ZM6 17a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z' fill='black'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2a3 3 0 1 1-1 5.83V10H7.83A3 3 0 1 1 6 8.17V7h4V7.83A3 3 0 0 1 12 2Zm6 9a3 3 0 1 1-1 5.83V18h-4v-2h4v-1.17A3 3 0 0 1 18 11ZM6 15a3 3 0 1 1-1 5.83V22h8v-2H7v-.17A3 3 0 0 1 6 15Zm6-11a1 1 0 1 0 0 2 1 1 0 0 0 0-2ZM6 10a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm12 3a1 1 0 1 0 0 2 1 1 0 0 0 0-2ZM6 17a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z' fill='black'/%3E%3C/svg%3E");
+}
+
+/* Replace the legacy statistic glyph with a consistent analytics mark. */
+[class*='chartMark'] {
+  width: 24px;
+  height: 24px;
+  display: block !important;
+  font-size: 0 !important;
+  background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M4 20h2V10H4v10Zm7 0h2V4h-2v16Zm7 0h2v-7h-2v7Z' fill='black'/%3E%3C/svg%3E") center/contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M4 20h2V10H4v10Zm7 0h2V4h-2v16Zm7 0h2v-7h-2v7Z' fill='black'/%3E%3C/svg%3E") center/contain no-repeat;
+}
+
+/* Social links use real brand-shaped marks while labels remain available to
+ * screen readers. */
+#kontak [class*='footerBrand'] a[href*='instagram.com'],
+#kontak [class*='footerBrand'] a[href*='tiktok.com'] {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  display: inline-grid;
+  place-items: center;
+  overflow: hidden;
+  font-size: 0 !important;
+}
+
+#kontak [class*='footerBrand'] a[href*='instagram.com']::before,
+#kontak [class*='footerBrand'] a[href*='tiktok.com']::before {
+  content: '' !important;
+  display: block;
+  width: 17px;
+  height: 17px;
+  background: currentColor;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+}
+
+#kontak [class*='footerBrand'] a[href*='instagram.com']::before {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M7 2h10a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V7a5 5 0 0 1 5-5Zm0 2a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3H7Zm5 3a5 5 0 1 1 0 10 5 5 0 0 1 0-10Zm0 2a3 3 0 1 0 0 6 3 3 0 0 0 0-6Zm5.5-2.5a1 1 0 1 1 0 2 1 1 0 0 1 0-2Z' fill='black'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M7 2h10a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V7a5 5 0 0 1 5-5Zm0 2a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3H7Zm5 3a5 5 0 1 1 0 10 5 5 0 0 1 0-10Zm0 2a3 3 0 1 0 0 6 3 3 0 0 0 0-6Zm5.5-2.5a1 1 0 1 1 0 2 1 1 0 0 1 0-2Z' fill='black'/%3E%3C/svg%3E");
+}
+
+#kontak [class*='footerBrand'] a[href*='tiktok.com']::before {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M14 3v11.2a4.8 4.8 0 1 1-4-4.73v2.18a2.7 2.7 0 1 0 2 2.55V3h2Zm0 0c.6 2.7 2.3 4.3 5 4.8V10a8.2 8.2 0 0 1-5-2.2V3Z' fill='black'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M14 3v11.2a4.8 4.8 0 1 1-4-4.73v2.18a2.7 2.7 0 1 0 2 2.55V3h2Zm0 0c.6 2.7 2.3 4.3 5 4.8V10a8.2 8.2 0 0 1-5-2.2V3Z' fill='black'/%3E%3C/svg%3E");
+}
+
+/* Arrow glyphs remain semantic text in the renderer but share one optical
+ * treatment so Portal CTA arrows and dashboard icon arrows feel identical. */
+a > span[aria-hidden='true'],
+button > span[aria-hidden='true'] {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1em;
+  line-height: 1;
+}
+
 @media (max-width: 980px) {
   #informasi-investor [class*='infoGrid'] {
     grid-template-columns: repeat(2, minmax(0, 1fr));
