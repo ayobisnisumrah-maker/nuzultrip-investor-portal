@@ -93,7 +93,7 @@ async function createOperationalContent(sql: Sql, f: Fixtures): Promise<Operatio
     ) values (
       ${`Operational Gate Offering ${f.suffix}`},
       ${`operational-gate-${f.suffix}`},
-      'open', 200, 100, 100000000, 2, 6, 1
+      'open', 200, 100, 100000000, 2, 6, 36
     )
     returning id
   `
@@ -103,11 +103,12 @@ async function createOperationalContent(sql: Sql, f: Fixtures): Promise<Operatio
   async function createSaleFixture(userId: string, label: string) {
     const [holding] = await sql<{ id: string }[]>`
       insert into public.ownership_holdings (
-        offering_id, investor_id, units, ownership_bps, transfer_eligible_at,
-        status, acquisition_reference
+        offering_id, investor_id, units, ownership_bps, acquisition_at,
+        transfer_eligible_at, status, acquisition_reference
       ) values (
         ${offeringId}, ${userId}, 1, 100,
-        ${new Date(Date.now() - 60_000).toISOString()},
+        now() - interval '37 months',
+        now() - interval '1 month',
         'active', ${`OP-GATE-${label}-${f.suffix}`}
       )
       returning id
