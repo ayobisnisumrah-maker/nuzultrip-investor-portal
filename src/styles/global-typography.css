@@ -1,0 +1,39 @@
+/* Runtime typography tokens from Dashboard Admin → Pengaturan. */
+html {
+  font-size: calc(16px * var(--app-font-size-scale, 1));
+}
+
+body,
+button,
+input,
+textarea,
+select {
+  font-family: var(--app-font-family, var(--font-jakarta), ui-sans-serif, system-ui, sans-serif) !important;
+  letter-spacing: var(--app-letter-spacing, 0em);
+}
+
+.font-display,
+.font-sans,
+.font-mono {
+  font-family: var(--app-font-family, var(--font-jakarta), ui-sans-serif, system-ui, sans-serif) !important;
+}
+
+body {
+  line-height: var(--app-line-height, 1.5);
+}
+
+body :where(p, li, label, button, input, textarea, select, a, td, th, small) {
+  line-height: var(--app-line-height, 1.5);
+  letter-spacing: var(--app-letter-spacing, 0em);
+}
+
+body :where(h1, h2, h3, h4, h5, h6) {
+  line-height: var(--app-heading-line-height, 1.08) !important;
+  letter-spacing: var(--app-letter-spacing, 0em) !important;
+}
+
+/* Icons and SVG geometry must not be affected by text tracking. */
+svg,
+svg * {
+  letter-spacing: normal;
+}
