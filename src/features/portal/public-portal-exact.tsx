@@ -86,8 +86,7 @@ function Header({ navigation, logoSrc }: { navigation: NavItem[]; logoSrc: strin
           ))}
         </nav>
         <div className={styles.headerActions}>
-          <Link href="/hubungi" className={styles.headerCta}>Ajukan Minat <Arrow /></Link>
-          <span className={styles.lang} aria-label="Bahasa Indonesia">◎ ID</span>
+          <Link href="/masuk" className={styles.headerCta}>Masuk</Link>
         </div>
       </div>
     </header>
