@@ -41,6 +41,22 @@ export async function requireInvestorPage(pathname = '/investor'): Promise<Inves
 }
 
 /**
+ * Operational investor pages are available only while the lifecycle grants
+ * data access. The investor overview deliberately remains outside this guard so
+ * submitted, under-review, rejected, and inactive investors can still see their
+ * own application/account status and status history.
+ */
+export async function requireInvestorDataPage(
+  pathname = '/investor',
+): Promise<InvestorPrincipal> {
+  const principal = await requireInvestorPage(pathname)
+
+  if (!principal.hasDataAccess) redirect('/investor')
+
+  return principal
+}
+
+/**
  * Returns the admin principal only if they hold the permission, otherwise
  * `null` — so the page can render a designed forbidden state rather than
  * bouncing the user somewhere they did not ask to go.
