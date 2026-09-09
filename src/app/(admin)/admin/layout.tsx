@@ -14,9 +14,12 @@ import { getPublicBrandLogo } from '@/server/portal/public-branding'
 import { ToastProvider } from '@/ui/toast'
 import { TooltipProvider } from '@/ui/menu'
 
-export const metadata: Metadata = {
-  title: { default: 'Admin', template: '%s · Admin' },
-  robots: { index: false, follow: false },
+export async function generateMetadata(): Promise<Metadata> {
+  const brandName = await getPublicBrandName()
+  return {
+    title: { default: `Admin · ${brandName}`, template: `%s · Admin · ${brandName}` },
+    robots: { index: false, follow: false },
+  }
 }
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
