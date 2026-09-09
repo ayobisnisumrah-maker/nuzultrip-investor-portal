@@ -93,7 +93,7 @@ async function createOperationalContent(sql: Sql, f: Fixtures): Promise<Operatio
     ) values (
       ${`Operational Gate Offering ${f.suffix}`},
       ${`operational-gate-${f.suffix}`},
-      'open', 200, 100, 100000000, 2, 6, 0
+      'open', 200, 100, 100000000, 2, 6, 1
     )
     returning id
   `
