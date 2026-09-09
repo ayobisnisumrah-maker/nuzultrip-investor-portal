@@ -108,6 +108,7 @@ export function AdminShell({
   roleName,
   initialUnreadMessages,
   initialNewInquiries,
+  brandLogoUrl,
   children,
 }: {
   sections: readonly SerializableNavSection[]
@@ -115,6 +116,7 @@ export function AdminShell({
   roleName: string
   initialUnreadMessages: number
   initialNewInquiries: number
+  brandLogoUrl?: string | null
   children: ReactNode
 }) {
   const router = useRouter()
@@ -171,9 +173,7 @@ export function AdminShell({
           : {}),
         ...(item.href === '/admin/messages'
           ? {
-              badge: (
-                <CountBadge count={initialUnreadMessages} label="pesan belum dibaca" />
-              ),
+              badge: <CountBadge count={initialUnreadMessages} label="pesan belum dibaca" />,
             }
           : {}),
         ...(item.href === '/admin/inquiries'
@@ -189,7 +189,7 @@ export function AdminShell({
     <AppShell
       homeHref="/admin"
       sections={resolved}
-      brand={<Brand sublabel="Admin Console" />}
+      brand={<Brand sublabel="Admin Console" logoUrl={brandLogoUrl} />}
       mobileSidebarFooter={
         <div className="[&>button]:w-full [&>button]:justify-start">
           <SignOutButton />

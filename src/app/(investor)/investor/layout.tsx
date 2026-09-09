@@ -11,6 +11,7 @@ import { requireInvestorPage } from '@/server/auth/page-guards'
 import { getUnreadMessageCount } from '@/server/messaging/lifecycle'
 import { getNotificationSoundSettings } from '@/server/settings/notification-sound'
 import { getServerSupabase } from '@/server/supabase/server'
+import { getPublicBrandLogo } from '@/server/portal/public-branding'
 import { ToastProvider } from '@/ui/toast'
 import { TooltipProvider } from '@/ui/menu'
 
@@ -21,7 +22,10 @@ export const metadata: Metadata = {
 
 export default async function InvestorLayout({ children }: { children: React.ReactNode }) {
   const principal = await requireInvestorPage()
-  const sound = await getNotificationSoundSettings()
+  const [sound, brandLogoUrl] = await Promise.all([
+    getNotificationSoundSettings(),
+    getPublicBrandLogo(),
+  ])
   const supabase = await getServerSupabase()
 
   const [unreadMessages, unreadNotificationsResult] = principal.hasDataAccess
@@ -99,7 +103,7 @@ export default async function InvestorLayout({ children }: { children: React.Rea
           <AppShell
             homeHref="/investor"
             sections={sections}
-            brand={<Brand sublabel="Investor" />}
+            brand={<Brand sublabel="Investor" logoUrl={brandLogoUrl} />}
             mobileSidebarFooter={
               <div className="[&>button]:w-full [&>button]:justify-start">
                 <SignOutButton />

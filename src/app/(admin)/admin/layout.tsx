@@ -9,6 +9,7 @@ import { requireAdminPage } from '@/server/auth/page-guards'
 import { expireMessageThreads, getUnreadMessageCount } from '@/server/messaging/lifecycle'
 import { getNotificationSoundSettings } from '@/server/settings/notification-sound'
 import { getServerSupabase } from '@/server/supabase/server'
+import { getPublicBrandLogo } from '@/server/portal/public-branding'
 import { ToastProvider } from '@/ui/toast'
 import { TooltipProvider } from '@/ui/menu'
 
@@ -19,13 +20,18 @@ export const metadata: Metadata = {
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const principal = await requireAdminPage()
-  const sound = await getNotificationSoundSettings()
+  const [sound, brandLogoUrl] = await Promise.all([
+    getNotificationSoundSettings(),
+    getPublicBrandLogo(),
+  ])
   const supabase = await getServerSupabase()
 
   await expireMessageThreads(supabase)
 
   const [initialUnreadMessages, newInquiryResult] = await Promise.all([
-    principal.permissions.has('messages.view') ? getUnreadMessageCount(supabase) : Promise.resolve(0),
+    principal.permissions.has('messages.view')
+      ? getUnreadMessageCount(supabase)
+      : Promise.resolve(0),
     principal.permissions.has('inquiries.view')
       ? supabase
           .from('portal_inquiries')
@@ -67,6 +73,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             roleName={principal.roleName}
             initialUnreadMessages={initialUnreadMessages}
             initialNewInquiries={initialNewInquiries}
+            brandLogoUrl={brandLogoUrl}
           >
             {children}
           </AdminShell>

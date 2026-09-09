@@ -8,6 +8,9 @@ import { getServiceRoleClient } from '@/server/admin/service-client'
 
 const BUCKET = 'investor-documents'
 const MAX_BYTES = 100 * 1024 * 1024
+const PORTAL_BUCKET = 'public-media'
+const PORTAL_MAX_BYTES = 6 * 1024 * 1024
+const PORTAL_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/avif'])
 
 const ALLOWED_MIME_TYPES = new Set([
   'application/pdf',
@@ -45,6 +48,7 @@ export async function POST(request: Request) {
 
   const formData = await request.formData()
   const file = formData.get('file')
+  const purpose = formData.get('purpose') === 'portal' ? 'portal' : 'document'
 
   if (!(file instanceof File)) {
     return NextResponse.json({ error: 'File wajib dipilih.' }, { status: 400 })
@@ -54,11 +58,20 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'File kosong tidak diperbolehkan.' }, { status: 400 })
   }
 
-  if (file.size > MAX_BYTES) {
-    return NextResponse.json({ error: 'Ukuran file maksimal 100 MB.' }, { status: 400 })
+  const maxBytes = purpose === 'portal' ? PORTAL_MAX_BYTES : MAX_BYTES
+  if (file.size > maxBytes) {
+    return NextResponse.json(
+      {
+        error:
+          purpose === 'portal' ? 'Ukuran gambar maksimal 6 MB.' : 'Ukuran file maksimal 100 MB.',
+      },
+      { status: 400 },
+    )
   }
 
-  if (!ALLOWED_MIME_TYPES.has(file.type)) {
+  if (
+    purpose === 'portal' ? !PORTAL_MIME_TYPES.has(file.type) : !ALLOWED_MIME_TYPES.has(file.type)
+  ) {
     return NextResponse.json({ error: 'Format file tidak didukung.' }, { status: 400 })
   }
 
@@ -67,6 +80,7 @@ export async function POST(request: Request) {
 
   const assetId = randomUUID()
   const objectPath = `${assetId}/${safeFilename(file.name)}`
+  const bucket = purpose === 'portal' ? PORTAL_BUCKET : BUCKET
 
   const serviceClient = getServiceRoleClient()
 
@@ -75,7 +89,7 @@ export async function POST(request: Request) {
    * bucket and Storage object writes are brokered server-side.
    */
   const { error: uploadError } = await serviceClient.storage
-    .from(BUCKET)
+    .from(bucket)
     .upload(objectPath, bytes, {
       contentType: file.type,
       upsert: false,
@@ -89,13 +103,13 @@ export async function POST(request: Request) {
     .from('media_assets')
     .insert({
       id: assetId,
-      bucket: BUCKET,
+      bucket,
       path: objectPath,
       original_filename: file.name,
       mime_type: file.type,
       byte_size: file.size,
       checksum_sha256: checksum,
-      visibility: 'restricted',
+      visibility: purpose === 'portal' ? 'public' : 'restricted',
       uploaded_by: principal.adminId,
       finalized_at: new Date().toISOString(),
     })
@@ -106,13 +120,18 @@ export async function POST(request: Request) {
     /*
      * Roll back the Storage object if metadata finalisation fails.
      */
-    await serviceClient.storage.from(BUCKET).remove([objectPath])
+    await serviceClient.storage.from(bucket).remove([objectPath])
 
     return NextResponse.json({ error: 'Metadata file gagal disimpan.' }, { status: 500 })
   }
 
+  const publicUrl =
+    purpose === 'portal'
+      ? serviceClient.storage.from(PORTAL_BUCKET).getPublicUrl(objectPath).data.publicUrl
+      : undefined
+
   return NextResponse.json({
     ok: true,
-    asset,
+    asset: { ...asset, public_url: publicUrl },
   })
 }
