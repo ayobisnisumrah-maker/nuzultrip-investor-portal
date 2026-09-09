@@ -35,6 +35,28 @@ alter table public.investors
   add constraint investors_rejected_at_required
   check (status <> 'rejected' or rejected_at is not null);
 
+-- Maintenance/replication may intentionally suppress ordinary user triggers.
+-- This minimal ALWAYS trigger protects only the structural invariant required by
+-- the check constraint; it does not authorize or enforce lifecycle transitions.
+create or replace function app.ensure_rejected_investor_timestamp()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if new.status = 'rejected' and new.rejected_at is null then
+    new.rejected_at := now();
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists investors_ensure_rejected_timestamp on public.investors;
+create trigger investors_ensure_rejected_timestamp
+  before insert or update on public.investors
+  for each row execute function app.ensure_rejected_investor_timestamp();
+alter table public.investors enable always trigger investors_ensure_rejected_timestamp;
+
 create or replace function app.investor_transition_allowed(
   p_from public.investor_status,
   p_to public.investor_status
