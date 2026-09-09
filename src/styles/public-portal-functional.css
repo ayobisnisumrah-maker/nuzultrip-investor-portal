@@ -4,6 +4,19 @@
  * changing the established layout system.
  */
 
+/* Keep the CMS-controlled hero title at exactly three visual lines on desktop.
+ * Each published pipe-delimited title fragment is one row; fragments must not
+ * wrap again into a second row at desktop widths.
+ */
+[class*='heroCopy'] h1 {
+  max-width: 760px !important;
+}
+
+[class*='heroCopy'] h1 > span {
+  display: block;
+  white-space: nowrap;
+}
+
 #informasi-investor {
   display: block !important;
   padding: 84px 0;
@@ -137,6 +150,14 @@ a[class*='statsCta'] {
 }
 
 @media (max-width: 820px) {
+  [class*='heroCopy'] h1 {
+    max-width: 100% !important;
+  }
+
+  [class*='heroCopy'] h1 > span {
+    white-space: normal;
+  }
+
   #informasi-investor {
     padding: 64px 0;
   }
