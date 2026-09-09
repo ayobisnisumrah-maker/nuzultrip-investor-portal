@@ -1,5 +1,9 @@
+import Image from 'next/image'
 import Link from 'next/link'
 import { GeometricField, KhatimStar } from '@/ui/geometry/khatim'
+import { getPublicBrandLogo } from '@/server/portal/public-branding'
+
+import styles from './auth-layout.module.css'
 
 /**
  * The authentication shell.
@@ -8,30 +12,47 @@ import { GeometricField, KhatimStar } from '@/ui/geometry/khatim'
  * On narrow viewports the panel collapses to a compact header so the form is
  * the first thing in reach.
  */
-export default function AuthLayout({ children }: { children: React.ReactNode }) {
+export default async function AuthLayout({ children }: { children: React.ReactNode }) {
+  const brandLogoUrl = await getPublicBrandLogo()
+
+  const brand = brandLogoUrl ? (
+    <Image
+      src={brandLogoUrl}
+      alt="Nuzultrip"
+      width={190}
+      height={64}
+      className="h-11 w-auto max-w-52 rounded-sm bg-white object-contain object-left px-2 py-1.5"
+      priority
+    />
+  ) : (
+    <>
+      <KhatimStar variant="filled" className="size-7 text-white" />
+      <span className="flex flex-col leading-tight">
+        <span className="text-heading-md text-white">Nuzultrip</span>
+        <span className="text-[0.6875rem] tracking-[0.1em] text-white/60 uppercase">
+          Investor Relations
+        </span>
+      </span>
+    </>
+  )
+
   return (
-    <div className="grid min-h-dvh lg:grid-cols-[1fr_minmax(28rem,36rem)]">
+    <div className={`${styles.authTheme} grid min-h-dvh lg:grid-cols-[1fr_minmax(28rem,36rem)]`}>
       {/* Identity panel — desktop */}
-      <aside className="bg-inverse relative hidden overflow-hidden lg:flex lg:flex-col lg:justify-between lg:p-12">
+      <aside className="relative hidden overflow-hidden bg-black lg:flex lg:flex-col lg:justify-between lg:p-12">
         <GeometricField className="text-fg-inverse" opacity={0.05} />
 
         <Link
           href="/"
           className="focus-visible:outline-ring relative flex items-center gap-3 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4"
         >
-          <KhatimStar variant="filled" className="text-accent-solid size-7" />
-          <span className="flex flex-col leading-tight">
-            <span className="font-display text-heading-md text-fg-inverse">Nuzultrip</span>
-            <span className="text-fg-inverse/60 text-[0.6875rem] tracking-[0.1em] uppercase">
-              Investor Relations
-            </span>
-          </span>
+          {brand}
         </Link>
 
         <div className="relative flex max-w-lg flex-col gap-5">
-          <p className="text-accent overline">Berjalan bersama</p>
-          <p className="font-display text-display-lg text-fg-inverse text-balance">
-            Berjalan bersama dan berkembang bersama.
+          <p className="text-white/60 overline">Nuzultrip Equity</p>
+          <p className="text-display-lg text-balance text-white">
+            Membangun Nilai dan Kepemilikan Bersama Nuzultrip.
           </p>
           <p className="text-body text-fg-inverse/70">
             Platform hubungan investor Nuzultrip — informasi perusahaan, materi investor, dan
@@ -55,8 +76,21 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
             href="/"
             className="focus-visible:outline-ring mb-8 inline-flex items-center gap-2.5 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 lg:hidden"
           >
-            <KhatimStar variant="filled" className="text-accent-solid size-6" />
-            <span className="font-display text-heading-sm text-fg">Nuzultrip</span>
+            {brandLogoUrl ? (
+              <Image
+                src={brandLogoUrl}
+                alt="Nuzultrip"
+                width={170}
+                height={56}
+                className="h-8 w-auto max-w-44 object-contain object-left"
+                priority
+              />
+            ) : (
+              <>
+                <KhatimStar variant="filled" className="size-6 text-black" />
+                <span className="text-heading-sm text-fg">Nuzultrip</span>
+              </>
+            )}
           </Link>
           {children}
         </div>

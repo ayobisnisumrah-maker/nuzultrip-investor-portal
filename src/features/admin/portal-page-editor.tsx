@@ -138,6 +138,9 @@ function createDefaultContent(kind: SectionKind): ContentRecord {
         primary_cta_href: '',
         secondary_cta_label: '',
         secondary_cta_href: '',
+        image_url: '',
+        image_alt: '',
+        image_caption: '',
       }
 
     case 'intro':
@@ -364,6 +367,75 @@ function Field({
   )
 }
 
+function ImageField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string
+  value: string
+  onChange: (value: string) => void
+}) {
+  const [uploading, setUploading] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
+
+  async function upload(file: File) {
+    setUploading(true)
+    setUploadError(null)
+    try {
+      const body = new FormData()
+      body.set('file', file)
+      body.set('purpose', 'portal')
+      const response = await fetch('/api/admin/media/upload', { method: 'POST', body })
+      const result = (await response.json()) as {
+        error?: string
+        asset?: { public_url?: string }
+      }
+      if (!response.ok || !result.asset?.public_url) {
+        setUploadError(result.error ?? 'Gambar gagal diunggah.')
+        return
+      }
+      onChange(result.asset.public_url)
+    } catch (error) {
+      setUploadError(error instanceof Error ? error.message : 'Gambar gagal diunggah.')
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  return (
+    <div className="space-y-2">
+      <Field label={label} value={value} onChange={onChange} placeholder="https://..." />
+      <label className="border-border bg-muted/20 text-fg-muted flex cursor-pointer items-center justify-between gap-3 rounded-lg border border-dashed px-3 py-2 text-xs">
+        <span>{uploading ? 'Mengunggah…' : 'Unggah JPG, PNG, WebP, atau AVIF (maks. 6 MB)'}</span>
+        <input
+          type="file"
+          accept="image/jpeg,image/png,image/webp,image/avif"
+          disabled={uploading}
+          className="sr-only"
+          onChange={(event) => {
+            const file = event.target.files?.[0]
+            if (file) void upload(file)
+            event.currentTarget.value = ''
+          }}
+        />
+        <span className="bg-primary text-primary-foreground rounded-md px-2.5 py-1 font-semibold">
+          Pilih
+        </span>
+      </label>
+      {value ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={value}
+          alt="Pratinjau"
+          className="border-border h-28 w-full rounded-lg border object-cover"
+        />
+      ) : null}
+      {uploadError ? <p className="text-danger text-xs">{uploadError}</p> : null}
+    </div>
+  )
+}
+
 function VisualEditor({
   kind,
   value,
@@ -528,17 +600,25 @@ function VisualEditor({
               <div className="grid gap-4 md:grid-cols-2">
                 {fields.map((field) => (
                   <div key={field.key} className={field.multiline ? 'md:col-span-2' : ''}>
-                    <Field
-                      label={field.label}
-                      value={asString(item[field.key])}
-                      onChange={(fieldValue) =>
-                        updateArray(arrayKey, index, {
-                          [field.key]: fieldValue,
-                        })
-                      }
-                      multiline={field.multiline}
-                      placeholder={field.placeholder}
-                    />
+                    {field.key === 'image_url' || field.key === 'icon_url' ? (
+                      <ImageField
+                        label={field.label}
+                        value={asString(item[field.key])}
+                        onChange={(fieldValue) =>
+                          updateArray(arrayKey, index, { [field.key]: fieldValue })
+                        }
+                      />
+                    ) : (
+                      <Field
+                        label={field.label}
+                        value={asString(item[field.key])}
+                        onChange={(fieldValue) =>
+                          updateArray(arrayKey, index, { [field.key]: fieldValue })
+                        }
+                        multiline={field.multiline}
+                        placeholder={field.placeholder}
+                      />
+                    )}
                   </div>
                 ))}
               </div>
@@ -595,6 +675,24 @@ function VisualEditor({
           label="Tautan CTA Sekunder"
           value={asString(content.secondary_cta_href)}
           onChange={(secondary_cta_href) => update({ secondary_cta_href })}
+        />
+
+        <div className="md:col-span-2">
+          <ImageField
+            label="Gambar Hero"
+            value={asString(content.image_url)}
+            onChange={(image_url) => update({ image_url })}
+          />
+        </div>
+        <Field
+          label="Teks Alternatif Gambar"
+          value={asString(content.image_alt)}
+          onChange={(image_alt) => update({ image_alt })}
+        />
+        <Field
+          label="Tulisan di Atas Gambar"
+          value={asString(content.image_caption)}
+          onChange={(image_caption) => update({ image_caption })}
         />
       </div>
     )
@@ -835,6 +933,18 @@ function VisualEditor({
           multiline
         />
 
+        <ImageField
+          label="Gambar Utama Bagian"
+          value={asString(content.image_url)}
+          onChange={(image_url) => update({ image_url })}
+        />
+
+        <Field
+          label="Teks Alternatif Gambar"
+          value={asString(content.image_alt)}
+          onChange={(image_alt) => update({ image_alt })}
+        />
+
         <div className="border-border space-y-4 rounded-xl border p-4">
           {renderArrayHeader(
             'Daftar Item',
@@ -851,6 +961,24 @@ function VisualEditor({
               key: 'description',
               label: 'Deskripsi',
               multiline: true,
+            },
+            {
+              key: 'icon',
+              label: 'Ikon (emoji atau simbol)',
+              placeholder: 'Contoh: ✈',
+            },
+            {
+              key: 'icon_url',
+              label: 'File Ikon',
+            },
+            {
+              key: 'image_url',
+              label: 'Gambar',
+            },
+            {
+              key: 'href',
+              label: 'Tautan',
+              placeholder: '/halaman atau https://...',
             },
           ])}
         </div>

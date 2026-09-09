@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Menu, X } from 'lucide-react'
@@ -177,10 +178,29 @@ function Navigation({
 export function Brand({
   label = 'Nuzultrip',
   sublabel = 'Investor Relations',
+  logoUrl,
 }: {
   label?: string
   sublabel?: string
+  logoUrl?: string | null
 }) {
+  if (logoUrl) {
+    return (
+      <span className="flex min-w-0 flex-col gap-1 leading-tight">
+        <Image
+          src={logoUrl}
+          alt={label}
+          width={168}
+          height={52}
+          className="h-8 w-auto max-w-40 rounded-sm bg-white object-contain object-left px-1.5 py-1"
+        />
+        <span className="text-fg-subtle truncate text-[0.625rem] tracking-[0.1em] uppercase">
+          {sublabel}
+        </span>
+      </span>
+    )
+  }
+
   return (
     <>
       <KhatimStar variant="filled" className="text-accent-solid size-6 shrink-0" />

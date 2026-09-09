@@ -1,0 +1,22 @@
+.authTheme {
+  --c-canvas: #ffffff;
+  --c-background: #ffffff;
+  --c-surface: #ffffff;
+  --c-inverse: #050505;
+  --c-primary: #0a0a0a;
+  --c-primary-hover: #262626;
+  --c-primary-active: #3b3b3b;
+  --c-primary-subtle: #f3f3f1;
+  --c-primary-border: #cfcfcb;
+  --c-on-primary: #ffffff;
+  --c-accent-solid: #111111;
+  --c-on-accent: #ffffff;
+  --c-ring: #111111;
+}
+
+.authTheme :global(h1),
+.authTheme :global(h2),
+.authTheme :global(h3) {
+  font-family: Arial, Helvetica, sans-serif;
+  letter-spacing: -0.035em;
+}

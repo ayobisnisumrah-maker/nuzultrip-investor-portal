@@ -27,6 +27,16 @@ function list(value: unknown): Array<Record<string, unknown>> {
   )
 }
 
+function CmsIcon({ item, fallback }: { item: Record<string, unknown>; fallback: string }) {
+  const imageUrl = text(item.icon_url)
+  if (imageUrl) {
+    // CMS URLs come from the public-media bucket and may use a project-specific hostname.
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={imageUrl} alt="" />
+  }
+  return <>{text(item.icon) ?? fallback}</>
+}
+
 function SectionHeader({
   eyebrow,
   title,
@@ -67,6 +77,7 @@ function Hero({ section }: { section: PublicPortalSection }) {
   const secondaryLabel = text(c.secondary_cta_label)
   const secondaryHref = text(c.secondary_cta_href)
   const footnote = text(c.footnote)
+  const heroImage = text(c.image_url)
 
   return (
     <>
@@ -94,7 +105,7 @@ function Hero({ section }: { section: PublicPortalSection }) {
               </div>
             ) : null}
 
-            {primaryLabel && primaryHref || secondaryLabel && secondaryHref ? (
+            {(primaryLabel && primaryHref) || (secondaryLabel && secondaryHref) ? (
               <div className={styles.heroActions}>
                 {primaryLabel && primaryHref ? (
                   <Link className={styles.btnPrimary} href={primaryHref}>
@@ -134,57 +145,71 @@ function Hero({ section }: { section: PublicPortalSection }) {
             ) : null}
           </div>
 
-          <div className={styles.heroArt} aria-hidden="true">
-            <svg className={styles.scene} viewBox="0 0 560 470">
-              <defs>
-                <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0" stopColor="#1B2C6B" />
-                  <stop offset="1" stopColor="#0E9C9C" />
-                </linearGradient>
-                <linearGradient id="dome" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0" stopColor="#FDFBF6" />
-                  <stop offset="1" stopColor="#E8DFC9" />
-                </linearGradient>
-              </defs>
-              <circle cx="300" cy="224" r="184" fill="url(#sky)" />
-              <path d="M232 248c0-44 30-70 68-92 38 22 68 48 68 92z" fill="url(#dome)" />
-              <rect x="222" y="248" width="156" height="80" rx="10" fill="#FDFBF6" />
-              <rect x="196" y="194" width="20" height="134" rx="7" fill="url(#dome)" />
-              <rect x="384" y="194" width="20" height="134" rx="7" fill="url(#dome)" />
-              <path d="M206 166c9 10 13 17 13 23a13 13 0 01-26 0c0-6 4-13 13-23z" fill="#F2DFB6" />
-              <path d="M394 166c9 10 13 17 13 23a13 13 0 01-26 0c0-6 4-13 13-23z" fill="#F2DFB6" />
-              <g fill="#1B2C6B" opacity=".82">
-                <path d="M248 328v-34a13 13 0 0126 0v34z" />
-                <path d="M287 328v-42a13 13 0 0126 0v42z" />
-                <path d="M326 328v-34a13 13 0 0126 0v34z" />
-              </g>
-              <path
-                d="M68 177c70-58 164-58 226-16"
-                fill="none"
-                stroke="#25BDB6"
-                strokeWidth="3"
-                strokeLinecap="round"
-                strokeDasharray="7 9"
-              />
-              <g transform="translate(145 342)">
-                <rect width="94" height="68" rx="14" fill="#DF6951" />
-                <rect x="25" width="12" height="68" fill="#fff" opacity=".32" />
-                <rect x="58" width="12" height="68" fill="#fff" opacity=".32" />
-                <circle cx="20" cy="76" r="7" fill="#1B2C6B" />
-                <circle cx="74" cy="76" r="7" fill="#1B2C6B" />
-              </g>
-              <g transform="translate(390 348)">
-                <rect width="72" height="54" rx="9" fill="#25BDB6" />
+          <div className={styles.heroArt}>
+            {heroImage ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img className={styles.heroImage} src={heroImage} alt={text(c.image_alt) ?? ''} />
+            ) : (
+              <svg className={styles.scene} viewBox="0 0 560 470" aria-hidden="true">
+                <defs>
+                  <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0" stopColor="#1B2C6B" />
+                    <stop offset="1" stopColor="#0E9C9C" />
+                  </linearGradient>
+                  <linearGradient id="dome" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0" stopColor="#FDFBF6" />
+                    <stop offset="1" stopColor="#E8DFC9" />
+                  </linearGradient>
+                </defs>
+                <circle cx="300" cy="224" r="184" fill="url(#sky)" />
+                <path d="M232 248c0-44 30-70 68-92 38 22 68 48 68 92z" fill="url(#dome)" />
+                <rect x="222" y="248" width="156" height="80" rx="10" fill="#FDFBF6" />
+                <rect x="196" y="194" width="20" height="134" rx="7" fill="url(#dome)" />
+                <rect x="384" y="194" width="20" height="134" rx="7" fill="url(#dome)" />
                 <path
-                  d="M15 17h42M15 28h30M15 39h36"
-                  stroke="#fff"
-                  strokeWidth="5"
-                  strokeLinecap="round"
-                  opacity=".8"
+                  d="M206 166c9 10 13 17 13 23a13 13 0 01-26 0c0-6 4-13 13-23z"
+                  fill="#F2DFB6"
                 />
-              </g>
-              <path d="M412 104a22 22 0 100 44 27 27 0 110-44z" fill="#FFD98A" />
-            </svg>
+                <path
+                  d="M394 166c9 10 13 17 13 23a13 13 0 01-26 0c0-6 4-13 13-23z"
+                  fill="#F2DFB6"
+                />
+                <g fill="#1B2C6B" opacity=".82">
+                  <path d="M248 328v-34a13 13 0 0126 0v34z" />
+                  <path d="M287 328v-42a13 13 0 0126 0v42z" />
+                  <path d="M326 328v-34a13 13 0 0126 0v34z" />
+                </g>
+                <path
+                  d="M68 177c70-58 164-58 226-16"
+                  fill="none"
+                  stroke="#25BDB6"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  strokeDasharray="7 9"
+                />
+                <g transform="translate(145 342)">
+                  <rect width="94" height="68" rx="14" fill="#DF6951" />
+                  <rect x="25" width="12" height="68" fill="#fff" opacity=".32" />
+                  <rect x="58" width="12" height="68" fill="#fff" opacity=".32" />
+                  <circle cx="20" cy="76" r="7" fill="#1B2C6B" />
+                  <circle cx="74" cy="76" r="7" fill="#1B2C6B" />
+                </g>
+                <g transform="translate(390 348)">
+                  <rect width="72" height="54" rx="9" fill="#25BDB6" />
+                  <path
+                    d="M15 17h42M15 28h30M15 39h36"
+                    stroke="#fff"
+                    strokeWidth="5"
+                    strokeLinecap="round"
+                    opacity=".8"
+                  />
+                </g>
+                <path d="M412 104a22 22 0 100 44 27 27 0 110-44z" fill="#FFD98A" />
+              </svg>
+            )}
+            {text(c.image_caption) ? (
+              <p className={styles.imageCaption}>{text(c.image_caption)}</p>
+            ) : null}
             {heroFloatCards[0] ? (
               <div className={`${styles.floatCard} ${styles.floatOne}`}>
                 <b>{text(heroFloatCards[0].title)}</b>
@@ -242,7 +267,8 @@ function Offering({ section }: { section: PublicPortalSection }) {
           <div className={styles.fundingTarget}>
             {fundingLabel ? <span>{fundingLabel}</span> : null}
             <strong>
-              {fundingCurrency ? `${fundingCurrency} ` : ''}{fundingTarget}
+              {fundingCurrency ? `${fundingCurrency} ` : ''}
+              {fundingTarget}
             </strong>
           </div>
         ) : null}
@@ -331,7 +357,9 @@ function VisionMission({ section }: { section: PublicPortalSection }) {
           <p>{text(c.vision)}</p>
         </blockquote>
         <div className={styles.missionBox}>
-          {text(c.mission_label) ? <span className={styles.eyebrow}>{text(c.mission_label)}</span> : null}
+          {text(c.mission_label) ? (
+            <span className={styles.eyebrow}>{text(c.mission_label)}</span>
+          ) : null}
           <ul>
             {mission.map((item, index) => (
               <li key={`${section.id}-m-${index}`}>
@@ -352,14 +380,26 @@ function Revenue({ section }: { section: PublicPortalSection }) {
   return (
     <section id={section.anchor_id ?? section.id} className={`${styles.section} ${styles.tinted}`}>
       <div className={styles.wrap}>
-        <SectionHeader eyebrow={text(c.eyebrow)} title={text(c.title)} description={text(c.description)} />
+        <SectionHeader
+          eyebrow={text(c.eyebrow)}
+          title={text(c.title)}
+          description={text(c.description)}
+        />
+        {text(c.image_url) ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            className={styles.sectionImage}
+            src={text(c.image_url) as string}
+            alt={text(c.image_alt) ?? ''}
+          />
+        ) : null}
         <div className={styles.revenueGrid}>
           {items.slice(0, 4).map((item, index) => (
             <article key={`${section.id}-revenue-${index}`}>
               <span
                 className={`${styles.revenueIcon} ${styles[`ri${index + 1}` as keyof typeof styles] ?? ''}`}
               >
-                {['▣', '▤', '◈', '▦'][index]}
+                <CmsIcon item={item} fallback={['▣', '▤', '◈', '▦'][index] ?? '•'} />
               </span>
               <div>
                 <h3>{text(item.title)}</h3>
@@ -392,10 +432,14 @@ function Ecosystem({ section }: { section: PublicPortalSection }) {
               key={`${section.id}-eco-${index}`}
               className={`${styles.ecoCard} ${styles[`tone${index + 1}` as keyof typeof styles] ?? ''}`}
             >
-              <span className={styles.ecoIcon}>{['♙', '▤', '◎', '⌘', '▣', '✧'][index]}</span>
+              <span className={styles.ecoIcon}>
+                <CmsIcon item={item} fallback={['♙', '▤', '◎', '⌘', '▣', '✧'][index] ?? '•'} />
+              </span>
               <h3>{text(item.title)}</h3>
               <p>{text(item.description)}</p>
-              {text(item.caption) || itemCaption ? <small>{text(item.caption) ?? itemCaption}</small> : null}
+              {text(item.caption) || itemCaption ? (
+                <small>{text(item.caption) ?? itemCaption}</small>
+              ) : null}
             </article>
           ))}
         </div>
@@ -411,7 +455,11 @@ function Growth({ section }: { section: PublicPortalSection }) {
     <section id={section.anchor_id ?? section.id} className={`${styles.section} ${styles.tinted}`}>
       <div className={`${styles.wrap} ${styles.growthGrid}`}>
         <div>
-          <SectionHeader eyebrow={text(c.eyebrow)} title={text(c.title)} description={text(c.description)} />
+          <SectionHeader
+            eyebrow={text(c.eyebrow)}
+            title={text(c.title)}
+            description={text(c.description)}
+          />
           <div className={styles.growthSteps}>
             {milestones.slice(0, 4).map((item, index) => (
               <div className={styles.growthStep} key={`${section.id}-growth-${index}`}>
@@ -430,7 +478,9 @@ function Growth({ section }: { section: PublicPortalSection }) {
         </div>
         {text(c.progress_title) || text(c.progress_label) ? (
           <div className={styles.progressMock}>
-            {text(c.progress_title) ? <div className={styles.progressTop}>{text(c.progress_title)}</div> : null}
+            {text(c.progress_title) ? (
+              <div className={styles.progressTop}>{text(c.progress_title)}</div>
+            ) : null}
             <div className={styles.progressBody}>
               {text(c.progress_label) ? <small>{text(c.progress_label)}</small> : null}
               {milestones.slice(0, 4).map((item, index) => {
@@ -463,13 +513,21 @@ function UseFunds({ section }: { section: PublicPortalSection }) {
   return (
     <section id={section.anchor_id ?? section.id} className={styles.section}>
       <div className={styles.wrap}>
-        <SectionHeader eyebrow={text(c.eyebrow)} title={text(c.title)} description={text(c.description)} />
+        <SectionHeader
+          eyebrow={text(c.eyebrow)}
+          title={text(c.title)}
+          description={text(c.description)}
+        />
         <div className={styles.fundsGrid}>
           {items.slice(0, 4).map((item, index) => (
             <article key={`${section.id}-fund-${index}`}>
               <span>{String(index + 1).padStart(2, '0')}</span>
               <div>
-                {priorityLabel ? <small>{priorityLabel} {index + 1}</small> : null}
+                {priorityLabel ? (
+                  <small>
+                    {priorityLabel} {index + 1}
+                  </small>
+                ) : null}
                 <h3>{text(item.title)}</h3>
                 <p>{text(item.description)}</p>
               </div>
@@ -497,7 +555,13 @@ function Governance({ section }: { section: PublicPortalSection }) {
         <div className={styles.govGrid}>
           {items.slice(0, 3).map((item, index) => (
             <article key={`${section.id}-gov-${index}`}>
-              <span>{['▤', '◫', '◎'][index]}</span>
+              {text(item.image_url) ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img className={styles.articleImage} src={text(item.image_url) as string} alt="" />
+              ) : null}
+              <span>
+                <CmsIcon item={item} fallback={['▤', '◫', '◎'][index] ?? '•'} />
+              </span>
               <h3>{text(item.title)}</h3>
               <p>{text(item.description)}</p>
             </article>
@@ -538,7 +602,11 @@ function Documents({ section }: { section: PublicPortalSection }) {
   return (
     <section id={section.anchor_id ?? section.id} className={`${styles.section} ${styles.tinted}`}>
       <div className={styles.wrap}>
-        <SectionHeader eyebrow={text(c.eyebrow)} title={text(c.title)} description={text(c.description)} />
+        <SectionHeader
+          eyebrow={text(c.eyebrow)}
+          title={text(c.title)}
+          description={text(c.description)}
+        />
         <div className={styles.docsGrid}>
           {items.slice(0, 6).map((item, index) => {
             const href = text(item.href) ?? text(item.url)
@@ -556,6 +624,81 @@ function Documents({ section }: { section: PublicPortalSection }) {
               <div key={`${section.id}-doc-${index}`}>{node}</div>
             )
           })}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function Stats({ section }: { section: PublicPortalSection }) {
+  const c = section.content
+  const metrics = list(c.metrics)
+  return (
+    <section id={section.anchor_id ?? section.id} className={styles.section}>
+      <div className={styles.wrap}>
+        <SectionHeader
+          eyebrow={text(c.eyebrow)}
+          title={text(c.title)}
+          description={text(c.description)}
+        />
+        <div className={styles.statsGrid}>
+          {metrics.slice(0, 6).map((metric, index) => (
+            <article key={`${section.id}-metric-${index}`}>
+              <strong>{text(metric.value)}</strong>
+              <span>{text(metric.label)}</span>
+              {text(metric.description) ? <small>{text(metric.description)}</small> : null}
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function LogoWall({ section }: { section: PublicPortalSection }) {
+  const c = section.content
+  const logos = list(c.logos)
+  return (
+    <section id={section.anchor_id ?? section.id} className={styles.section}>
+      <div className={`${styles.wrap} ${styles.logoWall}`}>
+        <SectionHeader eyebrow={text(c.eyebrow)} title={text(c.title)} />
+        <div className={styles.logoGrid}>
+          {logos.map((logo, index) => {
+            const imageUrl = text(logo.image_url)
+            const content = imageUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={imageUrl} alt={text(logo.name) ?? ''} />
+            ) : (
+              <span>{text(logo.name)}</span>
+            )
+            const href = text(logo.href)
+            return href ? (
+              <Link href={href} key={`${section.id}-logo-${index}`}>
+                {content}
+              </Link>
+            ) : (
+              <div key={`${section.id}-logo-${index}`}>{content}</div>
+            )
+          })}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function Faq({ section }: { section: PublicPortalSection }) {
+  const c = section.content
+  return (
+    <section id={section.anchor_id ?? section.id} className={styles.section}>
+      <div className={styles.wrap}>
+        <SectionHeader eyebrow={text(c.eyebrow)} title={text(c.title)} />
+        <div className={styles.faqList}>
+          {list(c.items).map((item, index) => (
+            <details key={`${section.id}-faq-${index}`}>
+              <summary>{text(item.question) ?? text(item.title)}</summary>
+              <p>{text(item.answer) ?? text(item.description)}</p>
+            </details>
+          ))}
         </div>
       </div>
     </section>
@@ -666,12 +809,15 @@ function RenderSection({ section }: { section: PublicPortalSection }) {
       return <Documents section={section} />
     case 'contact_cta':
       return <Contact section={section} />
-    case 'milestones':
     case 'financial_highlights':
-    case 'rich_content':
     case 'stat_grid':
+      return <Stats section={section} />
     case 'logo_wall':
+      return <LogoWall section={section} />
     case 'faq':
+      return <Faq section={section} />
+    case 'milestones':
+    case 'rich_content':
       return null
     default:
       return <Generic section={section} />
@@ -721,8 +867,8 @@ export function PublicPortalModel({
               </Link>
             ))}
           </nav>
-          <Link className={styles.navCta} href="/masuk">
-            Masuk
+          <Link className={styles.navCta} href="/hubungi">
+            Ajukan Minat <span aria-hidden="true">→</span>
           </Link>
         </div>
       </header>
@@ -768,7 +914,12 @@ export function PublicPortalModel({
             <div>
               <h4>Ikuti Nuzultrip</h4>
               {social.map((item) => (
-                <Link key={item.id} href={item.href} target={item.target} rel={item.target === '_blank' ? 'noreferrer' : undefined}>
+                <Link
+                  key={item.id}
+                  href={item.href}
+                  target={item.target}
+                  rel={item.target === '_blank' ? 'noreferrer' : undefined}
+                >
                   {item.label}
                 </Link>
               ))}
