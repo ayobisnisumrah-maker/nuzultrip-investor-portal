@@ -7,7 +7,7 @@ import { getServerSupabase } from '@/server/supabase/server'
 
 function formatPeriodType(periodType: string) {
   const labels: Record<string, string> = {
-    annual: 'Tahunan',
+    yearly: 'Tahunan',
     quarterly: 'Triwulanan',
     monthly: 'Bulanan',
   }
@@ -18,7 +18,7 @@ function formatPeriodType(periodType: string) {
 function formatPeriodName(periodType: string, periodIndex: number | null, fiscalYear: number) {
   const type = formatPeriodType(periodType)
 
-  if (periodType === 'annual' || periodIndex == null) {
+  if (periodType === 'yearly' || periodIndex == null) {
     return `${type} ${fiscalYear}`
   }
 
