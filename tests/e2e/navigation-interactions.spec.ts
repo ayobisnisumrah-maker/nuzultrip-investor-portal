@@ -96,7 +96,7 @@ async function crawlDashboard(page: Page, scope: DashboardScope): Promise<string
     if (visited.has(pathname)) continue
     visited.add(pathname)
 
-    const response = await page.goto(pathname, { waitUntil: 'networkidle' })
+    const response = await page.goto(pathname, { waitUntil: 'domcontentloaded' })
     const status = response?.status() ?? 0
     const finalPath = new URL(page.url()).pathname
 
@@ -110,8 +110,13 @@ async function crawlDashboard(page: Page, scope: DashboardScope): Promise<string
       continue
     }
 
-    if (!(await page.locator('main#main').isVisible())) {
-      failures.push(`${pathname}: main#main is not visible`)
+    try {
+      // App Router + realtime hydration can briefly replace the streamed tree,
+      // especially in WebKit. Wait for the shared dashboard shell instead of
+      // taking a single visibility snapshot during that transition.
+      await expect(page.locator('main#main')).toBeVisible({ timeout: 30_000 })
+    } catch {
+      failures.push(`${pathname}: main#main is not visible after hydration`)
       continue
     }
 
