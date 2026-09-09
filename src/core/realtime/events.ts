@@ -49,10 +49,6 @@ export const EVENT_KINDS = [
 
 export type EventKind = (typeof EVENT_KINDS)[number]
 
-/**
- * Parsed on arrival. An unparseable event is dropped and counted, never
- * applied — the socket is untrusted input like any other.
- */
 export const realtimeEventSchema = z.object({
   kind: z.enum(EVENT_KINDS),
   entityType: z.string().max(64),
@@ -69,16 +65,6 @@ export function parseRealtimeEvent(payload: unknown): RealtimeEvent | null {
   return parsed.success ? parsed.data : null
 }
 
-/* -------------------------------------------------------------------------- */
-/* Topics                                                                     */
-/* -------------------------------------------------------------------------- */
-
-/**
- * Topic names are produced here and by the matching SQL helpers, never by
- * string concatenation at a call site — a typo would be a silent subscription
- * to a channel that never receives anything, which is indistinguishable from
- * "nothing has happened yet".
- */
 export const topics = {
   portal: () => 'portal:public',
   allInvestors: () => 'investors:all',
@@ -89,7 +75,6 @@ export const topics = {
 
 export type Topic = ReturnType<(typeof topics)[keyof typeof topics]>
 
-/** Which events a given topic can actually deliver. Used to catch dead handlers. */
 export const TOPIC_EVENTS: Readonly<Record<string, readonly EventKind[]>> = {
   'portal:public': [
     'portal.page_published',
@@ -98,7 +83,7 @@ export const TOPIC_EVENTS: Readonly<Record<string, readonly EventKind[]>> = {
     'portal.navigation_updated',
     'document.published',
   ],
-  'investors:all': ['document.published', 'financial_report.published'],
+  'investors:all': ['document.published', 'financial_report.published', 'portal.theme_updated'],
   'admin:global': [
     'investor.applied',
     'investor.status_changed',
@@ -116,7 +101,6 @@ export const TOPIC_EVENTS: Readonly<Record<string, readonly EventKind[]>> = {
   ],
 } as const
 
-/** Prefixed topics carry an id, so they are matched by shape. */
 export function eventsForTopic(topic: string): readonly EventKind[] {
   if (topic.startsWith('investor:')) {
     return [
@@ -127,6 +111,7 @@ export function eventsForTopic(topic: string): readonly EventKind[] {
       'profit_distribution.changed',
       'message.received',
       'document.published',
+      'portal.theme_updated',
     ]
   }
   if (topic.startsWith('user:')) {
@@ -134,10 +119,6 @@ export function eventsForTopic(topic: string): readonly EventKind[] {
   }
   return TOPIC_EVENTS[topic] ?? []
 }
-
-/* -------------------------------------------------------------------------- */
-/* Connection state                                                           */
-/* -------------------------------------------------------------------------- */
 
 export const CONNECTION_STATES = ['connecting', 'connected', 'degraded', 'offline'] as const
 export type ConnectionState = (typeof CONNECTION_STATES)[number]
@@ -149,23 +130,10 @@ export const CONNECTION_LABELS: Readonly<Record<ConnectionState, string>> = {
   offline: 'Tidak ada koneksi',
 }
 
-/**
- * How often to reconcile by refetching while the socket is down.
- *
- * This is a **safety net, not the mechanism**. Polling is explicitly not how
- * this system stays in sync (docs/REALTIME.md §1); if this interval is ever the
- * thing that delivers an update to a user, that is a bug the metric should
- * show.
- */
 export const DEGRADED_RECONCILE_MS = 30_000
-
-/** The same net, far slower, for a socket that is up but might have missed something. */
 export const HEALTHY_RECONCILE_MS = 10 * 60_000
 
-/** Exponential backoff with jitter, capped, so a dead server is not hammered. */
 export function reconnectDelayMs(attempt: number, random: number = Math.random()): number {
   const base = Math.min(1000 * 2 ** Math.max(attempt - 1, 0), 30_000)
-  // Jitter spreads reconnects so a restarted server does not receive every
-  // client at the same instant.
   return Math.round(base * (0.5 + random * 0.5))
 }
