@@ -245,9 +245,10 @@ describe('full investor ownership lifecycle acceptance', () => {
     `
     expect(sellerHolding).toBeTruthy()
     expect(sellerHolding!.investor_id).toBe(fixtures.investorA.userId)
-    expect(sellerHolding!.units).toBe(0)
-    expect(sellerHolding!.ownership_bps).toBe(0)
-    expect(sellerHolding!.status).toBe('sold')
+    // Full sale preserves the original lot snapshot for history, but it is no longer active ownership.
+    expect(sellerHolding!.units).toBe(1)
+    expect(sellerHolding!.ownership_bps).toBe(80)
+    expect(sellerHolding!.status).toBe('transferred')
 
     const [buyerHolding] = await db()<{
       investor_id: string
