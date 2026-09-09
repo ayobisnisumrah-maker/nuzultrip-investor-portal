@@ -47,34 +47,12 @@ async function writeAudit(
   if (error) throw new Error(`audit:${action}:${error.message}`)
 }
 
-async function hasAny(
-  admin: SupabaseClient,
-  table: string,
-  column: string,
-  investorId: string,
-): Promise<boolean> {
-  const { data, error } = await admin.from(table).select('id').eq(column, investorId).limit(1)
-  if (error) throw new Error(`blocker:${table}:${error.message}`)
-  return (data?.length ?? 0) > 0
-}
-
 async function findBlockers(admin: SupabaseClient, investorId: string): Promise<string[]> {
-  const blockers: string[] = []
-
-  if (await hasAny(admin, 'ownership_holdings', 'investor_id', investorId)) blockers.push('ownership_holdings')
-  if (await hasAny(admin, 'ownership_inheritance', 'current_investor_id', investorId)) blockers.push('ownership_inheritance')
-  if (await hasAny(admin, 'profit_distribution_allocations', 'investor_id', investorId)) blockers.push('profit_distribution_allocations')
-  if (await hasAny(admin, 'profit_distribution_payment_proofs', 'investor_id', investorId)) blockers.push('profit_distribution_payment_proofs')
-
-  const { data: transfers, error: transfersError } = await admin
-    .from('ownership_transfers')
-    .select('id')
-    .or(`from_investor_id.eq.${investorId},to_investor_id.eq.${investorId}`)
-    .limit(1)
-  if (transfersError) throw new Error(`blocker:ownership_transfers:${transfersError.message}`)
-  if ((transfers?.length ?? 0) > 0) blockers.push('ownership_transfers')
-
-  return blockers
+  const { data, error } = await admin.rpc('rejected_investor_purge_blockers', {
+    p_investor_id: investorId,
+  })
+  if (error) throw new Error(`blockers:${error.message}`)
+  return Array.isArray(data) ? data.filter((value): value is string => typeof value === 'string') : []
 }
 
 Deno.serve(async (req: Request) => {
@@ -99,16 +77,9 @@ Deno.serve(async (req: Request) => {
   )
   if (authError || authorized !== true) return json(401, { error: 'unauthorized' })
 
-  const cutoff = new Date(Date.now() - RETENTION_HOURS * 60 * 60 * 1000).toISOString()
-  const { data, error } = await admin
-    .from('investors')
-    .select('id,reference_code,rejected_at,ktp_storage_bucket,ktp_storage_path')
-    .eq('status', 'rejected')
-    .not('rejected_at', 'is', null)
-    .lte('rejected_at', cutoff)
-    .order('rejected_at', { ascending: true })
-    .limit(BATCH_SIZE)
-
+  const { data, error } = await admin.rpc('list_rejected_investor_purge_candidates', {
+    p_limit: BATCH_SIZE,
+  })
   if (error) return json(500, { error: 'candidate_query_failed' })
 
   const candidates = (data ?? []) as Candidate[]
@@ -118,6 +89,8 @@ Deno.serve(async (req: Request) => {
 
   for (const candidate of candidates) {
     try {
+      // Re-check immediately before destruction. This closes the gap between the
+      // candidate query and any ownership/financial record created afterwards.
       const blockers = await findBlockers(admin, candidate.id)
       if (blockers.length > 0) {
         blocked += 1
@@ -136,7 +109,7 @@ Deno.serve(async (req: Request) => {
         'investor.rejected_purge_started',
         candidate,
         'Rejected investor retention purge started.',
-        { cutoff },
+        {},
       )
 
       let documentDeleted = false
