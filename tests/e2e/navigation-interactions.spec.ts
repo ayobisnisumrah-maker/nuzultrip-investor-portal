@@ -5,12 +5,16 @@ import {
   createAdminAccount,
   createInvestorAccount,
   deleteAccounts,
+  serviceClient,
   signIn,
   waitForRealtime,
 } from './helpers/accounts'
 import { createPublishedHomePortal } from './helpers/portal'
 
 const createdAccounts: string[] = []
+const createdFinancialPeriods: string[] = []
+
+type DashboardScope = '/admin' | '/investor'
 
 test.describe.configure({ mode: 'serial' })
 
@@ -19,6 +23,16 @@ test.beforeEach(async () => {
 })
 
 test.afterAll(async () => {
+  const supabase = serviceClient()
+  if (createdFinancialPeriods.length > 0) {
+    const { error } = await supabase
+      .from('financial_periods')
+      .delete()
+      .in('id', createdFinancialPeriods)
+    if (error) throw new Error(`Failed to delete route-audit financial periods: ${error.message}`)
+    createdFinancialPeriods.length = 0
+  }
+
   await deleteAccounts(createdAccounts)
   createdAccounts.length = 0
 })
@@ -43,7 +57,7 @@ async function clickShellLink(page: Page, href: string): Promise<void> {
   await waitForRealtime(page)
 }
 
-function normalizeDashboardHref(href: string, scope: '/admin' | '/investor'): string | null {
+function normalizeDashboardHref(href: string, scope: DashboardScope): string | null {
   try {
     const url = new URL(href, 'http://dashboard.local')
     if (url.origin !== 'http://dashboard.local') return null
@@ -56,10 +70,7 @@ function normalizeDashboardHref(href: string, scope: '/admin' | '/investor'): st
   }
 }
 
-async function collectDashboardLinks(
-  page: Page,
-  scope: '/admin' | '/investor',
-): Promise<string[]> {
+async function collectDashboardLinks(page: Page, scope: DashboardScope): Promise<string[]> {
   const hrefs = await page.locator(`a[href^="${scope}"]`).evaluateAll((anchors) =>
     anchors
       .map((anchor) => anchor.getAttribute('href'))
@@ -75,11 +86,8 @@ async function collectDashboardLinks(
   ]
 }
 
-async function crawlDashboard(
-  page: Page,
-  scope: '/admin' | '/investor',
-): Promise<string[]> {
-  const pending = [scope]
+async function crawlDashboard(page: Page, scope: DashboardScope): Promise<string[]> {
+  const pending: string[] = [scope]
   const visited = new Set<string>()
   const failures: string[] = []
 
@@ -124,6 +132,31 @@ async function crawlDashboard(
   expect(failures, `Dashboard route failures:\n${failures.join('\n')}`).toEqual([])
 
   return [...visited].sort()
+}
+
+async function createRouteAuditFinancialPeriod(): Promise<string> {
+  const supabase = serviceClient()
+  const uniqueYear = 2098
+  const { data, error } = await supabase
+    .from('financial_periods')
+    .insert({
+      period_type: 'monthly',
+      fiscal_year: uniqueYear,
+      period_index: 12,
+      starts_on: `${uniqueYear}-12-01`,
+      ends_on: `${uniqueYear}-12-31`,
+      currency: 'IDR',
+      status: 'open',
+    })
+    .select('id')
+    .single()
+
+  if (error || !data) {
+    throw new Error(`Failed to create route-audit financial period: ${error?.message}`)
+  }
+
+  createdFinancialPeriods.push(data.id as string)
+  return data.id as string
 }
 
 test('public portal CTA links scroll to their published targets', async ({ page }) => {
@@ -213,7 +246,11 @@ test('every reachable super admin dashboard page resolves without 404 or error b
     fullName: 'Dashboard Route Audit Admin E2E',
   })
   createdAccounts.push(admin.userId)
+  const financialPeriodId = await createRouteAuditFinancialPeriod()
 
   await signIn(page, admin, '/admin')
-  await crawlDashboard(page, '/admin')
+  const visited = await crawlDashboard(page, '/admin')
+
+  expect(visited).toContain(`/admin/financials/periods/${financialPeriodId}`)
+  expect(visited).toContain(`/admin/financials/periods/${financialPeriodId}/edit`)
 })
