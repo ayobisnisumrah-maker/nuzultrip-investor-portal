@@ -3,6 +3,7 @@
 import Image from 'next/image'
 import { useRef, useState } from 'react'
 import type { FormEvent } from 'react'
+import { useRouter } from 'next/navigation'
 import { Upload } from 'lucide-react'
 
 import { Alert } from '@/ui/alert'
@@ -17,6 +18,7 @@ export function CompanyLogoEditor({
   initialFileName: string | null
   canUpdate: boolean
 }) {
+  const router = useRouter()
   const inputRef = useRef<HTMLInputElement | null>(null)
   const [logoUrl, setLogoUrl] = useState(initialUrl)
   const [fileName, setFileName] = useState(initialFileName)
@@ -48,8 +50,9 @@ export function CompanyLogoEditor({
       if (inputRef.current) inputRef.current.value = ''
       setMessage({
         tone: 'success',
-        text: 'Logo perusahaan berhasil diperbarui untuk portal publik, login, registrasi, dasbor Admin, dan dasbor Investor.',
+        text: 'Logo perusahaan berhasil diperbarui dan disinkronkan ke portal, autentikasi, Admin, Investor, serta ikon/metadata browser.',
       })
+      router.refresh()
     } catch (error) {
       setMessage({
         tone: 'danger',
@@ -75,7 +78,7 @@ export function CompanyLogoEditor({
           <div className="text-center">
             <p className="text-body-sm text-fg font-medium">Logo default masih digunakan</p>
             <p className="text-caption text-fg-muted mt-1">
-              Unggah logo resmi untuk seluruh portal, halaman autentikasi, dan dasbor.
+              Unggah logo resmi untuk seluruh portal, halaman autentikasi, dasbor, dan metadata browser.
             </p>
           </div>
         )}
