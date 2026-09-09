@@ -157,14 +157,15 @@ beforeAll(async () => {
 }, 60_000)
 
 afterAll(async () => {
-  if (content) {
+  const c = content
+  if (c) {
     await cleanup(async (tx) => {
-      await tx`delete from storage.objects where id in (${content.activeStorageObjectId}, ${content.inactiveStorageObjectId})`
-      await tx`delete from public.notifications where id in (${content.activeNotificationId}, ${content.inactiveNotificationId})`
-      await tx`delete from public.message_threads where id in (${content.activeThreadId}, ${content.inactiveThreadId})`
-      await tx`delete from public.ownership_transfers where id in (${content.activeTransferId}, ${content.inactiveTransferId})`
-      await tx`delete from public.ownership_holdings where id in (${content.activeHoldingId}, ${content.inactiveHoldingId})`
-      await tx`delete from public.ownership_offerings where id = ${content.offeringId}`
+      await tx`delete from storage.objects where id in (${c.activeStorageObjectId}, ${c.inactiveStorageObjectId})`
+      await tx`delete from public.notifications where id in (${c.activeNotificationId}, ${c.inactiveNotificationId})`
+      await tx`delete from public.message_threads where id in (${c.activeThreadId}, ${c.inactiveThreadId})`
+      await tx`delete from public.ownership_transfers where id in (${c.activeTransferId}, ${c.inactiveTransferId})`
+      await tx`delete from public.ownership_holdings where id in (${c.activeHoldingId}, ${c.inactiveHoldingId})`
+      await tx`delete from public.ownership_offerings where id = ${c.offeringId}`
     })
   }
   if (fixtures) await destroyFixtures(fixtures)
@@ -174,45 +175,51 @@ afterAll(async () => {
 describe('investor operational lifecycle gates', () => {
   it('keeps operational data available to an active investor', async () => {
     if (!fixtures || !content) throw new Error('Operational gate fixtures were not initialized.')
-    const principal = { kind: 'authenticated' as const, userId: fixtures.investorA.userId }
+    const f = fixtures
+    const c = content
+    const principal = { kind: 'authenticated' as const, userId: f.investorA.userId }
 
-    expect(await as(principal, (tx) => tx`select id from public.message_threads where id = ${content.activeThreadId}`)).toHaveLength(1)
-    expect(await as(principal, (tx) => tx`select id from public.messages where id = ${content.activeMessageId}`)).toHaveLength(1)
-    expect(await as(principal, (tx) => tx`select user_id from public.thread_participants where thread_id = ${content.activeThreadId} and user_id = ${fixtures.investorA.userId}`)).toHaveLength(1)
-    expect(await as(principal, (tx) => tx`select message_id from public.message_reads where message_id = ${content.activeMessageId} and user_id = ${fixtures.investorA.userId}`)).toHaveLength(1)
-    expect(await as(principal, (tx) => tx`select id from public.notifications where id = ${content.activeNotificationId}`)).toHaveLength(1)
-    expect(await as(principal, (tx) => tx`select id from storage.objects where id = ${content.activeStorageObjectId}`)).toHaveLength(1)
+    expect(await as(principal, (tx) => tx`select id from public.message_threads where id = ${c.activeThreadId}`)).toHaveLength(1)
+    expect(await as(principal, (tx) => tx`select id from public.messages where id = ${c.activeMessageId}`)).toHaveLength(1)
+    expect(await as(principal, (tx) => tx`select user_id from public.thread_participants where thread_id = ${c.activeThreadId} and user_id = ${f.investorA.userId}`)).toHaveLength(1)
+    expect(await as(principal, (tx) => tx`select message_id from public.message_reads where message_id = ${c.activeMessageId} and user_id = ${f.investorA.userId}`)).toHaveLength(1)
+    expect(await as(principal, (tx) => tx`select id from public.notifications where id = ${c.activeNotificationId}`)).toHaveLength(1)
+    expect(await as(principal, (tx) => tx`select id from storage.objects where id = ${c.activeStorageObjectId}`)).toHaveLength(1)
 
     const sales = await as(principal, (tx) => tx`select id from app.list_my_ownership_sales()`)
-    expect(sales.map((row) => row['id'])).toContain(content.activeTransferId)
+    expect(sales.map((row) => row['id'])).toContain(c.activeTransferId)
   })
 
   it('revokes all operational data from an inactive investor', async () => {
     if (!fixtures || !content) throw new Error('Operational gate fixtures were not initialized.')
-    const principal = { kind: 'authenticated' as const, userId: fixtures.investorInactive.userId }
+    const f = fixtures
+    const c = content
+    const principal = { kind: 'authenticated' as const, userId: f.investorInactive.userId }
 
-    expect(await as(principal, (tx) => tx`select id from public.message_threads where id = ${content.inactiveThreadId}`)).toHaveLength(0)
-    expect(await as(principal, (tx) => tx`select id from public.messages where id = ${content.inactiveMessageId}`)).toHaveLength(0)
-    expect(await as(principal, (tx) => tx`select user_id from public.thread_participants where thread_id = ${content.inactiveThreadId} and user_id = ${fixtures.investorInactive.userId}`)).toHaveLength(0)
-    expect(await as(principal, (tx) => tx`select message_id from public.message_reads where message_id = ${content.inactiveMessageId} and user_id = ${fixtures.investorInactive.userId}`)).toHaveLength(0)
-    expect(await as(principal, (tx) => tx`select id from public.notifications where id = ${content.inactiveNotificationId}`)).toHaveLength(0)
-    expect(await as(principal, (tx) => tx`select id from storage.objects where id = ${content.inactiveStorageObjectId}`)).toHaveLength(0)
+    expect(await as(principal, (tx) => tx`select id from public.message_threads where id = ${c.inactiveThreadId}`)).toHaveLength(0)
+    expect(await as(principal, (tx) => tx`select id from public.messages where id = ${c.inactiveMessageId}`)).toHaveLength(0)
+    expect(await as(principal, (tx) => tx`select user_id from public.thread_participants where thread_id = ${c.inactiveThreadId} and user_id = ${f.investorInactive.userId}`)).toHaveLength(0)
+    expect(await as(principal, (tx) => tx`select message_id from public.message_reads where message_id = ${c.inactiveMessageId} and user_id = ${f.investorInactive.userId}`)).toHaveLength(0)
+    expect(await as(principal, (tx) => tx`select id from public.notifications where id = ${c.inactiveNotificationId}`)).toHaveLength(0)
+    expect(await as(principal, (tx) => tx`select id from storage.objects where id = ${c.inactiveStorageObjectId}`)).toHaveLength(0)
     expect(await as(principal, (tx) => tx`select id from app.list_my_ownership_sales()`)).toHaveLength(0)
   })
 
   it('prevents an inactive investor from creating or cancelling a share sale', async () => {
     if (!fixtures || !content) throw new Error('Operational gate fixtures were not initialized.')
-    const principal = { kind: 'authenticated' as const, userId: fixtures.investorInactive.userId }
+    const f = fixtures
+    const c = content
+    const principal = { kind: 'authenticated' as const, userId: f.investorInactive.userId }
 
     const createError = await expectRejected(() =>
       as(principal, (tx) =>
-        tx`select app.create_ownership_sale_request(${content.inactiveHoldingId}, 1, 100000000, 'should fail')`,
+        tx`select app.create_ownership_sale_request(${c.inactiveHoldingId}, 1, 100000000, 'should fail')`,
       ),
     )
     expect(createError.code).toBe('42501')
 
     const cancelError = await expectRejected(() =>
-      as(principal, (tx) => tx`select app.cancel_ownership_sale_request(${content.inactiveTransferId})`),
+      as(principal, (tx) => tx`select app.cancel_ownership_sale_request(${c.inactiveTransferId})`),
     )
     expect(cancelError.code).toBe('42501')
   })
