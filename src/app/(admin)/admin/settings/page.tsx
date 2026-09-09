@@ -1,9 +1,11 @@
 import type { Metadata } from 'next'
 
+import { BrandSettingsForm } from '@/features/admin/brand-settings-form'
 import { EmailSettingsForm } from '@/features/admin/email-settings-form'
 import { NotificationSoundSettingsForm } from '@/features/admin/notification-sound-settings-form'
 import { TypographySettingsForm } from '@/features/admin/typography-settings-form'
 import { adminWithPermission } from '@/server/auth/page-guards'
+import { getBrandSettings } from '@/server/settings/brand'
 import { getEmailSettings } from '@/server/settings/email'
 import { getNotificationSoundSettings } from '@/server/settings/notification-sound'
 import { getTypographySettings } from '@/server/settings/typography'
@@ -31,7 +33,8 @@ export default async function AdminSettingsPage() {
     )
   }
 
-  const [typographySettings, emailSettings, notificationSound] = await Promise.all([
+  const [brandSettings, typographySettings, emailSettings, notificationSound] = await Promise.all([
+    getBrandSettings(),
     getTypographySettings(),
     getEmailSettings(),
     getNotificationSoundSettings(),
@@ -49,6 +52,16 @@ export default async function AdminSettingsPage() {
           Kelola konfigurasi aplikasi yang dapat diubah tanpa mengubah kode sumber.
         </p>
       </header>
+
+      <section className="flex flex-col gap-5">
+        <div>
+          <h2 className="font-display text-heading-md text-fg">Identitas Aplikasi</h2>
+          <p className="text-body-sm text-fg-muted mt-1">
+            Atur nama yang tampil pada tab browser dan identitas global sistem. Logo utama tetap dikelola dari Profil Perusahaan.
+          </p>
+        </div>
+        <BrandSettingsForm settings={brandSettings} canUpdate={canUpdate} />
+      </section>
 
       <section className="flex flex-col gap-5">
         <div>
