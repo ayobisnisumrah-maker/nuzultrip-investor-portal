@@ -1,35 +1,36 @@
-import { JetBrains_Mono, Newsreader, Plus_Jakarta_Sans } from 'next/font/google'
+import { Figtree } from 'next/font/google'
 
 /**
- * Typefaces are self-hosted by `next/font` at build time. Nothing is fetched
- * from a font CDN at runtime — which is both a performance decision and a
- * requirement of the Content-Security-Policy (docs/SECURITY.md §7).
+ * Figtree is the single type family for the whole product surface: public
+ * portal, authentication, investor portal, admin dashboard, financial data,
+ * and operational UI. `next/font` self-hosts the generated assets at build
+ * time, so no font CDN is contacted at runtime.
  *
- * See docs/DESIGN-SYSTEM.md §3 for the rationale behind each choice.
+ * The three exports intentionally preserve the existing design-system
+ * contracts (`display`, `sans`, and `mono`) while resolving all of them to
+ * Figtree. This lets the product change typography globally without forcing
+ * feature-level refactors.
  */
 
-/** Display — editorial gravitas. Reads as a considered publication. */
-export const fontDisplay = Newsreader({
+export const fontDisplay = Figtree({
   subsets: ['latin'],
   variable: '--font-newsreader',
   display: 'swap',
   preload: true,
 })
 
-/** UI and body — designed in Jakarta. A real, non-decorative identity signal. */
-export const fontSans = Plus_Jakarta_Sans({
+export const fontSans = Figtree({
   subsets: ['latin'],
   variable: '--font-jakarta',
   display: 'swap',
   preload: true,
 })
 
-/** Numeric — tabular financial figures, reference codes, checksums. */
-export const fontMono = JetBrains_Mono({
+export const fontMono = Figtree({
   subsets: ['latin'],
   variable: '--font-jetbrains',
   display: 'swap',
-  preload: false,
+  preload: true,
 })
 
 export const fontVariables = [fontDisplay.variable, fontSans.variable, fontMono.variable].join(' ')
