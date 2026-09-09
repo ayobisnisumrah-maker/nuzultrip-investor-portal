@@ -49,6 +49,10 @@ export type Database = {
         Args: { p_role_id: string }
         Returns: undefined
       }
+      authorize_rejected_purge_scheduler: {
+        Args: { p_token: string }
+        Returns: boolean
+      }
       cancel_ownership_sale_request: {
         Args: { p_transfer_id: string }
         Returns: undefined
@@ -184,6 +188,16 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      list_rejected_investor_purge_candidates: {
+        Args: { p_limit?: number }
+        Returns: {
+          id: string
+          ktp_storage_bucket: string
+          ktp_storage_path: string
+          reference_code: string
+          rejected_at: string
+        }[]
+      }
       mark_profit_distribution_allocation_paid: {
         Args: { p_allocation_id: string; p_payment_reference?: string }
         Returns: {
@@ -230,6 +244,10 @@ export type Database = {
       reject_ownership_sale: {
         Args: { p_reason: string; p_transfer_id: string }
         Returns: undefined
+      }
+      rejected_investor_purge_blockers: {
+        Args: { p_investor_id: string }
+        Returns: string[]
       }
       thread_accepts_investor_reply: {
         Args: { p_thread_id: string }
@@ -1483,6 +1501,7 @@ export type Database = {
           organization_name: string | null
           organization_role: string | null
           reference_code: string
+          rejected_at: string | null
           rejection_reason: string | null
           relationship_manager_id: string | null
           reviewed_at: string | null
@@ -1517,6 +1536,7 @@ export type Database = {
           organization_name?: string | null
           organization_role?: string | null
           reference_code: string
+          rejected_at?: string | null
           rejection_reason?: string | null
           relationship_manager_id?: string | null
           reviewed_at?: string | null
@@ -1551,6 +1571,7 @@ export type Database = {
           organization_name?: string | null
           organization_role?: string | null
           reference_code?: string
+          rejected_at?: string | null
           rejection_reason?: string | null
           relationship_manager_id?: string | null
           reviewed_at?: string | null
