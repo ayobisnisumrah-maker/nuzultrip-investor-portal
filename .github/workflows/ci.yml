@@ -101,9 +101,13 @@ jobs:
               '-H', 'Accept: application/vnd.github+json',
               '-H', 'X-GitHub-Api-Version: 2022-11-28',
             ]
-            if (body) args.push('-H', 'Content-Type: application/json', '--data-binary', JSON.stringify(body))
+            let input
+            if (body) {
+              args.push('-H', 'Content-Type: application/json', '--data-binary', '@-')
+              input = JSON.stringify(body)
+            }
             args.push(`https://api.github.com/repos/${repo}${path}`)
-            return JSON.parse(execFileSync('curl', args, { encoding: 'utf8' }))
+            return JSON.parse(execFileSync('curl', args, { encoding: 'utf8', input }))
           }
 
           function putFile(path, content, message) {
