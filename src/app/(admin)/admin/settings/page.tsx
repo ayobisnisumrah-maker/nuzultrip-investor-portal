@@ -2,9 +2,11 @@ import type { Metadata } from 'next'
 
 import { EmailSettingsForm } from '@/features/admin/email-settings-form'
 import { NotificationSoundSettingsForm } from '@/features/admin/notification-sound-settings-form'
+import { TypographySettingsForm } from '@/features/admin/typography-settings-form'
 import { adminWithPermission } from '@/server/auth/page-guards'
 import { getEmailSettings } from '@/server/settings/email'
 import { getNotificationSoundSettings } from '@/server/settings/notification-sound'
+import { getTypographySettings } from '@/server/settings/typography'
 
 export const metadata: Metadata = {
   title: 'Pengaturan',
@@ -29,7 +31,8 @@ export default async function AdminSettingsPage() {
     )
   }
 
-  const [emailSettings, notificationSound] = await Promise.all([
+  const [typographySettings, emailSettings, notificationSound] = await Promise.all([
+    getTypographySettings(),
     getEmailSettings(),
     getNotificationSoundSettings(),
   ])
@@ -46,6 +49,16 @@ export default async function AdminSettingsPage() {
           Kelola konfigurasi aplikasi yang dapat diubah tanpa mengubah kode sumber.
         </p>
       </header>
+
+      <section className="flex flex-col gap-5">
+        <div>
+          <h2 className="font-display text-heading-md text-fg">Tampilan & Tipografi</h2>
+          <p className="text-body-sm text-fg-muted mt-1">
+            Atur keluarga font, ukuran, kerapatan huruf, dan jarak antarbaris untuk seluruh aplikasi.
+          </p>
+        </div>
+        <TypographySettingsForm settings={typographySettings} canUpdate={canUpdate} />
+      </section>
 
       <section className="flex flex-col gap-5">
         <div>
