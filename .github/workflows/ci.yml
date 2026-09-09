@@ -76,7 +76,25 @@ jobs:
         run: supabase db reset
 
       - name: Verify generated database types
+        id: db_types_check
+        continue-on-error: true
         run: pnpm db:types --check
+
+      - name: Generate database types artifact
+        if: steps.db_types_check.outcome == 'failure'
+        run: pnpm db:types
+
+      - name: Upload generated database types artifact
+        if: steps.db_types_check.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-database-types
+          path: src/types/database.ts
+          retention-days: 1
+
+      - name: Fail on database type drift
+        if: steps.db_types_check.outcome == 'failure'
+        run: exit 1
 
       - name: Typecheck
         run: pnpm typecheck
