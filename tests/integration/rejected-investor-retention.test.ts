@@ -70,7 +70,8 @@ describe('rejected investor retention', () => {
   })
 
   it('does not select a rejected applicant before the 72-hour retention window', async () => {
-    const rows = await db()< { id: string }[]>`
+    const sql = db()
+    const rows = await sql<{ id: string }[]>`
       select id from app.list_rejected_investor_purge_candidates(50)
       where id = ${investorId}
     `
@@ -78,6 +79,8 @@ describe('rejected investor retention', () => {
   })
 
   it('selects the applicant after 72 hours and reports durable ownership blockers', async () => {
+    const sql = db()
+
     await cleanup(async (tx) => {
       await tx`
         update public.investors
@@ -86,13 +89,13 @@ describe('rejected investor retention', () => {
       `
     })
 
-    const eligible = await db()< { id: string }[]>`
+    const eligible = await sql<{ id: string }[]>`
       select id from app.list_rejected_investor_purge_candidates(50)
       where id = ${investorId}
     `
     expect(eligible).toHaveLength(1)
 
-    const [offering] = await db()< { id: string }[]>`
+    const [offering] = await sql<{ id: string }[]>`
       insert into public.ownership_offerings (
         name, code, status, total_offered_bps, unit_ownership_bps,
         unit_price, total_units, distribution_cadence_months, transfer_lock_months
@@ -106,7 +109,7 @@ describe('rejected investor retention', () => {
     if (!offering) throw new Error('Retention safety offering was not created.')
     offeringId = offering.id
 
-    const [holding] = await db()< { id: string }[]>`
+    const [holding] = await sql<{ id: string }[]>`
       insert into public.ownership_holdings (
         offering_id, investor_id, units, ownership_bps, acquisition_at,
         transfer_eligible_at, status, acquisition_reference
@@ -119,7 +122,7 @@ describe('rejected investor retention', () => {
     if (!holding) throw new Error('Retention safety holding was not created.')
     holdingId = holding.id
 
-    const [blockerRow] = await db()< { blockers: string[] }[]>`
+    const [blockerRow] = await sql<{ blockers: string[] }[]>`
       select app.rejected_investor_purge_blockers(${investorId}) as blockers
     `
     expect(blockerRow?.blockers).toContain('ownership_holdings')
