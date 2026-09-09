@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 
-import { PublicPortalReference } from '@/features/portal/public-portal-reference'
+import { PublicPortalExact } from '@/features/portal/public-portal-exact'
 import { PublicRealtimeSurface } from '@/features/realtime/public-realtime-surface'
 import { getPublicBrandLogo } from '@/server/portal/public-branding'
 import {
@@ -87,7 +87,7 @@ export default async function Home() {
 
   return (
     <PublicRealtimeSurface>
-      <PublicPortalReference
+      <PublicPortalExact
         page={{
           title: 'Nuzultrip',
           seo: portal.page.seo,
