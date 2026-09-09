@@ -6,7 +6,6 @@ import '@/styles/globals.css'
 import '@/styles/public-portal-rounded.css'
 import '@/styles/public-portal-hero-title.css'
 import '@/styles/public-portal-functional.css'
-import '@/styles/public-portal-header-override.css'
 import '@/styles/global-typography.css'
 
 import { getClientEnv } from '@/lib/env'
