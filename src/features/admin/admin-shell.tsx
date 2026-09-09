@@ -109,6 +109,7 @@ export function AdminShell({
   initialUnreadMessages,
   initialNewInquiries,
   brandLogoUrl,
+  brandName,
   children,
 }: {
   sections: readonly SerializableNavSection[]
@@ -117,6 +118,7 @@ export function AdminShell({
   initialUnreadMessages: number
   initialNewInquiries: number
   brandLogoUrl?: string | null
+  brandName: string
   children: ReactNode
 }) {
   const router = useRouter()
@@ -189,7 +191,7 @@ export function AdminShell({
     <AppShell
       homeHref="/admin"
       sections={resolved}
-      brand={<Brand sublabel="Admin Console" logoUrl={brandLogoUrl} />}
+      brand={<Brand label={brandName} sublabel="Admin Console" logoUrl={brandLogoUrl} />}
       mobileSidebarFooter={
         <div className="[&>button]:w-full [&>button]:justify-start">
           <SignOutButton />
@@ -230,7 +232,7 @@ export function AdminShell({
             <div className="relative flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
               <div>
                 <p className="text-caption text-fg-subtle mb-1 font-medium tracking-[0.14em] uppercase">
-                  Nuzultrip Investor Relations
+                  {brandName}
                 </p>
 
                 <h1 className="font-display text-heading-lg text-fg">Admin Console</h1>

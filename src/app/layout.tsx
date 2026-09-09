@@ -9,6 +9,8 @@ import '@/styles/public-portal-functional.css'
 import '@/styles/global-typography.css'
 
 import { getClientEnv } from '@/lib/env'
+import { getPublicBrandLogo } from '@/server/portal/public-branding'
+import { getPublicBrandName } from '@/server/settings/brand'
 import { getTypographySettings, typographyCssVariables } from '@/server/settings/typography'
 import { fontVariables } from '@/ui/fonts'
 import { ThemeProvider } from '@/ui/theme/theme-provider'
@@ -16,26 +18,43 @@ import { THEME_COOKIE, resolveInitialTheme, themeAttribute } from '@/ui/theme/th
 
 const env = getClientEnv()
 
-export const metadata: Metadata = {
-  title: {
-    default: 'Nuzultrip Equity Relations',
-    template: '%s · Nuzultrip Equity Relations',
-  },
-  description:
-    'Platform resmi Nuzultrip untuk informasi perusahaan, pengelolaan equity, kepemilikan, dan komunikasi pemangku kepentingan.',
-  applicationName: 'Nuzultrip Equity Relations',
-  metadataBase: new URL(env.NEXT_PUBLIC_SITE_URL),
-  openGraph: {
-    type: 'website',
-    siteName: 'Nuzultrip Equity Relations',
-    title: 'Nuzultrip Equity Relations',
+export async function generateMetadata(): Promise<Metadata> {
+  const [brandName, brandLogoUrl] = await Promise.all([
+    getPublicBrandName(),
+    getPublicBrandLogo(),
+  ])
+
+  return {
+    title: {
+      default: brandName,
+      template: `%s · ${brandName}`,
+    },
     description:
       'Platform resmi untuk informasi perusahaan, pengelolaan equity, kepemilikan, dan komunikasi pemangku kepentingan.',
-  },
-  robots: {
-    index: true,
-    follow: true,
-  },
+    applicationName: brandName,
+    metadataBase: new URL(env.NEXT_PUBLIC_SITE_URL),
+    ...(brandLogoUrl
+      ? {
+          icons: {
+            icon: brandLogoUrl,
+            shortcut: brandLogoUrl,
+            apple: brandLogoUrl,
+          },
+        }
+      : {}),
+    openGraph: {
+      type: 'website',
+      siteName: brandName,
+      title: brandName,
+      description:
+        'Platform resmi untuk informasi perusahaan, pengelolaan equity, kepemilikan, dan komunikasi pemangku kepentingan.',
+      ...(brandLogoUrl ? { images: [{ url: brandLogoUrl, alt: brandName }] } : {}),
+    },
+    robots: {
+      index: true,
+      follow: true,
+    },
+  }
 }
 
 export const viewport: Viewport = {

@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Building2, History, ImageIcon } from 'lucide-react'
 
 import { CompanyLogoEditor } from '@/features/admin/company-logo-editor'
+import { CompanyProfileIdentityEditor } from '@/features/admin/company-profile-identity-editor'
 import { adminWithPermission } from '@/server/auth/page-guards'
 import { getServerSupabase } from '@/server/supabase/server'
 import { formatDateTime } from '@/lib/format'
@@ -9,7 +10,6 @@ import { Alert } from '@/ui/alert'
 import { Card, CardBody, CardHeader, CardTitle } from '@/ui/card'
 import { DetailList, DetailRow } from '@/ui/data'
 import { PageHeader, Stack } from '@/ui/layout'
-import { EmptyState } from '@/ui/states'
 
 export const metadata: Metadata = { title: 'Profil Perusahaan' }
 
@@ -50,6 +50,7 @@ export default async function CompanyProfilePage() {
     )
   }
 
+  const canUpdate = principal.permissions.has('company_profile.update')
   const logo = logoSetting?.value && typeof logoSetting.value === 'object' && !Array.isArray(logoSetting.value)
     ? (logoSetting.value as BrandLogoSetting)
     : null
@@ -68,7 +69,7 @@ export default async function CompanyProfilePage() {
       <PageHeader
         eyebrow="Perusahaan"
         title="Profil Perusahaan"
-        description="Kelola identitas brand perusahaan dan pantau lifecycle profil yang digunakan oleh portal investor. Logo resmi dapat diganti langsung dari halaman ini."
+        description="Kelola identitas perusahaan dan logo resmi dari satu tempat. Perubahan identitas dan logo disiarkan ke portal, autentikasi, Admin, Investor, dan metadata browser secara realtime."
       />
 
       <Card>
@@ -82,7 +83,7 @@ export default async function CompanyProfilePage() {
           <CompanyLogoEditor
             initialUrl={logo?.public_url ?? null}
             initialFileName={logo?.original_filename ?? null}
-            canUpdate={principal.permissions.has('company_profile.update')}
+            canUpdate={canUpdate}
           />
           {logoSetting?.updated_at ? (
             <p className="text-caption text-fg-subtle mt-4">Terakhir diperbarui {formatDateTime(logoSetting.updated_at)}</p>
@@ -99,26 +100,35 @@ export default async function CompanyProfilePage() {
         </CardHeader>
         <CardBody>
           {!rows.length ? (
-            <EmptyState
-              title="Belum ada profil perusahaan berversi"
-              description="Database profil perusahaan belum memiliki record. Logo tetap dapat dikelola secara terpisah tanpa membuat data profil contoh."
+            <CompanyProfileIdentityEditor
+              value={{ id: null, displayName: '', legalName: '', slug: 'nuzultrip' }}
+              canUpdate={canUpdate}
             />
           ) : (
-            <div className="grid gap-4">
+            <div className="grid gap-5">
               {rows.map((profile) => {
                 const current = profile.current_version_id ? versionMap.get(profile.current_version_id) : undefined
                 const published = profile.published_version_id ? versionMap.get(profile.published_version_id) : undefined
                 return (
                   <div key={profile.id} className="border-border bg-canvas rounded-xl border p-5">
-                    <DetailList>
-                      <DetailRow label="Nama tampilan">{profile.display_name}</DetailRow>
-                      <DetailRow label="Nama legal">{profile.legal_name}</DetailRow>
-                      <DetailRow label="Slug"><span className="font-mono">{profile.slug}</span></DetailRow>
-                      <DetailRow label="Status">{profile.status}</DetailRow>
-                      <DetailRow label="Versi aktif">{current ? `v${current.version_number} · ${current.status}` : '—'}</DetailRow>
-                      <DetailRow label="Versi terbit">{published ? `v${published.version_number} · ${published.status}` : 'Belum diterbitkan'}</DetailRow>
-                      <DetailRow label="Diperbarui">{formatDateTime(profile.updated_at)}</DetailRow>
-                    </DetailList>
+                    <CompanyProfileIdentityEditor
+                      value={{
+                        id: profile.id,
+                        displayName: profile.display_name,
+                        legalName: profile.legal_name,
+                        slug: profile.slug,
+                      }}
+                      canUpdate={canUpdate}
+                    />
+
+                    <div className="border-border mt-6 border-t pt-5">
+                      <DetailList>
+                        <DetailRow label="Status">{profile.status}</DetailRow>
+                        <DetailRow label="Versi aktif">{current ? `v${current.version_number} · ${current.status}` : '—'}</DetailRow>
+                        <DetailRow label="Versi terbit">{published ? `v${published.version_number} · ${published.status}` : 'Belum diterbitkan'}</DetailRow>
+                        <DetailRow label="Diperbarui">{formatDateTime(profile.updated_at)}</DetailRow>
+                      </DetailList>
+                    </div>
                   </div>
                 )
               })}
@@ -136,7 +146,7 @@ export default async function CompanyProfilePage() {
         </CardHeader>
         <CardBody>
           <p className="text-body-sm text-fg-muted">
-            Perubahan identitas perusahaan yang bersifat konten tetap mengikuti mekanisme versi, review, approval, dan publish. Asset logo dikelola langsung agar penggantian brand tidak memerlukan perubahan source code.
+            Identitas utama dan logo dapat dikelola langsung dari halaman ini. Konten profil berversi tetap mengikuti mekanisme draft, review, approval, dan publish agar perubahan publik dapat diaudit dan tidak melewati lifecycle publikasi.
           </p>
         </CardBody>
       </Card>

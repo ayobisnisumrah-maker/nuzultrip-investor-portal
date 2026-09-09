@@ -5,26 +5,32 @@ import { Avatar } from '@/ui/primitives'
 import { LiveNavBadge } from '@/features/investor/live-nav-badge'
 import { SignOutButton } from '@/features/shell/sign-out-button'
 import { RealtimeProvider } from '@/features/realtime/realtime-provider'
+import { RealtimeRefresher } from '@/features/realtime/realtime-refresher'
 import { RealtimeStatus } from '@/features/realtime/realtime-status'
 import { NotificationSoundListener } from '@/features/notifications/notification-sound-listener'
 import { requireInvestorPage } from '@/server/auth/page-guards'
 import { getUnreadMessageCount } from '@/server/messaging/lifecycle'
 import { getNotificationSoundSettings } from '@/server/settings/notification-sound'
+import { getPublicBrandName } from '@/server/settings/brand'
 import { getServerSupabase } from '@/server/supabase/server'
 import { getPublicBrandLogo } from '@/server/portal/public-branding'
 import { ToastProvider } from '@/ui/toast'
 import { TooltipProvider } from '@/ui/menu'
 
-export const metadata: Metadata = {
-  title: { default: 'Investor', template: '%s · Investor Nuzultrip' },
-  robots: { index: false, follow: false },
+export async function generateMetadata(): Promise<Metadata> {
+  const brandName = await getPublicBrandName()
+  return {
+    title: { default: `Investor · ${brandName}`, template: `%s · Investor · ${brandName}` },
+    robots: { index: false, follow: false },
+  }
 }
 
 export default async function InvestorLayout({ children }: { children: React.ReactNode }) {
   const principal = await requireInvestorPage()
-  const [sound, brandLogoUrl] = await Promise.all([
+  const [sound, brandLogoUrl, brandName] = await Promise.all([
     getNotificationSoundSettings(),
     getPublicBrandLogo(),
+    getPublicBrandName(),
   ])
   const supabase = await getServerSupabase()
 
@@ -45,6 +51,7 @@ export default async function InvestorLayout({ children }: { children: React.Rea
 
   const investorTopic = topics.investor(principal.investorId)
   const userTopic = topics.user(principal.userId)
+  const brandTopic = topics.portal()
 
   const sections = principal.hasDataAccess
     ? [
@@ -86,11 +93,13 @@ export default async function InvestorLayout({ children }: { children: React.Rea
   const subscribed = [
     investorTopic,
     userTopic,
+    brandTopic,
     ...(principal.hasDataAccess ? [topics.allInvestors()] : []),
   ]
 
   return (
     <RealtimeProvider topics={subscribed}>
+      <RealtimeRefresher topic={brandTopic} kinds={['portal.theme_updated']} />
       <NotificationSoundListener
         topics={subscribed}
         role="investor"
@@ -103,7 +112,7 @@ export default async function InvestorLayout({ children }: { children: React.Rea
           <AppShell
             homeHref="/investor"
             sections={sections}
-            brand={<Brand sublabel="Investor" logoUrl={brandLogoUrl} />}
+            brand={<Brand label={brandName} sublabel="Investor" logoUrl={brandLogoUrl} />}
             mobileSidebarFooter={
               <div className="[&>button]:w-full [&>button]:justify-start">
                 <SignOutButton />
