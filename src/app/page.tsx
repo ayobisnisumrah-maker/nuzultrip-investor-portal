@@ -22,7 +22,6 @@ const HOME_SECTION_KINDS = new Set([
   'financial_highlights',
   'investor_updates',
   'documents',
-  'contact_cta',
   'legal_notice',
   'rich_content',
   'stat_grid',
