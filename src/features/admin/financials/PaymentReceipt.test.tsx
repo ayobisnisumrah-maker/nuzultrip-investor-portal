@@ -66,4 +66,23 @@ describe('PaymentReceipt', () => {
     render(<PaymentReceipt data={{ ...baseData, companyContact: null }} />)
     expect(screen.queryByText('Kontak')).toBeNull()
   })
+
+  it('renders management authorization with signature and stamp assets', () => {
+    render(
+      <PaymentReceipt
+        data={{
+          ...baseData,
+          signatureUrl: '/images/test-signature.png',
+          stampUrl: '/images/test-stamp.png',
+          signerName: 'Maulana',
+          signerPosition: 'Management',
+        }}
+      />,
+    )
+
+    expect(screen.getByText('Managemen')).toBeTruthy()
+    expect(screen.queryByText('Tanda tangan & stempel')).toBeNull()
+    expect(screen.getByAltText('Tanda tangan')).toBeTruthy()
+    expect(screen.getByAltText('Stempel perusahaan')).toBeTruthy()
+  })
 })

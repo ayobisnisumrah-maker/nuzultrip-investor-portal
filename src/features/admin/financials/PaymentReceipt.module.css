@@ -317,24 +317,35 @@
 }
 .signature {
   position: relative;
+  width: 280px;
 }
 .signatureImages {
-  height: 63px;
-  display: flex;
-  align-items: flex-end;
-  gap: 12px;
-  margin-top: 6px;
+  position: relative;
+  width: 190px;
+  height: 104px;
+  margin-top: 8px;
+  align-self: center;
 }
 .signatureImage {
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  top: 47%;
   width: auto;
-  max-width: 135px;
-  height: 58px;
+  max-width: 160px;
+  height: 72px;
   object-fit: contain;
+  transform: translate(-55%, -50%);
 }
 .stampImage {
-  width: 65px;
-  height: 65px;
+  position: absolute;
+  z-index: 1;
+  left: 50%;
+  top: 50%;
+  width: 92px;
+  height: 92px;
   object-fit: contain;
+  transform: translate(-50%, -50%);
 }
 .signatureLine {
   width: 100%;
