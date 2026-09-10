@@ -1,0 +1,39 @@
+name: Export DB Types
+
+on:
+  push:
+    branches: [feat/refund-policy-terms-letterhead]
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.28.1
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: supabase/setup-cli@v2
+        with:
+          version: latest
+          github-token: ${{ github.token }}
+      - run: supabase start
+      - run: supabase db reset
+      - run: pnpm db:types
+      - uses: actions/upload-artifact@v4
+        with:
+          name: generated-database-types
+          path: src/types/database.ts
+          if-no-files-found: error
