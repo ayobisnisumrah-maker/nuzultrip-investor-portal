@@ -37,7 +37,10 @@ set search_path = ''
 as $$
 declare
   v_row public.profit_distributions%rowtype;
-  v_period public.financial_periods%rowtype;
+  v_period_id uuid;
+  v_period_start date;
+  v_period_end date;
+  v_period_status public.period_status;
   v_report_status public.publication_status;
   v_version_status public.publication_status;
   v_revenue numeric(20,2);
@@ -59,8 +62,9 @@ begin
     raise exception 'Ownership offering not found or archived.' using errcode='P0002';
   end if;
 
-  select fp, fr.status, fv.status
-    into v_period, v_report_status, v_version_status
+  select fp.id, fp.starts_on, fp.ends_on, fp.status, fr.status, fv.status
+    into v_period_id, v_period_start, v_period_end, v_period_status,
+         v_report_status, v_version_status
   from public.financial_report_versions fv
   join public.financial_reports fr on fr.id = fv.financial_report_id
   join public.financial_periods fp on fp.id = fr.financial_period_id
@@ -69,12 +73,12 @@ begin
     and fr.published_version_id = fv.id
   for share of fv, fr, fp;
 
-  if v_period.id is null
+  if v_period_id is null
      or v_report_status <> 'published'
      or v_version_status <> 'published' then
     raise exception 'Financial report version must be the published snapshot.' using errcode='23514';
   end if;
-  if v_period.status not in ('closed','locked') then
+  if v_period_status not in ('closed','locked') then
     raise exception 'Financial period must be closed before profit distribution.' using errcode='23514';
   end if;
 
@@ -92,7 +96,7 @@ begin
     where offering_id = p_offering_id
       and status <> 'cancelled'
       and daterange(period_start, period_end, '[]')
-          && daterange(v_period.starts_on, v_period.ends_on, '[]')
+          && daterange(v_period_start, v_period_end, '[]')
   ) then
     raise exception 'Distribution period overlaps an existing distribution for this offering.' using errcode='23505';
   end if;
@@ -102,7 +106,7 @@ begin
     revenue_amount, opex_amount, profit_amount, company_share_bps,
     investor_pool_bps, investor_pool_amount, status, notes, created_by, updated_by
   ) values (
-    p_offering_id, p_financial_report_version_id, v_period.starts_on, v_period.ends_on,
+    p_offering_id, p_financial_report_version_id, v_period_start, v_period_end,
     v_revenue, v_expenses, v_profit, p_company_share_bps,
     p_investor_pool_bps, v_profit * p_investor_pool_bps / 10000.0,
     'draft', nullif(btrim(coalesce(p_notes,'')),''), auth.uid(), auth.uid()
