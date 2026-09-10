@@ -31,10 +31,11 @@ export const createFinanceProduct = defineAction({
   input: financeProductSchema,
   audit: { action: 'finance.product_created', entityType: 'finance_product' },
   handler: async ({ input, supabase, principal, audit }) => {
+    const code = input.code || `PKT-${crypto.randomUUID().slice(0, 8).toUpperCase()}`
     const { data, error } = await supabase
       .from('finance_products')
       .insert({
-        code: input.code,
+        code,
         name: input.name,
         description: input.description || null,
         unit_label: input.unitLabel,
@@ -50,7 +51,7 @@ export const createFinanceProduct = defineAction({
         error.message,
         'Produk atau paket tidak dapat disimpan. Pastikan kodenya belum digunakan.',
       )
-    audit({ entityId: data.id, summary: `Produk keuangan ${input.code} dibuat.` })
+    audit({ entityId: data.id, summary: `Produk keuangan ${code} dibuat.` })
     refresh()
     return data
   },

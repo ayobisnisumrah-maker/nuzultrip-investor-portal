@@ -238,7 +238,7 @@ export function FinanceOperationsWorkspace({
                 run(
                   () =>
                     createFinanceProduct({
-                      code: String(form.get('code')),
+                      code: '',
                       name: String(form.get('name')),
                       description: String(form.get('description')),
                       unitLabel: String(form.get('unit')),
@@ -250,9 +250,6 @@ export function FinanceOperationsWorkspace({
               }}
             >
               <div className="grid gap-3 sm:grid-cols-2">
-                <Field label="Kode">
-                  <Input name="code" required />
-                </Field>
                 <Field label="Nama paket">
                   <Input name="name" required />
                 </Field>
@@ -270,7 +267,7 @@ export function FinanceOperationsWorkspace({
                 <Textarea name="description" rows={2} />
               </Field>
               <Button type="submit" loading={pending}>
-                Tambah paket
+                Tambah paket (kode otomatis)
               </Button>
             </form>
           </CardBody>

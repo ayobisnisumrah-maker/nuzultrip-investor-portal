@@ -2,12 +2,7 @@ import { z } from 'zod'
 
 const money = z.number().finite().min(0).max(999_999_999_999_999)
 export const financeProductSchema = z.object({
-  code: z
-    .string()
-    .trim()
-    .min(2)
-    .max(40)
-    .transform((v) => v.toUpperCase()),
+  code: z.string().trim().max(40).default(''),
   name: z.string().trim().min(2).max(160),
   description: z.string().trim().max(1000).default(''),
   unitLabel: z.string().trim().min(1).max(24).default('pax'),
