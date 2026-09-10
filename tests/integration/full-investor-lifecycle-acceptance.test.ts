@@ -53,6 +53,7 @@ describe('full investor ownership lifecycle acceptance', () => {
   it('covers acquisition, distribution, lock rejection, sale, transfer, and new owner', async () => {
     const snapshot = await createPublishedFinancialSnapshot({
       suffix: fixtures.suffix,
+      fiscalYear: 2198,
       revenue: 1_000_000_000,
       expenses: 100_000_000,
     })
