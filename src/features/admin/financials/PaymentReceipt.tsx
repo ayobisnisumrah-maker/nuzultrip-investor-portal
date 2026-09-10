@@ -25,6 +25,7 @@ export interface PaymentReceiptData {
   balanceDue: number
   paymentDatetime?: string | null
   paymentMethod?: string | null
+  dueDate?: string | null
   companyName?: string
   companyAddress: string
   companyContact?: string | null
@@ -181,8 +182,8 @@ export function PaymentReceipt({ data }: { data: PaymentReceiptData }) {
       <section className={styles.statusSection}>
         <p className={isPaid ? styles.statusPaid : styles.statusDp}>
           {isPaid
-            ? 'Status pembayaran: LUNAS. Seluruh kewajiban pembayaran pada tagihan ini telah dibayar.'
-            : 'Status pembayaran: DP. Dokumen ini bukan bukti pelunasan.'}
+            ? 'Status pembayaran: LUNAS.'
+            : `Batas pelunasan: ${data.dueDate || 'Belum ditentukan'}`}
         </p>
       </section>
 
@@ -223,17 +224,19 @@ export function PaymentReceipt({ data }: { data: PaymentReceiptData }) {
       ) : null}
 
       <section className={styles.issuerSection}>
-        <div className={styles.contact}>
-          <span className={styles.smallLabel}>Kontak</span>
-          <span>{data.companyContact || '—'}</span>
-        </div>
-
         <div className={styles.issuer}>
           <strong className={styles.companyName}>
             {data.companyName ?? 'PT Swarna Dipa Wisata (Nuzultrip)'}
           </strong>
           <span>{data.companyAddress}</span>
         </div>
+
+        {data.companyContact ? (
+          <div className={styles.contact}>
+            <span className={styles.smallLabel}>Kontak</span>
+            <span>{data.companyContact}</span>
+          </div>
+        ) : null}
       </section>
 
       <footer className={styles.footer}>
