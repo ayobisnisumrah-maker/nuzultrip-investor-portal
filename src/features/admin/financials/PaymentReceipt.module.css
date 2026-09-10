@@ -20,6 +20,11 @@
   flex-direction: column;
 }
 
+.document {
+  display: grid;
+  gap: 20px;
+}
+
 .header {
   display: flex;
   align-items: flex-start;
@@ -268,6 +273,12 @@
 .statusDp {
   color: var(--orange);
 }
+.departureDate {
+  margin: 4px 0 0;
+  color: #687386;
+  font-size: 9px;
+  font-weight: 700;
+}
 
 .signatureSection {
   display: flex;
@@ -405,11 +416,120 @@
   letter-spacing: 0.5px;
 }
 
+.termsPage {
+  position: relative;
+}
+.letterhead {
+  width: 100%;
+  min-height: 42mm;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  overflow: hidden;
+}
+.letterheadImage {
+  width: 100%;
+  height: auto;
+  max-height: 52mm;
+  object-fit: contain;
+  object-position: top center;
+}
+.termsFallbackHeader {
+  min-height: 30mm;
+  padding-bottom: 8mm;
+  border-bottom: 1px solid #d8dde3;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.termsFallbackHeader strong {
+  font-size: 15px;
+}
+.termsFallbackHeader span {
+  color: #707986;
+  font-size: 9px;
+  white-space: pre-line;
+}
+.termsContent {
+  margin-top: 10mm;
+}
+.termsEyebrow {
+  margin: 0 0 4px;
+  color: var(--green);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+}
+.termsTitle {
+  margin: 0;
+  color: #202b33;
+  font-size: 20px;
+  line-height: 1.25;
+  font-weight: 800;
+}
+.termsBody {
+  margin-top: 8mm;
+  color: #303a42;
+  font-size: 10px;
+  line-height: 1.7;
+  white-space: pre-line;
+}
+.termsEmpty {
+  margin-top: 8mm;
+  padding: 12px;
+  border: 1px solid #d8dde3;
+  border-radius: 6px;
+  color: #687386;
+}
+.refundTerms {
+  margin-top: 8mm;
+  padding-top: 6mm;
+  border-top: 1px solid #d8dde3;
+}
+.refundTerms h3 {
+  margin: 0 0 10px;
+  color: #27323a;
+  font-size: 13px;
+}
+.refundTerms ol {
+  margin: 0;
+  padding-left: 20px;
+  color: #303a42;
+  font-size: 9px;
+  line-height: 1.65;
+}
+.refundTerms li + li {
+  margin-top: 4px;
+}
+.acceptanceBox {
+  margin-top: 10mm;
+  padding: 14px 16px;
+  border: 1px solid #b8c6c1;
+  border-radius: 6px;
+  background: #f8fbfa;
+}
+.acceptanceBox strong {
+  color: #26313a;
+  font-size: 10px;
+}
+.acceptanceBox p {
+  margin: 5px 0 0;
+  color: #45515a;
+  font-size: 9px;
+  line-height: 1.65;
+}
+.termsFooter {
+  margin-top: auto;
+}
+
 @page {
   size: A4 portrait;
   margin: 0;
 }
 @media print {
+  .document {
+    display: block;
+  }
   .receipt {
     width: 210mm;
     min-height: 297mm;
@@ -417,6 +537,10 @@
     box-shadow: none;
     break-after: auto;
     page-break-after: auto;
+  }
+  .termsPage {
+    break-before: page;
+    page-break-before: always;
   }
 }
 @media screen {
@@ -457,5 +581,11 @@
   .issuerSection {
     margin-top: 32px;
     padding-top: 0;
+  }
+  .letterhead {
+    min-height: auto;
+  }
+  .termsContent {
+    margin-top: 24px;
   }
 }
