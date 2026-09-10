@@ -70,6 +70,9 @@ export const financeSettingsSchema = z.object({
   paymentInstructions: z.string().trim().max(2000).default(''),
   invoiceTerms: z.string().trim().max(5000).default(''),
   invoiceFooter: z.string().trim().max(1000).default(''),
+  logoAssetId: z.string().uuid().nullable(),
+  stampAssetId: z.string().uuid().nullable(),
+  signatureAssetId: z.string().uuid().nullable(),
 })
 export const financePaymentSchema = z.object({
   invoiceId: z.string().uuid(),

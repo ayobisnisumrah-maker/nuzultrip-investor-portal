@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useRef, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   createFinanceExpense,
@@ -32,6 +32,9 @@ type Settings = {
   payment_instructions: string | null
   invoice_terms: string | null
   invoice_footer: string | null
+  logo_asset_id: string | null
+  stamp_asset_id: string | null
+  signature_asset_id: string | null
 }
 type Result = { ok: boolean; error?: { message: string }; data?: { id?: string } }
 const rupiah = new Intl.NumberFormat('id-ID', {
@@ -50,6 +53,12 @@ export function FinanceOperationsWorkspace({
   const router = useRouter()
   const [pending, startTransition] = useTransition()
   const [notice, setNotice] = useState<{ ok: boolean; text: string } | null>(null)
+  const [branding, setBranding] = useState({
+    logo: settings.logo_asset_id,
+    stamp: settings.stamp_asset_id,
+    signature: settings.signature_asset_id,
+  })
+  const [uploading, setUploading] = useState<string | null>(null)
   const [productId, setProductId] = useState(products[0]?.id ?? '')
   const product = products.find((item) => item.id === productId)
   const [quantity, setQuantity] = useState(1)
@@ -356,6 +365,9 @@ export function FinanceOperationsWorkspace({
                     paymentInstructions: String(form.get('instructions')),
                     invoiceTerms: String(form.get('terms')),
                     invoiceFooter: String(form.get('footer')),
+                    logoAssetId: branding.logo,
+                    stampAssetId: branding.stamp,
+                    signatureAssetId: branding.signature,
                   }),
                 'Pengaturan invoice berhasil disimpan.',
               )
@@ -399,12 +411,106 @@ export function FinanceOperationsWorkspace({
             <Field label="Catatan kaki">
               <Input name="footer" defaultValue={settings.invoice_footer ?? ''} />
             </Field>
+            <div className="grid gap-4 md:grid-cols-3">
+              <BrandAsset
+                label="Logo invoice"
+                assetId={branding.logo}
+                busy={uploading === 'logo'}
+                onChange={(id) => setBranding((value) => ({ ...value, logo: id }))}
+                onBusy={(value) => setUploading(value ? 'logo' : null)}
+              />
+              <BrandAsset
+                label="Stempel perusahaan"
+                assetId={branding.stamp}
+                busy={uploading === 'stamp'}
+                onChange={(id) => setBranding((value) => ({ ...value, stamp: id }))}
+                onBusy={(value) => setUploading(value ? 'stamp' : null)}
+              />
+              <BrandAsset
+                label="Tanda tangan"
+                assetId={branding.signature}
+                busy={uploading === 'signature'}
+                onChange={(id) => setBranding((value) => ({ ...value, signature: id }))}
+                onBusy={(value) => setUploading(value ? 'signature' : null)}
+              />
+            </div>
             <Button type="submit" loading={pending}>
               Simpan pengaturan
             </Button>
           </form>
         </CardBody>
       </Card>
+    </div>
+  )
+}
+function BrandAsset({
+  label,
+  assetId,
+  busy,
+  onChange,
+  onBusy,
+}: {
+  label: string
+  assetId: string | null
+  busy: boolean
+  onChange: (id: string | null) => void
+  onBusy: (busy: boolean) => void
+}) {
+  const input = useRef<HTMLInputElement>(null)
+  async function upload(file: File | null) {
+    if (!file) return
+    onBusy(true)
+    try {
+      const body = new FormData()
+      body.append('file', file)
+      body.append('purpose', 'finance-branding')
+      const response = await fetch('/api/admin/media/upload', { method: 'POST', body })
+      const payload = (await response.json()) as {
+        ok?: boolean
+        asset?: { id: string }
+        error?: string
+      }
+      if (!response.ok || !payload.ok || !payload.asset)
+        throw new Error(payload.error || 'Gambar gagal diunggah.')
+      onChange(payload.asset.id)
+    } finally {
+      onBusy(false)
+      if (input.current) input.current.value = ''
+    }
+  }
+  return (
+    <div className="border-border grid gap-3 rounded-lg border p-4">
+      <div>
+        <p className="text-body-sm font-medium">{label}</p>
+        <p className="text-caption text-fg-subtle">PNG, JPG, atau WebP; maksimal 6 MB.</p>
+      </div>
+      {assetId ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={`/api/admin/finance/assets/${assetId}`}
+          alt={label}
+          className="h-20 max-w-full object-contain object-left"
+        />
+      ) : (
+        <p className="text-caption text-fg-subtle">Belum diunggah</p>
+      )}
+      <div className="flex gap-2">
+        <Button type="button" variant="secondary" loading={busy} onClick={() => input.current?.click()}>
+          {assetId ? 'Ganti' : 'Unggah'}
+        </Button>
+        {assetId ? (
+          <Button type="button" variant="ghost" disabled={busy} onClick={() => onChange(null)}>
+            Hapus
+          </Button>
+        ) : null}
+      </div>
+      <input
+        ref={input}
+        className="hidden"
+        type="file"
+        accept="image/png,image/jpeg,image/webp"
+        onChange={(event) => void upload(event.target.files?.[0] ?? null)}
+      />
     </div>
   )
 }

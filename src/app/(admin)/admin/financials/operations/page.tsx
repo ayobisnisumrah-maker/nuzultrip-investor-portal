@@ -32,7 +32,7 @@ export default async function FinanceOperationsPage() {
     supabase
       .from('finance_settings')
       .select(
-        'invoice_prefix,receipt_prefix,refund_prefix,company_legal_name,company_address,company_tax_id,bank_details,payment_instructions,invoice_terms,invoice_footer',
+        'invoice_prefix,receipt_prefix,refund_prefix,company_legal_name,company_address,company_tax_id,bank_details,payment_instructions,invoice_terms,invoice_footer,logo_asset_id,stamp_asset_id,signature_asset_id',
       )
       .eq('singleton', true)
       .single(),

@@ -18,6 +18,9 @@ type Company = {
   bankDetails?: string
   paymentInstructions?: string
   footer?: string
+  logoAssetId?: string
+  stampAssetId?: string
+  signatureAssetId?: string
 }
 export default async function InvoicePage({ params }: { params: Promise<{ id: string }> }) {
   const principal = await adminWithPermission(
@@ -75,6 +78,14 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
           <div className="grid gap-8">
             <div className="flex flex-wrap justify-between gap-6">
               <div>
+                {company.logoAssetId ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={`/api/admin/finance/assets/${company.logoAssetId}`}
+                    alt="Logo perusahaan"
+                    className="mb-4 h-16 max-w-56 object-contain object-left"
+                  />
+                ) : null}
                 <p className="text-heading-md font-semibold">{company.legalName || 'Nuzultrip'}</p>
                 <p className="text-body-sm text-fg-muted whitespace-pre-line">{company.address}</p>
                 {company.taxId ? (
@@ -169,6 +180,16 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
                 <p className="mt-2">{invoice.terms_snapshot}</p>
               </section>
             ) : null}
+            {company.stampAssetId || company.signatureAssetId ? (
+              <section className="ml-auto grid w-full max-w-sm grid-cols-2 gap-6 text-center">
+                {company.signatureAssetId ? (
+                  <InvoiceMark assetId={company.signatureAssetId} label="Tanda tangan" />
+                ) : <span />}
+                {company.stampAssetId ? (
+                  <InvoiceMark assetId={company.stampAssetId} label="Stempel perusahaan" />
+                ) : null}
+              </section>
+            ) : null}
             <Alert tone="info" title="Jenis dokumen">
               Dokumen ini adalah invoice operasional, bukan faktur pajak kecuali diterbitkan melalui
               sistem perpajakan yang berlaku.
@@ -177,6 +198,19 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
         </CardBody>
       </Card>
     </Stack>
+  )
+}
+function InvoiceMark({ assetId, label }: { assetId: string; label: string }) {
+  return (
+    <div>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={`/api/admin/finance/assets/${assetId}`}
+        alt={label}
+        className="mx-auto h-24 max-w-40 object-contain"
+      />
+      <p className="text-caption text-fg-subtle mt-2">{label}</p>
+    </div>
   )
 }
 function Total({

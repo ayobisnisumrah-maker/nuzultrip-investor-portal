@@ -206,6 +206,9 @@ export const updateFinanceSettings = defineAction({
         payment_instructions: input.paymentInstructions || null,
         invoice_terms: input.invoiceTerms || null,
         invoice_footer: input.invoiceFooter || null,
+        logo_asset_id: input.logoAssetId,
+        stamp_asset_id: input.stampAssetId,
+        signature_asset_id: input.signatureAssetId,
         updated_by: principal.kind === 'anonymous' ? null : principal.userId,
       })
       .eq('singleton', true)

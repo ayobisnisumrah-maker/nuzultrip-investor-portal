@@ -1508,10 +1508,13 @@ export type Database = {
           invoice_footer: string | null
           invoice_prefix: string
           invoice_terms: string | null
+          logo_asset_id: string | null
           payment_instructions: string | null
           receipt_prefix: string
           refund_prefix: string
+          signature_asset_id: string | null
           singleton: boolean
+          stamp_asset_id: string | null
           tax_invoice_enabled: boolean
           updated_at: string
           updated_by: string | null
@@ -1527,10 +1530,13 @@ export type Database = {
           invoice_footer?: string | null
           invoice_prefix?: string
           invoice_terms?: string | null
+          logo_asset_id?: string | null
           payment_instructions?: string | null
           receipt_prefix?: string
           refund_prefix?: string
+          signature_asset_id?: string | null
           singleton?: boolean
+          stamp_asset_id?: string | null
           tax_invoice_enabled?: boolean
           updated_at?: string
           updated_by?: string | null
@@ -1546,15 +1552,40 @@ export type Database = {
           invoice_footer?: string | null
           invoice_prefix?: string
           invoice_terms?: string | null
+          logo_asset_id?: string | null
           payment_instructions?: string | null
           receipt_prefix?: string
           refund_prefix?: string
+          signature_asset_id?: string | null
           singleton?: boolean
+          stamp_asset_id?: string | null
           tax_invoice_enabled?: boolean
           updated_at?: string
           updated_by?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "finance_settings_logo_asset_id_fkey"
+            columns: ["logo_asset_id"]
+            isOneToOne: false
+            referencedRelation: "media_assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_settings_signature_asset_id_fkey"
+            columns: ["signature_asset_id"]
+            isOneToOne: false
+            referencedRelation: "media_assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_settings_stamp_asset_id_fkey"
+            columns: ["stamp_asset_id"]
+            isOneToOne: false
+            referencedRelation: "media_assets"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       financial_kpis: {
         Row: {
