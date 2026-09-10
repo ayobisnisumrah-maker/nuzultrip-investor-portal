@@ -17,12 +17,14 @@ const baseData: PaymentReceiptData = {
   invoiceTotal: 22_500_000,
   amountPaid: 5_000_000,
   balanceDue: 17_500_000,
+  dueDate: '25 Sep 2026',
+  companyName: 'PT Swarna Dipa Wisata',
   companyAddress: 'Makassar',
   status: 'DP',
 }
 
 describe('PaymentReceipt', () => {
-  it('renders a dynamic title, DP icon, and hides zero-value rows', () => {
+  it('renders a dynamic title, DP icon, due date, and hides zero-value rows', () => {
     render(<PaymentReceipt data={{ ...baseData, discount: 0, tax: 0 }} />)
 
     expect(
@@ -33,9 +35,9 @@ describe('PaymentReceipt', () => {
     )
     expect(screen.queryByText('Pajak')).toBeNull()
     expect(screen.queryByText('Potongan Harga')).toBeNull()
-    expect(
-      screen.getByText('Status pembayaran: DP. Dokumen ini bukan bukti pelunasan.'),
-    ).toBeTruthy()
+    expect(screen.getByText('Batas pelunasan: 25 Sep 2026')).toBeTruthy()
+    expect(screen.queryByText(/Dokumen ini bukan bukti pelunasan/i)).toBeNull()
+    expect(screen.getByText('PT Swarna Dipa Wisata')).toBeTruthy()
   })
 
   it('renders the PAID state and tax when tax has a positive value', () => {
@@ -57,10 +59,11 @@ describe('PaymentReceipt', () => {
     )
     expect(screen.getByText('Pajak')).toBeTruthy()
     expect(screen.queryByText('Sisa Tagihan')).toBeNull()
-    expect(
-      screen.getByText(
-        'Status pembayaran: LUNAS. Seluruh kewajiban pembayaran pada tagihan ini telah dibayar.',
-      ),
-    ).toBeTruthy()
+    expect(screen.getByText('Status pembayaran: LUNAS.')).toBeTruthy()
+  })
+
+  it('does not render an empty contact block', () => {
+    render(<PaymentReceipt data={{ ...baseData, companyContact: null }} />)
+    expect(screen.queryByText('Kontak')).toBeNull()
   })
 })
