@@ -172,6 +172,16 @@ export type Database = {
         Args: { p_document_id: string }
         Returns: boolean
       }
+      investor_monthly_cashflow_summary: {
+        Args: { p_months?: number }
+        Returns: {
+          cash_in: number
+          cash_out: number
+          month_start: string
+          net_cashflow: number
+          pax: number
+        }[]
+      }
       investor_transition_allowed: {
         Args: {
           p_from: Database["public"]["Enums"]["investor_status"]
