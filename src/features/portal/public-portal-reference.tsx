@@ -9,8 +9,52 @@ type PublicPortalReferenceProps = PublicPortalProps & {
   publicDocuments: PublicPortalDocument[]
 }
 
-// Portal publik hanya memiliki satu stylesheet: public-portal-model.module.css.
-// Jangan menambah lapisan penimpa; perbaiki gaya langsung di stylesheet utama tersebut.
+const partnerLogoStyles = `
+.nuzultrip-public-portal :is(
+  img[alt='Agen Nuzultrip'],
+  img[alt='Mitra Travel'],
+  img[alt='Mitra Layanan'],
+  img[alt='Land Arrangement'],
+  img[alt='Mitra Strategis']
+) {
+  width: 100% !important;
+  max-width: 190px !important;
+  max-height: 76px !important;
+  height: auto !important;
+  object-fit: contain !important;
+  transform: scale(1.28);
+  transform-origin: center;
+}
+
+@media (max-width: 820px) {
+  .nuzultrip-public-portal :is(
+    img[alt='Agen Nuzultrip'],
+    img[alt='Mitra Travel'],
+    img[alt='Mitra Layanan'],
+    img[alt='Land Arrangement'],
+    img[alt='Mitra Strategis']
+  ) {
+    max-width: 175px !important;
+    max-height: 70px !important;
+    transform: scale(1.18);
+  }
+}
+
+@media (max-width: 560px) {
+  .nuzultrip-public-portal :is(
+    img[alt='Agen Nuzultrip'],
+    img[alt='Mitra Travel'],
+    img[alt='Mitra Layanan'],
+    img[alt='Land Arrangement'],
+    img[alt='Mitra Strategis']
+  ) {
+    max-width: 165px !important;
+    max-height: 66px !important;
+    transform: scale(1.08);
+  }
+}
+`
+
 export function PublicPortalReference({
   publicDocuments,
   sections,
@@ -38,5 +82,10 @@ export function PublicPortalReference({
     }
   })
 
-  return <PublicPortalModel {...props} sections={resolvedSections} />
+  return (
+    <div className="nuzultrip-public-portal">
+      <style>{partnerLogoStyles}</style>
+      <PublicPortalModel {...props} sections={resolvedSections} />
+    </div>
+  )
 }
