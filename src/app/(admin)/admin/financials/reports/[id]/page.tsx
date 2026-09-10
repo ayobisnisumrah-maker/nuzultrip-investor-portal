@@ -115,6 +115,13 @@ export default async function FinancialReportDetailPage({
             >
               Kembali
             </Link>
+            <Link
+              href={`/print/financial-reports/${report.id}`}
+              target="_blank"
+              className="border-border rounded-lg border px-3 py-2 text-sm font-medium"
+            >
+              Pratinjau / PDF
+            </Link>
             {canSyncTransactions ? <FinancialReportTransactionSync reportId={report.id} /> : null}
             <FinancialReportLifecycleActions
               reportId={report.id}
