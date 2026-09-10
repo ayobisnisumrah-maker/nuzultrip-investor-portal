@@ -36,6 +36,23 @@ function money(value: number | string, currency: string) {
   }).format(Number(value || 0))
 }
 
+function accountingText(line: LineItem) {
+  return `${line.line_key} ${line.label}`.toLowerCase().replace(/[_-]+/g, ' ')
+}
+
+function hasPosition(
+  lines: readonly LineItem[],
+  category: 'asset' | 'liability' | 'equity',
+  terms: readonly string[],
+) {
+  return lines.some(
+    (line) =>
+      line.statement === 'balance' &&
+      line.category === category &&
+      terms.some((term) => accountingText(line).includes(term)),
+  )
+}
+
 export function FinancialReportInvestorReadiness({
   summary,
   visibility,
@@ -49,18 +66,28 @@ export function FinancialReportInvestorReadiness({
   const cashFlowLines = lines.filter((line) => line.statement === 'cash_flow')
   const balanceLines = lines.filter((line) => line.statement === 'balance')
   const hasAsset = balanceLines.some((line) => line.category === 'asset')
-  const hasLiabilityOrEquity = balanceLines.some(
-    (line) => line.category === 'liability' || line.category === 'equity',
-  )
+  const hasCashAndBank = hasPosition(lines, 'asset', ['kas', 'cash', 'bank', 'rekening'])
+  const hasLiabilityReview = balanceLines.some((line) => line.category === 'liability')
+  const hasEquityReview = balanceLines.some((line) => line.category === 'equity')
+  const hasAdvanceOrDepositReview = balanceLines.some((line) => {
+    const text = accountingText(line)
+    return ['deposit', 'uang muka', 'advance', 'titipan'].some((term) => text.includes(term))
+  })
 
   const checks = [
     { label: 'Ringkasan investor sudah diisi', ok: Boolean(summary?.trim()) },
     { label: 'Laba rugi / pendapatan dan beban tersedia', ok: incomeLines.length > 0 },
     { label: 'Arus kas masuk dan keluar tersedia', ok: cashFlowLines.length > 0 },
     { label: 'Posisi keuangan memiliki data aset', ok: hasAsset },
+    { label: 'Saldo kas / bank akhir periode sudah dicatat', ok: hasCashAndBank },
     {
-      label: 'Liabilitas / ekuitas sudah ditinjau dan dicatat bila relevan',
-      ok: hasLiabilityOrEquity,
+      label: 'Utang / kewajiban sudah ditinjau dan dicatat, termasuk Rp0 bila nihil',
+      ok: hasLiabilityReview,
+    },
+    { label: 'Modal / ekuitas sudah ditinjau dan dicatat', ok: hasEquityReview },
+    {
+      label: 'Deposit / uang muka / titipan sudah ditinjau bila relevan',
+      ok: hasAdvanceOrDepositReview,
     },
     { label: 'KPI operasional dan keuangan tersedia', ok: kpis.length >= 5 },
     { label: 'Nama penyusun laporan tersedia', ok: Boolean(preparedBy?.trim()) },
@@ -74,8 +101,10 @@ export function FinancialReportInvestorReadiness({
   const kpiByKey = new Map(kpis.map((kpi) => [kpi.kpi_key, kpi]))
   const lineByKey = new Map(lines.map((line) => [line.line_key, line]))
 
-  const grossRevenue = kpiByKey.get('gross_revenue')?.value ?? lineByKey.get('gross_revenue')?.amount ?? 0
-  const operatingResult = kpiByKey.get('operating_result')?.value ?? lineByKey.get('operating_result')?.amount ?? 0
+  const grossRevenue =
+    kpiByKey.get('gross_revenue')?.value ?? lineByKey.get('gross_revenue')?.amount ?? 0
+  const operatingResult =
+    kpiByKey.get('operating_result')?.value ?? lineByKey.get('operating_result')?.amount ?? 0
   const cashIn = kpiByKey.get('cash_in')?.value ?? lineByKey.get('cash_received')?.amount ?? 0
   const cashOut = kpiByKey.get('cash_out')?.value ?? 0
   const pax = kpiByKey.get('pax_sold')?.value ?? 0
@@ -83,33 +112,77 @@ export function FinancialReportInvestorReadiness({
 
   return (
     <div className="grid gap-4">
-      <Alert tone={ready ? 'success' : 'info'} title={ready ? 'Laporan siap masuk tahap review' : `Kelengkapan laporan ${completed}/${checks.length}`}>
+      <Alert
+        tone={ready ? 'success' : 'info'}
+        title={
+          ready
+            ? 'Laporan siap masuk tahap review'
+            : `Kelengkapan laporan ${completed}/${checks.length}`
+        }
+      >
         {ready
-          ? 'Komponen utama laporan investor sudah tersedia. Lakukan pemeriksaan akhir angka dan catatan, lalu kirim ke tahap review.'
-          : 'Selesaikan item yang belum terpenuhi sebelum laporan diterbitkan kepada investor. Angka transaksi otomatis tetap perlu ditinjau untuk saldo atau penyesuaian yang belum tercatat di Kasir & Invoice.'}
+          ? 'Komponen utama laporan investor sudah tersedia. Lakukan pemeriksaan akhir angka, rekonsiliasi saldo, dan catatan, lalu kirim ke tahap review.'
+          : 'Selesaikan item yang belum terpenuhi sebelum laporan diterbitkan. Sinkronisasi Kasir & Invoice mengisi transaksi operasional, sedangkan saldo kas/bank, utang, ekuitas, deposit, uang muka, dan penyesuaian akuntansi harus direkonsiliasi dari data keuangan perusahaan.'}
       </Alert>
 
       <Card>
-        <CardHeader><CardTitle>Ikhtisar yang akan dibaca investor</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle>Ikhtisar yang akan dibaca investor</CardTitle>
+        </CardHeader>
         <CardBody>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            <div className="border-border rounded-lg border p-3"><p className="text-caption text-fg-subtle">Pendapatan bruto</p><p className="mt-1 font-semibold tabular">{money(grossRevenue, currency)}</p></div>
-            <div className="border-border rounded-lg border p-3"><p className="text-caption text-fg-subtle">Hasil operasional</p><p className="mt-1 font-semibold tabular">{money(operatingResult, currency)}</p></div>
-            <div className="border-border rounded-lg border p-3"><p className="text-caption text-fg-subtle">Arus masuk</p><p className="mt-1 font-semibold tabular">{money(cashIn, currency)}</p></div>
-            <div className="border-border rounded-lg border p-3"><p className="text-caption text-fg-subtle">Arus keluar</p><p className="mt-1 font-semibold tabular">{money(cashOut, currency)}</p></div>
-            <div className="border-border rounded-lg border p-3"><p className="text-caption text-fg-subtle">Pax terjual</p><p className="mt-1 font-semibold tabular">{formatFinancialKpi(pax, 'count', currency)}</p></div>
-            <div className="border-border rounded-lg border p-3"><p className="text-caption text-fg-subtle">Piutang invoice periode</p><p className="mt-1 font-semibold tabular">{money(receivables, currency)}</p></div>
+            <div className="border-border rounded-lg border p-3">
+              <p className="text-caption text-fg-subtle">Pendapatan bruto</p>
+              <p className="mt-1 font-semibold tabular">{money(grossRevenue, currency)}</p>
+            </div>
+            <div className="border-border rounded-lg border p-3">
+              <p className="text-caption text-fg-subtle">Hasil operasional</p>
+              <p className="mt-1 font-semibold tabular">{money(operatingResult, currency)}</p>
+            </div>
+            <div className="border-border rounded-lg border p-3">
+              <p className="text-caption text-fg-subtle">Arus masuk</p>
+              <p className="mt-1 font-semibold tabular">{money(cashIn, currency)}</p>
+            </div>
+            <div className="border-border rounded-lg border p-3">
+              <p className="text-caption text-fg-subtle">Arus keluar</p>
+              <p className="mt-1 font-semibold tabular">{money(cashOut, currency)}</p>
+            </div>
+            <div className="border-border rounded-lg border p-3">
+              <p className="text-caption text-fg-subtle">Pax terjual</p>
+              <p className="mt-1 font-semibold tabular">
+                {formatFinancialKpi(pax, 'count', currency)}
+              </p>
+            </div>
+            <div className="border-border rounded-lg border p-3">
+              <p className="text-caption text-fg-subtle">Piutang invoice periode</p>
+              <p className="mt-1 font-semibold tabular">{money(receivables, currency)}</p>
+            </div>
           </div>
         </CardBody>
       </Card>
 
       <Card>
-        <CardHeader><CardTitle>Checklist sebelum dikirim ke investor</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle>Checklist sebelum dikirim ke investor</CardTitle>
+        </CardHeader>
         <CardBody>
+          <div className="mb-4 rounded-lg border border-dashed p-3 text-sm">
+            <p className="font-medium">Pos posisi keuangan yang perlu direkonsiliasi manual</p>
+            <p className="text-fg-muted mt-1">
+              Catat saldo kas/bank, utang atau kewajiban, modal/ekuitas, deposit atau uang muka,
+              serta penyesuaian lain yang tidak berasal dari Kasir & Invoice. Bila suatu kewajiban
+              benar-benar nihil, tetap catat posnya dengan nilai Rp0 agar hasil review eksplisit.
+            </p>
+          </div>
           <div className="grid gap-2 sm:grid-cols-2">
             {checks.map((item) => (
-              <div key={item.label} className="border-border flex items-start gap-2 rounded-lg border p-3 text-sm">
-                <span aria-hidden="true" className={item.ok ? 'text-positive' : 'text-fg-subtle'}>{item.ok ? '✓' : '○'}</span>
+              <div
+                key={item.label}
+                className="border-border flex items-start gap-2 rounded-lg border p-3 text-sm"
+              >
+                <span aria-hidden="true" className={item.ok ? 'text-positive' : 'text-fg-subtle'}>
+                  {item.ok ? '✓' : '○'}
+                </span>
                 <span>{item.label}</span>
               </div>
             ))}
