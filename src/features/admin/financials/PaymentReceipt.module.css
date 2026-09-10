@@ -1,0 +1,438 @@
+.receipt {
+  --green: #08765e;
+  --green-light: #16a365;
+  --orange: #efa91f;
+  --text: #26313a;
+  --muted: #737e8d;
+  --border: #d8dde3;
+  --surface: #f7f8fa;
+  width: 210mm;
+  min-height: 297mm;
+  margin: 0 auto;
+  padding: 14mm 12mm 10mm;
+  box-sizing: border-box;
+  background: #fff;
+  color: var(--text);
+  font-family: Inter, Arial, Helvetica, sans-serif;
+  font-size: 10px;
+  line-height: 1.5;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+}
+.headerLeft {
+  display: flex;
+  flex-direction: column;
+}
+.title {
+  margin: 0;
+  color: #202b33;
+  font-size: 20px;
+  line-height: 1.2;
+  font-weight: 800;
+  letter-spacing: -0.35px;
+}
+.orderId {
+  margin: 12px 0 0;
+  color: var(--green);
+  font-size: 11px;
+  font-weight: 700;
+}
+.brand {
+  min-width: 140px;
+  text-align: right;
+}
+.brandLogo {
+  width: auto;
+  max-width: 168px;
+  height: 52px;
+  object-fit: contain;
+  object-position: right top;
+}
+.brandName {
+  color: var(--green);
+  font-size: 18px;
+  line-height: 1.1;
+  font-weight: 800;
+  letter-spacing: 0.7px;
+}
+.brandSubtitle {
+  margin-top: 9px;
+  color: var(--green);
+  font-size: 10px;
+}
+
+.customerSection {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 112px;
+  gap: 20px;
+  align-items: center;
+  margin-top: 28px;
+}
+.customerCard {
+  min-height: 74px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  align-items: center;
+  padding: 16px 18px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-sizing: border-box;
+}
+.infoItem {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.infoLabel {
+  color: #6f7885;
+  font-size: 8px;
+  font-weight: 700;
+}
+.infoValue {
+  color: #29333c;
+  font-size: 9px;
+  font-weight: 500;
+  word-break: break-word;
+}
+.statusIconWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.statusIcon {
+  width: 88px;
+  height: 88px;
+  object-fit: contain;
+}
+
+.paymentSection {
+  margin-top: 38px;
+}
+.sectionTitle {
+  margin: 0 0 20px;
+  color: #27323a;
+  font-size: 14px;
+  line-height: 1.2;
+  font-weight: 800;
+}
+.paymentCard {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: #fff;
+}
+.tableHeader,
+.productRow {
+  display: grid;
+  grid-template-columns: 52px 105px minmax(0, 1fr) 90px 145px;
+  padding-inline: 18px;
+  box-sizing: border-box;
+}
+.tableHeader {
+  min-height: 42px;
+  align-items: center;
+  background: var(--surface);
+  color: #687386;
+  font-size: 8px;
+  font-weight: 700;
+  border-bottom: 1px solid var(--border);
+}
+.productRow {
+  min-height: 90px;
+  padding-top: 23px;
+  padding-bottom: 18px;
+  align-items: flex-start;
+}
+.productNo,
+.productType,
+.quantity,
+.amount {
+  font-size: 9px;
+}
+.description {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-size: 9px;
+}
+.description strong {
+  font-weight: 700;
+}
+.description span {
+  color: var(--muted);
+  font-size: 8px;
+}
+.amount {
+  font-weight: 700;
+}
+.textRight {
+  text-align: right;
+}
+
+.summaryArea {
+  width: 49%;
+  margin-left: auto;
+  margin-right: 18px;
+  padding: 13px 0 7px;
+  border-top: 1px dashed #d6dce1;
+}
+.summaryRow {
+  min-height: 22px;
+  display: grid;
+  grid-template-columns: 1fr 150px;
+  gap: 20px;
+  align-items: center;
+  color: #7c8490;
+  font-size: 8px;
+}
+.summaryValue,
+.summaryRow strong {
+  text-align: right;
+}
+.summaryRow strong {
+  color: #29333b;
+  font-weight: 800;
+}
+.taxAmount,
+.paidAmount {
+  color: var(--green-light) !important;
+}
+.balanceAmount {
+  color: var(--orange) !important;
+}
+
+.paymentFooter {
+  min-height: 60px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  padding: 11px 18px;
+  border-top: 1px solid var(--border);
+  box-sizing: border-box;
+}
+.paymentMethod {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.paymentMethod strong {
+  font-size: 8px;
+  font-weight: 800;
+}
+.paymentMethod span {
+  color: #717a87;
+  font-size: 8px;
+}
+.totalPayment {
+  min-width: 190px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+}
+.totalPayment span {
+  font-size: 8px;
+  font-weight: 700;
+}
+.totalPayment strong {
+  color: #2b363e;
+  font-size: 17px;
+  line-height: 1.2;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.statusSection {
+  margin-top: 30px;
+}
+.statusPaid,
+.statusDp {
+  margin: 0;
+  font-size: 9px;
+  line-height: 1.5;
+  font-weight: 800;
+}
+.statusPaid {
+  color: var(--green-light);
+}
+.statusDp {
+  color: var(--orange);
+}
+
+.signatureSection {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 42px;
+}
+.issuerSection {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 70px;
+  align-items: end;
+  margin-top: 34px;
+}
+.issuer,
+.contact,
+.signature {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.issuer {
+  align-items: flex-end;
+  text-align: right;
+}
+.contact > span:not(.smallLabel) {
+  margin-top: 10px;
+  color: #707986;
+  font-size: 8px;
+  line-height: 1.65;
+  white-space: pre-line;
+}
+.smallLabel {
+  color: #697383;
+  font-size: 8px;
+  font-weight: 700;
+}
+.companyName {
+  margin-top: 10px;
+  color: #303a42;
+  font-size: 11px;
+  font-weight: 800;
+}
+.issuer > span {
+  margin-top: 8px;
+  color: #707986;
+  font-size: 8px;
+  line-height: 1.65;
+  white-space: pre-line;
+}
+.signature {
+  position: relative;
+}
+.signatureImages {
+  height: 63px;
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  margin-top: 6px;
+}
+.signatureImage {
+  width: auto;
+  max-width: 135px;
+  height: 58px;
+  object-fit: contain;
+}
+.stampImage {
+  width: 65px;
+  height: 65px;
+  object-fit: contain;
+}
+.signatureLine {
+  width: 100%;
+  max-width: 280px;
+  margin-top: 4px;
+  border-top: 1px solid #cfd4da;
+}
+.signer {
+  margin-top: 8px;
+  color: #303a42;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.footer {
+  margin-top: auto;
+  min-height: 34px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  padding-top: 15px;
+  border-top: 1px solid #e1e4e8;
+  color: #818a96;
+  font-size: 7px;
+}
+.footerRight {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+}
+.footerLogo {
+  width: auto;
+  max-width: 84px;
+  height: 26px;
+  object-fit: contain;
+  object-position: right bottom;
+}
+.footerBrand {
+  color: var(--green);
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+@page {
+  size: A4 portrait;
+  margin: 0;
+}
+@media print {
+  .receipt {
+    width: 210mm;
+    min-height: 297mm;
+    margin: 0;
+    box-shadow: none;
+    break-after: auto;
+    page-break-after: auto;
+  }
+}
+@media screen {
+  .receipt {
+    box-shadow:
+      0 10px 30px rgba(15, 23, 42, 0.08),
+      0 2px 6px rgba(15, 23, 42, 0.04);
+  }
+}
+
+@media screen and (max-width: 850px) {
+  .receipt {
+    width: 100%;
+    min-height: auto;
+    padding: 24px 18px;
+  }
+  .customerSection {
+    grid-template-columns: 1fr;
+  }
+  .customerCard {
+    grid-template-columns: 1fr;
+  }
+  .tableHeader {
+    display: none;
+  }
+  .productRow {
+    grid-template-columns: 32px minmax(80px, 0.7fr) minmax(0, 1.4fr);
+    gap: 10px;
+  }
+  .quantity,
+  .amount {
+    margin-top: 10px;
+  }
+  .summaryArea {
+    width: auto;
+    margin-inline: 18px;
+  }
+  .issuerSection {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+}
