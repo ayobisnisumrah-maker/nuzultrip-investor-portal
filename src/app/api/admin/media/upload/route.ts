@@ -61,10 +61,12 @@ export async function POST(request: Request) {
       ? 'portal'
       : requestedPurpose === 'financial-report'
         ? 'financial-report'
+        : requestedPurpose === 'finance-branding'
+          ? 'finance-branding'
         : 'document'
 
   const permitted =
-    purpose === 'financial-report'
+    purpose === 'financial-report' || purpose === 'finance-branding'
       ? hasPermission(principal, 'financial_reports.update')
       : hasPermission(principal, 'media.upload')
   if (!permitted) {
@@ -82,19 +84,19 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'File kosong tidak diperbolehkan.' }, { status: 400 })
   }
 
-  const maxBytes = purpose === 'portal' ? PORTAL_MAX_BYTES : MAX_BYTES
+  const maxBytes = purpose === 'portal' || purpose === 'finance-branding' ? PORTAL_MAX_BYTES : MAX_BYTES
   if (file.size > maxBytes) {
     return NextResponse.json(
       {
         error:
-          purpose === 'portal' ? 'Ukuran gambar maksimal 6 MB.' : 'Ukuran file maksimal 100 MB.',
+          purpose === 'portal' || purpose === 'finance-branding' ? 'Ukuran gambar maksimal 6 MB.' : 'Ukuran file maksimal 100 MB.',
       },
       { status: 400 },
     )
   }
 
   const allowedMimeTypes =
-    purpose === 'portal'
+    purpose === 'portal' || purpose === 'finance-branding'
       ? PORTAL_MIME_TYPES
       : purpose === 'financial-report'
         ? FINANCIAL_MIME_TYPES

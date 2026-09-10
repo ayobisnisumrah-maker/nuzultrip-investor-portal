@@ -123,6 +123,12 @@ export const ADMIN_NAVIGATION: readonly AdminNavSection[] = [
         exact: true,
       },
       {
+        href: '/admin/financials/operations',
+        label: 'Kasir & Invoice',
+        icon: 'ReceiptText',
+        permission: 'financial_reports.view',
+      },
+      {
         href: '/admin/financials/periods',
         label: 'Periode Keuangan',
         icon: 'CalendarRange',

@@ -43,7 +43,9 @@ export default async function FinancialsPage() {
   const reports = reportsResult.data ?? []
   const openPeriods = periods.filter((item) => item.status === 'open').length
   const publishedReports = reports.filter((item) => item.status === 'published').length
-  const reportsInWorkflow = reports.filter((item) => ['review', 'approved'].includes(item.status)).length
+  const reportsInWorkflow = reports.filter((item) =>
+    ['review', 'approved'].includes(item.status),
+  ).length
 
   return (
     <Stack gap={8}>
@@ -54,28 +56,75 @@ export default async function FinancialsPage() {
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Card><CardBody><div className="text-caption text-fg-subtle">Periode Terbuka</div><div className="text-heading-lg mt-1 font-semibold">{openPeriods}</div></CardBody></Card>
-        <Card><CardBody><div className="text-caption text-fg-subtle">Laporan Dalam Proses</div><div className="text-heading-lg mt-1 font-semibold">{reportsInWorkflow}</div></CardBody></Card>
-        <Card><CardBody><div className="text-caption text-fg-subtle">Laporan Terbit</div><div className="text-heading-lg mt-1 font-semibold">{publishedReports}</div></CardBody></Card>
-        <Card><CardBody><div className="text-caption text-fg-subtle">KPI Tercatat</div><div className="text-heading-lg mt-1 font-semibold">{kpisResult.count ?? 0}</div></CardBody></Card>
+        <Card>
+          <CardBody>
+            <div className="text-caption text-fg-subtle">Periode Terbuka</div>
+            <div className="text-heading-lg mt-1 font-semibold">{openPeriods}</div>
+          </CardBody>
+        </Card>
+        <Card>
+          <CardBody>
+            <div className="text-caption text-fg-subtle">Laporan Dalam Proses</div>
+            <div className="text-heading-lg mt-1 font-semibold">{reportsInWorkflow}</div>
+          </CardBody>
+        </Card>
+        <Card>
+          <CardBody>
+            <div className="text-caption text-fg-subtle">Laporan Terbit</div>
+            <div className="text-heading-lg mt-1 font-semibold">{publishedReports}</div>
+          </CardBody>
+        </Card>
+        <Card>
+          <CardBody>
+            <div className="text-caption text-fg-subtle">KPI Tercatat</div>
+            <div className="text-heading-lg mt-1 font-semibold">{kpisResult.count ?? 0}</div>
+          </CardBody>
+        </Card>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <Link href="/admin/financials/periods" className="border-border bg-surface hover:border-primary-solid rounded-xl border p-5 transition">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <Link
+          href="/admin/financials/operations"
+          className="border-border bg-surface hover:border-primary-solid rounded-xl border p-5 transition"
+        >
+          <h2 className="text-body text-fg font-semibold">Kasir & Invoice</h2>
+          <p className="text-body-sm text-fg-muted mt-2">
+            Catat penjualan per pax, pembayaran, refund, pengeluaran, dan hasilkan invoice
+            operasional.
+          </p>
+          <p className="text-caption text-fg-subtle mt-4">Transaksi operasional terpusat</p>
+        </Link>
+        <Link
+          href="/admin/financials/periods"
+          className="border-border bg-surface hover:border-primary-solid rounded-xl border p-5 transition"
+        >
           <h2 className="text-body text-fg font-semibold">Periode Keuangan</h2>
-          <p className="text-body-sm text-fg-muted mt-2">Kelola periode pelaporan, pembukaan periode, dan penguncian setelah proses pelaporan selesai.</p>
+          <p className="text-body-sm text-fg-muted mt-2">
+            Kelola periode pelaporan, pembukaan periode, dan penguncian setelah proses pelaporan
+            selesai.
+          </p>
           <p className="text-caption text-fg-subtle mt-4">{periods.length} periode terdaftar</p>
         </Link>
 
-        <Link href="/admin/financials/reports" className="border-border bg-surface hover:border-primary-solid rounded-xl border p-5 transition">
+        <Link
+          href="/admin/financials/reports"
+          className="border-border bg-surface hover:border-primary-solid rounded-xl border p-5 transition"
+        >
           <h2 className="text-body text-fg font-semibold">Laporan Keuangan</h2>
-          <p className="text-body-sm text-fg-muted mt-2">Pantau laporan, peninjauan, persetujuan, visibilitas, dan publikasi kepada investor.</p>
+          <p className="text-body-sm text-fg-muted mt-2">
+            Pantau laporan, peninjauan, persetujuan, visibilitas, dan publikasi kepada investor.
+          </p>
           <p className="text-caption text-fg-subtle mt-4">{reports.length} laporan terdaftar</p>
         </Link>
 
-        <Link href="/admin/financials/kpis" className="border-border bg-surface hover:border-primary-solid rounded-xl border p-5 transition">
+        <Link
+          href="/admin/financials/kpis"
+          className="border-border bg-surface hover:border-primary-solid rounded-xl border p-5 transition"
+        >
           <h2 className="text-body text-fg font-semibold">KPI Keuangan</h2>
-          <p className="text-body-sm text-fg-muted mt-2">Lihat indikator utama yang melekat pada versi laporan keuangan.</p>
+          <p className="text-body-sm text-fg-muted mt-2">
+            Lihat indikator utama yang melekat pada versi laporan keuangan.
+          </p>
           <p className="text-caption text-fg-subtle mt-4">{kpisResult.count ?? 0} KPI tercatat</p>
         </Link>
       </div>
