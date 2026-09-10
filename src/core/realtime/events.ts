@@ -36,6 +36,10 @@ export const EVENT_KINDS = [
   'financial_report.published',
   'financial_report.state_changed',
 
+  // Finance operations
+  'finance.transaction_changed',
+  'finance.cashflow_changed',
+
   // Ownership and distributions
   'ownership.changed',
   'profit_distribution.changed',
@@ -83,7 +87,12 @@ export const TOPIC_EVENTS: Readonly<Record<string, readonly EventKind[]>> = {
     'portal.navigation_updated',
     'document.published',
   ],
-  'investors:all': ['document.published', 'financial_report.published', 'portal.theme_updated'],
+  'investors:all': [
+    'document.published',
+    'financial_report.published',
+    'finance.cashflow_changed',
+    'portal.theme_updated',
+  ],
   'admin:global': [
     'investor.applied',
     'investor.status_changed',
@@ -93,6 +102,7 @@ export const TOPIC_EVENTS: Readonly<Record<string, readonly EventKind[]>> = {
     'document.state_changed',
     'financial_period.changed',
     'financial_report.state_changed',
+    'finance.transaction_changed',
     'ownership.changed',
     'profit_distribution.changed',
     'message.received',
