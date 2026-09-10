@@ -116,6 +116,46 @@ export default async function Home() {
 
   return (
     <PublicRealtimeSurface>
+      <style>{`
+        img[alt='Agen Nuzultrip'],
+        img[alt='Mitra Travel'],
+        img[alt='Mitra Layanan'],
+        img[alt='Land Arrangement'],
+        img[alt='Mitra Strategis'] {
+          width: 200px !important;
+          max-width: 100% !important;
+          height: auto !important;
+          max-height: 82px !important;
+          object-fit: contain !important;
+          transform: scale(1.18);
+          transform-origin: center;
+        }
+
+        @media (max-width: 820px) {
+          img[alt='Agen Nuzultrip'],
+          img[alt='Mitra Travel'],
+          img[alt='Mitra Layanan'],
+          img[alt='Land Arrangement'],
+          img[alt='Mitra Strategis'] {
+            width: 170px !important;
+            max-height: 72px !important;
+            transform: scale(1.12);
+          }
+        }
+
+        @media (max-width: 560px) {
+          img[alt='Agen Nuzultrip'],
+          img[alt='Mitra Travel'],
+          img[alt='Mitra Layanan'],
+          img[alt='Land Arrangement'],
+          img[alt='Mitra Strategis'] {
+            width: 180px !important;
+            max-height: 74px !important;
+            transform: none;
+          }
+        }
+      `}</style>
+
       <PublicPortalExact
         page={{
           title: 'Nuzultrip',
