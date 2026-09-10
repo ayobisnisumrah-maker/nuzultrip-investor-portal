@@ -13,7 +13,7 @@ afterAll(async () => {
 })
 
 describe('finance refund trigger boundary', () => {
-  it('allows an authenticated admin refund insert to recalculate the invoice internally', async () => {
+  it('allows authenticated refund writes while keeping invoice totals limited to processed refunds', async () => {
     await as({ kind: 'authenticated', userId: fixtures.superAdmin.userId }, async (tx) => {
       const [invoice] = await tx<{ id: string }[]>`
         select app.create_finance_invoice(
@@ -53,16 +53,37 @@ describe('finance refund trigger boundary', () => {
         )
         returning id
       `
+      if (!refund) throw new Error('Refund request was not created.')
 
-      const [actual] = await tx<{ refunded_total: string; status: string }[]>`
+      const [requestedState] = await tx<{ refunded_total: string; status: string }[]>`
         select refunded_total, status
         from public.finance_invoices
         where id = ${invoice.id}
       `
 
-      expect(refund?.id).toBeTruthy()
-      expect(actual?.refunded_total).toBe('25000.00')
-      expect(actual?.status).toBe('partially_paid')
+      // A requested refund must not reduce recognized paid balance yet, but the
+      // insert itself must succeed through the internal SECURITY DEFINER trigger.
+      expect(requestedState?.refunded_total).toBe('0.00')
+      expect(requestedState?.status).toBe('paid')
+
+      await tx`
+        update public.finance_refunds
+        set status = 'processed',
+            approved_by = ${fixtures.superAdmin.userId},
+            processed_by = ${fixtures.superAdmin.userId},
+            approved_at = now(),
+            processed_at = now()
+        where id = ${refund.id}
+      `
+
+      const [processedState] = await tx<{ refunded_total: string; status: string }[]>`
+        select refunded_total, status
+        from public.finance_invoices
+        where id = ${invoice.id}
+      `
+
+      expect(processedState?.refunded_total).toBe('25000.00')
+      expect(processedState?.status).toBe('partially_paid')
     })
   })
 })
