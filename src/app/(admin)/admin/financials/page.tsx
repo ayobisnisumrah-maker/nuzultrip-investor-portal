@@ -18,19 +18,20 @@ export default async function FinancialsPage() {
   }
 
   const supabase = await getServerSupabase()
-  const [periodsResult, reportsResult, kpisResult] = await Promise.all([
+  const [periodsResult, reportsResult, kpisResult, invoicesResult] = await Promise.all([
     supabase.from('financial_periods').select('id, status', { count: 'exact' }),
     supabase.from('financial_reports').select('id, status', { count: 'exact' }),
     supabase.from('financial_kpis').select('id', { count: 'exact', head: true }),
+    supabase.from('finance_invoices').select('id, status', { count: 'exact' }),
   ])
 
-  if (periodsResult.error || reportsResult.error || kpisResult.error) {
+  if (periodsResult.error || reportsResult.error || kpisResult.error || invoicesResult.error) {
     return (
       <Stack gap={6}>
         <PageHeader
           eyebrow="Keuangan"
           title="Ringkasan Keuangan"
-          description="Ringkasan periode, laporan, dan KPI keuangan perusahaan."
+          description="Ringkasan periode, laporan, KPI, dan transaksi kasir perusahaan."
         />
         <Alert tone="danger" title="Ringkasan tidak dapat dimuat">
           Sistem gagal mengambil sebagian data keuangan. Silakan coba lagi.
@@ -50,17 +51,24 @@ export default async function FinancialsPage() {
       <PageHeader
         eyebrow="Keuangan"
         title="Ringkasan Keuangan"
-        description="Pantau sumber informasi keuangan resmi yang digunakan Admin dan hanya ditampilkan kepada investor setelah melalui persetujuan dan publikasi."
+        description="Pantau transaksi kasir sebagai sumber operasional, susun laporan resmi, dan tampilkan informasi kepada investor hanya setelah melalui persetujuan dan publikasi."
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+        <Card><CardBody><div className="text-caption text-fg-subtle">Transaksi Kasir</div><div className="text-heading-lg mt-1 font-semibold">{invoicesResult.count ?? 0}</div></CardBody></Card>
         <Card><CardBody><div className="text-caption text-fg-subtle">Periode Terbuka</div><div className="text-heading-lg mt-1 font-semibold">{openPeriods}</div></CardBody></Card>
         <Card><CardBody><div className="text-caption text-fg-subtle">Laporan Dalam Proses</div><div className="text-heading-lg mt-1 font-semibold">{reportsInWorkflow}</div></CardBody></Card>
         <Card><CardBody><div className="text-caption text-fg-subtle">Laporan Terbit</div><div className="text-heading-lg mt-1 font-semibold">{publishedReports}</div></CardBody></Card>
         <Card><CardBody><div className="text-caption text-fg-subtle">KPI Tercatat</div><div className="text-heading-lg mt-1 font-semibold">{kpisResult.count ?? 0}</div></CardBody></Card>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <Link href="/admin/financials/cashier" className="border-border bg-surface hover:border-primary-solid rounded-xl border p-5 transition">
+          <h2 className="text-body text-fg font-semibold">Kasir & Transaksi</h2>
+          <p className="text-body-sm text-fg-muted mt-2">Kelola penjualan paket/produk, jumlah pax, invoice, DP/cicilan/pelunasan, refund, pengeluaran, bukti, dan pengaturan dokumen transaksi.</p>
+          <p className="text-caption text-fg-subtle mt-4">{invoicesResult.count ?? 0} transaksi terdaftar</p>
+        </Link>
+
         <Link href="/admin/financials/periods" className="border-border bg-surface hover:border-primary-solid rounded-xl border p-5 transition">
           <h2 className="text-body text-fg font-semibold">Periode Keuangan</h2>
           <p className="text-body-sm text-fg-muted mt-2">Kelola periode pelaporan, pembukaan periode, dan penguncian setelah proses pelaporan selesai.</p>
@@ -69,7 +77,7 @@ export default async function FinancialsPage() {
 
         <Link href="/admin/financials/reports" className="border-border bg-surface hover:border-primary-solid rounded-xl border p-5 transition">
           <h2 className="text-body text-fg font-semibold">Laporan Keuangan</h2>
-          <p className="text-body-sm text-fg-muted mt-2">Pantau laporan, peninjauan, persetujuan, visibilitas, dan publikasi kepada investor.</p>
+          <p className="text-body-sm text-fg-muted mt-2">Susun, tinjau, setujui, dan publikasikan laporan yang bersumber dari transaksi operasional perusahaan.</p>
           <p className="text-caption text-fg-subtle mt-4">{reports.length} laporan terdaftar</p>
         </Link>
 
