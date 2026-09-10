@@ -14,11 +14,17 @@ export function FinanceInvoiceActions({
   status,
   outstanding,
   refundable,
+  documentTitle,
+  customerName,
+  issuedOn,
 }: {
   invoiceId: string
   status: string
   outstanding: number
   refundable: number
+  documentTitle: string
+  customerName: string
+  issuedOn: string | null
 }) {
   const router = useRouter()
   const [pending, startTransition] = useTransition()
@@ -39,7 +45,27 @@ export function FinanceInvoiceActions({
         </Alert>
       ) : null}
       <div className="flex flex-wrap gap-2">
-        <Button variant="secondary" onClick={() => window.print()}>
+        <Button
+          variant="secondary"
+          onClick={() => {
+            const safe = (value: string) =>
+              value
+                .normalize('NFKD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .replace(/[^a-zA-Z0-9]+/g, '-')
+                .replace(/^-+|-+$/g, '')
+                .slice(0, 90)
+            const previousTitle = document.title
+            document.title = [customerName, issuedOn ?? new Date().toISOString().slice(0, 10), documentTitle]
+              .map(safe)
+              .filter(Boolean)
+              .join('-')
+            window.print()
+            window.setTimeout(() => {
+              document.title = previousTitle
+            }, 1000)
+          }}
+        >
           Cetak / Simpan PDF
         </Button>
         {status === 'draft' ? (
