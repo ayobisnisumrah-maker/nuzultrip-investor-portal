@@ -84,6 +84,19 @@ if (checkOnly) {
   }
   const current = readFileSync(outputPath, 'utf8')
   if (current.trim() !== generated.trim()) {
+    const generatedPath = resolve(root, '.database.generated.ts')
+    writeFileSync(generatedPath, generated, 'utf8')
+    try {
+      execSync(`diff -u "${outputPath}" "${generatedPath}"`, {
+        cwd: root,
+        encoding: 'utf8',
+        stdio: ['ignore', 'pipe', 'pipe'],
+      })
+    } catch (error) {
+      if (error && typeof error === 'object' && 'stdout' in error && error.stdout) {
+        console.error(String(error.stdout))
+      }
+    }
     console.error('\nsrc/types/database.ts is out of date with the migrations.')
     console.error('Run `pnpm db:types` and commit the result.\n')
     process.exit(1)
