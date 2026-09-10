@@ -1,5 +1,8 @@
 import Link from 'next/link'
+
+import { parseRefundPolicy } from '@/core/financials/refund-policy'
 import { FinanceOperationsWorkspace } from '@/features/admin/financials/finance-operations-workspace'
+import { RefundPolicySettings } from '@/features/admin/financials/refund-policy-settings'
 import { adminWithPermission } from '@/server/auth/page-guards'
 import { getServerSupabase } from '@/server/supabase/server'
 import { Alert } from '@/ui/alert'
@@ -11,6 +14,14 @@ const rupiah = new Intl.NumberFormat('id-ID', {
   currency: 'IDR',
   maximumFractionDigits: 0,
 })
+
+type ExtendedFinanceSettings = {
+  invoice_terms_body?: string | null
+  terms_letterhead_asset_id?: string | null
+  refund_processing_days?: number
+  refund_day_basis?: string
+  refund_tiers?: unknown
+}
 
 export default async function FinanceOperationsPage() {
   const principal = await adminWithPermission(
@@ -31,13 +42,7 @@ export default async function FinanceOperationsPage() {
       .select('id,code,name,unit_label,default_unit_price,tax_rate')
       .eq('active', true)
       .order('name'),
-    supabase
-      .from('finance_settings')
-      .select(
-        'invoice_prefix,receipt_prefix,refund_prefix,company_legal_name,company_address,company_tax_id,bank_details,payment_instructions,invoice_terms,invoice_footer,logo_asset_id,stamp_asset_id,signature_asset_id',
-      )
-      .eq('singleton', true)
-      .single(),
+    supabase.from('finance_settings').select('*').eq('singleton', true).single(),
     supabase
       .from('finance_invoices')
       .select('id,reference,status,customer_name,grand_total,paid_total,refunded_total,created_at')
@@ -75,6 +80,12 @@ export default async function FinanceOperationsPage() {
   const spent = expenseRows
     .filter((x) => x.status === 'recorded')
     .reduce((sum, x) => sum + Number(x.total_amount), 0)
+  const extended = settings.data as typeof settings.data & ExtendedFinanceSettings
+  const refundPolicy = parseRefundPolicy({
+    processingDays: extended.refund_processing_days ?? 90,
+    dayBasis: extended.refund_day_basis ?? 'business_days',
+    tiers: extended.refund_tiers ?? [],
+  })
 
   return (
     <Stack gap={8}>
@@ -114,7 +125,7 @@ export default async function FinanceOperationsPage() {
                     <span className="text-body-sm">{invoice.customer_name}</span>
                     <span className="text-body-sm">
                       Sisa {rupiah.format(outstanding)}
-                      {paidNet > 0 ? ` · dapat direfund ${rupiah.format(paidNet)}` : ''}
+                      {paidNet > 0 ? ` · saldo pembayaran ${rupiah.format(paidNet)}` : ''}
                     </span>
                     <span className="text-body-sm font-semibold">
                       {paidNet > 0 ? 'Pelunasan / Refund' : 'Pelunasan'} →
@@ -153,6 +164,7 @@ export default async function FinanceOperationsPage() {
           Tambahkan produk atau paket, lalu buat invoice pertama.
         </Alert>
       )}
+
       <FinanceOperationsWorkspace
         products={(products.data ?? []).map((x) => ({
           ...x,
@@ -160,6 +172,12 @@ export default async function FinanceOperationsPage() {
           tax_rate: Number(x.tax_rate),
         }))}
         settings={settings.data}
+      />
+
+      <RefundPolicySettings
+        termsBody={extended.invoice_terms_body ?? ''}
+        termsLetterheadAssetId={extended.terms_letterhead_asset_id ?? null}
+        refundPolicy={refundPolicy}
       />
     </Stack>
   )
