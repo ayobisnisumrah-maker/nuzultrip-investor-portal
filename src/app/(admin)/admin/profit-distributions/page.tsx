@@ -7,8 +7,10 @@ import { adminWithPermission } from '@/server/auth/page-guards'
 import {
   listProfitDistributionAllocations,
   listProfitDistributions,
+  type ProfitDistributionAllocation,
 } from '@/server/ownership/profit-distribution-service'
 import { getServerSupabase } from '@/server/supabase/server'
+import { Alert } from '@/ui/alert'
 
 export default async function ProfitDistributionsPage() {
   const principal = await adminWithPermission(
@@ -33,25 +35,42 @@ export default async function ProfitDistributionsPage() {
   const supabase = await getServerSupabase()
   const distributions = await listProfitDistributions(supabase)
   const visibleDistributions = distributions.slice(0, 50)
-  const allocationsEntries = await Promise.all(
+
+  const allocationResults = await Promise.all(
     visibleDistributions.map(async (distribution) => {
-      const allocations = await listProfitDistributionAllocations(supabase, distribution.id)
-      return [distribution.id, allocations] as const
+      try {
+        return {
+          distributionId: distribution.id,
+          allocations: await listProfitDistributionAllocations(supabase, distribution.id),
+          failed: false,
+        } as const
+      } catch {
+        return {
+          distributionId: distribution.id,
+          allocations: [] as ProfitDistributionAllocation[],
+          failed: true,
+        } as const
+      }
     }),
   )
-  const allocationsByDistribution = Object.fromEntries(allocationsEntries)
-  const allocationIds = allocationsEntries.flatMap(([, allocations]) =>
+
+  const allocationsByDistribution = Object.fromEntries(
+    allocationResults.map(({ distributionId, allocations }) => [distributionId, allocations]),
+  )
+  const allocationIds = allocationResults.flatMap(({ allocations }) =>
     allocations.map((allocation) => allocation.id),
   )
+  const failedAllocationCount = allocationResults.filter((result) => result.failed).length
 
-  const { data: proofRows } = allocationIds.length
+  const proofResult = allocationIds.length
     ? await supabase
         .from('profit_distribution_payment_proofs')
         .select('allocation_id')
         .in('allocation_id', allocationIds)
-    : { data: [] }
+    : { data: [], error: null }
 
-  const proofAllocationIds = (proofRows ?? []).map((proof) => proof.allocation_id)
+  const proofAllocationIds = (proofResult.data ?? []).map((proof) => proof.allocation_id)
+  const hasAncillaryLoadWarning = failedAllocationCount > 0 || Boolean(proofResult.error)
 
   return (
     <div className="space-y-5">
@@ -75,6 +94,16 @@ export default async function ProfitDistributionsPage() {
           </Link>
         ) : null}
       </div>
+
+      {hasAncillaryLoadWarning ? (
+        <Alert tone="warning" title="Sebagian data pembayaran belum dapat dimuat">
+          Daftar distribusi tetap dapat digunakan. Muat ulang halaman untuk mencoba mengambil kembali
+          {failedAllocationCount > 0 ? ` alokasi pada ${failedAllocationCount} distribusi` : ''}
+          {failedAllocationCount > 0 && proofResult.error ? ' dan' : ''}
+          {proofResult.error ? ' data bukti pembayaran' : ''}.
+        </Alert>
+      ) : null}
+
       <ProfitDistributionManager
         distributions={visibleDistributions}
         allocationsByDistribution={allocationsByDistribution}
