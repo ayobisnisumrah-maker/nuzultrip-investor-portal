@@ -117,29 +117,48 @@ export default async function Home() {
   return (
     <PublicRealtimeSurface>
       <style>{`
+        section:has(img[alt='Agen Nuzultrip']) > div > div {
+          grid-template-columns: 0.2fr 0.8fr !important;
+          gap: 32px !important;
+        }
+
+        section:has(img[alt='Agen Nuzultrip']) div:has(> img[alt='Agen Nuzultrip']),
+        section:has(img[alt='Agen Nuzultrip']) div:has(> img[alt='Mitra Travel']),
+        section:has(img[alt='Agen Nuzultrip']) div:has(> img[alt='Mitra Layanan']),
+        section:has(img[alt='Agen Nuzultrip']) div:has(> img[alt='Land Arrangement']),
+        section:has(img[alt='Agen Nuzultrip']) div:has(> img[alt='Mitra Strategis']) {
+          min-height: 118px !important;
+          overflow: visible !important;
+        }
+
         img[alt='Agen Nuzultrip'],
         img[alt='Mitra Travel'],
         img[alt='Mitra Layanan'],
         img[alt='Land Arrangement'],
         img[alt='Mitra Strategis'] {
-          width: 200px !important;
-          max-width: 100% !important;
-          height: auto !important;
-          max-height: 82px !important;
+          width: 220px !important;
+          max-width: none !important;
+          height: 100px !important;
+          max-height: none !important;
           object-fit: contain !important;
-          transform: scale(1.18);
+          transform: scale(1.22);
           transform-origin: center;
         }
 
-        @media (max-width: 820px) {
+        @media (max-width: 1000px) {
+          section:has(img[alt='Agen Nuzultrip']) > div > div {
+            grid-template-columns: 1fr !important;
+            gap: 28px !important;
+          }
+
           img[alt='Agen Nuzultrip'],
           img[alt='Mitra Travel'],
           img[alt='Mitra Layanan'],
           img[alt='Land Arrangement'],
           img[alt='Mitra Strategis'] {
-            width: 170px !important;
-            max-height: 72px !important;
-            transform: scale(1.12);
+            width: 210px !important;
+            height: 94px !important;
+            transform: scale(1.18);
           }
         }
 
@@ -149,8 +168,8 @@ export default async function Home() {
           img[alt='Mitra Layanan'],
           img[alt='Land Arrangement'],
           img[alt='Mitra Strategis'] {
-            width: 180px !important;
-            max-height: 74px !important;
+            width: 220px !important;
+            height: 100px !important;
             transform: none;
           }
         }
