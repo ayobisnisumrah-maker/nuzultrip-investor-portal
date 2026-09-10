@@ -21,6 +21,17 @@ export const refundPolicySchema = z.object({
   tiers: z.array(refundTierSchema).max(20),
 })
 
+export const financePolicySettingsSchema = z.object({
+  termsBody: z.string().trim().max(20_000).default(''),
+  termsLetterheadAssetId: z.string().uuid().nullable(),
+  refundPolicy: refundPolicySchema,
+})
+
+export const financeInvoiceDepartureSchema = z.object({
+  invoiceId: z.string().uuid(),
+  departureOn: z.string().date(),
+})
+
 export type RefundPolicy = z.infer<typeof refundPolicySchema>
 export type RefundTier = z.infer<typeof refundTierSchema>
 
