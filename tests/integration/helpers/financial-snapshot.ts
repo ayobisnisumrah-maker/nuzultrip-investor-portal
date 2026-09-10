@@ -15,10 +15,19 @@ export async function createPublishedFinancialSnapshot({
   revenue: number
   expenses: number
 }): Promise<FinancialSnapshotFixture> {
+  const fiscalYear =
+    3000 +
+    [...suffix].reduce(
+      (hash, character) => (hash * 31 + character.charCodeAt(0)) % 6000,
+      0,
+    )
+  const startsOn = `${fiscalYear}-01-01`
+  const endsOn = `${fiscalYear}-12-31`
+
   const [period] = await db()<{ id: string }[]>`
     insert into public.financial_periods (
       period_type, fiscal_year, period_index, starts_on, ends_on, currency, status
-    ) values ('yearly', 2198, 1, '2198-01-01', '2198-12-31', 'IDR', 'closed')
+    ) values ('yearly', ${fiscalYear}, 1, ${startsOn}, ${endsOn}, 'IDR', 'closed')
     returning id
   `
   if (!period) throw new Error('Failed to create financial period fixture.')
@@ -34,7 +43,7 @@ export async function createPublishedFinancialSnapshot({
   const [version] = await db()<{ id: string }[]>`
     insert into public.financial_report_versions (
       financial_report_id, version_number, status, source, published_at
-    ) values (${report.id}, 1, 'published', 'audited', now())
+    ) values (${report.id}, 1, 'draft', 'audited', null)
     returning id
   `
   if (!version) throw new Error('Failed to create financial report version fixture.')
@@ -45,6 +54,12 @@ export async function createPublishedFinancialSnapshot({
     ) values
       (${version.id}, 'income', 'revenue', 'revenue', 'Revenue', ${revenue}, 'IDR', 0),
       (${version.id}, 'income', 'expense', 'expenses', 'Expenses', ${expenses}, 'IDR', 1)
+  `
+
+  await db()`
+    update public.financial_report_versions
+    set status = 'published', published_at = now()
+    where id = ${version.id}
   `
 
   await db()`
