@@ -140,10 +140,7 @@ export async function buildTransactionFinancialReport(
     (sum, payment) => sum + finite(payment.amount),
     0,
   )
-  const refunds = (refundsResult.data ?? []).reduce(
-    (sum, refund) => sum + finite(refund.amount),
-    0,
-  )
+  const refunds = (refundsResult.data ?? []).reduce((sum, refund) => sum + finite(refund.amount), 0)
   const expenses = (expensesResult.data ?? []).reduce(
     (sum, expense) => sum + finite(expense.total_amount),
     0,
@@ -180,30 +177,12 @@ export async function buildTransactionFinancialReport(
     },
     {
       statement: 'income',
-      category: 'revenue',
-      lineKey: 'net_revenue',
-      label: 'Pendapatan neto operasional',
-      amount: netRevenue,
-      currency,
-      note: 'Pendapatan bruto dikurangi refund diproses.',
-    },
-    {
-      statement: 'income',
       category: 'expense',
       lineKey: 'operating_expenses',
       label: 'Pengeluaran operasional tercatat',
-      amount: -expenses,
+      amount: expenses,
       currency,
       note: 'Otomatis dari pengeluaran berstatus recorded pada periode laporan.',
-    },
-    {
-      statement: 'income',
-      category: 'operating',
-      lineKey: 'operating_result',
-      label: 'Hasil operasional',
-      amount: operatingResult,
-      currency,
-      note: 'Pendapatan neto dikurangi pengeluaran operasional tercatat.',
     },
     {
       statement: 'cash_flow',
@@ -233,15 +212,6 @@ export async function buildTransactionFinancialReport(
       note: 'Pengeluaran berstatus recorded pada periode laporan.',
     },
     {
-      statement: 'cash_flow',
-      category: 'operating',
-      lineKey: 'net_operating_cashflow',
-      label: 'Arus kas operasional bersih',
-      amount: netCashflow,
-      currency,
-      note: 'Kas masuk dikurangi refund dan pengeluaran tercatat.',
-    },
-    {
       statement: 'balance',
       category: 'asset',
       lineKey: 'accounts_receivable',
@@ -269,7 +239,13 @@ export async function buildTransactionFinancialReport(
       basis: 'derived',
     },
     { kpiKey: 'cash_in', label: 'Arus masuk', value: cashIn, unit: 'currency', basis: 'derived' },
-    { kpiKey: 'cash_out', label: 'Arus keluar', value: cashOut, unit: 'currency', basis: 'derived' },
+    {
+      kpiKey: 'cash_out',
+      label: 'Arus keluar',
+      value: cashOut,
+      unit: 'currency',
+      basis: 'derived',
+    },
     {
       kpiKey: 'net_cashflow',
       label: 'Arus kas bersih',
