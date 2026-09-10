@@ -202,14 +202,14 @@ export function PaymentReceipt({ data }: { data: PaymentReceiptData }) {
       {data.signatureUrl || data.stampUrl || data.signerName || data.signerPosition ? (
         <section className={styles.signatureSection}>
           <div className={styles.signature}>
-            <span className={styles.smallLabel}>Tanda tangan &amp; stempel</span>
+            <span className={styles.smallLabel}>Managemen</span>
             <div className={styles.signatureImages}>
               {data.signatureUrl ? (
                 <Image
                   src={data.signatureUrl}
                   alt="Tanda tangan"
-                  width={135}
-                  height={65}
+                  width={160}
+                  height={80}
                   unoptimized
                   className={styles.signatureImage}
                 />
@@ -218,8 +218,8 @@ export function PaymentReceipt({ data }: { data: PaymentReceiptData }) {
                 <Image
                   src={data.stampUrl}
                   alt="Stempel perusahaan"
-                  width={90}
-                  height={90}
+                  width={100}
+                  height={100}
                   unoptimized
                   className={styles.stampImage}
                 />
