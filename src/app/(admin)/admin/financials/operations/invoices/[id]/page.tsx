@@ -58,14 +58,16 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
   if (!invoiceResult.data) notFound()
   const invoice = invoiceResult.data
   const company = invoice.company_snapshot as Company
+  const firstItem = itemsResult.data?.[0]
+  const documentTitle = `Bukti Pembayaran ${firstItem?.name || 'Pesanan'}`
   const paidNet = Number(invoice.paid_total) - Number(invoice.refunded_total)
   const outstanding = Math.max(Number(invoice.grand_total) - paidNet, 0)
   return (
     <Stack gap={6}>
       <PageHeader
-        eyebrow="Invoice Operasional"
-        title={invoice.reference}
-        description={`${invoice.customer_name} · ${invoice.status}`}
+        eyebrow="Bukti Pembayaran"
+        title={documentTitle}
+        description={`${invoice.reference} · ${invoice.customer_name}`}
       />
       <FinanceInvoiceActions
         invoiceId={id}
@@ -87,6 +89,7 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
                   />
                 ) : null}
                 <p className="text-heading-md font-semibold">{company.legalName || 'Nuzultrip'}</p>
+                <p className="text-body-sm text-fg-muted mt-1">{documentTitle}</p>
                 <p className="text-body-sm text-fg-muted whitespace-pre-line">{company.address}</p>
                 {company.taxId ? (
                   <p className="text-caption text-fg-subtle">Identitas pajak: {company.taxId}</p>
@@ -141,7 +144,9 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
             <div className="text-body-sm ml-auto grid w-full max-w-sm gap-2">
               <Total label="Subtotal" value={Number(invoice.subtotal)} />
               <Total label="Diskon" value={-Number(invoice.discount_total)} />
-              <Total label="Pajak" value={Number(invoice.tax_total)} />
+              {Number(invoice.tax_total) > 0 ? (
+                <Total label="Pajak" value={Number(invoice.tax_total)} />
+              ) : null}
               <Total label="Total" value={Number(invoice.grand_total)} strong />
               <Total label="Dibayar bersih" value={paidNet} />
               <Total label="Sisa" value={outstanding} />
