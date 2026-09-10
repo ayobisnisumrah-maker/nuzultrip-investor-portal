@@ -34,6 +34,10 @@ export const financeInvoiceSchema = z.object({
     .min(1)
     .max(100),
 })
+export const financeInvoiceDueDateSchema = z.object({
+  invoiceId: z.string().uuid(),
+  dueOn: z.string().date(),
+})
 export const financeExpenseSchema = z.object({
   expenseOn: z.string().date(),
   category: z.string().trim().min(2).max(80),
