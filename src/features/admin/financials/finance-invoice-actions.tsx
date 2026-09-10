@@ -5,6 +5,7 @@ import {
   issueFinanceInvoice,
   processFinanceRefund,
   recordFinancePayment,
+  updateFinanceInvoiceDueDate,
 } from '@/server/financials/operation-actions'
 import { Alert } from '@/ui/alert'
 import { Button } from '@/ui/button'
@@ -17,6 +18,7 @@ export function FinanceInvoiceActions({
   documentTitle,
   customerName,
   issuedOn,
+  currentDueOn,
 }: {
   invoiceId: string
   status: string
@@ -25,6 +27,7 @@ export function FinanceInvoiceActions({
   documentTitle: string
   customerName: string
   issuedOn: string | null
+  currentDueOn: string | null
 }) {
   const router = useRouter()
   const [pending, startTransition] = useTransition()
@@ -37,6 +40,7 @@ export function FinanceInvoiceActions({
       else router.refresh()
     })
   }
+  const canManageDueDate = ['draft', 'issued', 'partially_paid'].includes(status)
   return (
     <div className="grid gap-4 print:hidden">
       {error ? (
@@ -74,6 +78,32 @@ export function FinanceInvoiceActions({
           </Button>
         ) : null}
       </div>
+      {canManageDueDate ? (
+        <form
+          className="border-border grid gap-3 rounded-xl border p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end"
+          onSubmit={(e) => {
+            e.preventDefault()
+            const f = new FormData(e.currentTarget)
+            run(() =>
+              updateFinanceInvoiceDueDate({
+                invoiceId,
+                dueOn: String(f.get('dueOn')),
+              }),
+            )
+          }}
+        >
+          <label className="text-body-sm grid gap-1">
+            <span>Batas pelunasan</span>
+            <Input name="dueOn" type="date" defaultValue={currentDueOn ?? ''} required />
+            <span className="text-caption text-fg-muted">
+              Tanggal ini diatur manual oleh kasir. Sistem tidak menentukan batas pelunasan otomatis.
+            </span>
+          </label>
+          <Button type="submit" variant="secondary" loading={pending}>
+            Simpan batas pelunasan
+          </Button>
+        </form>
+      ) : null}
       {['issued', 'partially_paid'].includes(status) && outstanding > 0 ? (
         <form
           className="border-border grid gap-3 rounded-xl border p-4 sm:grid-cols-3"
