@@ -94,7 +94,7 @@ describe('PaymentReceipt', () => {
     expect(screen.queryByRole('link', { name: /javascript/i })).toBeNull()
   })
 
-  it('renders management authorization with signature and stamp assets', () => {
+  it('renders signature and stamp assets without management label', () => {
     render(
       <PaymentReceipt
         data={{
@@ -107,7 +107,7 @@ describe('PaymentReceipt', () => {
       />,
     )
 
-    expect(screen.getByText('Managemen')).toBeTruthy()
+    expect(screen.queryByText('Managemen')).toBeNull()
     expect(screen.queryByText('Tanda tangan & stempel')).toBeNull()
     expect(screen.getByAltText('Tanda tangan')).toBeTruthy()
     expect(screen.getByAltText('Stempel perusahaan')).toBeTruthy()
