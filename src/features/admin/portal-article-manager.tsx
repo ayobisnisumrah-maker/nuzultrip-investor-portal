@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { returnPortalPageToDraft, savePortalSection } from '@/server/portal/admin-actions'
 
 type ContentRecord = Record<string, unknown>
+type RichContentRecord = ContentRecord & { kind: 'rich_content' }
 
 type ArticleItem = {
   type: 'article' | 'news'
@@ -126,7 +127,7 @@ export function PortalArticleManager({
   }
 
   function save() {
-    const content: ContentRecord = {
+    const content: RichContentRecord = {
       ...initialContent,
       kind: 'rich_content',
       eyebrow,
