@@ -50,7 +50,9 @@ test('published document and financial report appear to investor automatically',
   const supabase = serviceClient()
   const adminClient = await authenticatedClient(admin)
   const token = randomUUID().slice(0, 8)
-  const year = 2100 + (Number.parseInt(token.slice(0, 4), 16) % 100)
+  // Official reports may only be published after their accounting period ends.
+  // Keep the fixture randomized while guaranteeing a completed period.
+  const year = 2000 + (Number.parseInt(token.slice(0, 4), 16) % 25)
   const documentTitle = `Dokumen Investor Realtime ${token}`
   const reportTitle = `Laporan Investor Realtime ${token}`
 
