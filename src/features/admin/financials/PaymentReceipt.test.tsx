@@ -32,7 +32,7 @@ const baseData: PaymentReceiptData = {
 }
 
 describe('PaymentReceipt', () => {
-  it('renders a dynamic title, DP icon, due date, terms page, and hides zero-value rows', () => {
+  it('renders a dynamic title, DP icon, due date, terms page, and refund table', () => {
     render(<PaymentReceipt data={{ ...baseData, discount: 0, tax: 0 }} />)
 
     expect(
@@ -46,7 +46,7 @@ describe('PaymentReceipt', () => {
     expect(screen.getByText('Batas pelunasan: 25 Sep 2026')).toBeTruthy()
     expect(screen.getByText('Keberangkatan: 10 Oct 2026')).toBeTruthy()
     expect(screen.queryByText(/Dokumen ini bukan bukti pelunasan/i)).toBeNull()
-    expect(screen.getByText(/Syarat & Ketentuan tercantum pada halaman 2/)).toBeTruthy()
+    expect(screen.getByText(/Syarat & Ketentuan tercantum mulai halaman 2/)).toBeTruthy()
     expect(
       screen.getByRole('link', { name: 'https://nuzultrip.com/syarat-ketentuan' }),
     ).toHaveAttribute('href', 'https://nuzultrip.com/syarat-ketentuan')
@@ -56,8 +56,16 @@ describe('PaymentReceipt', () => {
     expect(screen.getByAltText('Kop surat Syarat & Ketentuan')).toBeTruthy()
     expect(screen.getByText(/Pembayaran DP mengikat pemesanan paket/)).toBeTruthy()
     expect(screen.getByText(/Proses refund maksimal 90 hari kerja/)).toBeTruthy()
+    expect(
+      screen.getByRole('columnheader', { name: 'Rentang pembatalan sebelum keberangkatan' }),
+    ).toBeTruthy()
+    expect(screen.getByRole('columnheader', { name: 'Maksimal refund' })).toBeTruthy()
+    expect(screen.getByText('0–6 hari sebelum keberangkatan')).toBeTruthy()
+    expect(screen.getByText('0%')).toBeTruthy()
     expect(screen.getByText(/Dengan melakukan pembayaran atas invoice ini/)).toBeTruthy()
     expect(screen.getByText('Dokumen dibuat otomatis oleh sistem Nuzultrip.')).toBeTruthy()
+    expect(screen.queryByText('Halaman 1 dari 2')).toBeNull()
+    expect(screen.queryByText('Halaman 2 dari 2')).toBeNull()
     expect(screen.getAllByText('PT Swarna Dipa Wisata').length).toBeGreaterThan(0)
   })
 
@@ -90,7 +98,7 @@ describe('PaymentReceipt', () => {
       />,
     )
     expect(screen.queryByText('Kontak')).toBeNull()
-    expect(screen.getByText('Syarat & Ketentuan tercantum pada halaman 2.')).toBeTruthy()
+    expect(screen.getByText('Syarat & Ketentuan tercantum mulai halaman 2.')).toBeTruthy()
     expect(screen.queryByRole('link', { name: /javascript/i })).toBeNull()
   })
 
