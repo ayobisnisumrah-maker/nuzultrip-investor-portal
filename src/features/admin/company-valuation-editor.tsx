@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { returnPortalPageToDraft, savePortalSection } from '@/server/portal/admin-actions'
 
 type StatContent = {
-  kind?: string
+  kind?: 'stat_grid'
   metrics?: unknown
   company_valuation_amount?: unknown
   company_valuation_currency?: unknown
@@ -138,7 +138,7 @@ export function CompanyValuationEditor({
       ...metricsWithoutValuation.slice(4),
     ]
 
-    const content: StatContent = {
+    const content: StatContent & { kind: 'stat_grid' } = {
       ...initialContent,
       kind: 'stat_grid',
       company_valuation_amount: validValuation,
