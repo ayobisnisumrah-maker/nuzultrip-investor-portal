@@ -28,6 +28,11 @@ const monthFormatter = new Intl.DateTimeFormat('id-ID', {
   timeZone: 'UTC',
 })
 
+const monthNameFormatter = new Intl.DateTimeFormat('id-ID', {
+  month: 'long',
+  timeZone: 'UTC',
+})
+
 function formatRupiah(value: number) {
   return new Intl.NumberFormat('id-ID', {
     style: 'currency',
@@ -40,10 +45,26 @@ function formatMonth(value: string) {
   return monthFormatter.format(new Date(`${value}T00:00:00Z`))
 }
 
-export default async function InvestorOverviewPage() {
+function formatMonthName(month: number) {
+  return monthNameFormatter.format(new Date(Date.UTC(2026, month - 1, 1)))
+}
+
+type InvestorOverviewSearchParams = {
+  month?: string
+  year?: string
+}
+
+export default async function InvestorOverviewPage({
+  searchParams,
+}: {
+  searchParams?: Promise<InvestorOverviewSearchParams>
+}) {
   const principal = await requireInvestorPage()
   const supabase = await getServerSupabase()
   const liveTopic = topics.investor(principal.investorId)
+  const filters = (await searchParams) ?? {}
+  const selectedMonth = /^\d{2}$/.test(filters.month ?? '') ? filters.month ?? '' : ''
+  const selectedYear = /^\d{4}$/.test(filters.year ?? '') ? filters.year ?? '' : ''
 
   const { data: history } = await supabase
     .from('investor_status_history')
@@ -101,9 +122,21 @@ export default async function InvestorOverviewPage() {
 
     ;[financialDashboard, transactionCashflow] = await Promise.all([
       getPublishedFinancialDashboardData(supabase),
-      getInvestorMonthlyCashflowSummary(supabase, 6),
+      getInvestorMonthlyCashflowSummary(supabase, 12),
     ])
   }
+
+  const availableYears = Array.from(
+    new Set(transactionCashflow.map((row) => row.monthStart.slice(0, 4))),
+  ).sort((a, b) => b.localeCompare(a))
+
+  const filteredTransactionCashflow = transactionCashflow.filter((row) => {
+    const year = row.monthStart.slice(0, 4)
+    const month = row.monthStart.slice(5, 7)
+    if (selectedYear && year !== selectedYear) return false
+    if (selectedMonth && month !== selectedMonth) return false
+    return true
+  })
 
   const totalUnits = holdings.reduce((sum, holding) => sum + Number(holding.units), 0)
   const totalOwnershipBps = holdings.reduce(
@@ -238,17 +271,54 @@ export default async function InvestorOverviewPage() {
           <div>
             <p className="text-caption text-fg-subtle font-medium">Aktivitas Perusahaan</p>
             <h2 className="font-display text-heading-md text-fg mt-1">Arus transaksi bulanan</h2>
-            <p className="text-body-sm text-fg-muted mt-1 max-w-3xl">
-              Investor hanya melihat ringkasan nominal arus masuk, arus keluar, bulan transaksi, dan jumlah pax. Identitas pelanggan, vendor, referensi, metode pembayaran, serta detail transaksi tidak ditampilkan.
-            </p>
           </div>
 
           <Card>
             <CardBody>
-              {transactionCashflow.length === 0 ? (
+              <form method="get" className="mb-4 grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto_auto] sm:items-end">
+                <label className="text-body-sm grid gap-1.5">
+                  <span className="text-fg-subtle">Bulan</span>
+                  <select
+                    name="month"
+                    defaultValue={selectedMonth}
+                    className="border-border bg-canvas h-10 rounded-lg border px-3"
+                  >
+                    <option value="">Semua bulan</option>
+                    {Array.from({ length: 12 }, (_, index) => index + 1).map((month) => {
+                      const value = String(month).padStart(2, '0')
+                      return <option key={value} value={value}>{formatMonthName(month)}</option>
+                    })}
+                  </select>
+                </label>
+                <label className="text-body-sm grid gap-1.5">
+                  <span className="text-fg-subtle">Tahun</span>
+                  <select
+                    name="year"
+                    defaultValue={selectedYear}
+                    className="border-border bg-canvas h-10 rounded-lg border px-3"
+                  >
+                    <option value="">Semua tahun</option>
+                    {availableYears.map((year) => <option key={year} value={year}>{year}</option>)}
+                  </select>
+                </label>
+                <button
+                  type="submit"
+                  className="border-border bg-fg text-canvas h-10 rounded-lg border px-4 text-sm font-medium"
+                >
+                  Terapkan
+                </button>
+                <Link
+                  href="/investor"
+                  className="border-border text-fg flex h-10 items-center justify-center rounded-lg border px-4 text-sm font-medium hover:bg-canvas-subtle"
+                >
+                  Reset
+                </Link>
+              </form>
+
+              {filteredTransactionCashflow.length === 0 ? (
                 <EmptyState
-                  title="Belum ada ringkasan transaksi"
-                  description="Ringkasan arus transaksi akan muncul setelah transaksi operasional perusahaan tercatat."
+                  title="Tidak ada data pada periode ini"
+                  description="Ubah filter bulan atau tahun untuk melihat ringkasan arus transaksi yang tersedia."
                 />
               ) : (
                 <div className="overflow-x-auto">
@@ -262,7 +332,7 @@ export default async function InvestorOverviewPage() {
                       </tr>
                     </thead>
                     <tbody className="divide-border divide-y">
-                      {transactionCashflow.map((row) => (
+                      {filteredTransactionCashflow.map((row) => (
                         <tr key={row.monthStart} className="text-body-sm">
                           <td className="px-3 py-3 font-medium">{formatMonth(row.monthStart)}</td>
                           <td className="tabular px-3 py-3 text-right font-mono">
