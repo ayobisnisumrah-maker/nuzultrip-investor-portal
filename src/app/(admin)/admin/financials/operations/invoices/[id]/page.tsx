@@ -74,6 +74,9 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
         status={invoice.status}
         outstanding={outstanding}
         refundable={Math.max(paidNet, 0)}
+        documentTitle={documentTitle}
+        customerName={invoice.customer_name}
+        issuedOn={invoice.issued_on}
       />
       <Card>
         <CardBody>
@@ -195,10 +198,6 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
                 ) : null}
               </section>
             ) : null}
-            <Alert tone="info" title="Jenis dokumen">
-              Dokumen ini adalah invoice operasional, bukan faktur pajak kecuali diterbitkan melalui
-              sistem perpajakan yang berlaku.
-            </Alert>
           </div>
         </CardBody>
       </Card>
