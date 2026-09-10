@@ -68,7 +68,7 @@ export default async function PortalPage() {
           </p>
           <h1 className="font-display text-heading-lg text-fg mt-1">Ringkasan Portal</h1>
           <p className="text-body-sm text-fg-muted mt-2 max-w-2xl">
-            Pantau status publikasi, revisi konten, navigasi, ikon, dan aset media dari satu tempat.
+            Pantau status publikasi, valuasi, Artikel & Berita, revisi konten, navigasi, ikon, dan aset media dari satu tempat.
           </p>
         </div>
 
@@ -164,6 +164,12 @@ export default async function PortalPage() {
           <div className="mt-4 grid gap-2">
             <Link href="/admin/portal/pages" className="border-border hover:bg-muted rounded-lg border px-4 py-3 text-sm">
               Halaman
+            </Link>
+            <Link href="/admin/portal/valuation" className="border-border hover:bg-muted rounded-lg border px-4 py-3 text-sm">
+              Valuasi Perusahaan
+            </Link>
+            <Link href="/admin/portal/articles" className="border-border hover:bg-muted rounded-lg border px-4 py-3 text-sm">
+              Artikel & Berita
             </Link>
             <Link href="/admin/portal/icons" className="border-border hover:bg-muted rounded-lg border px-4 py-3 text-sm">
               Ikon Portal
