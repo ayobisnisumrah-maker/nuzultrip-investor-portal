@@ -4298,3 +4298,353 @@ export type Database = {
       financial_statement: "income" | "balance" | "cash_flow"
       inquiry_status: "new" | "in_progress" | "converted" | "closed"
       investor_status:
+        | "prospective"
+        | "submitted"
+        | "under_review"
+        | "approved"
+        | "rejected"
+        | "active"
+        | "inactive"
+      investor_type: "individual" | "institution"
+      nav_location: "header" | "footer" | "legal" | "social"
+      notification_kind:
+        | "investor_application_received"
+        | "investor_approved"
+        | "investor_rejected"
+        | "investor_deactivated"
+        | "document_published"
+        | "document_shared"
+        | "financial_report_published"
+        | "investor_report_published"
+        | "company_update"
+        | "message_received"
+        | "inquiry_received"
+        | "account_invited"
+      ownership_holding_status:
+        | "reserved"
+        | "active"
+        | "transferred"
+        | "cancelled"
+      ownership_inheritance_status:
+        | "pending"
+        | "approved"
+        | "rejected"
+        | "completed"
+        | "cancelled"
+      ownership_offering_status:
+        | "draft"
+        | "open"
+        | "paused"
+        | "closed"
+        | "archived"
+      ownership_transfer_status:
+        | "pending"
+        | "approved"
+        | "processing"
+        | "rejected"
+        | "completed"
+        | "cancelled"
+      page_kind: "home" | "standard" | "legal"
+      participant_role: "investor" | "admin"
+      period_status: "open" | "closed" | "locked"
+      period_type: "monthly" | "quarterly" | "yearly"
+      profit_distribution_status:
+        | "draft"
+        | "review"
+        | "approved"
+        | "payable"
+        | "paid"
+        | "cancelled"
+      publication_status:
+        | "draft"
+        | "review"
+        | "approved"
+        | "published"
+        | "archived"
+      section_kind:
+        | "hero_3d"
+        | "intro"
+        | "vision_mission"
+        | "business_overview"
+        | "growth_story"
+        | "ecosystem"
+        | "investment_info"
+        | "milestones"
+        | "strategic_direction"
+        | "financial_highlights"
+        | "investor_updates"
+        | "documents"
+        | "contact_cta"
+        | "legal_notice"
+        | "rich_content"
+        | "stat_grid"
+        | "logo_wall"
+        | "faq"
+      thread_kind: "investor_admin" | "broadcast" | "portal_inquiry"
+      user_status: "active" | "inactive"
+      visibility: "public" | "investors" | "restricted" | "internal"
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
+}
+
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never) = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never) = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  app: {
+    Enums: {},
+  },
+  public: {
+    Enums: {
+      account_status: ["active", "disabled"],
+      account_type: ["admin", "investor"],
+      app_role: ["admin", "ir"],
+      asset_visibility: ["public", "internal", "restricted"],
+      broadcast_audience: ["all_investors", "by_status", "selected"],
+      delivery_channel: ["email"],
+      delivery_status: ["pending", "sent", "failed", "skipped"],
+      document_kind: [
+        "investment_proposal",
+        "pitch_deck",
+        "investor_report",
+        "business_update",
+        "supporting",
+      ],
+      finance_expense_status: ["draft", "recorded", "void"],
+      finance_invoice_status: [
+        "draft",
+        "issued",
+        "partially_paid",
+        "paid",
+        "void",
+      ],
+      finance_payment_status: ["pending", "confirmed", "failed", "refunded"],
+      finance_refund_status: ["requested", "approved", "processed", "rejected"],
+      financial_category: [
+        "revenue",
+        "expense",
+        "asset",
+        "liability",
+        "equity",
+        "operating",
+        "investing",
+        "financing",
+      ],
+      financial_source: ["internal", "reviewed", "audited"],
+      financial_statement: ["income", "balance", "cash_flow"],
+      inquiry_status: ["new", "in_progress", "converted", "closed"],
+      investor_status: [
+        "prospective",
+        "submitted",
+        "under_review",
+        "approved",
+        "rejected",
+        "active",
+        "inactive",
+      ],
+      investor_type: ["individual", "institution"],
+      nav_location: ["header", "footer", "legal", "social"],
+      notification_kind: [
+        "investor_application_received",
+        "investor_approved",
+        "investor_rejected",
+        "investor_deactivated",
+        "document_published",
+        "document_shared",
+        "financial_report_published",
+        "investor_report_published",
+        "company_update",
+        "message_received",
+        "inquiry_received",
+        "account_invited",
+      ],
+      ownership_holding_status: [
+        "reserved",
+        "active",
+        "transferred",
+        "cancelled",
+      ],
+      ownership_inheritance_status: [
+        "pending",
+        "approved",
+        "rejected",
+        "completed",
+        "cancelled",
+      ],
+      ownership_offering_status: [
+        "draft",
+        "open",
+        "paused",
+        "closed",
+        "archived",
+      ],
+      ownership_transfer_status: [
+        "pending",
+        "approved",
+        "processing",
+        "rejected",
+        "completed",
+        "cancelled",
+      ],
+      page_kind: ["home", "standard", "legal"],
+      participant_role: ["investor", "admin"],
+      period_status: ["open", "closed", "locked"],
+      period_type: ["monthly", "quarterly", "yearly"],
+      profit_distribution_status: [
+        "draft",
+        "review",
+        "approved",
+        "payable",
+        "paid",
+        "cancelled",
+      ],
+      publication_status: [
+        "draft",
+        "review",
+        "approved",
+        "published",
+        "archived",
+      ],
+      section_kind: [
+        "hero_3d",
+        "intro",
+        "vision_mission",
+        "business_overview",
+        "growth_story",
+        "ecosystem",
+        "investment_info",
+        "milestones",
+        "strategic_direction",
+        "financial_highlights",
+        "investor_updates",
+        "documents",
+        "contact_cta",
+        "legal_notice",
+        "rich_content",
+        "stat_grid",
+        "logo_wall",
+        "faq",
+      ],
+      thread_kind: ["investor_admin", "broadcast", "portal_inquiry"],
+      user_status: ["active", "inactive"],
+      visibility: ["public", "investors", "restricted", "internal"],
+    },
+  },
+} as const
