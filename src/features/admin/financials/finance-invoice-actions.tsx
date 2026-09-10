@@ -39,7 +39,10 @@ export function FinanceInvoiceActions({
         </Alert>
       ) : null}
       <div className="flex flex-wrap gap-2">
-        <Button variant="secondary" onClick={() => window.print()}>
+        <Button
+          variant="secondary"
+          onClick={() => window.open(`/print/invoices/${invoiceId}`, '_blank', 'noopener,noreferrer')}
+        >
           Cetak / Simpan PDF
         </Button>
         {status === 'draft' ? (
