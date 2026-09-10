@@ -134,10 +134,7 @@ export type Database = {
           p_investor_pool_bps?: number
           p_notes?: string
           p_offering_id: string
-          p_opex_amount: number
-          p_period_end: string
-          p_period_start: string
-          p_revenue_amount: number
+          p_financial_report_version_id: string
         }
         Returns: Database["public"]["Tables"]["profit_distributions"]["Row"]
         SetofOptions: {
@@ -3758,6 +3755,7 @@ export type Database = {
           company_share_bps: number
           created_at: string
           created_by: string | null
+          financial_report_version_id: string | null
           id: string
           investor_pool_amount: number
           investor_pool_bps: number
@@ -3779,6 +3777,7 @@ export type Database = {
           company_share_bps?: number
           created_at?: string
           created_by?: string | null
+          financial_report_version_id?: string | null
           id?: string
           investor_pool_amount?: number
           investor_pool_bps?: number
@@ -3800,6 +3799,7 @@ export type Database = {
           company_share_bps?: number
           created_at?: string
           created_by?: string | null
+          financial_report_version_id?: string | null
           id?: string
           investor_pool_amount?: number
           investor_pool_bps?: number
@@ -3828,6 +3828,13 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "admins"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profit_distributions_financial_report_version_fk"
+            columns: ["financial_report_version_id"]
+            isOneToOne: false
+            referencedRelation: "financial_report_versions"
             referencedColumns: ["id"]
           },
           {
@@ -4637,4 +4644,3 @@ export const Constants = {
     },
   },
 } as const
-
