@@ -4,6 +4,7 @@ import { topics } from '@/core/realtime/events'
 import { ADMIN_NAVIGATION } from '@/features/admin/navigation'
 import { AdminShell, type SerializableNavSection } from '@/features/admin/admin-shell'
 import { RealtimeProvider } from '@/features/realtime/realtime-provider'
+import { RealtimeRefresher } from '@/features/realtime/realtime-refresher'
 import { NotificationSoundListener } from '@/features/notifications/notification-sound-listener'
 import { requireAdminPage } from '@/server/auth/page-guards'
 import { expireMessageThreads, getUnreadMessageCount } from '@/server/messaging/lifecycle'
@@ -59,10 +60,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       })),
   })).filter((section) => section.items.length > 0)
 
-  const subscribed = [topics.admin(), topics.user(principal.userId)]
+  const adminTopic = topics.admin()
+  const subscribed = [adminTopic, topics.user(principal.userId)]
 
   return (
     <RealtimeProvider topics={subscribed}>
+      <RealtimeRefresher topic={adminTopic} kinds={['finance.transaction_changed']} />
       <NotificationSoundListener
         topics={subscribed}
         role="admin"
