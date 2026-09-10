@@ -5,7 +5,7 @@ on:
     branches: [feat/refund-policy-terms-letterhead]
 
 permissions:
-  contents: read
+  contents: write
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -16,6 +16,8 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: feat/refund-policy-terms-letterhead
       - uses: pnpm/action-setup@v4
         with:
           version: 10.28.1
@@ -28,12 +30,18 @@ jobs:
       - uses: supabase/setup-cli@v2
         with:
           version: latest
-          github-token: ${{ github.token }}
       - run: supabase start
       - run: supabase db reset
       - run: pnpm db:types
-      - uses: actions/upload-artifact@v4
-        with:
-          name: generated-database-types
-          path: src/types/database.ts
-          if-no-files-found: error
+      - name: Commit generated database types
+        shell: bash
+        run: |
+          if git diff --quiet -- src/types/database.ts; then
+            echo "database.ts is already current."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/types/database.ts
+          git commit -m "chore(db): regenerate database types"
+          git push origin HEAD:feat/refund-policy-terms-letterhead
