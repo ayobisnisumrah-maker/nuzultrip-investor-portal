@@ -76,7 +76,7 @@ export default async function InvoicePrintPage({ params }: { params: Promise<{ i
       .order('position', { ascending: true }),
     supabase
       .from('finance_settings')
-      .select('company_legal_name, company_address, company_tax_id, company_email, company_phone, company_website, bank_details, payment_instructions, invoice_terms, invoice_footer, tax_invoice_enabled, logo_asset_id, stamp_asset_id, signature_asset_id, signer_name, signer_title, show_stamp, show_signature, show_print_metadata, show_draft_watermark')
+      .select('default_currency, company_legal_name, company_address, company_tax_id, company_email, company_phone, company_website, bank_details, payment_instructions, invoice_terms, invoice_footer, tax_invoice_enabled, logo_asset_id, stamp_asset_id, signature_asset_id, signer_name, signer_title, show_stamp, show_signature, show_print_metadata, show_draft_watermark')
       .eq('singleton', true)
       .limit(1),
   ])
@@ -147,7 +147,7 @@ export default async function InvoicePrintPage({ params }: { params: Promise<{ i
       <article className="invoice-sheet relative mx-auto w-[210mm] min-h-[297mm] overflow-hidden border border-slate-200 bg-white px-[16mm] py-[14mm] shadow-xl print:w-auto print:min-h-0">
         {invoice.status === 'draft' && showDraftWatermark ? (
           <div className="pointer-events-none absolute inset-0 z-0 flex items-center justify-center overflow-hidden">
-            <span className="-rotate-35 select-none text-[96px] font-black tracking-[0.18em] text-slate-100">DRAFT</span>
+            <span className="-rotate-[35deg] select-none text-[96px] font-black tracking-[0.18em] text-slate-100">DRAFT</span>
           </div>
         ) : null}
 
