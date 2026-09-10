@@ -22,6 +22,7 @@ export function refundTiersOverlap(tiers: RefundTier[]): boolean {
   for (let index = 1; index < sorted.length; index += 1) {
     const previous = sorted[index - 1]
     const current = sorted[index]
+    if (!previous || !current) continue
     const previousMax = previous.maxDaysBeforeDeparture ?? Number.POSITIVE_INFINITY
     if (current.minDaysBeforeDeparture <= previousMax) return true
   }
