@@ -42,6 +42,81 @@ const lineCategories: Record<LineItem['statement'], LineItem['category'][]> = {
   cash_flow: ['operating', 'investing', 'financing'],
 }
 
+const balanceSheetTemplate: LineItem[] = [
+  {
+    statement: 'balance',
+    category: 'asset',
+    lineKey: 'cash_and_bank',
+    label: 'Kas & Bank',
+    amount: '0',
+    currency: 'IDR',
+    note: 'Template awal — rekonsiliasi dengan saldo kas dan rekening bank.',
+  },
+  {
+    statement: 'balance',
+    category: 'asset',
+    lineKey: 'accounts_receivable',
+    label: 'Piutang Usaha',
+    amount: '0',
+    currency: 'IDR',
+    note: 'Rekonsiliasi dengan invoice yang belum tertagih.',
+  },
+  {
+    statement: 'balance',
+    category: 'asset',
+    lineKey: 'prepaid_expenses',
+    label: 'Uang Muka & Biaya Dibayar Dimuka',
+    amount: '0',
+    currency: 'IDR',
+    note: 'Template awal — rekonsiliasi uang muka vendor dan biaya dibayar dimuka.',
+  },
+  {
+    statement: 'balance',
+    category: 'liability',
+    lineKey: 'accounts_payable',
+    label: 'Utang Vendor',
+    amount: '0',
+    currency: 'IDR',
+    note: 'Template awal — rekonsiliasi kewajiban vendor yang belum dibayar.',
+  },
+  {
+    statement: 'balance',
+    category: 'liability',
+    lineKey: 'customer_advances',
+    label: 'Uang Muka / Titipan Pelanggan',
+    amount: '0',
+    currency: 'IDR',
+    note: 'Template awal — rekonsiliasi pembayaran pelanggan yang belum menjadi pendapatan.',
+  },
+  {
+    statement: 'balance',
+    category: 'liability',
+    lineKey: 'other_liabilities',
+    label: 'Kewajiban Lainnya',
+    amount: '0',
+    currency: 'IDR',
+    note: 'Template awal — isi hanya kewajiban lain yang dapat direkonsiliasi.',
+  },
+  {
+    statement: 'balance',
+    category: 'equity',
+    lineKey: 'paid_in_capital',
+    label: 'Modal Disetor',
+    amount: '0',
+    currency: 'IDR',
+    note: 'Template awal — rekonsiliasi dengan dokumen setoran modal.',
+  },
+  {
+    statement: 'balance',
+    category: 'equity',
+    lineKey: 'retained_earnings',
+    label: 'Saldo Laba',
+    amount: '0',
+    currency: 'IDR',
+    note: 'Template awal — rekonsiliasi dengan saldo laba periode sebelumnya dan hasil berjalan.',
+  },
+]
+
 function keyFromLabel(value: string, fallback: string) {
   const key = value
     .toLowerCase()
@@ -56,6 +131,15 @@ function bytes(value: number) {
   return value < 1024 * 1024
     ? `${Math.ceil(value / 1024)} KB`
     : `${(value / 1024 / 1024).toFixed(1)} MB`
+}
+
+function formatIDR(value: number) {
+  return new Intl.NumberFormat('id-ID', {
+    style: 'currency',
+    currency: 'IDR',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(value)
 }
 
 export function FinancialReportContentEditor({
@@ -90,6 +174,31 @@ export function FinancialReportContentEditor({
         note: '',
       },
     ])
+  }
+
+  function addBalanceSheetTemplate() {
+    setLines((current) => {
+      const existingKeys = new Set(
+        current.flatMap((item) => [item.lineKey, keyFromLabel(item.label, '')]).filter(Boolean),
+      )
+      const missing = balanceSheetTemplate.filter(
+        (template) => !existingKeys.has(template.lineKey),
+      )
+
+      if (missing.length === 0) {
+        setMessage({
+          tone: 'success',
+          text: 'Semua pos template posisi keuangan sudah tersedia. Nilai yang ada tidak diubah.',
+        })
+        return current
+      }
+
+      setMessage({
+        tone: 'success',
+        text: `${missing.length} pos template posisi keuangan ditambahkan dengan nilai awal Rp0. Rekonsiliasi setiap pos sebelum laporan ditinjau.`,
+      })
+      return [...current, ...missing.map((item) => ({ ...item }))]
+    })
   }
 
   function addKpi() {
@@ -172,6 +281,18 @@ export function FinancialReportContentEditor({
   }
 
   const busy = pending || uploading
+  const balanceLines = lines.filter((item) => item.statement === 'balance')
+  const hasIncompleteBalance = balanceLines.some(
+    (item) => !item.amount.trim() || !Number.isFinite(Number(item.amount)),
+  )
+  const totalAssets = balanceLines
+    .filter((item) => item.category === 'asset')
+    .reduce((total, item) => total + (Number(item.amount) || 0), 0)
+  const totalLiabilitiesAndEquity = balanceLines
+    .filter((item) => item.category === 'liability' || item.category === 'equity')
+    .reduce((total, item) => total + (Number(item.amount) || 0), 0)
+  const balanceDifference = totalAssets - totalLiabilitiesAndEquity
+  const isBalanceSheetBalanced = !hasIncompleteBalance && Math.abs(balanceDifference) < 0.5
 
   return (
     <div className="grid gap-7">
@@ -213,15 +334,27 @@ export function FinancialReportContentEditor({
       </section>
 
       <section className="grid gap-3">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h3 className="font-semibold">Rincian pos keuangan</h3>
             <p className="text-caption text-fg-subtle">Laba rugi, neraca, dan arus kas.</p>
           </div>
-          <Button variant="secondary" onClick={addLine}>
-            <Plus className="size-4" /> Tambah pos
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="secondary" disabled={busy} onClick={addBalanceSheetTemplate}>
+              Template posisi keuangan
+            </Button>
+            <Button variant="secondary" disabled={busy} onClick={addLine}>
+              <Plus className="size-4" /> Tambah pos
+            </Button>
+          </div>
         </div>
+
+        <p className="border-border bg-surface-subtle text-fg-subtle rounded-lg border p-3 text-sm">
+          Template posisi keuangan hanya menambahkan pos yang belum ada dengan nilai awal Rp0 dan tidak
+          menimpa angka manual. Nilai Rp0 pada template bukan angka terverifikasi dan wajib direkonsiliasi
+          sebelum laporan dikirim untuk ditinjau.
+        </p>
+
         {lines.map((line, index) => (
           <div
             key={index}
@@ -325,6 +458,25 @@ export function FinancialReportContentEditor({
             </Button>
           </div>
         ))}
+
+        {balanceLines.length > 0 ? (
+          <Alert
+            tone={isBalanceSheetBalanced ? 'success' : 'info'}
+            title={isBalanceSheetBalanced ? 'Neraca seimbang' : 'Neraca perlu rekonsiliasi'}
+          >
+            {hasIncompleteBalance ? (
+              'Lengkapi nilai seluruh pos neraca sebelum memeriksa persamaan akuntansi.'
+            ) : (
+              <>
+                Aset {formatIDR(totalAssets)} · Liabilitas + Ekuitas{' '}
+                {formatIDR(totalLiabilitiesAndEquity)} · Selisih {formatIDR(balanceDifference)}.{' '}
+                {isBalanceSheetBalanced
+                  ? 'Persamaan Aset = Liabilitas + Ekuitas terpenuhi.'
+                  : 'Rekonsiliasi diperlukan; sistem tidak akan memaksa angka agar seimbang.'}
+              </>
+            )}
+          </Alert>
+        ) : null}
       </section>
 
       <section className="grid gap-3">
@@ -335,7 +487,7 @@ export function FinancialReportContentEditor({
               Indikator utama yang akan terlihat jelas oleh investor.
             </p>
           </div>
-          <Button variant="secondary" onClick={addKpi}>
+          <Button variant="secondary" disabled={busy} onClick={addKpi}>
             <Plus className="size-4" /> Tambah KPI
           </Button>
         </div>
