@@ -8,15 +8,16 @@ import {
   formatFinancialKpi,
   KPI_BASIS_LABELS,
 } from '@/core/financials/format'
-import { FinancialReportLifecycleActions } from '@/features/admin/financials/financial-report-lifecycle-actions'
 import { FinancialReportContentEditor } from '@/features/admin/financials/financial-report-content-editor'
+import { FinancialReportInvestorReadiness } from '@/features/admin/financials/financial-report-investor-readiness'
+import { FinancialReportLifecycleActions } from '@/features/admin/financials/financial-report-lifecycle-actions'
 import { FinancialReportTransactionSync } from '@/features/admin/financials/financial-report-transaction-sync'
 import { adminWithPermission } from '@/server/auth/page-guards'
 import { getServerSupabase } from '@/server/supabase/server'
 import { Alert } from '@/ui/alert'
 import { Card, CardBody, CardHeader, CardTitle } from '@/ui/card'
-import { EmptyState } from '@/ui/states'
 import { PageHeader, Stack } from '@/ui/layout'
+import { EmptyState } from '@/ui/states'
 
 function money(value: number | string, currency = 'IDR') {
   return new Intl.NumberFormat('id-ID', {
@@ -163,6 +164,16 @@ export default async function FinancialReportDetailPage({
           </CardBody>
         </Card>
       </div>
+
+      <FinancialReportInvestorReadiness
+        summary={report.summary}
+        visibility={report.visibility}
+        preparedBy={currentVersion?.prepared_by ?? null}
+        hasAttachment={Boolean(attachment)}
+        currency={period?.currency?.trim().toUpperCase() || 'IDR'}
+        lines={lines ?? []}
+        kpis={kpis ?? []}
+      />
 
       <Card>
         <CardHeader>
