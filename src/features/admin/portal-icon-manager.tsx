@@ -230,6 +230,7 @@ export function PortalIconManager({
     <div className="space-y-8">
       {[...sectionsByPage.entries()].map(([pageId, pageSections]) => {
         const page = pageSections[0]
+        if (!page) return null
         const pageEditable = canUpdate && page.pageStatus === 'draft'
 
         return (
