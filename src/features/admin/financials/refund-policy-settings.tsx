@@ -2,7 +2,11 @@
 
 import { useRef, useState, useTransition } from 'react'
 
-import type { RefundPolicy, RefundTier } from '@/core/financials/refund-policy'
+import {
+  refundPolicySchema,
+  type RefundPolicy,
+  type RefundTier,
+} from '@/core/financials/refund-policy'
 import { updateFinancePolicySettings } from '@/server/financials/policy-actions'
 import { Alert } from '@/ui/alert'
 import { Button } from '@/ui/button'
@@ -65,10 +69,24 @@ export function RefundPolicySettings({
       const maxRaw = String(form.get(`tier-${index}-max`) ?? '').trim()
       const percentRaw = String(form.get(`tier-${index}-percent`) ?? '').trim()
       if (!minRaw && !maxRaw && !percentRaw) continue
+
+      if (!minRaw || !percentRaw) {
+        throw new Error(
+          `Baris kebijakan refund ${index + 1} belum lengkap. Isi minimum hari dan persentase, atau kosongkan seluruh baris.`,
+        )
+      }
+
+      const min = Number(minRaw)
+      const max = maxRaw ? Number(maxRaw) : null
+      const percent = Number(percentRaw)
+      if (!Number.isFinite(min) || (max !== null && !Number.isFinite(max)) || !Number.isFinite(percent)) {
+        throw new Error(`Baris kebijakan refund ${index + 1} berisi angka yang tidak valid.`)
+      }
+
       tiers.push({
-        minDaysBeforeDeparture: Number(minRaw),
-        maxDaysBeforeDeparture: maxRaw ? Number(maxRaw) : null,
-        refundPercent: Number(percentRaw),
+        minDaysBeforeDeparture: min,
+        maxDaysBeforeDeparture: max,
+        refundPercent: percent,
       })
     }
     return tiers
@@ -111,17 +129,33 @@ export function RefundPolicySettings({
           onSubmit={(event) => {
             event.preventDefault()
             const form = new FormData(event.currentTarget)
-            run(() =>
-              updateFinancePolicySettings({
-                termsBody: String(form.get('termsBody') ?? ''),
-                termsLetterheadAssetId: letterheadId,
-                refundPolicy: {
-                  processingDays: Number(form.get('processingDays')),
-                  dayBasis: String(form.get('dayBasis')) as 'business_days' | 'calendar_days',
-                  tiers: collectTiers(form),
-                },
-              }),
-            )
+            try {
+              const candidate = {
+                processingDays: Number(form.get('processingDays')),
+                dayBasis: String(form.get('dayBasis')) as 'business_days' | 'calendar_days',
+                tiers: collectTiers(form),
+              }
+              const parsed = refundPolicySchema.safeParse(candidate)
+              if (!parsed.success) {
+                setNotice({
+                  ok: false,
+                  text: parsed.error.issues[0]?.message ?? 'Kebijakan refund tidak valid.',
+                })
+                return
+              }
+              run(() =>
+                updateFinancePolicySettings({
+                  termsBody: String(form.get('termsBody') ?? ''),
+                  termsLetterheadAssetId: letterheadId,
+                  refundPolicy: parsed.data,
+                }),
+              )
+            } catch (error) {
+              setNotice({
+                ok: false,
+                text: error instanceof Error ? error.message : 'Kebijakan refund tidak valid.',
+              })
+            }
           }}
         >
           <section className="grid gap-3">
@@ -218,7 +252,8 @@ export function RefundPolicySettings({
               <h3 className="font-semibold">Persentase refund berdasarkan jarak keberangkatan</h3>
               <p className="text-caption text-fg-muted mt-1">
                 Tidak ada persentase yang ditentukan sistem. Isi sesuai kebijakan perusahaan. Nilai
-                0% berarti pembayaran hangus pada rentang tersebut. Baris kosong diabaikan.
+                0% berarti pembayaran hangus pada rentang tersebut. Rentang tidak boleh tumpang tindih;
+                baris kosong diabaikan.
               </p>
             </div>
             <div className="overflow-x-auto">
