@@ -8,19 +8,15 @@ export type FinancialSnapshotFixture = {
 
 export async function createPublishedFinancialSnapshot({
   suffix,
+  fiscalYear,
   revenue,
   expenses,
 }: {
   suffix: string
+  fiscalYear: number
   revenue: number
   expenses: number
 }): Promise<FinancialSnapshotFixture> {
-  const fiscalYear =
-    3000 +
-    [...suffix].reduce(
-      (hash, character) => (hash * 31 + character.charCodeAt(0)) % 6000,
-      0,
-    )
   const startsOn = `${fiscalYear}-01-01`
   const endsOn = `${fiscalYear}-12-31`
 
