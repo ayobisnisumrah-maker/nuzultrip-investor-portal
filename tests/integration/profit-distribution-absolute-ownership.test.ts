@@ -1,13 +1,19 @@
 // @vitest-environment node
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
-import { asCommitted, cleanup, closeDb } from './helpers/db'
+import { as, asCommitted, cleanup, closeDb, expectRejected } from './helpers/db'
 import { createFixtures, destroyFixtures, type Fixtures } from './helpers/fixtures'
+import {
+  createPublishedFinancialSnapshot,
+  destroyFinancialSnapshot,
+  type FinancialSnapshotFixture,
+} from './helpers/financial-snapshot'
 
 let fixtures: Fixtures
 let offeringId: string | null = null
 let holdingId: string | null = null
 let distributionId: string | null = null
+let financialSnapshot: FinancialSnapshotFixture | null = null
 
 beforeAll(async () => {
   fixtures = await createFixtures()
@@ -29,12 +35,20 @@ afterAll(async () => {
       await tx`delete from public.ownership_offerings where id = ${offeringId}`
     }
   })
+  await destroyFinancialSnapshot(financialSnapshot)
   await destroyFixtures(fixtures)
   await closeDb()
 })
 
 describe('profit distribution uses absolute company ownership', () => {
   it('pays one 0.8% unit exactly 0.8% of profit instead of the whole 40% investor pool', async () => {
+    const snapshot = await createPublishedFinancialSnapshot({
+      suffix: fixtures.suffix,
+      fiscalYear: 2199,
+      revenue: 1_000_000_000,
+      expenses: 100_000_000,
+    })
+    financialSnapshot = snapshot
     const result = await asCommitted(
       { kind: 'authenticated', userId: fixtures.superAdmin.userId },
       async (tx) => {
@@ -84,14 +98,13 @@ describe('profit distribution uses absolute company ownership', () => {
         if (!holding) throw new Error('Failed to allocate ownership holding.')
         holdingId = holding.id
 
-        const [distribution] = await tx<{ id: string; profit_amount: string; investor_pool_amount: string }[]>`
+        const [distribution] = await tx<
+          { id: string; profit_amount: string; investor_pool_amount: string }[]
+        >`
           select id, profit_amount::text, investor_pool_amount::text
           from app.create_profit_distribution(
             ${offering.id},
-            '2026-08-01'::date,
-            '2026-08-31'::date,
-            1000000000,
-            100000000,
+            ${snapshot.versionId},
             6000,
             4000,
             'Regression: payout must follow absolute ownership.'
@@ -100,12 +113,14 @@ describe('profit distribution uses absolute company ownership', () => {
         if (!distribution) throw new Error('Failed to create distribution.')
         distributionId = distribution.id
 
-        const allocations = await tx<{
-          investor_id: string
-          ownership_bps: number
-          investor_pool_share_bps: number
-          allocation_amount: string
-        }[]>`
+        const allocations = await tx<
+          {
+            investor_id: string
+            ownership_bps: number
+            investor_pool_share_bps: number
+            allocation_amount: string
+          }[]
+        >`
           select
             investor_id,
             ownership_bps,
@@ -127,5 +142,14 @@ describe('profit distribution uses absolute company ownership', () => {
     expect(result.allocations[0]!.ownership_bps).toBe(80)
     expect(result.allocations[0]!.investor_pool_share_bps).toBe(200)
     expect(Number(result.allocations[0]!.allocation_amount)).toBe(7_200_000)
+
+    const mismatch = await expectRejected(() =>
+      as({ kind: 'authenticated', userId: fixtures.superAdmin.userId }, async (tx) => {
+        await tx`update public.profit_distributions set revenue_amount = revenue_amount + 1 where id = ${distributionId}`
+        await tx`select app.transition_profit_distribution(${distributionId}, 'review'::public.profit_distribution_status)`
+      }),
+    )
+    expect(mismatch.code).toBe('23514')
+    expect(mismatch.message).toContain('no longer reconciles')
   }, 60_000)
 })

@@ -3,6 +3,11 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
 import { as, asCommitted, cleanup, closeDb, db, expectRejected } from './helpers/db'
 import { createFixtures, destroyFixtures, type Fixtures } from './helpers/fixtures'
+import {
+  createPublishedFinancialSnapshot,
+  destroyFinancialSnapshot,
+  type FinancialSnapshotFixture,
+} from './helpers/financial-snapshot'
 
 let fixtures: Fixtures
 let offeringId: string | null = null
@@ -11,6 +16,7 @@ let distributionId: string | null = null
 let allocationId: string | null = null
 let transferId: string | null = null
 let buyerHoldingId: string | null = null
+let financialSnapshot: FinancialSnapshotFixture | null = null
 
 beforeAll(async () => {
   fixtures = await createFixtures()
@@ -38,12 +44,20 @@ afterAll(async () => {
       await tx`delete from public.ownership_offerings where id = ${offeringId}`
     }
   })
+  await destroyFinancialSnapshot(financialSnapshot)
   await destroyFixtures(fixtures)
   await closeDb()
 })
 
 describe('full investor ownership lifecycle acceptance', () => {
   it('covers acquisition, distribution, lock rejection, sale, transfer, and new owner', async () => {
+    const snapshot = await createPublishedFinancialSnapshot({
+      suffix: fixtures.suffix,
+      fiscalYear: 2198,
+      revenue: 1_000_000_000,
+      expenses: 100_000_000,
+    })
+    financialSnapshot = snapshot
     const acquisition = await asCommitted(
       { kind: 'authenticated', userId: fixtures.superAdmin.userId },
       async (tx) => {
@@ -62,15 +76,17 @@ describe('full investor ownership lifecycle acceptance', () => {
         if (!offering) throw new Error('Failed to create offering.')
         offeringId = offering.id
 
-        const [holding] = await tx<{
-          id: string
-          investor_id: string
-          units: number
-          ownership_bps: number
-          status: string
-          acquisition_reference: string | null
-          transfer_eligible_at: string
-        }[]>`
+        const [holding] = await tx<
+          {
+            id: string
+            investor_id: string
+            units: number
+            ownership_bps: number
+            status: string
+            acquisition_reference: string | null
+            transfer_eligible_at: string
+          }[]
+        >`
           select id, investor_id, units, ownership_bps, status, acquisition_reference,
                  transfer_eligible_at::text
           from app.allocate_ownership_holding(
@@ -106,18 +122,17 @@ describe('full investor ownership lifecycle acceptance', () => {
     const distribution = await asCommitted(
       { kind: 'authenticated', userId: fixtures.superAdmin.userId },
       async (tx) => {
-        const [created] = await tx<{
-          id: string
-          profit_amount: string
-          investor_pool_amount: string
-        }[]>`
+        const [created] = await tx<
+          {
+            id: string
+            profit_amount: string
+            investor_pool_amount: string
+          }[]
+        >`
           select id, profit_amount::text, investor_pool_amount::text
           from app.create_profit_distribution(
             ${offeringId},
-            '2026-08-01'::date,
-            '2026-08-31'::date,
-            1000000000,
-            100000000,
+            ${snapshot.versionId},
             6000,
             4000,
             'Acceptance lifecycle distribution.'
@@ -126,14 +141,16 @@ describe('full investor ownership lifecycle acceptance', () => {
         if (!created) throw new Error('Failed to create distribution.')
         distributionId = created.id
 
-        const [allocation] = await tx<{
-          id: string
-          investor_id: string
-          ownership_bps: number
-          investor_pool_share_bps: number
-          allocation_amount: string
-          status: string
-        }[]>`
+        const [allocation] = await tx<
+          {
+            id: string
+            investor_id: string
+            ownership_bps: number
+            investor_pool_share_bps: number
+            allocation_amount: string
+            status: string
+          }[]
+        >`
           select id, investor_id, ownership_bps, investor_pool_share_bps,
                  allocation_amount::text, status
           from app.regenerate_profit_distribution_allocations(${created.id})
@@ -177,10 +194,12 @@ describe('full investor ownership lifecycle acceptance', () => {
     const payment = await asCommitted(
       { kind: 'authenticated', userId: fixtures.superAdmin.userId },
       async (tx) => {
-        const [paid] = await tx<{
-          allocation_status: string
-          distribution_status: string
-        }[]>`
+        const [paid] = await tx<
+          {
+            allocation_status: string
+            distribution_status: string
+          }[]
+        >`
           select allocation_status, distribution_status::text
           from app.mark_profit_distribution_allocation_paid(
             ${allocationId}, ${`PAY-${fixtures.suffix}`}
@@ -218,27 +237,26 @@ describe('full investor ownership lifecycle acceptance', () => {
       },
     )
 
-    await asCommitted(
-      { kind: 'authenticated', userId: fixtures.superAdmin.userId },
-      async (tx) => {
-        await tx`select app.approve_ownership_sale(${transferId})`
-        await tx`select app.process_ownership_sale(
+    await asCommitted({ kind: 'authenticated', userId: fixtures.superAdmin.userId }, async (tx) => {
+      await tx`select app.approve_ownership_sale(${transferId})`
+      await tx`select app.process_ownership_sale(
           ${transferId}, ${fixtures.investorB.userId}, 110000000
         )`
-        const [row] = await tx<{ buyer_holding_id: string }[]>`
+      const [row] = await tx<{ buyer_holding_id: string }[]>`
           select app.complete_ownership_sale(${transferId}) as buyer_holding_id
         `
-        if (!row) throw new Error('Failed to complete sale.')
-        buyerHoldingId = row.buyer_holding_id
-      },
-    )
+      if (!row) throw new Error('Failed to complete sale.')
+      buyerHoldingId = row.buyer_holding_id
+    })
 
-    const [sellerHolding] = await db()<{
-      investor_id: string
-      units: number
-      ownership_bps: number
-      status: string
-    }[]>`
+    const [sellerHolding] = await db()<
+      {
+        investor_id: string
+        units: number
+        ownership_bps: number
+        status: string
+      }[]
+    >`
       select investor_id, units, ownership_bps, status
       from public.ownership_holdings
       where id = ${sellerHoldingId}
@@ -250,14 +268,16 @@ describe('full investor ownership lifecycle acceptance', () => {
     expect(sellerHolding!.ownership_bps).toBe(80)
     expect(sellerHolding!.status).toBe('transferred')
 
-    const [buyerHolding] = await db()<{
-      investor_id: string
-      units: number
-      ownership_bps: number
-      status: string
-      acquisition_at: string
-      transfer_eligible_at: string
-    }[]>`
+    const [buyerHolding] = await db()<
+      {
+        investor_id: string
+        units: number
+        ownership_bps: number
+        status: string
+        acquisition_at: string
+        transfer_eligible_at: string
+      }[]
+    >`
       select investor_id, units, ownership_bps, status,
              acquisition_at::text, transfer_eligible_at::text
       from public.ownership_holdings
@@ -272,11 +292,13 @@ describe('full investor ownership lifecycle acceptance', () => {
       new Date(buyerHolding!.acquisition_at).getTime(),
     )
 
-    const [historicalAllocation] = await db()<{
-      investor_id: string
-      allocation_amount: string
-      status: string
-    }[]>`
+    const [historicalAllocation] = await db()<
+      {
+        investor_id: string
+        allocation_amount: string
+        status: string
+      }[]
+    >`
       select investor_id, allocation_amount::text, status
       from public.profit_distribution_allocations
       where id = ${allocationId}
@@ -286,13 +308,15 @@ describe('full investor ownership lifecycle acceptance', () => {
     expect(Number(historicalAllocation!.allocation_amount)).toBe(7_200_000)
     expect(historicalAllocation!.status).toBe('paid')
 
-    const [transfer] = await db()<{
-      from_investor_id: string
-      to_investor_id: string
-      units: number
-      status: string
-      agreed_unit_price: string
-    }[]>`
+    const [transfer] = await db()<
+      {
+        from_investor_id: string
+        to_investor_id: string
+        units: number
+        status: string
+        agreed_unit_price: string
+      }[]
+    >`
       select from_investor_id, to_investor_id, units, status, agreed_unit_price::text
       from public.ownership_transfers
       where id = ${transferId}
