@@ -83,6 +83,18 @@ export type Database = {
           visibility: Database["public"]["Enums"]["visibility"]
         }[]
       }
+      create_finance_invoice: {
+        Args: {
+          p_customer_address: string
+          p_customer_email: string
+          p_customer_name: string
+          p_customer_phone: string
+          p_due_on: string
+          p_items: Json
+          p_notes: string
+        }
+        Returns: string
+      }
       create_financial_report_with_draft: {
         Args: {
           p_financial_period_id: string
@@ -154,6 +166,7 @@ export type Database = {
         Returns: undefined
       }
       expire_message_threads: { Args: never; Returns: number }
+      finance_reference: { Args: { p_prefix: string }; Returns: string }
       has_permission: { Args: { p_key: string }; Returns: boolean }
       investor_granted_document: {
         Args: { p_document_id: string }
@@ -168,6 +181,10 @@ export type Database = {
       }
       is_admin: { Args: never; Returns: boolean }
       is_investor: { Args: never; Returns: boolean }
+      issue_finance_invoice: {
+        Args: { p_invoice_id: string }
+        Returns: undefined
+      }
       list_admin_ownership_sales: {
         Args: never
         Returns: Database["public"]["Tables"]["ownership_transfers"]["Row"][]
@@ -212,6 +229,16 @@ export type Database = {
         Args: { p_thread_id: string }
         Returns: boolean
       }
+      process_finance_refund: {
+        Args: {
+          p_amount: number
+          p_invoice_id: string
+          p_notes: string
+          p_payment_id: string
+          p_reason: string
+        }
+        Returns: string
+      }
       process_ownership_sale: {
         Args: {
           p_agreed_unit_price: number
@@ -230,6 +257,22 @@ export type Database = {
       published_change_is_referential: {
         Args: { p_new: Json; p_old: Json }
         Returns: boolean
+      }
+      recalculate_finance_invoice: {
+        Args: { p_invoice_id: string }
+        Returns: undefined
+      }
+      record_finance_payment: {
+        Args: {
+          p_amount: number
+          p_external_reference: string
+          p_idempotency_key?: string
+          p_invoice_id: string
+          p_method: string
+          p_notes: string
+          p_received_at: string
+        }
+        Returns: string
       }
       regenerate_profit_distribution_allocations: {
         Args: { p_distribution_id: string }
@@ -1031,6 +1074,487 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      finance_expenses: {
+        Row: {
+          category: string
+          created_at: string
+          currency: string
+          description: string
+          expense_on: string
+          id: string
+          notes: string | null
+          payment_method: string | null
+          quantity: number
+          receipt_asset_id: string | null
+          recorded_by: string | null
+          reference: string
+          status: Database["public"]["Enums"]["finance_expense_status"]
+          tax_amount: number
+          total_amount: number | null
+          unit_price: number
+          updated_at: string
+          vendor_name: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          currency?: string
+          description: string
+          expense_on: string
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          quantity?: number
+          receipt_asset_id?: string | null
+          recorded_by?: string | null
+          reference: string
+          status?: Database["public"]["Enums"]["finance_expense_status"]
+          tax_amount?: number
+          total_amount?: number | null
+          unit_price: number
+          updated_at?: string
+          vendor_name?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          currency?: string
+          description?: string
+          expense_on?: string
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          quantity?: number
+          receipt_asset_id?: string | null
+          recorded_by?: string | null
+          reference?: string
+          status?: Database["public"]["Enums"]["finance_expense_status"]
+          tax_amount?: number
+          total_amount?: number | null
+          unit_price?: number
+          updated_at?: string
+          vendor_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_expenses_receipt_asset_id_fkey"
+            columns: ["receipt_asset_id"]
+            isOneToOne: false
+            referencedRelation: "media_assets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_invoice_items: {
+        Row: {
+          created_at: string
+          description: string | null
+          discount_amount: number
+          id: string
+          invoice_id: string
+          line_subtotal: number | null
+          line_tax: number | null
+          line_total: number | null
+          name: string
+          position: number
+          product_code_snapshot: string | null
+          product_id: string | null
+          quantity: number
+          tax_rate: number
+          unit_label: string
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          discount_amount?: number
+          id?: string
+          invoice_id: string
+          line_subtotal?: number | null
+          line_tax?: number | null
+          line_total?: number | null
+          name: string
+          position?: number
+          product_code_snapshot?: string | null
+          product_id?: string | null
+          quantity: number
+          tax_rate?: number
+          unit_label?: string
+          unit_price: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          discount_amount?: number
+          id?: string
+          invoice_id?: string
+          line_subtotal?: number | null
+          line_tax?: number | null
+          line_total?: number | null
+          name?: string
+          position?: number
+          product_code_snapshot?: string | null
+          product_id?: string | null
+          quantity?: number
+          tax_rate?: number
+          unit_label?: string
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_invoice_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "finance_invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_invoice_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "finance_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_invoices: {
+        Row: {
+          company_snapshot: Json
+          created_at: string
+          created_by: string | null
+          currency: string
+          customer_address: string | null
+          customer_email: string | null
+          customer_name: string
+          customer_phone: string | null
+          discount_total: number
+          due_on: string | null
+          grand_total: number
+          id: string
+          investor_id: string | null
+          issued_by: string | null
+          issued_on: string | null
+          notes: string | null
+          paid_total: number
+          reference: string
+          refunded_total: number
+          status: Database["public"]["Enums"]["finance_invoice_status"]
+          subtotal: number
+          tax_total: number
+          terms_snapshot: string | null
+          updated_at: string
+        }
+        Insert: {
+          company_snapshot?: Json
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          customer_address?: string | null
+          customer_email?: string | null
+          customer_name: string
+          customer_phone?: string | null
+          discount_total?: number
+          due_on?: string | null
+          grand_total?: number
+          id?: string
+          investor_id?: string | null
+          issued_by?: string | null
+          issued_on?: string | null
+          notes?: string | null
+          paid_total?: number
+          reference: string
+          refunded_total?: number
+          status?: Database["public"]["Enums"]["finance_invoice_status"]
+          subtotal?: number
+          tax_total?: number
+          terms_snapshot?: string | null
+          updated_at?: string
+        }
+        Update: {
+          company_snapshot?: Json
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          customer_address?: string | null
+          customer_email?: string | null
+          customer_name?: string
+          customer_phone?: string | null
+          discount_total?: number
+          due_on?: string | null
+          grand_total?: number
+          id?: string
+          investor_id?: string | null
+          issued_by?: string | null
+          issued_on?: string | null
+          notes?: string | null
+          paid_total?: number
+          reference?: string
+          refunded_total?: number
+          status?: Database["public"]["Enums"]["finance_invoice_status"]
+          subtotal?: number
+          tax_total?: number
+          terms_snapshot?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_invoices_investor_id_fkey"
+            columns: ["investor_id"]
+            isOneToOne: false
+            referencedRelation: "investors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          external_reference: string | null
+          id: string
+          idempotency_key: string | null
+          invoice_id: string
+          method: string
+          notes: string | null
+          proof_asset_id: string | null
+          received_at: string | null
+          recorded_by: string | null
+          reference: string
+          status: Database["public"]["Enums"]["finance_payment_status"]
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency?: string
+          external_reference?: string | null
+          id?: string
+          idempotency_key?: string | null
+          invoice_id: string
+          method: string
+          notes?: string | null
+          proof_asset_id?: string | null
+          received_at?: string | null
+          recorded_by?: string | null
+          reference: string
+          status?: Database["public"]["Enums"]["finance_payment_status"]
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          external_reference?: string | null
+          id?: string
+          idempotency_key?: string | null
+          invoice_id?: string
+          method?: string
+          notes?: string | null
+          proof_asset_id?: string | null
+          received_at?: string | null
+          recorded_by?: string | null
+          reference?: string
+          status?: Database["public"]["Enums"]["finance_payment_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_payments_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "finance_invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_payments_proof_asset_id_fkey"
+            columns: ["proof_asset_id"]
+            isOneToOne: false
+            referencedRelation: "media_assets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_products: {
+        Row: {
+          active: boolean
+          code: string
+          created_at: string
+          created_by: string | null
+          currency: string
+          default_unit_price: number
+          description: string | null
+          id: string
+          name: string
+          tax_rate: number
+          unit_label: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          default_unit_price?: number
+          description?: string | null
+          id?: string
+          name: string
+          tax_rate?: number
+          unit_label?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          default_unit_price?: number
+          description?: string | null
+          id?: string
+          name?: string
+          tax_rate?: number
+          unit_label?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      finance_refunds: {
+        Row: {
+          amount: number
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          id: string
+          invoice_id: string
+          notes: string | null
+          payment_id: string | null
+          processed_at: string | null
+          processed_by: string | null
+          reason: string
+          reference: string
+          requested_at: string
+          requested_by: string | null
+          status: Database["public"]["Enums"]["finance_refund_status"]
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          id?: string
+          invoice_id: string
+          notes?: string | null
+          payment_id?: string | null
+          processed_at?: string | null
+          processed_by?: string | null
+          reason: string
+          reference: string
+          requested_at?: string
+          requested_by?: string | null
+          status?: Database["public"]["Enums"]["finance_refund_status"]
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          id?: string
+          invoice_id?: string
+          notes?: string | null
+          payment_id?: string | null
+          processed_at?: string | null
+          processed_by?: string | null
+          reason?: string
+          reference?: string
+          requested_at?: string
+          requested_by?: string | null
+          status?: Database["public"]["Enums"]["finance_refund_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_refunds_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "finance_invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_refunds_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "finance_payments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_settings: {
+        Row: {
+          bank_details: string | null
+          company_address: string | null
+          company_legal_name: string | null
+          company_tax_id: string | null
+          created_at: string
+          default_currency: string
+          id: string
+          invoice_footer: string | null
+          invoice_prefix: string
+          invoice_terms: string | null
+          payment_instructions: string | null
+          receipt_prefix: string
+          refund_prefix: string
+          singleton: boolean
+          tax_invoice_enabled: boolean
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          bank_details?: string | null
+          company_address?: string | null
+          company_legal_name?: string | null
+          company_tax_id?: string | null
+          created_at?: string
+          default_currency?: string
+          id?: string
+          invoice_footer?: string | null
+          invoice_prefix?: string
+          invoice_terms?: string | null
+          payment_instructions?: string | null
+          receipt_prefix?: string
+          refund_prefix?: string
+          singleton?: boolean
+          tax_invoice_enabled?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          bank_details?: string | null
+          company_address?: string | null
+          company_legal_name?: string | null
+          company_tax_id?: string | null
+          created_at?: string
+          default_currency?: string
+          id?: string
+          invoice_footer?: string | null
+          invoice_prefix?: string
+          invoice_terms?: string | null
+          payment_instructions?: string | null
+          receipt_prefix?: string
+          refund_prefix?: string
+          singleton?: boolean
+          tax_invoice_enabled?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
       }
       financial_kpis: {
         Row: {
@@ -3700,6 +4224,15 @@ export type Database = {
         | "investor_report"
         | "business_update"
         | "supporting"
+      finance_expense_status: "draft" | "recorded" | "void"
+      finance_invoice_status:
+        | "draft"
+        | "issued"
+        | "partially_paid"
+        | "paid"
+        | "void"
+      finance_payment_status: "pending" | "confirmed" | "failed" | "refunded"
+      finance_refund_status: "requested" | "approved" | "processed" | "rejected"
       financial_category:
         | "revenue"
         | "expense"
@@ -3942,6 +4475,16 @@ export const Constants = {
         "business_update",
         "supporting",
       ],
+      finance_expense_status: ["draft", "recorded", "void"],
+      finance_invoice_status: [
+        "draft",
+        "issued",
+        "partially_paid",
+        "paid",
+        "void",
+      ],
+      finance_payment_status: ["pending", "confirmed", "failed", "refunded"],
+      finance_refund_status: ["requested", "approved", "processed", "rejected"],
       financial_category: [
         "revenue",
         "expense",
@@ -4053,4 +4596,3 @@ export const Constants = {
     },
   },
 } as const
-
