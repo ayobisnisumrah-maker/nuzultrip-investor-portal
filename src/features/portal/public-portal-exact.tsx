@@ -154,18 +154,13 @@ function AboutAndStats({ intro, stats }: { intro?: Section; stats?: Section }) {
         </div>
         {metrics.length ? (
           <div className={styles.statsGrid}>
-            {metrics.slice(0, 4).map((metric, index) => (
+            {metrics.slice(0, 5).map((metric, index) => (
               <article key={`${text(metric.label)}-${index}`}>
                 <strong>{text(metric.value)}</strong>
                 <span>{text(metric.label)}</span>
                 {text(metric.description) ? <small>{text(metric.description)}</small> : null}
               </article>
             ))}
-            <Link href="/hubungi" className={styles.statsCta}>
-              <span className={styles.chartMark}>▥</span>
-              <b>Bersama<br />Membangun<br />Dampak Lebih Besar</b>
-              <span className={styles.smallCircle}>→</span>
-            </Link>
           </div>
         ) : null}
       </div>
@@ -407,22 +402,27 @@ function Articles({ section }: { section?: Section }) {
 
   return (
     <section className={styles.articleSection} id={section.anchor_id ?? 'wawasan'}>
+      <style>{`.${styles.articleLayout}::before,.${styles.articleLayout}::after{display:none!important;content:none!important}`}</style>
       <div className={styles.shell}>
         <div className={styles.articleLayout}>
           <div className={styles.articleIntro}>
-            <div className={styles.eyebrowLight}>{text(c.eyebrow) || 'WAWASAN'}</div>
-            <h2>{text(c.title) || 'Wawasan untuk Keputusan yang Lebih Baik'}</h2>
+            <div className={styles.eyebrowLight}>{text(c.eyebrow) || 'ARTIKEL & BERITA'}</div>
+            <h2>{text(c.title) || 'Artikel & Berita Nuzultrip'}</h2>
             {text(c.description) ? <p>{text(c.description)}</p> : null}
             {ctaHref ? <Link href={ctaHref}>{text(c.cta_label) || 'Lihat Selengkapnya'} <Arrow /></Link> : null}
           </div>
           <div className={styles.articleCards}>
             {items.slice(0, 2).map((item, index) => {
               const href = usableHref(item.href)
+              const typeLabel = text(item.type).toLocaleLowerCase('id-ID') === 'news' ? 'Berita' : 'Artikel'
+              const date = text(item.date)
+              const meta = date ? `${typeLabel} · ${date}` : typeLabel
               const card: ReactNode = (
                 <>
                   <CmsImage src={text(item.image_url)} alt={text(item.title)} />
                   <h3>{text(item.title)}</h3>
-                  {text(item.date) ? <small>{text(item.date)}</small> : null}
+                  <small>{meta}</small>
+                  {text(item.description) ? <p style={{ padding: '10px 18px 0', color: '#b5b5b5', fontSize: '.78rem', lineHeight: 1.5 }}>{text(item.description)}</p> : null}
                   {href ? <span aria-hidden="true">→</span> : null}
                 </>
               )
