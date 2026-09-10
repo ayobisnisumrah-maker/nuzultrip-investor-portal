@@ -6,7 +6,16 @@ import { z } from 'zod'
 
 import { ConflictError } from '@/core/errors'
 import { defineAction } from '@/server/auth/guards'
-import { buildTransactionFinancialReport } from '@/server/financials/transaction-report-service'
+import {
+  mergeGeneratedWithManualAccounting,
+  type ExistingFinancialKpi,
+  type ExistingFinancialLineItem,
+} from '@/server/financials/accounting-report-merge'
+import {
+  buildTransactionFinancialReport,
+  type GeneratedFinancialKpi,
+  type GeneratedFinancialLineItem,
+} from '@/server/financials/transaction-report-service'
 import type { Database, Json } from '@/types/database'
 
 const createSchema = z.object({
@@ -74,6 +83,11 @@ type AppRpcClient = {
   ) => Promise<{ data: unknown; error: { message: string } | null }>
 }
 
+type ReportContent = {
+  lineItems: GeneratedFinancialLineItem[]
+  kpis: GeneratedFinancialKpi[]
+}
+
 function appRpcClient(supabase: SupabaseClient<Database>) {
   return supabase.schema('app') as unknown as AppRpcClient
 }
@@ -83,11 +97,9 @@ function firstRow(data: unknown): Record<string, unknown> | null {
   return value && typeof value === 'object' ? (value as Record<string, unknown>) : null
 }
 
-function toRpcContent(
-  generated: Awaited<ReturnType<typeof buildTransactionFinancialReport>>,
-) {
+function toRpcContent(content: ReportContent) {
   return {
-    lineItems: generated.lineItems.map((item, position) => ({
+    lineItems: content.lineItems.map((item, position) => ({
       statement: item.statement,
       category: item.category,
       line_key: item.lineKey,
@@ -97,7 +109,7 @@ function toRpcContent(
       position,
       note: item.note?.trim() || null,
     })),
-    kpis: generated.kpis.map((item, position) => ({
+    kpis: content.kpis.map((item, position) => ({
       kpi_key: item.kpiKey,
       label: item.label,
       value: item.value,
@@ -112,14 +124,14 @@ async function saveGeneratedContent(
   supabase: SupabaseClient<Database>,
   reportId: string,
   documentAssetId: string | null,
-  generated: Awaited<ReturnType<typeof buildTransactionFinancialReport>>,
+  content: ReportContent,
 ) {
-  const content = toRpcContent(generated)
+  const rpcContent = toRpcContent(content)
   return appRpcClient(supabase).rpc('save_financial_report_draft_content', {
     p_report_id: reportId,
     p_document_asset_id: documentAssetId,
-    p_line_items: content.lineItems,
-    p_kpis: content.kpis,
+    p_line_items: rpcContent.lineItems,
+    p_kpis: rpcContent.kpis,
   })
 }
 
@@ -257,11 +269,24 @@ export const syncFinancialReportFromTransactions = defineAction({
       )
     }
 
-    const { data: version, error: versionError } = await supabase
-      .from('financial_report_versions')
-      .select('document_asset_id,status')
-      .eq('id', report.current_version_id)
-      .maybeSingle()
+    const [{ data: version, error: versionError }, existingLinesResult, existingKpisResult] =
+      await Promise.all([
+        supabase
+          .from('financial_report_versions')
+          .select('document_asset_id,status')
+          .eq('id', report.current_version_id)
+          .maybeSingle(),
+        supabase
+          .from('financial_line_items')
+          .select('statement,category,line_key,label,amount,currency,note')
+          .eq('financial_report_version_id', report.current_version_id)
+          .order('position'),
+        supabase
+          .from('financial_kpis')
+          .select('kpi_key,label,value,unit,basis')
+          .eq('financial_report_version_id', report.current_version_id)
+          .order('position'),
+      ])
 
     if (versionError || !version || version.status !== 'draft') {
       throw new ConflictError(
@@ -270,12 +295,24 @@ export const syncFinancialReportFromTransactions = defineAction({
       )
     }
 
+    if (existingLinesResult.error || existingKpisResult.error) {
+      throw new ConflictError(
+        'Existing financial report content could not be loaded.',
+        'Isi laporan saat ini belum dapat dibaca untuk sinkronisasi yang aman.',
+      )
+    }
+
     const generated = await buildTransactionFinancialReport(supabase, report.financial_period_id)
+    const merged = mergeGeneratedWithManualAccounting(
+      generated,
+      (existingLinesResult.data ?? []) as ExistingFinancialLineItem[],
+      (existingKpisResult.data ?? []) as ExistingFinancialKpi[],
+    )
     const { error } = await saveGeneratedContent(
       supabase,
       report.id,
       version.document_asset_id,
-      generated,
+      merged,
     )
 
     if (error) {
@@ -287,13 +324,15 @@ export const syncFinancialReportFromTransactions = defineAction({
 
     audit({
       entityId: report.id,
-      summary: `Draft laporan disinkronkan dari transaksi: ${generated.totals.invoiceCount} invoice, ${generated.totals.pax} pax.`,
+      summary: `Draft laporan disinkronkan dari transaksi: ${generated.totals.invoiceCount} invoice, ${generated.totals.pax} pax; ${merged.preservedLineItemCount} pos manual dipertahankan.`,
       changes: {
         grossRevenue: { before: null, after: generated.totals.grossRevenue },
         cashIn: { before: null, after: generated.totals.cashIn },
         cashOut: { before: null, after: generated.totals.cashOut },
         netCashflow: { before: null, after: generated.totals.netCashflow },
         pax: { before: null, after: generated.totals.pax },
+        preservedManualLineItems: { before: null, after: merged.preservedLineItemCount },
+        preservedManualKpis: { before: null, after: merged.preservedKpiCount },
       },
     })
 
@@ -303,7 +342,12 @@ export const syncFinancialReportFromTransactions = defineAction({
     revalidatePath(`/admin/financials/reports/${report.id}`)
     revalidatePath('/investor')
     revalidatePath('/investor/financials')
-    return { reportId: report.id, ...generated.totals }
+    return {
+      reportId: report.id,
+      ...generated.totals,
+      preservedManualLineItems: merged.preservedLineItemCount,
+      preservedManualKpis: merged.preservedKpiCount,
+    }
   },
 })
 
