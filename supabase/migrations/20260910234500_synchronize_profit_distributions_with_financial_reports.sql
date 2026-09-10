@@ -162,7 +162,7 @@ end;
 $$;
 
 revoke all on function app.assert_profit_distribution_snapshot(uuid) from public, anon;
-grant execute on function app.assert_profit_distribution_snapshot(uuid) to authenticated;
+grant execute on function app.assert_profit_distribution_snapshot(uuid) to authenticated, service_role;
 
 create or replace function app.guard_profit_distribution_snapshot_transition()
 returns trigger
