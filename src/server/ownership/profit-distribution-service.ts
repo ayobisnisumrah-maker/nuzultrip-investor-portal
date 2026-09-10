@@ -8,6 +8,7 @@ export type ProfitDistributionStatus =
 export type ProfitDistribution = {
   id: string
   offering_id: string
+  financial_report_version_id: string | null
   period_start: string
   period_end: string
   revenue_amount: number
@@ -45,6 +46,7 @@ export type ProfitDistributionAllocation = {
 type ProfitDistributionRow = {
   id: string
   offering_id: string
+  financial_report_version_id: string | null
   period_start: string
   period_end: string
   revenue_amount: number | string
@@ -91,6 +93,7 @@ type HoldingRow = {
 const DISTRIBUTION_SELECT = `
   id,
   offering_id,
+  financial_report_version_id,
   period_start,
   period_end,
   revenue_amount,
@@ -129,6 +132,7 @@ function mapDistribution(row: ProfitDistributionRow): ProfitDistribution {
   return {
     id: row.id,
     offering_id: row.offering_id,
+    financial_report_version_id: row.financial_report_version_id,
     period_start: row.period_start,
     period_end: row.period_end,
     revenue_amount: Number(row.revenue_amount),
