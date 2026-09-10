@@ -139,7 +139,7 @@ export default async function Home() {
         section:has(img[alt='Agen Nuzultrip'], img[alt='Mitra Travel'], img[alt='Mitra Layanan'], img[alt='Land Arrangement'], img[alt='Mitra Strategis']) > div > div > div:last-child > div {
           width: 100% !important;
           min-width: 0 !important;
-          min-height: 156px !important;
+          min-height: 160px !important;
           display: flex !important;
           align-items: center !important;
           justify-content: center !important;
@@ -152,12 +152,12 @@ export default async function Home() {
         img[alt='Mitra Layanan'],
         img[alt='Land Arrangement'],
         img[alt='Mitra Strategis'] {
-          width: 248px !important;
+          width: 256px !important;
           max-width: none !important;
-          height: 118px !important;
+          height: 122px !important;
           max-height: none !important;
           object-fit: contain !important;
-          transform: scale(1.25) !important;
+          transform: scale(1.28) !important;
           transform-origin: center !important;
         }
 
@@ -175,9 +175,9 @@ export default async function Home() {
           img[alt='Mitra Layanan'],
           img[alt='Land Arrangement'],
           img[alt='Mitra Strategis'] {
-            width: 232px !important;
-            height: 112px !important;
-            transform: scale(1.19) !important;
+            width: 238px !important;
+            height: 116px !important;
+            transform: scale(1.21) !important;
           }
         }
 
@@ -207,9 +207,9 @@ export default async function Home() {
           img[alt='Mitra Layanan'],
           img[alt='Land Arrangement'],
           img[alt='Mitra Strategis'] {
-            width: 248px !important;
-            height: 116px !important;
-            transform: scale(1.14) !important;
+            width: 254px !important;
+            height: 120px !important;
+            transform: scale(1.16) !important;
           }
         }
       `}</style>
