@@ -54,8 +54,32 @@ export async function createPublishedFinancialSnapshot({
 
   await db()`
     update public.financial_report_versions
+    set status = 'review'
+    where id = ${version.id}
+  `
+
+  await db()`
+    update public.financial_report_versions
+    set status = 'approved'
+    where id = ${version.id}
+  `
+
+  await db()`
+    update public.financial_report_versions
     set status = 'published', published_at = now()
     where id = ${version.id}
+  `
+
+  await db()`
+    update public.financial_reports
+    set status = 'review', current_version_id = ${version.id}
+    where id = ${report.id}
+  `
+
+  await db()`
+    update public.financial_reports
+    set status = 'approved'
+    where id = ${report.id}
   `
 
   await db()`
