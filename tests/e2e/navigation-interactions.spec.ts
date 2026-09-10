@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Page, type Response } from '@playwright/test'
 
 import {
   clearRateLimits,
@@ -86,6 +86,23 @@ async function collectDashboardLinks(page: Page, scope: DashboardScope): Promise
   ]
 }
 
+async function gotoDashboardPath(page: Page, pathname: string): Promise<Response | null> {
+  // App Router can still finish a prefetched/client transition from the previous
+  // dashboard page while the crawler starts the next direct navigation. WebKit
+  // reports that as an interrupted page.goto even though both destinations are
+  // valid. Settle the competing navigation, then retry the crawler's requested
+  // path once. Product redirects remain failures below via finalPath !== pathname.
+  try {
+    return await page.goto(pathname, { waitUntil: 'domcontentloaded' })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error)
+    if (!/interrupted by another navigation/i.test(message)) throw error
+
+    await page.waitForLoadState('domcontentloaded').catch(() => undefined)
+    return await page.goto(pathname, { waitUntil: 'domcontentloaded' })
+  }
+}
+
 async function crawlDashboard(page: Page, scope: DashboardScope): Promise<string[]> {
   const pending: string[] = [scope]
   const visited = new Set<string>()
@@ -96,7 +113,7 @@ async function crawlDashboard(page: Page, scope: DashboardScope): Promise<string
     if (visited.has(pathname)) continue
     visited.add(pathname)
 
-    const response = await page.goto(pathname, { waitUntil: 'domcontentloaded' })
+    const response = await gotoDashboardPath(page, pathname)
     const status = response?.status() ?? 0
     const finalPath = new URL(page.url()).pathname
 
