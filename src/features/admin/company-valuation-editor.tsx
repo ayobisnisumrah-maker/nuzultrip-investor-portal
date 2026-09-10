@@ -3,7 +3,19 @@
 import { useMemo, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 
-import { updateCompanyValuation } from '@/server/ownership/valuation-actions'
+import { returnPortalPageToDraft, savePortalSection } from '@/server/portal/admin-actions'
+
+type StatContent = {
+  kind?: string
+  metrics?: unknown
+  company_valuation_amount?: unknown
+  company_valuation_currency?: unknown
+  [key: string]: unknown
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
 
 function formatRupiah(value: number) {
   return new Intl.NumberFormat('id-ID', {
@@ -26,37 +38,73 @@ function formatCompactRupiah(value: number) {
   return formatRupiah(value)
 }
 
+function initialValuation(content: StatContent) {
+  const raw = Number(content.company_valuation_amount)
+  if (Number.isFinite(raw) && raw > 0) return raw
+
+  const metrics = Array.isArray(content.metrics) ? content.metrics.filter(isRecord) : []
+  const metric = metrics.find((item) =>
+    String(item.label ?? '').trim().toLocaleLowerCase('id-ID').includes('valuasi perusahaan'),
+  )
+  const numeric = Number(metric?.raw_value)
+  return Number.isFinite(numeric) && numeric > 0 ? numeric : null
+}
+
 export function CompanyValuationEditor({
-  offeringId,
-  initialValue,
+  pageId,
+  pageStatus,
+  sectionId,
+  initialContent,
   totalOfferedBps,
   unitOwnershipBps,
   totalUnits,
   canUpdate,
 }: {
-  offeringId: string
-  initialValue: number | null
-  totalOfferedBps: number
-  unitOwnershipBps: number
-  totalUnits: number
+  pageId: string
+  pageStatus: string
+  sectionId: string
+  initialContent: StatContent
+  totalOfferedBps: number | null
+  unitOwnershipBps: number | null
+  totalUnits: number | null
   canUpdate: boolean
 }) {
   const router = useRouter()
   const [pending, startTransition] = useTransition()
-  const [value, setValue] = useState(initialValue ? String(Math.round(initialValue)) : '')
+  const [value, setValue] = useState(() => {
+    const initial = initialValuation(initialContent)
+    return initial ? String(Math.round(initial)) : ''
+  })
   const [message, setMessage] = useState<string | null>(null)
 
   const valuation = Number(value)
   const validValuation = Number.isFinite(valuation) && valuation > 0 ? valuation : 0
+  const editable = canUpdate && pageStatus === 'draft'
 
   const derived = useMemo(() => {
+    if (!validValuation) return null
+
     const onePercent = validValuation / 100
-    const offeredValue = validValuation * (totalOfferedBps / 10_000)
-    const remainingValue = validValuation - offeredValue
-    const unitValue = validValuation * (unitOwnershipBps / 10_000)
+    const offeredValue =
+      totalOfferedBps === null ? null : validValuation * (totalOfferedBps / 10_000)
+    const remainingValue = offeredValue === null ? null : validValuation - offeredValue
+    const unitValue =
+      unitOwnershipBps === null ? null : validValuation * (unitOwnershipBps / 10_000)
 
     return { onePercent, offeredValue, remainingValue, unitValue }
   }, [validValuation, totalOfferedBps, unitOwnershipBps])
+
+  function startRevision() {
+    setMessage(null)
+    startTransition(async () => {
+      const result = await returnPortalPageToDraft({ pageId })
+      if (!result.ok) {
+        setMessage(result.error?.message ?? 'Gagal memulai revisi portal.')
+        return
+      }
+      router.refresh()
+    })
+  }
 
   function save() {
     if (!validValuation) {
@@ -64,11 +112,46 @@ export function CompanyValuationEditor({
       return
     }
 
+    const currentMetrics = Array.isArray(initialContent.metrics)
+      ? initialContent.metrics.filter(isRecord)
+      : []
+
+    const metricsWithoutValuation = currentMetrics.filter(
+      (item) =>
+        !String(item.label ?? '')
+          .trim()
+          .toLocaleLowerCase('id-ID')
+          .includes('valuasi perusahaan'),
+    )
+
+    const valuationMetric = {
+      value: formatCompactRupiah(validValuation),
+      label: 'Valuasi Perusahaan',
+      description: formatRupiah(validValuation),
+      raw_value: validValuation,
+      source: 'admin_valuation',
+    }
+
+    const metrics = [
+      ...metricsWithoutValuation.slice(0, 4),
+      valuationMetric,
+      ...metricsWithoutValuation.slice(4),
+    ]
+
+    const content: StatContent = {
+      ...initialContent,
+      kind: 'stat_grid',
+      company_valuation_amount: validValuation,
+      company_valuation_currency: 'IDR',
+      metrics,
+    }
+
     setMessage(null)
     startTransition(async () => {
-      const result = await updateCompanyValuation({
-        offeringId,
-        companyValuation: validValuation,
+      const result = await savePortalSection({
+        sectionId,
+        content,
+        changeNote: 'Pembaruan valuasi perusahaan dan nilai turunan.',
       })
 
       if (!result.ok) {
@@ -76,7 +159,7 @@ export function CompanyValuationEditor({
         return
       }
 
-      setMessage('Valuasi perusahaan berhasil disimpan dan siap digunakan pada portal publik.')
+      setMessage('Valuasi tersimpan pada draf portal. Terbitkan revisi agar tampil realtime di portal publik.')
       router.refresh()
     })
   }
@@ -87,7 +170,7 @@ export function CompanyValuationEditor({
         <div className="max-w-2xl">
           <p className="text-fg text-sm font-semibold">Valuasi Perusahaan</p>
           <p className="text-fg-muted mt-1 text-xs leading-5">
-            Masukkan valuasi perusahaan dalam rupiah. Sistem menghitung otomatis nilai 1%, nilai kepemilikan yang ditawarkan, nilai teoritis per unit, dan sisa kepemilikan.
+            Nilai ini disimpan ke snapshot Statistik Utama portal. Empat statistik pertama tetap dipertahankan dan Valuasi Perusahaan menjadi kartu kelima.
           </p>
         </div>
         {validValuation ? (
@@ -98,6 +181,23 @@ export function CompanyValuationEditor({
         ) : null}
       </div>
 
+      {pageStatus !== 'draft' ? (
+        <div className="border-primary/20 bg-primary/5 mt-5 rounded-lg border p-4">
+          <p className="text-fg text-sm font-medium">Halaman saat ini berstatus {pageStatus}.</p>
+          <p className="text-fg-muted mt-1 text-xs">Mulai revisi agar valuasi dapat diubah tanpa mengubah versi publik aktif.</p>
+          {canUpdate && pageStatus === 'published' ? (
+            <button
+              type="button"
+              disabled={pending}
+              onClick={startRevision}
+              className="border-primary text-primary mt-3 inline-flex h-9 items-center rounded-lg border px-3 text-sm font-semibold disabled:opacity-50"
+            >
+              {pending ? 'Menyiapkan…' : 'Mulai Revisi'}
+            </button>
+          ) : null}
+        </div>
+      ) : null}
+
       <div className="mt-5 grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end">
         <label className="block">
           <span className="text-fg text-sm font-medium">Nilai valuasi (IDR)</span>
@@ -107,7 +207,7 @@ export function CompanyValuationEditor({
             step="1"
             inputMode="numeric"
             value={value}
-            disabled={!canUpdate || pending}
+            disabled={!editable || pending}
             onChange={(event) => setValue(event.target.value)}
             placeholder="12500000000"
             className="border-border bg-background text-fg focus:border-primary mt-1.5 h-11 w-full rounded-lg border px-3 text-sm outline-none disabled:cursor-not-allowed disabled:opacity-55"
@@ -119,7 +219,7 @@ export function CompanyValuationEditor({
 
         <button
           type="button"
-          disabled={!canUpdate || pending || !validValuation}
+          disabled={!editable || pending || !validValuation}
           onClick={save}
           className="bg-primary text-primary-foreground inline-flex h-11 items-center justify-center rounded-lg px-5 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-45"
         >
@@ -127,32 +227,37 @@ export function CompanyValuationEditor({
         </button>
       </div>
 
-      {validValuation ? (
+      {derived ? (
         <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <div className="bg-muted/30 rounded-lg p-4">
             <p className="text-fg-muted text-xs">Nilai 1%</p>
             <p className="text-fg mt-1 text-sm font-semibold">{formatRupiah(derived.onePercent)}</p>
           </div>
           <div className="bg-muted/30 rounded-lg p-4">
-            <p className="text-fg-muted text-xs">Nilai {totalOfferedBps / 100}% Ditawarkan</p>
-            <p className="text-fg mt-1 text-sm font-semibold">{formatRupiah(derived.offeredValue)}</p>
+            <p className="text-fg-muted text-xs">Nilai Kepemilikan Ditawarkan</p>
+            <p className="text-fg mt-1 text-sm font-semibold">
+              {derived.offeredValue === null ? '-' : formatRupiah(derived.offeredValue)}
+            </p>
+            {totalOfferedBps !== null ? <p className="text-fg-subtle mt-1 text-[11px]">{totalOfferedBps / 100}%</p> : null}
           </div>
           <div className="bg-muted/30 rounded-lg p-4">
-            <p className="text-fg-muted text-xs">Nilai Teoritis per Unit ({unitOwnershipBps / 100}%)</p>
-            <p className="text-fg mt-1 text-sm font-semibold">{formatRupiah(derived.unitValue)}</p>
-            <p className="text-fg-subtle mt-1 text-[11px]">{totalUnits} unit pada penawaran aktif</p>
+            <p className="text-fg-muted text-xs">Nilai Teoritis per Unit</p>
+            <p className="text-fg mt-1 text-sm font-semibold">
+              {derived.unitValue === null ? '-' : formatRupiah(derived.unitValue)}
+            </p>
+            {unitOwnershipBps !== null ? <p className="text-fg-subtle mt-1 text-[11px]">{unitOwnershipBps / 100}% per unit · {totalUnits ?? '-'} unit</p> : null}
           </div>
           <div className="bg-muted/30 rounded-lg p-4">
             <p className="text-fg-muted text-xs">Sisa Nilai Kepemilikan</p>
-            <p className="text-fg mt-1 text-sm font-semibold">{formatRupiah(derived.remainingValue)}</p>
+            <p className="text-fg mt-1 text-sm font-semibold">
+              {derived.remainingValue === null ? '-' : formatRupiah(derived.remainingValue)}
+            </p>
           </div>
         </div>
       ) : null}
 
       {message ? <p className="text-fg-muted mt-4 text-sm">{message}</p> : null}
-      {!canUpdate ? (
-        <p className="text-fg-subtle mt-4 text-xs">Anda tidak memiliki permission ownership_offerings.update.</p>
-      ) : null}
+      {!canUpdate ? <p className="text-fg-subtle mt-4 text-xs">Anda tidak memiliki permission portal.update.</p> : null}
     </div>
   )
 }
