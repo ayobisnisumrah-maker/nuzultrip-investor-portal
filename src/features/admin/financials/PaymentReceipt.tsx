@@ -210,7 +210,10 @@ export function PaymentReceipt({ data }: { data: PaymentReceiptData }) {
         {data.signatureUrl || data.stampUrl || data.signerName || data.signerPosition ? (
           <section className={styles.signatureSection}>
             <div className={styles.signature}>
-              <div className={styles.signatureImages}>
+              <div
+                className={styles.signatureImages}
+                style={{ width: 250, height: 145, marginTop: 0 }}
+              >
                 {data.signatureUrl ? (
                   <Image
                     src={data.signatureUrl}
@@ -219,6 +222,7 @@ export function PaymentReceipt({ data }: { data: PaymentReceiptData }) {
                     height={110}
                     unoptimized
                     className={styles.signatureImage}
+                    style={{ maxWidth: 210, height: 96 }}
                   />
                 ) : null}
                 {data.stampUrl ? (
@@ -229,6 +233,7 @@ export function PaymentReceipt({ data }: { data: PaymentReceiptData }) {
                     height={140}
                     unoptimized
                     className={styles.stampImage}
+                    style={{ width: 126, height: 126 }}
                   />
                 ) : null}
               </div>
