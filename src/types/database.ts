@@ -315,6 +315,10 @@ export type Database = {
           line_item_count: number
         }[]
       }
+      set_finance_invoice_departure: {
+        Args: { p_departure_on: string; p_invoice_id: string }
+        Returns: undefined
+      }
       thread_accepts_investor_reply: {
         Args: { p_thread_id: string }
         Returns: boolean
@@ -374,6 +378,16 @@ export type Database = {
         }
       }
       unread_message_count: { Args: never; Returns: number }
+      update_finance_policy_settings: {
+        Args: {
+          p_refund_day_basis: string
+          p_refund_processing_days: number
+          p_refund_tiers: Json
+          p_terms_body: string
+          p_terms_letterhead_asset_id: string
+        }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never
@@ -1238,6 +1252,7 @@ export type Database = {
           customer_email: string | null
           customer_name: string
           customer_phone: string | null
+          departure_on: string | null
           discount_total: number
           due_on: string | null
           grand_total: number
@@ -1248,10 +1263,13 @@ export type Database = {
           notes: string | null
           paid_total: number
           reference: string
+          refund_policy_snapshot: Json
           refunded_total: number
           status: Database["public"]["Enums"]["finance_invoice_status"]
           subtotal: number
           tax_total: number
+          terms_body_snapshot: string | null
+          terms_letterhead_asset_id: string | null
           terms_snapshot: string | null
           updated_at: string
         }
@@ -1264,6 +1282,7 @@ export type Database = {
           customer_email?: string | null
           customer_name: string
           customer_phone?: string | null
+          departure_on?: string | null
           discount_total?: number
           due_on?: string | null
           grand_total?: number
@@ -1274,10 +1293,13 @@ export type Database = {
           notes?: string | null
           paid_total?: number
           reference: string
+          refund_policy_snapshot?: Json
           refunded_total?: number
           status?: Database["public"]["Enums"]["finance_invoice_status"]
           subtotal?: number
           tax_total?: number
+          terms_body_snapshot?: string | null
+          terms_letterhead_asset_id?: string | null
           terms_snapshot?: string | null
           updated_at?: string
         }
@@ -1290,6 +1312,7 @@ export type Database = {
           customer_email?: string | null
           customer_name?: string
           customer_phone?: string | null
+          departure_on?: string | null
           discount_total?: number
           due_on?: string | null
           grand_total?: number
@@ -1300,10 +1323,13 @@ export type Database = {
           notes?: string | null
           paid_total?: number
           reference?: string
+          refund_policy_snapshot?: Json
           refunded_total?: number
           status?: Database["public"]["Enums"]["finance_invoice_status"]
           subtotal?: number
           tax_total?: number
+          terms_body_snapshot?: string | null
+          terms_letterhead_asset_id?: string | null
           terms_snapshot?: string | null
           updated_at?: string
         }
@@ -1313,6 +1339,13 @@ export type Database = {
             columns: ["investor_id"]
             isOneToOne: false
             referencedRelation: "investors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_invoices_terms_letterhead_asset_id_fkey"
+            columns: ["terms_letterhead_asset_id"]
+            isOneToOne: false
+            referencedRelation: "media_assets"
             referencedColumns: ["id"]
           },
         ]
@@ -1518,14 +1551,19 @@ export type Database = {
           invoice_footer: string | null
           invoice_prefix: string
           invoice_terms: string | null
+          invoice_terms_body: string | null
           logo_asset_id: string | null
           payment_instructions: string | null
           receipt_prefix: string
+          refund_day_basis: string
           refund_prefix: string
+          refund_processing_days: number
+          refund_tiers: Json
           signature_asset_id: string | null
           singleton: boolean
           stamp_asset_id: string | null
           tax_invoice_enabled: boolean
+          terms_letterhead_asset_id: string | null
           updated_at: string
           updated_by: string | null
         }
@@ -1540,14 +1578,19 @@ export type Database = {
           invoice_footer?: string | null
           invoice_prefix?: string
           invoice_terms?: string | null
+          invoice_terms_body?: string | null
           logo_asset_id?: string | null
           payment_instructions?: string | null
           receipt_prefix?: string
+          refund_day_basis?: string
           refund_prefix?: string
+          refund_processing_days?: number
+          refund_tiers?: Json
           signature_asset_id?: string | null
           singleton?: boolean
           stamp_asset_id?: string | null
           tax_invoice_enabled?: boolean
+          terms_letterhead_asset_id?: string | null
           updated_at?: string
           updated_by?: string | null
         }
@@ -1562,14 +1605,19 @@ export type Database = {
           invoice_footer?: string | null
           invoice_prefix?: string
           invoice_terms?: string | null
+          invoice_terms_body?: string | null
           logo_asset_id?: string | null
           payment_instructions?: string | null
           receipt_prefix?: string
+          refund_day_basis?: string
           refund_prefix?: string
+          refund_processing_days?: number
+          refund_tiers?: Json
           signature_asset_id?: string | null
           singleton?: boolean
           stamp_asset_id?: string | null
           tax_invoice_enabled?: boolean
+          terms_letterhead_asset_id?: string | null
           updated_at?: string
           updated_by?: string | null
         }
@@ -1591,6 +1639,13 @@ export type Database = {
           {
             foreignKeyName: "finance_settings_stamp_asset_id_fkey"
             columns: ["stamp_asset_id"]
+            isOneToOne: false
+            referencedRelation: "media_assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_settings_terms_letterhead_asset_id_fkey"
+            columns: ["terms_letterhead_asset_id"]
             isOneToOne: false
             referencedRelation: "media_assets"
             referencedColumns: ["id"]
