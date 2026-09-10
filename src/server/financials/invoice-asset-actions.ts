@@ -20,9 +20,58 @@ function isInvoiceAssetKind(value: FormDataEntryValue | null): value is InvoiceA
   return value === 'logo' || value === 'stamp' || value === 'signature'
 }
 
-export async function uploadInvoiceDocumentAsset(formData: FormData) {
+function text(formData: FormData, key: string, maxLength: number) {
+  const value = formData.get(key)
+  if (typeof value !== 'string') return null
+  const trimmed = value.trim()
+  return trimmed ? trimmed.slice(0, maxLength) : null
+}
+
+async function requireFinanceEditor() {
   const principal = await getPrincipal()
-  if (principal.kind !== 'admin' || !hasPermission(principal, 'financial_reports.update')) {
+  if (principal.kind !== 'admin' || !hasPermission(principal, 'financial_reports.update')) return null
+  return principal
+}
+
+export async function updateInvoiceDocumentSettings(formData: FormData) {
+  const principal = await requireFinanceEditor()
+  if (!principal) {
+    return { ok: false as const, error: 'Anda tidak memiliki izin untuk mengubah pengaturan dokumen invoice.' }
+  }
+
+  const supabase = await getServerSupabase()
+  const { data: settings, error: settingsError } = await supabase
+    .from('finance_settings')
+    .select('id')
+    .eq('singleton', true)
+    .maybeSingle()
+
+  if (settingsError || !settings) {
+    return { ok: false as const, error: 'Simpan Pengaturan Invoice & Kasir terlebih dahulu.' }
+  }
+
+  const payload = {
+    company_email: text(formData, 'company_email', 254),
+    company_phone: text(formData, 'company_phone', 80),
+    company_website: text(formData, 'company_website', 300),
+    signer_name: text(formData, 'signer_name', 200),
+    signer_title: text(formData, 'signer_title', 200),
+    show_stamp: formData.get('show_stamp') === 'on',
+    show_signature: formData.get('show_signature') === 'on',
+    show_print_metadata: formData.get('show_print_metadata') === 'on',
+    show_draft_watermark: formData.get('show_draft_watermark') === 'on',
+  }
+
+  const { error } = await supabase.from('finance_settings').update(payload).eq('id', settings.id)
+  if (error) return { ok: false as const, error: `Pengaturan dokumen gagal disimpan: ${error.message}` }
+
+  revalidatePath('/admin/financials/cashier')
+  return { ok: true as const }
+}
+
+export async function uploadInvoiceDocumentAsset(formData: FormData) {
+  const principal = await requireFinanceEditor()
+  if (!principal) {
     return { ok: false as const, error: 'Anda tidak memiliki izin untuk mengubah aset invoice.' }
   }
 
