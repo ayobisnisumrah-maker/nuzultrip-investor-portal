@@ -18,21 +18,27 @@ export default async function ContactPage({
           ? 'Permintaan belum berhasil dikirim. Silakan coba kembali.'
           : null
 
+  const fieldClassName =
+    'mt-2 h-12 w-full rounded-[3px] border border-[#cfcfcb] bg-white px-4 text-base text-[#111111] outline-none transition focus:border-[#111111] focus:ring-2 focus:ring-black/10'
+
   return (
-    <main className="min-h-dvh bg-[#f5faf9] px-6 py-14 text-[#142657] sm:py-20">
+    <main className="min-h-dvh bg-white px-6 py-14 text-[#111111] sm:py-20">
       <div className="mx-auto max-w-3xl">
-        <Link href="/" className="text-base font-medium text-[#397077] hover:text-[#0b7374]">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-2 border-b border-[#111111] pb-1 text-sm font-semibold text-[#111111] transition-opacity hover:opacity-60"
+        >
           ← Kembali ke Investor Relations
         </Link>
 
-        <div className="mt-8">
-          <p className="text-sm font-bold tracking-[0.16em] text-[#0b7374] uppercase">
+        <div className="mt-10 border-b border-[#e1e1df] pb-10">
+          <p className="text-xs font-bold tracking-[0.14em] text-[#252525] uppercase">
             Investor Relations
           </p>
-          <h1 className="font-display text-display-lg mt-3 text-[#142657]">
+          <h1 className="font-display mt-4 text-4xl font-medium tracking-[-0.045em] text-[#111111] sm:text-5xl">
             Minta Informasi atau Dokumen
           </h1>
-          <p className="mt-5 max-w-2xl text-lg leading-8 text-[#46556f] sm:text-xl sm:leading-9">
+          <p className="mt-5 max-w-2xl text-base leading-7 text-[#707070] sm:text-lg sm:leading-8">
             Gunakan formulir ini untuk meminta informasi atau dokumen Nuzultrip Equity yang ingin Anda
             pelajari terlebih dahulu. Pengiriman formulir ini bukan pendaftaran investor dan tidak
             membuat akun investor.
@@ -40,30 +46,31 @@ export default async function ContactPage({
         </div>
 
         {params.sent === '1' ? (
-          <div className="mt-9 rounded-2xl border border-[#cfe0df] bg-white p-7 shadow-sm sm:p-8">
-            <h2 className="font-display text-2xl font-semibold text-[#142657]">
+          <div className="mt-9 rounded-[4px] border border-[#e1e1df] bg-[#f6f6f4] p-7 sm:p-9">
+            <p className="text-xs font-bold tracking-[0.14em] text-[#555555] uppercase">Terkirim</p>
+            <h2 className="font-display mt-3 text-2xl font-medium tracking-[-0.035em] text-[#111111] sm:text-3xl">
               Permintaan berhasil dikirim
             </h2>
-            <p className="mt-3 text-base leading-7 text-[#46556f] sm:text-lg sm:leading-8">
+            <p className="mt-3 text-base leading-7 text-[#707070] sm:text-lg sm:leading-8">
               Tim Investor Relations akan meninjau kebutuhan informasi atau dokumen Anda dan
               menindaklanjutinya melalui informasi kontak yang diberikan.
             </p>
             <Link
               href="/"
-              className="mt-6 inline-flex text-base font-semibold text-[#0b7374] hover:underline"
+              className="mt-6 inline-flex items-center gap-5 border-b border-[#111111] pb-1 text-sm font-semibold text-[#111111] hover:opacity-60"
             >
-              Kembali ke portal
+              Kembali ke portal →
             </Link>
           </div>
         ) : (
           <form
             action={submitPortalInquiry}
-            className="mt-9 space-y-7 rounded-2xl border border-[#cfe0df] bg-white p-6 shadow-sm sm:p-9"
+            className="mt-9 space-y-7 rounded-[4px] border border-[#e1e1df] bg-white p-6 sm:p-9"
           >
             {errorMessage ? (
               <div
                 role="alert"
-                className="rounded-xl border border-[#e3b7ae] bg-[#fff4f1] p-4 text-base text-[#8b3c2f]"
+                className="rounded-[3px] border border-[#d9b9b2] bg-[#fff7f5] p-4 text-base text-[#7d3328]"
               >
                 {errorMessage}
               </div>
@@ -71,7 +78,7 @@ export default async function ContactPage({
 
             <div className="grid gap-6 sm:grid-cols-2">
               <div>
-                <label htmlFor="name" className="text-base font-semibold text-[#142657]">
+                <label htmlFor="name" className="text-sm font-semibold text-[#111111]">
                   Nama lengkap
                 </label>
                 <input
@@ -79,11 +86,11 @@ export default async function ContactPage({
                   name="name"
                   required
                   maxLength={200}
-                  className="mt-2 h-12 w-full rounded-xl border border-[#799fa2] bg-white px-4 text-base text-[#142657] outline-none focus:border-[#0b7374] focus:ring-2 focus:ring-[#0b7374]/20"
+                  className={fieldClassName}
                 />
               </div>
               <div>
-                <label htmlFor="email" className="text-base font-semibold text-[#142657]">
+                <label htmlFor="email" className="text-sm font-semibold text-[#111111]">
                   Email
                 </label>
                 <input
@@ -92,35 +99,35 @@ export default async function ContactPage({
                   type="email"
                   required
                   maxLength={320}
-                  className="mt-2 h-12 w-full rounded-xl border border-[#799fa2] bg-white px-4 text-base text-[#142657] outline-none focus:border-[#0b7374] focus:ring-2 focus:ring-[#0b7374]/20"
+                  className={fieldClassName}
                 />
               </div>
               <div>
-                <label htmlFor="phone" className="text-base font-semibold text-[#142657]">
+                <label htmlFor="phone" className="text-sm font-semibold text-[#111111]">
                   Nomor telepon
                 </label>
                 <input
                   id="phone"
                   name="phone"
                   maxLength={50}
-                  className="mt-2 h-12 w-full rounded-xl border border-[#799fa2] bg-white px-4 text-base text-[#142657] outline-none focus:border-[#0b7374] focus:ring-2 focus:ring-[#0b7374]/20"
+                  className={fieldClassName}
                 />
               </div>
               <div>
-                <label htmlFor="organization" className="text-base font-semibold text-[#142657]">
+                <label htmlFor="organization" className="text-sm font-semibold text-[#111111]">
                   Perusahaan / organisasi
                 </label>
                 <input
                   id="organization"
                   name="organization"
                   maxLength={200}
-                  className="mt-2 h-12 w-full rounded-xl border border-[#799fa2] bg-white px-4 text-base text-[#142657] outline-none focus:border-[#0b7374] focus:ring-2 focus:ring-[#0b7374]/20"
+                  className={fieldClassName}
                 />
               </div>
             </div>
 
             <div>
-              <label htmlFor="message" className="text-base font-semibold text-[#142657]">
+              <label htmlFor="message" className="text-sm font-semibold text-[#111111]">
                 Informasi / dokumen yang ingin dipelajari
               </label>
               <textarea
@@ -130,12 +137,12 @@ export default async function ContactPage({
                 maxLength={5000}
                 rows={7}
                 placeholder="Contoh: Saya ingin mempelajari profil perusahaan, skema kepemilikan, atau dokumen pendukung yang tersedia."
-                className="mt-2 w-full rounded-xl border border-[#799fa2] bg-white px-4 py-3 text-base leading-7 text-[#142657] outline-none placeholder:text-[#8290a5] focus:border-[#0b7374] focus:ring-2 focus:ring-[#0b7374]/20"
+                className="mt-2 w-full rounded-[3px] border border-[#cfcfcb] bg-white px-4 py-3 text-base leading-7 text-[#111111] outline-none transition placeholder:text-[#909090] focus:border-[#111111] focus:ring-2 focus:ring-black/10"
               />
             </div>
 
-            <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm leading-6 text-[#617087] sm:text-base">
+            <div className="flex flex-col-reverse gap-4 border-t border-[#ededed] pt-6 sm:flex-row sm:items-center sm:justify-between">
+              <p className="max-w-md text-sm leading-6 text-[#707070]">
                 Data digunakan hanya untuk menindaklanjuti permintaan informasi atau dokumen Anda.
               </p>
               <InquirySubmitButton />
