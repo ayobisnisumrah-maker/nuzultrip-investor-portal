@@ -61,6 +61,7 @@ describe('finance operations lifecycle', () => {
         { id: string }[]
       >`select app.create_finance_invoice('Pelanggan Uji','','','',null,'',${tx.json([{ product_id: null, product_code: 'QA', name: 'Paket Uji', description: '', quantity: 1, unit_label: 'pax', unit_price: 50000, discount_amount: 0, tax_rate: 0, position: 0 }])}) as id`
       await tx`select app.issue_finance_invoice(${invoice!.id})`
+      await tx`savepoint overpayment_assertion`
       const overpayment = await expectRejected(
         () =>
           tx`select app.record_finance_payment(
@@ -73,10 +74,15 @@ describe('finance operations lifecycle', () => {
             ${`QA-OVER-${fixtures.suffix}`}::text
           )`,
       )
+      await tx`rollback to savepoint overpayment_assertion`
+      await tx`release savepoint overpayment_assertion`
+      await tx`savepoint mutation_assertion`
       const mutation = await expectRejected(
         () =>
           tx`update public.finance_invoice_items set quantity=2 where invoice_id=${invoice!.id}`,
       )
+      await tx`rollback to savepoint mutation_assertion`
+      await tx`release savepoint mutation_assertion`
       expect(overpayment.code).toBe('23514')
       expect(mutation.code).toBe('42501')
     })
