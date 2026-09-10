@@ -151,6 +151,7 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
         documentTitle={documentTitle}
         customerName={invoice.customer_name}
         issuedOn={invoice.issued_on}
+        currentDueOn={invoice.due_on}
       />
 
       <PaymentReceipt data={receipt} />
