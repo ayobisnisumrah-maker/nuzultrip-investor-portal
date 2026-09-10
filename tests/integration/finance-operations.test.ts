@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { as, closeDb, expectRejected } from './helpers/db'
+import { as, asCommitted, cleanup, closeDb, expectRejected } from './helpers/db'
 import { createFixtures, destroyFixtures, type Fixtures } from './helpers/fixtures'
 
 let fixtures: Fixtures
@@ -85,6 +85,142 @@ describe('finance operations lifecycle', () => {
       await tx`release savepoint mutation_assertion`
       expect(overpayment.code).toBe('23514')
       expect(mutation.code).toBe('42501')
+    })
+  })
+
+  it('exposes only monthly aggregate cashflow to an active investor', async () => {
+    await as({ kind: 'authenticated', userId: fixtures.investorA.userId }, async (tx) => {
+      const rows = await tx<
+        {
+          month_start: string
+          cash_in: string
+          cash_out: string
+          net_cashflow: string
+          pax: string
+        }[]
+      >`select * from app.investor_monthly_cashflow_summary(6)`
+
+      expect(rows).toHaveLength(6)
+      expect(Object.keys(rows[0] ?? {}).sort()).toEqual(
+        ['cash_in', 'cash_out', 'month_start', 'net_cashflow', 'pax'].sort(),
+      )
+      expect(rows.every((row) => Number(row.cash_in) >= 0)).toBe(true)
+      expect(rows.every((row) => Number(row.cash_out) >= 0)).toBe(true)
+      expect(rows.every((row) => Number(row.pax) >= 0)).toBe(true)
+    })
+  })
+
+  it('synchronizes committed cashier transactions into the investor monthly summary', async () => {
+    const baseline = await as(
+      { kind: 'authenticated', userId: fixtures.investorA.userId },
+      async (tx) => {
+        const [row] = await tx<
+          { cash_in: string; cash_out: string; net_cashflow: string; pax: string }[]
+        >`select cash_in, cash_out, net_cashflow, pax from app.investor_monthly_cashflow_summary(1)`
+        return row!
+      },
+    )
+
+    let invoiceId = ''
+    let expenseId = ''
+
+    try {
+      await asCommitted(
+        { kind: 'authenticated', userId: fixtures.superAdmin.userId },
+        async (tx) => {
+          const [invoice] = await tx<{ id: string }[]>`
+            select app.create_finance_invoice(
+              ${`Realtime ${fixtures.suffix}`}, '', '', '', current_date + 7, '',
+              ${tx.json([{ product_id: null, product_code: `RT-${fixtures.suffix}`, name: 'Paket Realtime', description: '', quantity: 3, unit_label: 'pax', unit_price: 100000, discount_amount: 0, tax_rate: 0, position: 0 }])}
+            ) as id
+          `
+          if (!invoice) throw new Error('Realtime invoice was not created.')
+          invoiceId = invoice.id
+          await tx`select app.issue_finance_invoice(${invoice.id})`
+          const [payment] = await tx<{ id: string }[]>`
+            select app.record_finance_payment(${invoice.id}, 300000, 'transfer', now(), 'SYNC', '', ${`RT-PAY-${fixtures.suffix}`}) as id
+          `
+          if (!payment) throw new Error('Realtime payment was not created.')
+          await tx`select app.process_finance_refund(${invoice.id}, ${payment.id}, 50000, 'Sinkronisasi uji', '')`
+
+          const [expense] = await tx<{ id: string }[]>`
+            insert into public.finance_expenses (
+              reference, status, expense_on, category, description, quantity, unit_price,
+              tax_amount, currency, recorded_by
+            ) values (
+              ${`RT-EXP-${fixtures.suffix}`}, 'recorded', current_date, 'operasional',
+              'Pengeluaran sinkronisasi uji', 1, 25000, 0, 'IDR', ${fixtures.superAdmin.userId}
+            ) returning id
+          `
+          if (!expense) throw new Error('Realtime expense was not created.')
+          expenseId = expense.id
+        },
+      )
+
+      const after = await as(
+        { kind: 'authenticated', userId: fixtures.investorA.userId },
+        async (tx) => {
+          const [row] = await tx<
+            { cash_in: string; cash_out: string; net_cashflow: string; pax: string }[]
+          >`select cash_in, cash_out, net_cashflow, pax from app.investor_monthly_cashflow_summary(1)`
+          return row!
+        },
+      )
+
+      expect(Number(after.cash_in) - Number(baseline.cash_in)).toBe(300000)
+      expect(Number(after.cash_out) - Number(baseline.cash_out)).toBe(75000)
+      expect(Number(after.net_cashflow) - Number(baseline.net_cashflow)).toBe(225000)
+      expect(Number(after.pax) - Number(baseline.pax)).toBe(3)
+    } finally {
+      await cleanup(async (tx) => {
+        if (expenseId) await tx`delete from public.finance_expenses where id=${expenseId}`
+        if (invoiceId) await tx`delete from public.finance_invoices where id=${invoiceId}`
+      })
+    }
+  })
+
+  it('attaches realtime finance triggers without exposing trigger execution', async () => {
+    await as({ kind: 'authenticated', userId: fixtures.superAdmin.userId }, async (tx) => {
+      const rows = await tx<{ table_name: string }[]>`
+        select c.relname as table_name
+        from pg_trigger t
+        join pg_class c on c.oid = t.tgrelid
+        join pg_namespace n on n.oid = c.relnamespace
+        where not t.tgisinternal
+          and n.nspname = 'public'
+          and t.tgname like 'finance%emit_transaction_events'
+        order by c.relname
+      `
+      expect(rows.map((row) => row.table_name)).toEqual([
+        'finance_expenses',
+        'finance_invoice_items',
+        'finance_invoices',
+        'finance_payments',
+        'finance_refunds',
+      ])
+
+      const [acl] = await tx<{ can_execute: boolean }[]>`
+        select has_function_privilege('authenticated', 'app.emit_finance_transaction_events()'::regprocedure, 'EXECUTE') as can_execute
+      `
+      expect(acl?.can_execute).toBe(false)
+    })
+  })
+
+  it('rejects cashflow summary access for pending investors', async () => {
+    await as({ kind: 'authenticated', userId: fixtures.investorPending.userId }, async (tx) => {
+      const rejection = await expectRejected(
+        () => tx`select * from app.investor_monthly_cashflow_summary(6)`,
+      )
+      expect(rejection.message).toContain('active investor required')
+    })
+  })
+
+  it('does not grant anonymous callers access to investor cashflow', async () => {
+    await as({ kind: 'anon' }, async (tx) => {
+      const rejection = await expectRejected(
+        () => tx`select * from app.investor_monthly_cashflow_summary(6)`,
+      )
+      expect(rejection.code).toBe('42501')
     })
   })
 })

@@ -10,6 +10,7 @@ import {
 } from '@/core/financials/format'
 import { FinancialReportLifecycleActions } from '@/features/admin/financials/financial-report-lifecycle-actions'
 import { FinancialReportContentEditor } from '@/features/admin/financials/financial-report-content-editor'
+import { FinancialReportTransactionSync } from '@/features/admin/financials/financial-report-transaction-sync'
 import { adminWithPermission } from '@/server/auth/page-guards'
 import { getServerSupabase } from '@/server/supabase/server'
 import { Alert } from '@/ui/alert'
@@ -96,6 +97,9 @@ export default async function FinancialReportDetailPage({
         .maybeSingle()
     : { data: null }
 
+  const canSyncTransactions =
+    report.status === 'draft' && principal.permissions.has('financial_reports.update')
+
   return (
     <Stack gap={8}>
       <PageHeader
@@ -110,6 +114,7 @@ export default async function FinancialReportDetailPage({
             >
               Kembali
             </Link>
+            {canSyncTransactions ? <FinancialReportTransactionSync reportId={report.id} /> : null}
             <FinancialReportLifecycleActions
               reportId={report.id}
               title={report.title}
@@ -119,6 +124,14 @@ export default async function FinancialReportDetailPage({
           </div>
         }
       />
+
+      {canSyncTransactions ? (
+        <Alert tone="info" title="Draft terhubung ke transaksi operasional">
+          Klik “Sinkronkan dari transaksi” untuk menghitung ulang invoice, pembayaran, refund, pengeluaran,
+          arus kas, piutang, dan jumlah pax sesuai periode. Setelah itu Admin dapat merevisi angka atau
+          catatan yang memang membutuhkan penyesuaian sebelum peninjauan.
+        </Alert>
+      ) : null}
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card>
@@ -231,7 +244,7 @@ export default async function FinancialReportDetailPage({
           {!lines?.length ? (
             <EmptyState
               title="Belum ada rincian angka"
-              description="Lifecycle laporan tetap dapat diuji, tetapi investor akan melihat empty state sampai line item ditambahkan."
+              description="Klik sinkronisasi transaksi untuk membuat rincian awal, lalu revisi bila diperlukan."
             />
           ) : (
             <div className="overflow-x-auto">
@@ -276,7 +289,7 @@ export default async function FinancialReportDetailPage({
           {!kpis?.length ? (
             <EmptyState
               title="Belum ada KPI"
-              description="KPI terstruktur akan tampil di sini setelah ditambahkan ke versi aktif."
+              description="Klik sinkronisasi transaksi untuk membentuk KPI awal dari transaksi operasional."
             />
           ) : (
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">

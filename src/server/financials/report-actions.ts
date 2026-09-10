@@ -6,6 +6,7 @@ import { z } from 'zod'
 
 import { ConflictError } from '@/core/errors'
 import { defineAction } from '@/server/auth/guards'
+import { buildTransactionFinancialReport } from '@/server/financials/transaction-report-service'
 import type { Database, Json } from '@/types/database'
 
 const createSchema = z.object({
@@ -19,6 +20,7 @@ const createSchema = z.object({
 })
 
 const transitionSchema = z.object({ reportId: z.uuid() })
+const syncSchema = z.object({ reportId: z.uuid() })
 
 const lineItemSchema = z.object({
   statement: z.enum(['income', 'balance', 'cash_flow']),
@@ -81,11 +83,51 @@ function firstRow(data: unknown): Record<string, unknown> | null {
   return value && typeof value === 'object' ? (value as Record<string, unknown>) : null
 }
 
+function toRpcContent(
+  generated: Awaited<ReturnType<typeof buildTransactionFinancialReport>>,
+) {
+  return {
+    lineItems: generated.lineItems.map((item, position) => ({
+      statement: item.statement,
+      category: item.category,
+      line_key: item.lineKey,
+      label: item.label,
+      amount: item.amount,
+      currency: item.currency,
+      position,
+      note: item.note?.trim() || null,
+    })),
+    kpis: generated.kpis.map((item, position) => ({
+      kpi_key: item.kpiKey,
+      label: item.label,
+      value: item.value,
+      unit: item.unit,
+      basis: item.basis,
+      position,
+    })),
+  }
+}
+
+async function saveGeneratedContent(
+  supabase: SupabaseClient<Database>,
+  reportId: string,
+  documentAssetId: string | null,
+  generated: Awaited<ReturnType<typeof buildTransactionFinancialReport>>,
+) {
+  const content = toRpcContent(generated)
+  return appRpcClient(supabase).rpc('save_financial_report_draft_content', {
+    p_report_id: reportId,
+    p_document_asset_id: documentAssetId,
+    p_line_items: content.lineItems,
+    p_kpis: content.kpis,
+  })
+}
+
 export const createFinancialReport = defineAction({
   access: { permission: 'financial_reports.create' },
   input: createSchema,
   audit: { action: 'financial_report.created', entityType: 'financial_report' },
-  handler: async ({ input, supabase, audit }) => {
+  handler: async ({ input, principal, supabase, audit }) => {
     const { data, error } = await appRpcClient(supabase).rpc('create_financial_report_with_draft', {
       p_financial_period_id: input.financialPeriodId,
       p_title: input.title,
@@ -112,15 +154,32 @@ export const createFinancialReport = defineAction({
       )
     }
 
+    let generatedFromTransactions = false
+    if (principal.kind === 'admin' && principal.permissions.has('financial_reports.update')) {
+      try {
+        const generated = await buildTransactionFinancialReport(supabase, input.financialPeriodId)
+        const generatedResult = await saveGeneratedContent(supabase, reportId, null, generated)
+        generatedFromTransactions = !generatedResult.error
+      } catch {
+        generatedFromTransactions = false
+      }
+    }
+
     audit({
       entityId: reportId,
-      summary: `Laporan keuangan ${input.title} dibuat sebagai draft.`,
-      changes: { status: { before: null, after: 'draft' } },
+      summary: generatedFromTransactions
+        ? `Laporan keuangan ${input.title} dibuat sebagai draft dan diisi otomatis dari transaksi.`
+        : `Laporan keuangan ${input.title} dibuat sebagai draft.`,
+      changes: {
+        status: { before: null, after: 'draft' },
+        transactionSync: { before: null, after: generatedFromTransactions ? 'generated' : 'not_generated' },
+      },
     })
 
+    revalidatePath('/admin')
     revalidatePath('/admin/financials')
     revalidatePath('/admin/financials/reports')
-    return { reportId }
+    return { reportId, generatedFromTransactions }
   },
 })
 
@@ -172,10 +231,79 @@ export const saveFinancialReportContent = defineAction({
       },
     })
 
+    revalidatePath('/admin')
     revalidatePath('/admin/financials')
     revalidatePath('/admin/financials/reports')
     revalidatePath(`/admin/financials/reports/${input.reportId}`)
     return { reportId: input.reportId, lineItemCount: lineItems.length, kpiCount: kpis.length }
+  },
+})
+
+export const syncFinancialReportFromTransactions = defineAction({
+  access: { permission: 'financial_reports.update' },
+  input: syncSchema,
+  audit: { action: 'financial_report.transaction_sync', entityType: 'financial_report' },
+  handler: async ({ input, supabase, audit }) => {
+    const { data: report, error: reportError } = await supabase
+      .from('financial_reports')
+      .select('id,financial_period_id,current_version_id,status')
+      .eq('id', input.reportId)
+      .maybeSingle()
+
+    if (reportError || !report || report.status !== 'draft' || !report.current_version_id) {
+      throw new ConflictError(
+        'Financial report is not an editable draft.',
+        'Sinkronisasi hanya dapat dilakukan pada laporan yang masih berstatus draft.',
+      )
+    }
+
+    const { data: version, error: versionError } = await supabase
+      .from('financial_report_versions')
+      .select('document_asset_id,status')
+      .eq('id', report.current_version_id)
+      .maybeSingle()
+
+    if (versionError || !version || version.status !== 'draft') {
+      throw new ConflictError(
+        'Financial report current version is not editable.',
+        'Versi aktif laporan tidak dapat disinkronkan saat ini.',
+      )
+    }
+
+    const generated = await buildTransactionFinancialReport(supabase, report.financial_period_id)
+    const { error } = await saveGeneratedContent(
+      supabase,
+      report.id,
+      version.document_asset_id,
+      generated,
+    )
+
+    if (error) {
+      throw new ConflictError(
+        `Failed to synchronize financial report: ${error.message}`,
+        'Data transaksi belum dapat disinkronkan ke laporan keuangan.',
+      )
+    }
+
+    audit({
+      entityId: report.id,
+      summary: `Draft laporan disinkronkan dari transaksi: ${generated.totals.invoiceCount} invoice, ${generated.totals.pax} pax.`,
+      changes: {
+        grossRevenue: { before: null, after: generated.totals.grossRevenue },
+        cashIn: { before: null, after: generated.totals.cashIn },
+        cashOut: { before: null, after: generated.totals.cashOut },
+        netCashflow: { before: null, after: generated.totals.netCashflow },
+        pax: { before: null, after: generated.totals.pax },
+      },
+    })
+
+    revalidatePath('/admin')
+    revalidatePath('/admin/financials')
+    revalidatePath('/admin/financials/reports')
+    revalidatePath(`/admin/financials/reports/${report.id}`)
+    revalidatePath('/investor')
+    revalidatePath('/investor/financials')
+    return { reportId: report.id, ...generated.totals }
   },
 })
 

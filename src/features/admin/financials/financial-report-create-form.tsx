@@ -58,6 +58,9 @@ export function FinancialReportCreateForm({ periods }: { periods: readonly Perio
 
   return (
     <div className="grid gap-5">
+      <Alert tone="info" title="Laporan akan diisi dari transaksi">
+        Saat laporan dibuat, sistem akan mencoba mengisi pos keuangan dan KPI dari invoice, pembayaran, refund, pengeluaran, dan pax pada periode yang dipilih. Admin tetap dapat meninjau dan merevisi draft sebelum diterbitkan.
+      </Alert>
       <label className="text-body-sm text-fg grid gap-1.5">
         <span>Periode keuangan</span>
         <select value={periodId} onChange={(e) => setPeriodId(e.target.value)} className="border-border bg-canvas h-10 rounded-lg border px-3">
@@ -99,7 +102,7 @@ export function FinancialReportCreateForm({ periods }: { periods: readonly Perio
       </label>
       {error ? <Alert tone="danger" title="Laporan tidak dapat dibuat">{error}</Alert> : null}
       <div className="flex justify-end">
-        <Button loading={pending} disabled={!periodId || !title.trim()} onClick={submit}>Buat laporan draft</Button>
+        <Button loading={pending} disabled={!periodId || !title.trim()} onClick={submit}>Buat laporan dari transaksi</Button>
       </div>
     </div>
   )
