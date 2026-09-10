@@ -221,8 +221,8 @@ export function AdminShell({
         </div>
       }
     >
-      <div className="animate-page-enter mx-auto w-full max-w-[1600px]">
-        <div className="border-border bg-surface mb-6 overflow-hidden rounded-xl border">
+      <div className="animate-page-enter mx-auto w-full max-w-[1600px] print:max-w-none">
+        <div className="border-border bg-surface mb-6 overflow-hidden rounded-xl border print:hidden">
           <div className="relative px-5 py-5 sm:px-6 sm:py-6">
             <div
               aria-hidden="true"
