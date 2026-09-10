@@ -87,4 +87,44 @@ describe('finance operations lifecycle', () => {
       expect(mutation.code).toBe('42501')
     })
   })
+
+  it('exposes only monthly aggregate cashflow to an active investor', async () => {
+    await as({ kind: 'authenticated', userId: fixtures.investorA.userId }, async (tx) => {
+      const rows = await tx<
+        {
+          month_start: string
+          cash_in: string
+          cash_out: string
+          net_cashflow: string
+          pax: string
+        }[]
+      >`select * from app.investor_monthly_cashflow_summary(6)`
+
+      expect(rows).toHaveLength(6)
+      expect(Object.keys(rows[0] ?? {}).sort()).toEqual(
+        ['cash_in', 'cash_out', 'month_start', 'net_cashflow', 'pax'].sort(),
+      )
+      expect(rows.every((row) => Number(row.cash_in) >= 0)).toBe(true)
+      expect(rows.every((row) => Number(row.cash_out) >= 0)).toBe(true)
+      expect(rows.every((row) => Number(row.pax) >= 0)).toBe(true)
+    })
+  })
+
+  it('rejects cashflow summary access for pending investors', async () => {
+    await as({ kind: 'authenticated', userId: fixtures.investorPending.userId }, async (tx) => {
+      const rejection = await expectRejected(
+        () => tx`select * from app.investor_monthly_cashflow_summary(6)`,
+      )
+      expect(rejection.message).toContain('active investor required')
+    })
+  })
+
+  it('does not grant anonymous callers access to investor cashflow', async () => {
+    await as({ kind: 'anon' }, async (tx) => {
+      const rejection = await expectRejected(
+        () => tx`select * from app.investor_monthly_cashflow_summary(6)`,
+      )
+      expect(rejection.code).toBe('42501')
+    })
+  })
 })
