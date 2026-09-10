@@ -122,6 +122,7 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
     paymentDatetime: formatPaymentDatetime(lastPayment?.created_at),
     paymentMethod: lastPayment?.method,
     dueDate: formatInvoiceDate(invoice.due_on),
+    termsLink: invoice.terms_snapshot,
     companyName: company.legalName,
     companyAddress: company.address ?? '',
     companyContact: company.footer,
