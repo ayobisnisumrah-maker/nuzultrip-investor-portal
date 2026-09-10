@@ -78,10 +78,10 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
         customerName={invoice.customer_name}
         issuedOn={invoice.issued_on}
       />
-      <Card>
+      <Card className="invoice-document">
         <CardBody>
           <div className="grid gap-8">
-            <div className="flex flex-wrap justify-between gap-6">
+            <div className="flex flex-wrap items-start justify-between gap-6 invoice-header">
               <div>
                 {company.logoAssetId ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -92,50 +92,45 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
                   />
                 ) : null}
                 <p className="text-heading-md font-semibold">{company.legalName || 'Nuzultrip'}</p>
-                <p className="text-body-sm text-fg-muted mt-1">{documentTitle}</p>
+                <p className="invoice-title text-heading-md text-fg mt-1 font-semibold">{documentTitle}</p>
+                <p className="text-body-sm text-fg-muted mt-1">Nomor: {invoice.reference}</p>
                 <p className="text-body-sm text-fg-muted whitespace-pre-line">{company.address}</p>
                 {company.taxId ? (
                   <p className="text-caption text-fg-subtle">Identitas pajak: {company.taxId}</p>
                 ) : null}
               </div>
-              <div className="text-body-sm text-right">
-                <p>Diterbitkan: {invoice.issued_on ?? 'Draf'}</p>
+              <div className="text-body-sm text-right invoice-meta">
+                <p>Tanggal: {invoice.issued_on ?? 'Draf'}</p>
                 <p>Jatuh tempo: {invoice.due_on ?? '—'}</p>
               </div>
             </div>
-            <div>
-              <p className="text-caption text-fg-subtle">Ditagihkan kepada</p>
-              <p className="font-semibold">{invoice.customer_name}</p>
-              <p className="text-body-sm text-fg-muted">{invoice.customer_email}</p>
-              <p className="text-body-sm text-fg-muted whitespace-pre-line">
-                {invoice.customer_address}
-              </p>
+            <div className="invoice-customer border-border rounded-lg border p-4">
+              <p className="text-body-sm font-semibold mb-3">Informasi pemesan</p>
+              <div className="grid gap-4 sm:grid-cols-3">
+                <div><p className="text-caption text-fg-subtle">Nama pemesan</p><p className="text-body-sm">{invoice.customer_name}</p></div>
+                <div><p className="text-caption text-fg-subtle">Alamat email</p><p className="text-body-sm">{invoice.customer_email || '—'}</p></div>
+                <div><p className="text-caption text-fg-subtle">Nomor ponsel</p><p className="text-body-sm">{invoice.customer_phone || '—'}</p></div>
+              </div>
             </div>
+            <h2 className="invoice-section-title font-semibold">Detail pembayaran</h2>
             <div className="overflow-x-auto">
               <table className="text-body-sm w-full text-left">
                 <thead>
                   <tr className="border-border border-b">
-                    <th className="py-3">Item</th>
+                    <th className="py-3">Produk</th>
+                    <th>Deskripsi</th>
                     <th>Jumlah</th>
-                    <th>Harga</th>
-                    <th>Diskon</th>
                     <th className="text-right">Total</th>
                   </tr>
                 </thead>
                 <tbody>
                   {(itemsResult.data ?? []).map((item) => (
                     <tr key={item.id} className="border-border border-b">
-                      <td className="py-3">
-                        {item.name}
-                        <span className="text-caption text-fg-subtle block">
-                          {item.product_code_snapshot}
-                        </span>
-                      </td>
+                      <td className="py-3">{item.name}<span className="text-caption text-fg-subtle block">{item.product_code_snapshot}</span></td>
+                      <td>{item.description || '—'}</td>
                       <td>
                         {Number(item.quantity)} {item.unit_label}
                       </td>
-                      <td>{rupiah.format(Number(item.unit_price))}</td>
-                      <td>{rupiah.format(Number(item.discount_amount))}</td>
                       <td className="text-right font-medium">
                         {rupiah.format(Number(item.line_total))}
                       </td>
@@ -156,7 +151,7 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
             </div>
             {paymentsResult.data?.length ? (
               <section>
-                <h2 className="font-semibold">Riwayat pembayaran</h2>
+                <h2 className="font-semibold">Waktu dan metode pembayaran</h2>
                 {paymentsResult.data.map((x) => (
                   <p key={x.id} className="text-body-sm mt-2">
                     {x.reference} · {x.method} · {rupiah.format(Number(x.amount))} · {x.status}
