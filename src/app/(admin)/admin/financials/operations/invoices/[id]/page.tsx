@@ -38,6 +38,18 @@ function formatPaymentDatetime(value: string | null | undefined): string | null 
   }).format(parsed)
 }
 
+function formatInvoiceDate(value: string | null | undefined): string | null {
+  if (!value) return null
+  const parsed = new Date(value)
+  if (Number.isNaN(parsed.getTime())) return value
+  return new Intl.DateTimeFormat('id-ID', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    timeZone: 'Asia/Makassar',
+  }).format(parsed)
+}
+
 export default async function InvoicePage({ params }: { params: Promise<{ id: string }> }) {
   const principal = await adminWithPermission(
     'financial_reports.view',
@@ -109,6 +121,7 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
     balanceDue: outstanding,
     paymentDatetime: formatPaymentDatetime(lastPayment?.created_at),
     paymentMethod: lastPayment?.method,
+    dueDate: formatInvoiceDate(invoice.due_on),
     companyName: company.legalName,
     companyAddress: company.address ?? '',
     companyContact: company.footer,
