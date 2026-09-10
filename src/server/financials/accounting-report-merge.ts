@@ -42,6 +42,12 @@ function finite(value: unknown) {
   return Number.isFinite(number) ? number : 0
 }
 
+const LEGACY_DERIVED_LINE_KEYS = new Set([
+  'net_revenue',
+  'operating_result',
+  'net_operating_cashflow',
+])
+
 export function mergeGeneratedWithManualAccounting(
   generated: GeneratedTransactionReport,
   existingLines: readonly ExistingFinancialLineItem[],
@@ -51,7 +57,10 @@ export function mergeGeneratedWithManualAccounting(
   const generatedKpiKeys = new Set(generated.kpis.map((item) => item.kpiKey))
 
   const preservedLines: GeneratedFinancialLineItem[] = existingLines
-    .filter((item) => !generatedLineKeys.has(item.line_key))
+    .filter(
+      (item) =>
+        !generatedLineKeys.has(item.line_key) && !LEGACY_DERIVED_LINE_KEYS.has(item.line_key),
+    )
     .map((item) => ({
       statement: item.statement,
       category: item.category,
