@@ -1,5 +1,11 @@
 import { notFound } from 'next/navigation'
 
+import {
+  daysBeforeDeparture,
+  matchingRefundTier,
+  parseRefundPolicy,
+  refundPolicyLines,
+} from '@/core/financials/refund-policy'
 import { FinanceInvoiceActions } from '@/features/admin/financials/finance-invoice-actions'
 import { PaymentReceipt, type PaymentReceiptData } from '@/features/admin/financials/PaymentReceipt'
 import { adminWithPermission } from '@/server/auth/page-guards'
@@ -16,6 +22,13 @@ type Company = {
   signatureAssetId?: string
   signerName?: string
   signerPosition?: string
+}
+
+type ExtendedInvoice = {
+  departure_on?: string | null
+  terms_body_snapshot?: string | null
+  terms_letterhead_asset_id?: string | null
+  refund_policy_snapshot?: unknown
 }
 
 function productType(name: string): string {
@@ -90,8 +103,10 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
   if (!invoiceResult.data) notFound()
 
   const invoice = invoiceResult.data
+  const extended = invoice as typeof invoice & ExtendedInvoice
   const company = (invoice.company_snapshot ?? {}) as Company
   const items = itemsResult.data ?? []
+  const refunds = refundsResult.data ?? []
   const firstItem = items[0]
   const packageName = firstItem?.name || 'Pesanan'
   const documentTitle = `Bukti Pembayaran ${packageName}`
@@ -100,7 +115,42 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
   const isPaid = paidNet > 0 && outstanding === 0
   const lastPayment = paymentsResult.data?.at(-1)
   const itemTotal = items.reduce((total, item) => total + Number(item.line_total), 0)
-  const assetUrl = (assetId?: string) => (assetId ? `/api/admin/finance/assets/${assetId}` : null)
+  const assetUrl = (assetId?: string | null) =>
+    assetId ? `/api/admin/finance/assets/${assetId}` : null
+
+  const policy = parseRefundPolicy(extended.refund_policy_snapshot)
+  const committedRefund = refunds
+    .filter((refund) => ['requested', 'approved', 'processed'].includes(refund.status))
+    .reduce((sum, refund) => sum + Number(refund.amount), 0)
+  const availablePayment = Math.max(Number(invoice.paid_total) - committedRefund, 0)
+  let refundable = availablePayment
+  let refundPolicyNote: string | null = null
+
+  if (policy.tiers.length > 0) {
+    if (!extended.departure_on) {
+      refundable = 0
+      refundPolicyNote =
+        'Atur tanggal keberangkatan terlebih dahulu agar sistem dapat menentukan batas refund sesuai kebijakan invoice.'
+    } else {
+      const days = daysBeforeDeparture(new Date(), extended.departure_on)
+      const tier = days === null ? null : matchingRefundTier(policy, days)
+      if (days === null || !tier) {
+        refundable = 0
+        refundPolicyNote =
+          'Tidak ada aturan refund yang cocok untuk jarak keberangkatan saat ini. Periksa tanggal keberangkatan dan pengaturan kebijakan.'
+      } else {
+        const policyMaximum = (Number(invoice.paid_total) * tier.refundPercent) / 100
+        refundable = Math.max(Math.min(availablePayment, policyMaximum - committedRefund), 0)
+        refundPolicyNote = `${days} hari menuju keberangkatan · kebijakan maksimal ${tier.refundPercent}% dari pembayaran yang diterima.`
+        if (tier.refundPercent === 0) {
+          refundPolicyNote += ' Pada rentang ini pembayaran dinyatakan hangus sesuai kebijakan snapshot invoice.'
+        }
+      }
+    }
+  } else if (Number(invoice.paid_total) > 0) {
+    refundPolicyNote =
+      'Belum ada tier persentase refund pada snapshot invoice; batas refund mengikuti saldo pembayaran yang belum direfund.'
+  }
 
   const receipt: PaymentReceiptData = {
     orderId: invoice.reference,
@@ -122,7 +172,11 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
     paymentDatetime: formatPaymentDatetime(lastPayment?.created_at),
     paymentMethod: lastPayment?.method,
     dueDate: formatInvoiceDate(invoice.due_on),
+    departureDate: formatInvoiceDate(extended.departure_on),
     termsLink: invoice.terms_snapshot,
+    termsBody: extended.terms_body_snapshot,
+    termsLetterheadUrl: assetUrl(extended.terms_letterhead_asset_id),
+    refundPolicyLines: refundPolicyLines(policy),
     companyName: company.legalName,
     companyAddress: company.address ?? '',
     companyContact: company.footer,
@@ -148,11 +202,13 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
         invoiceId={id}
         status={invoice.status}
         outstanding={outstanding}
-        refundable={paidNet}
+        refundable={refundable}
+        refundPolicyNote={refundPolicyNote}
         documentTitle={documentTitle}
         customerName={invoice.customer_name}
         issuedOn={invoice.issued_on}
         currentDueOn={invoice.due_on}
+        currentDepartureOn={extended.departure_on ?? null}
       />
 
       <PaymentReceipt data={receipt} />

@@ -3,7 +3,12 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 
-import { issueFinanceInvoice, recordFinancePayment, updateFinanceInvoiceDueDate } from '@/server/financials/operation-actions'
+import {
+  issueFinanceInvoice,
+  recordFinancePayment,
+  updateFinanceInvoiceDueDate,
+} from '@/server/financials/operation-actions'
+import { updateFinanceInvoiceDeparture } from '@/server/financials/policy-actions'
 import { requestFinanceRefund } from '@/server/financials/refund-actions'
 import { Alert } from '@/ui/alert'
 import { Button } from '@/ui/button'
@@ -14,19 +19,23 @@ export function FinanceInvoiceActions({
   status,
   outstanding,
   refundable,
+  refundPolicyNote,
   documentTitle,
   customerName,
   issuedOn,
   currentDueOn,
+  currentDepartureOn,
 }: {
   invoiceId: string
   status: string
   outstanding: number
   refundable: number
+  refundPolicyNote?: string | null
   documentTitle: string
   customerName: string
   issuedOn: string | null
   currentDueOn: string | null
+  currentDepartureOn: string | null
 }) {
   const router = useRouter()
   const [pending, startTransition] = useTransition()
@@ -42,6 +51,7 @@ export function FinanceInvoiceActions({
   }
 
   const canManageDueDate = ['draft', 'issued', 'partially_paid'].includes(status)
+  const canManageDeparture = status !== 'void'
 
   return (
     <div className="grid gap-4 print:hidden">
@@ -86,32 +96,66 @@ export function FinanceInvoiceActions({
         ) : null}
       </div>
 
-      {canManageDueDate ? (
-        <form
-          className="border-border grid gap-3 rounded-xl border p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end"
-          onSubmit={(e) => {
-            e.preventDefault()
-            const f = new FormData(e.currentTarget)
-            run(() =>
-              updateFinanceInvoiceDueDate({
-                invoiceId,
-                dueOn: String(f.get('dueOn')),
-              }),
-            )
-          }}
-        >
-          <label className="text-body-sm grid gap-1">
-            <span>Batas pelunasan</span>
-            <Input name="dueOn" type="date" defaultValue={currentDueOn ?? ''} required />
-            <span className="text-caption text-fg-muted">
-              Tanggal ini diatur manual oleh kasir. Sistem tidak menentukan batas pelunasan otomatis.
-            </span>
-          </label>
-          <Button type="submit" variant="secondary" loading={pending}>
-            Simpan batas pelunasan
-          </Button>
-        </form>
-      ) : null}
+      <div className="grid gap-4 lg:grid-cols-2">
+        {canManageDueDate ? (
+          <form
+            className="border-border grid gap-3 rounded-xl border p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end"
+            onSubmit={(e) => {
+              e.preventDefault()
+              const f = new FormData(e.currentTarget)
+              run(() =>
+                updateFinanceInvoiceDueDate({
+                  invoiceId,
+                  dueOn: String(f.get('dueOn')),
+                }),
+              )
+            }}
+          >
+            <label className="text-body-sm grid gap-1">
+              <span>Batas pelunasan</span>
+              <Input name="dueOn" type="date" defaultValue={currentDueOn ?? ''} required />
+              <span className="text-caption text-fg-muted">
+                Tanggal ini diatur manual oleh kasir.
+              </span>
+            </label>
+            <Button type="submit" variant="secondary" loading={pending}>
+              Simpan
+            </Button>
+          </form>
+        ) : null}
+
+        {canManageDeparture ? (
+          <form
+            className="border-border grid gap-3 rounded-xl border p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end"
+            onSubmit={(e) => {
+              e.preventDefault()
+              const f = new FormData(e.currentTarget)
+              run(() =>
+                updateFinanceInvoiceDeparture({
+                  invoiceId,
+                  departureOn: String(f.get('departureOn')),
+                }),
+              )
+            }}
+          >
+            <label className="text-body-sm grid gap-1">
+              <span>Tanggal keberangkatan</span>
+              <Input
+                name="departureOn"
+                type="date"
+                defaultValue={currentDepartureOn ?? ''}
+                required
+              />
+              <span className="text-caption text-fg-muted">
+                Dipakai untuk menentukan persentase refund. Dikunci setelah pengajuan refund dibuat.
+              </span>
+            </label>
+            <Button type="submit" variant="secondary" loading={pending}>
+              Simpan
+            </Button>
+          </form>
+        ) : null}
+      </div>
 
       {['issued', 'partially_paid'].includes(status) && outstanding > 0 ? (
         <form
@@ -185,14 +229,23 @@ export function FinanceInvoiceActions({
           <div className="sm:col-span-2">
             <h3 className="font-semibold">Pengajuan refund</h3>
             <p className="text-caption text-fg-muted mt-1">
-              Data pelanggan, invoice, paket, dan pembayaran akan ditarik dari data kasir. Setelah
-              disimpan, formulir dapat dicetak. Refund baru memengaruhi laporan keuangan setelah
-              diproses.
+              Data pelanggan, invoice, paket, dan pembayaran ditarik dari data kasir. Refund baru
+              memengaruhi laporan keuangan setelah diproses.
             </p>
+            {refundPolicyNote ? (
+              <p className="text-caption mt-2 font-medium">{refundPolicyNote}</p>
+            ) : null}
           </div>
           <label className="text-body-sm grid gap-1">
             <span>Nominal pengajuan refund</span>
             <Input name="amount" type="number" min="1" max={refundable} required />
+            <span className="text-caption text-fg-muted">
+              Maksimal berdasarkan pembayaran dan kebijakan: {new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR',
+                maximumFractionDigits: 0,
+              }).format(refundable)}
+            </span>
           </label>
           <label className="text-body-sm grid gap-1">
             <span>Alasan refund</span>
@@ -208,6 +261,10 @@ export function FinanceInvoiceActions({
             </Button>
           </div>
         </form>
+      ) : refundPolicyNote ? (
+        <Alert tone="info" title="Refund mengikuti kebijakan invoice">
+          {refundPolicyNote}
+        </Alert>
       ) : null}
     </div>
   )

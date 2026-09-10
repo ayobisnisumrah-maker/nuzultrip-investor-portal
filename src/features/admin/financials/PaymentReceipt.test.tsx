@@ -18,14 +18,21 @@ const baseData: PaymentReceiptData = {
   amountPaid: 5_000_000,
   balanceDue: 17_500_000,
   dueDate: '25 Sep 2026',
+  departureDate: '10 Oct 2026',
   termsLink: 'https://nuzultrip.com/syarat-ketentuan',
+  termsBody: 'Pembayaran DP mengikat pemesanan paket.\nRefund mengikuti kebijakan pada invoice.',
+  termsLetterheadUrl: '/images/test-letterhead.png',
+  refundPolicyLines: [
+    'Proses refund maksimal 90 hari kerja sejak pengajuan diterima.',
+    '0–6 hari sebelum keberangkatan: pengembalian maksimal 0% dari pembayaran yang diterima.',
+  ],
   companyName: 'PT Swarna Dipa Wisata',
   companyAddress: 'Makassar',
   status: 'DP',
 }
 
 describe('PaymentReceipt', () => {
-  it('renders a dynamic title, DP icon, due date, terms link, and hides zero-value rows', () => {
+  it('renders a dynamic title, DP icon, due date, terms page, and hides zero-value rows', () => {
     render(<PaymentReceipt data={{ ...baseData, discount: 0, tax: 0 }} />)
 
     expect(
@@ -37,13 +44,21 @@ describe('PaymentReceipt', () => {
     expect(screen.queryByText('Pajak')).toBeNull()
     expect(screen.queryByText('Potongan Harga')).toBeNull()
     expect(screen.getByText('Batas pelunasan: 25 Sep 2026')).toBeTruthy()
+    expect(screen.getByText('Keberangkatan: 10 Oct 2026')).toBeTruthy()
     expect(screen.queryByText(/Dokumen ini bukan bukti pelunasan/i)).toBeNull()
-    expect(screen.getByText(/Syarat dan ketentuan berlaku/)).toBeTruthy()
+    expect(screen.getByText(/Syarat & Ketentuan tercantum pada halaman 2/)).toBeTruthy()
     expect(
       screen.getByRole('link', { name: 'https://nuzultrip.com/syarat-ketentuan' }),
     ).toHaveAttribute('href', 'https://nuzultrip.com/syarat-ketentuan')
+    expect(
+      screen.getByRole('heading', { name: 'Syarat & Ketentuan Pemesanan dan Pembayaran' }),
+    ).toBeTruthy()
+    expect(screen.getByAltText('Kop surat Syarat & Ketentuan')).toBeTruthy()
+    expect(screen.getByText(/Pembayaran DP mengikat pemesanan paket/)).toBeTruthy()
+    expect(screen.getByText(/Proses refund maksimal 90 hari kerja/)).toBeTruthy()
+    expect(screen.getByText(/Dengan melakukan pembayaran atas invoice ini/)).toBeTruthy()
     expect(screen.getByText('Dokumen dibuat otomatis oleh sistem Nuzultrip.')).toBeTruthy()
-    expect(screen.getByText('PT Swarna Dipa Wisata')).toBeTruthy()
+    expect(screen.getAllByText('PT Swarna Dipa Wisata').length).toBeGreaterThan(0)
   })
 
   it('renders the PAID state and tax when tax has a positive value', () => {
@@ -75,11 +90,11 @@ describe('PaymentReceipt', () => {
       />,
     )
     expect(screen.queryByText('Kontak')).toBeNull()
-    expect(screen.getByText('Syarat dan ketentuan berlaku.')).toBeTruthy()
+    expect(screen.getByText('Syarat & Ketentuan tercantum pada halaman 2.')).toBeTruthy()
     expect(screen.queryByRole('link', { name: /javascript/i })).toBeNull()
   })
 
-  it('renders management authorization with signature and stamp assets', () => {
+  it('renders signature and stamp assets without management label', () => {
     render(
       <PaymentReceipt
         data={{
@@ -92,7 +107,7 @@ describe('PaymentReceipt', () => {
       />,
     )
 
-    expect(screen.getByText('Managemen')).toBeTruthy()
+    expect(screen.queryByText('Managemen')).toBeNull()
     expect(screen.queryByText('Tanda tangan & stempel')).toBeNull()
     expect(screen.getByAltText('Tanda tangan')).toBeTruthy()
     expect(screen.getByAltText('Stempel perusahaan')).toBeTruthy()
