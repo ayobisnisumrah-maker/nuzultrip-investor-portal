@@ -244,17 +244,17 @@ export function PaymentReceipt({ data }: { data: PaymentReceiptData }) {
         ) : null}
 
         <section className={styles.issuerSection}>
-          <div className={styles.issuer}>
+          <div className={styles.issuerLeft}>
             <strong className={styles.companyName}>
-              {data.companyName ?? 'PT Swarna Dipa Wisata (Nuzultrip)'}
+              {data.companyName ?? 'PT Swarna Dipa Wisata'}
             </strong>
-            <span>{data.companyAddress}</span>
+            <span className={styles.companyAddress}>{data.companyAddress}</span>
           </div>
 
           {data.companyContact ? (
-            <div className={styles.contact}>
+            <div className={styles.issuerRight}>
               <span className={styles.smallLabel}>Kontak</span>
-              <span>{data.companyContact}</span>
+              <span className={styles.companyContact}>{data.companyContact}</span>
             </div>
           ) : null}
         </section>
