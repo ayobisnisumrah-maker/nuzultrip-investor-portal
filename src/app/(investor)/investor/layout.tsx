@@ -52,6 +52,7 @@ export default async function InvestorLayout({ children }: { children: React.Rea
   const investorTopic = topics.investor(principal.investorId)
   const userTopic = topics.user(principal.userId)
   const brandTopic = topics.portal()
+  const allInvestorsTopic = topics.allInvestors()
 
   const sections = principal.hasDataAccess
     ? [
@@ -94,12 +95,15 @@ export default async function InvestorLayout({ children }: { children: React.Rea
     investorTopic,
     userTopic,
     brandTopic,
-    ...(principal.hasDataAccess ? [topics.allInvestors()] : []),
+    ...(principal.hasDataAccess ? [allInvestorsTopic] : []),
   ]
 
   return (
     <RealtimeProvider topics={subscribed}>
       <RealtimeRefresher topic={brandTopic} kinds={['portal.theme_updated']} />
+      {principal.hasDataAccess ? (
+        <RealtimeRefresher topic={allInvestorsTopic} kinds={['finance.cashflow_changed']} />
+      ) : null}
       <NotificationSoundListener
         topics={subscribed}
         role="investor"
