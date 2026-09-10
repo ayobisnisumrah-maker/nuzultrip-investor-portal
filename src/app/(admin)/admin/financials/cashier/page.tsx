@@ -1,6 +1,7 @@
 import Link from 'next/link'
 
 import { CashierWorkspace } from '@/features/admin/financials/cashier-workspace'
+import { InvoiceDocumentSettings } from '@/features/admin/financials/invoice-document-settings'
 import { adminWithPermission } from '@/server/auth/page-guards'
 import { getServerSupabase } from '@/server/supabase/server'
 import { Alert } from '@/ui/alert'
@@ -49,7 +50,7 @@ export default async function CashierPage() {
       .order('name'),
     supabase
       .from('finance_settings')
-      .select('id, invoice_prefix, receipt_prefix, refund_prefix, default_currency, company_legal_name, company_address, company_tax_id, bank_details, payment_instructions, invoice_terms, invoice_footer, tax_invoice_enabled')
+      .select('id, invoice_prefix, receipt_prefix, refund_prefix, default_currency, company_legal_name, company_address, company_tax_id, company_email, company_phone, company_website, bank_details, payment_instructions, invoice_terms, invoice_footer, tax_invoice_enabled, logo_asset_id, stamp_asset_id, signature_asset_id, signer_name, signer_title, show_stamp, show_signature, show_print_metadata, show_draft_watermark')
       .eq('singleton', true)
       .limit(1),
     supabase
@@ -161,6 +162,8 @@ export default async function CashierPage() {
         settings={settings}
       />
 
+      {settings ? <InvoiceDocumentSettings settings={settings} /> : null}
+
       <Card>
         <CardBody>
           <div className="flex flex-wrap items-start justify-between gap-4">
@@ -174,7 +177,7 @@ export default async function CashierPage() {
           </div>
 
           <div className="mt-5 overflow-x-auto">
-            <table className="w-full min-w-[720px] text-left text-sm">
+            <table className="w-full min-w-[820px] text-left text-sm">
               <thead className="text-fg-subtle border-border border-b">
                 <tr>
                   <th className="py-3 pr-4 font-medium">Invoice</th>
@@ -182,12 +185,13 @@ export default async function CashierPage() {
                   <th className="py-3 pr-4 font-medium">Status</th>
                   <th className="py-3 pr-4 font-medium">Total</th>
                   <th className="py-3 pr-4 font-medium">Dibayar</th>
-                  <th className="py-3 font-medium">Jatuh Tempo</th>
+                  <th className="py-3 pr-4 font-medium">Jatuh Tempo</th>
+                  <th className="py-3 font-medium">Dokumen</th>
                 </tr>
               </thead>
               <tbody>
                 {invoices.length === 0 ? (
-                  <tr><td colSpan={6} className="text-fg-muted py-6 text-center">Belum ada transaksi kasir.</td></tr>
+                  <tr><td colSpan={7} className="text-fg-muted py-6 text-center">Belum ada transaksi kasir.</td></tr>
                 ) : invoices.slice(0, 12).map((invoice) => (
                   <tr key={invoice.id} className="border-border border-b last:border-0">
                     <td className="py-3 pr-4 font-medium">{invoice.reference}</td>
@@ -195,7 +199,16 @@ export default async function CashierPage() {
                     <td className="py-3 pr-4">{invoice.status}</td>
                     <td className="py-3 pr-4">{money.format(Number(invoice.grand_total ?? 0))}</td>
                     <td className="py-3 pr-4">{money.format(Number(invoice.paid_total ?? 0))}</td>
-                    <td className="py-3">{invoice.due_on ?? '-'}</td>
+                    <td className="py-3 pr-4">{invoice.due_on ?? '-'}</td>
+                    <td className="py-3">
+                      <Link
+                        href={`/print/invoices/${invoice.id}`}
+                        target="_blank"
+                        className="text-primary-solid font-medium hover:underline"
+                      >
+                        Cetak / PDF
+                      </Link>
+                    </td>
                   </tr>
                 ))}
               </tbody>
