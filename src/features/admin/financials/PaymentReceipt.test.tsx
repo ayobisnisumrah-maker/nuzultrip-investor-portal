@@ -39,10 +39,9 @@ describe('PaymentReceipt', () => {
     expect(screen.getByText('Batas pelunasan: 25 Sep 2026')).toBeTruthy()
     expect(screen.queryByText(/Dokumen ini bukan bukti pelunasan/i)).toBeNull()
     expect(screen.getByText(/Syarat dan ketentuan berlaku/)).toBeTruthy()
-    expect(screen.getByRole('link', { name: 'https://nuzultrip.com/syarat-ketentuan/' })).toHaveAttribute(
-      'href',
-      'https://nuzultrip.com/syarat-ketentuan',
-    )
+    expect(
+      screen.getByRole('link', { name: 'https://nuzultrip.com/syarat-ketentuan' }),
+    ).toHaveAttribute('href', 'https://nuzultrip.com/syarat-ketentuan')
     expect(screen.getByText('Dokumen dibuat otomatis oleh sistem Nuzultrip.')).toBeTruthy()
     expect(screen.getByText('PT Swarna Dipa Wisata')).toBeTruthy()
   })
