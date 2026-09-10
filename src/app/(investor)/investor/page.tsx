@@ -1,21 +1,32 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
+
 import { INVESTOR_STATUS_DESCRIPTIONS } from '@/core/investors/status'
 import { topics } from '@/core/realtime/events'
 import { RealtimeRefresher } from '@/features/realtime/realtime-refresher'
 import { InvestorFinancialDashboard } from '@/features/investor/investor-financial-dashboard'
-import { getPublishedFinancialDashboardData } from '@/server/dashboard/financial-dashboard-service'
-import { requireInvestorPage } from '@/server/auth/page-guards'
-import { getServerSupabase } from '@/server/supabase/server'
 import { formatDateTime } from '@/lib/format'
+import { requireInvestorPage } from '@/server/auth/page-guards'
+import { getPublishedFinancialDashboardData } from '@/server/dashboard/financial-dashboard-service'
+import {
+  getInvestorMonthlyCashflowSummary,
+  type MonthlyCashflowSummary,
+} from '@/server/dashboard/transaction-cashflow-service'
+import { getServerSupabase } from '@/server/supabase/server'
 import { Alert } from '@/ui/alert'
 import { Card, CardBody, CardHeader, CardTitle } from '@/ui/card'
 import { DetailList, DetailRow } from '@/ui/data'
 import { PageHeader, Stack } from '@/ui/layout'
-import { InvestorStatusPill } from '@/ui/status'
 import { EmptyState } from '@/ui/states'
+import { InvestorStatusPill } from '@/ui/status'
 
 export const metadata: Metadata = { title: 'Ringkasan' }
+
+const monthFormatter = new Intl.DateTimeFormat('id-ID', {
+  month: 'long',
+  year: 'numeric',
+  timeZone: 'UTC',
+})
 
 function formatRupiah(value: number) {
   return new Intl.NumberFormat('id-ID', {
@@ -23,6 +34,10 @@ function formatRupiah(value: number) {
     currency: 'IDR',
     maximumFractionDigits: 0,
   }).format(value)
+}
+
+function formatMonth(value: string) {
+  return monthFormatter.format(new Date(`${value}T00:00:00Z`))
 }
 
 export default async function InvestorOverviewPage() {
@@ -48,6 +63,7 @@ export default async function InvestorOverviewPage() {
   let payableProfit = 0
   let paidProfit = 0
   let financialDashboard = null
+  let transactionCashflow: MonthlyCashflowSummary[] = []
 
   if (principal.hasDataAccess) {
     const [holdingResult, documentsResult, reportsResult, allocationResult] = await Promise.all([
@@ -82,7 +98,11 @@ export default async function InvestorOverviewPage() {
       if (allocation.status === 'payable') payableProfit += amount
       if (allocation.status === 'paid') paidProfit += amount
     }
-    financialDashboard = await getPublishedFinancialDashboardData(supabase)
+
+    ;[financialDashboard, transactionCashflow] = await Promise.all([
+      getPublishedFinancialDashboardData(supabase),
+      getInvestorMonthlyCashflowSummary(supabase, 6),
+    ])
   }
 
   const totalUnits = holdings.reduce((sum, holding) => sum + Number(holding.units), 0)
@@ -212,6 +232,58 @@ export default async function InvestorOverviewPage() {
           ) : null}
         </>
       )}
+
+      {principal.hasDataAccess ? (
+        <section className="space-y-4">
+          <div>
+            <p className="text-caption text-fg-subtle font-medium">Aktivitas Perusahaan</p>
+            <h2 className="font-display text-heading-md text-fg mt-1">Arus transaksi bulanan</h2>
+            <p className="text-body-sm text-fg-muted mt-1 max-w-3xl">
+              Investor hanya melihat ringkasan nominal arus masuk, arus keluar, bulan transaksi, dan jumlah pax. Identitas pelanggan, vendor, referensi, metode pembayaran, serta detail transaksi tidak ditampilkan.
+            </p>
+          </div>
+
+          <Card>
+            <CardBody>
+              {transactionCashflow.length === 0 ? (
+                <EmptyState
+                  title="Belum ada ringkasan transaksi"
+                  description="Ringkasan arus transaksi akan muncul setelah transaksi operasional perusahaan tercatat."
+                />
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[640px] text-left">
+                    <thead>
+                      <tr className="border-border text-caption text-fg-subtle border-b">
+                        <th className="px-3 py-2 font-medium">Bulan</th>
+                        <th className="px-3 py-2 text-right font-medium">Arus masuk</th>
+                        <th className="px-3 py-2 text-right font-medium">Arus keluar</th>
+                        <th className="px-3 py-2 text-right font-medium">Jumlah pax</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-border divide-y">
+                      {transactionCashflow.map((row) => (
+                        <tr key={row.monthStart} className="text-body-sm">
+                          <td className="px-3 py-3 font-medium">{formatMonth(row.monthStart)}</td>
+                          <td className="tabular px-3 py-3 text-right font-mono">
+                            {formatRupiah(row.cashIn)}
+                          </td>
+                          <td className="tabular px-3 py-3 text-right font-mono">
+                            {formatRupiah(row.cashOut)}
+                          </td>
+                          <td className="tabular px-3 py-3 text-right font-mono">
+                            {row.pax.toLocaleString('id-ID')}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </CardBody>
+          </Card>
+        </section>
+      ) : null}
 
       {principal.hasDataAccess && financialDashboard ? (
         <section className="space-y-4">
