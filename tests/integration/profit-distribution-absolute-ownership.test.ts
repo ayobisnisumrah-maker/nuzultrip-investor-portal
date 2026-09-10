@@ -44,6 +44,7 @@ describe('profit distribution uses absolute company ownership', () => {
   it('pays one 0.8% unit exactly 0.8% of profit instead of the whole 40% investor pool', async () => {
     const snapshot = await createPublishedFinancialSnapshot({
       suffix: fixtures.suffix,
+      fiscalYear: 2199,
       revenue: 1_000_000_000,
       expenses: 100_000_000,
     })
