@@ -59,6 +59,7 @@ test('published document and financial report appear to investor automatically',
   let periodId: string | null = null
   let reportId: string | null = null
   let reportVersionId: string | null = null
+  let reportAssetId: string | null = null
 
   const context = await browser.newContext()
   const loginPage = await context.newPage()
@@ -178,6 +179,57 @@ test('published document and financial report appear to investor automatically',
       throw new Error(`financial report current version setup failed: ${currentReportVersionError.message}`)
     }
 
+    const { data: reportAsset, error: reportAssetError } = await supabase
+      .from('media_assets')
+      .insert({
+        bucket: 'financial-documents',
+        path: `financial-e2e-${token}/report.pdf`,
+        original_filename: `laporan-${token}.pdf`,
+        mime_type: 'application/pdf',
+        byte_size: 1024,
+        visibility: 'restricted',
+        uploaded_by: admin.userId,
+        finalized_at: new Date().toISOString(),
+      })
+      .select('id')
+      .single()
+    if (reportAssetError || !reportAsset) {
+      throw new Error(`financial report attachment setup failed: ${reportAssetError?.message}`)
+    }
+    reportAssetId = reportAsset.id as string
+
+    const { error: reportContentError } = await adminClient
+      .schema('app')
+      .rpc('save_financial_report_draft_content', {
+        p_report_id: reportId,
+        p_document_asset_id: reportAssetId,
+        p_line_items: [
+          {
+            statement: 'income',
+            category: 'revenue',
+            line_key: 'pendapatan',
+            label: 'Pendapatan',
+            amount: 125000000,
+            currency: 'IDR',
+            position: 0,
+            note: 'Pendapatan periode berjalan',
+          },
+        ],
+        p_kpis: [
+          {
+            kpi_key: 'margin_bersih',
+            label: 'Margin laba bersih',
+            value: 18.5,
+            unit: 'percent',
+            basis: 'reported',
+            position: 0,
+          },
+        ],
+      })
+    if (reportContentError) {
+      throw new Error(`financial report content setup failed: ${reportContentError.message}`)
+    }
+
     for (const target of ['review', 'approved', 'published'] as const) {
       const { error } = await adminClient.schema('app').rpc('transition_financial_report', {
         p_report_id: reportId,
@@ -193,6 +245,7 @@ test('published document and financial report appear to investor automatically',
     // financial period behind and collide with the next fixture.
     if (reportVersionId) await supabase.from('financial_report_versions').delete().eq('id', reportVersionId)
     if (reportId) await supabase.from('financial_reports').delete().eq('id', reportId)
+    if (reportAssetId) await supabase.from('media_assets').delete().eq('id', reportAssetId)
     if (periodId) await supabase.from('financial_periods').delete().eq('id', periodId)
     if (documentVersionId) await supabase.from('document_versions').delete().eq('id', documentVersionId)
     if (documentId) await supabase.from('documents').delete().eq('id', documentId)
