@@ -249,6 +249,19 @@ export type Database = {
         Args: { p_investor_id: string }
         Returns: string[]
       }
+      save_financial_report_draft_content: {
+        Args: {
+          p_document_asset_id: string
+          p_kpis: Json
+          p_line_items: Json
+          p_report_id: string
+        }
+        Returns: {
+          document_asset_id: string
+          kpi_count: number
+          line_item_count: number
+        }[]
+      }
       thread_accepts_investor_reply: {
         Args: { p_thread_id: string }
         Returns: boolean
@@ -4040,4 +4053,3 @@ export const Constants = {
     },
   },
 } as const
-

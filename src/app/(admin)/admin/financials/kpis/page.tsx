@@ -9,6 +9,7 @@ import { Button } from '@/ui/button'
 import { Card, CardBody, CardHeader, CardTitle } from '@/ui/card'
 import { PageHeader, Stack } from '@/ui/layout'
 import { EmptyState } from '@/ui/states'
+import { formatFinancialKpi, KPI_BASIS_LABELS } from '@/core/financials/format'
 
 export const metadata: Metadata = { title: 'KPI Keuangan' }
 
@@ -17,22 +18,6 @@ const PERIOD_TYPE_LABELS: Record<string, string> = {
   quarterly: 'Triwulanan',
   semiannual: 'Semester',
   yearly: 'Tahunan',
-}
-
-function formatKpi(value: number | string, unit: string) {
-  const n = typeof value === 'number' ? value : Number(value)
-  if (!Number.isFinite(n)) return String(value)
-  if (unit === 'percent' || unit === '%') {
-    return `${new Intl.NumberFormat('id-ID', { maximumFractionDigits: 2 }).format(n)}%`
-  }
-  if (unit === 'IDR') {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      maximumFractionDigits: 0,
-    }).format(n)
-  }
-  return `${new Intl.NumberFormat('id-ID', { maximumFractionDigits: 2 }).format(n)} ${unit}`.trim()
 }
 
 function formatPeriod(period: {
@@ -113,13 +98,39 @@ export default async function FinancialKpisPage() {
       />
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <Card><CardBody className="flex items-center gap-3 py-5"><Activity className="text-fg-muted size-5" aria-hidden="true" /><div><p className="text-caption text-fg-muted">Total KPI</p><p className="text-heading-sm text-fg font-semibold">{rows.length}</p></div></CardBody></Card>
-        <Card><CardBody className="flex items-center gap-3 py-5"><FileSpreadsheet className="text-fg-muted size-5" aria-hidden="true" /><div><p className="text-caption text-fg-muted">Laporan terkait</p><p className="text-heading-sm text-fg font-semibold">{reportCount}</p></div></CardBody></Card>
-        <Card><CardBody className="flex items-center gap-3 py-5"><BarChart3 className="text-fg-muted size-5" aria-hidden="true" /><div><p className="text-caption text-fg-muted">Versi terbit</p><p className="text-heading-sm text-fg font-semibold">{publishedCount}</p></div></CardBody></Card>
+        <Card>
+          <CardBody className="flex items-center gap-3 py-5">
+            <Activity className="text-fg-muted size-5" aria-hidden="true" />
+            <div>
+              <p className="text-caption text-fg-muted">Total KPI</p>
+              <p className="text-heading-sm text-fg font-semibold">{rows.length}</p>
+            </div>
+          </CardBody>
+        </Card>
+        <Card>
+          <CardBody className="flex items-center gap-3 py-5">
+            <FileSpreadsheet className="text-fg-muted size-5" aria-hidden="true" />
+            <div>
+              <p className="text-caption text-fg-muted">Laporan terkait</p>
+              <p className="text-heading-sm text-fg font-semibold">{reportCount}</p>
+            </div>
+          </CardBody>
+        </Card>
+        <Card>
+          <CardBody className="flex items-center gap-3 py-5">
+            <BarChart3 className="text-fg-muted size-5" aria-hidden="true" />
+            <div>
+              <p className="text-caption text-fg-muted">Versi terbit</p>
+              <p className="text-heading-sm text-fg font-semibold">{publishedCount}</p>
+            </div>
+          </CardBody>
+        </Card>
       </div>
 
       <Card>
-        <CardHeader><CardTitle>Indikator per laporan</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle>Indikator per laporan</CardTitle>
+        </CardHeader>
         <CardBody>
           {!rows.length ? (
             <EmptyState
@@ -134,13 +145,22 @@ export default async function FinancialKpisPage() {
                 const period = report ? periodMap.get(report.financial_period_id) : undefined
                 return (
                   <div key={kpi.id} className="border-border bg-canvas rounded-xl border p-4">
-                    <p className="text-caption text-fg-subtle uppercase tracking-wide">{kpi.kpi_key}</p>
+                    <p className="text-caption text-fg-subtle tracking-wide uppercase">
+                      {kpi.kpi_key}
+                    </p>
                     <p className="text-body-sm text-fg-muted mt-1">{kpi.label}</p>
-                    <p className="text-heading-md text-fg mt-3 font-semibold tabular-nums">{formatKpi(kpi.value, kpi.unit)}</p>
-                    <p className="text-caption text-fg-muted mt-2">Dasar perhitungan: {kpi.basis}</p>
+                    <p className="text-heading-md text-fg mt-3 font-semibold tabular-nums">
+                      {formatFinancialKpi(kpi.value, kpi.unit, period?.currency ?? 'IDR')}
+                    </p>
+                    <p className="text-caption text-fg-muted mt-2">
+                      Dasar: {KPI_BASIS_LABELS[kpi.basis] ?? kpi.basis}
+                    </p>
                     <div className="border-border mt-4 border-t pt-3">
                       {report ? (
-                        <Link href={`/admin/financials/reports/${report.id}`} className="text-body-sm text-link font-medium hover:underline">
+                        <Link
+                          href={`/admin/financials/reports/${report.id}`}
+                          className="text-body-sm text-link font-medium hover:underline"
+                        >
                           {report.title}
                         </Link>
                       ) : (

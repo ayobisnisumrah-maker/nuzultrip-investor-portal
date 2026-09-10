@@ -1,10 +1,20 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
+import {
+  FINANCIAL_CATEGORY_LABELS,
+  FINANCIAL_SOURCE_LABELS,
+  FINANCIAL_STATEMENT_LABELS,
+  formatFinancialKpi,
+  KPI_BASIS_LABELS,
+} from '@/core/financials/format'
 import { requireInvestorPage } from '@/server/auth/page-guards'
 import { getServerSupabase } from '@/server/supabase/server'
 import { PageHeader, Stack } from '@/ui/layout'
 import { Card, CardBody, CardHeader, CardTitle } from '@/ui/card'
 import { EmptyState } from '@/ui/states'
+import { RealtimeRefresher } from '@/features/realtime/realtime-refresher'
+import { topics } from '@/core/realtime/events'
+import { Button } from '@/ui/button'
 
 export const metadata: Metadata = { title: 'Laporan Keuangan' }
 
@@ -56,6 +66,7 @@ export default async function InvestorFinancialReportPage({
 
   return (
     <Stack gap={8}>
+      <RealtimeRefresher topic={topics.allInvestors()} kinds={['financial_report.published']} />
       <PageHeader
         eyebrow="Financial Report"
         title={report.title}
@@ -73,7 +84,7 @@ export default async function InvestorFinancialReportPage({
             </div>
             <div>
               <span className="text-fg-subtle">Sumber</span>
-              <div>{version.source}</div>
+              <div>{FINANCIAL_SOURCE_LABELS[version.source] ?? version.source}</div>
             </div>
             <div>
               <span className="text-fg-subtle">Versi</span>
@@ -82,6 +93,23 @@ export default async function InvestorFinancialReportPage({
           </div>
         </CardBody>
       </Card>
+      {version.document_asset_id ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Lampiran resmi</CardTitle>
+          </CardHeader>
+          <CardBody>
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <p className="text-body-sm text-fg-muted">
+                Unduh berkas laporan yang diterbitkan Admin untuk periode ini.
+              </p>
+              <Button asChild>
+                <a href={`/api/investor/financial-reports/${report.id}/file`}>Unduh laporan</a>
+              </Button>
+            </div>
+          </CardBody>
+        </Card>
+      ) : null}
       {kpis?.length ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {kpis.map((kpi) => (
@@ -89,10 +117,10 @@ export default async function InvestorFinancialReportPage({
               <CardBody>
                 <div className="text-caption text-fg-subtle">{kpi.label}</div>
                 <div className="text-heading-lg tabular mt-1 font-semibold">
-                  {Number(kpi.value).toLocaleString('id-ID')}
+                  {formatFinancialKpi(kpi.value, kpi.unit, period?.currency ?? 'IDR')}
                 </div>
                 <div className="text-caption text-fg-subtle">
-                  {kpi.unit} · {kpi.basis}
+                  {KPI_BASIS_LABELS[kpi.basis] ?? kpi.basis}
                 </div>
               </CardBody>
             </Card>
@@ -117,6 +145,7 @@ export default async function InvestorFinancialReportPage({
                     <th className="px-3 py-2">Statement</th>
                     <th className="px-3 py-2">Kategori</th>
                     <th className="px-3 py-2">Label</th>
+                    <th className="px-3 py-2">Catatan</th>
                     <th className="px-3 py-2 text-right">Nilai</th>
                   </tr>
                 </thead>
@@ -126,9 +155,14 @@ export default async function InvestorFinancialReportPage({
                       key={`${item.label}-${index}`}
                       className="border-border-subtle border-b last:border-0"
                     >
-                      <td className="px-3 py-2">{item.statement}</td>
-                      <td className="px-3 py-2">{item.category}</td>
+                      <td className="px-3 py-2">
+                        {FINANCIAL_STATEMENT_LABELS[item.statement] ?? item.statement}
+                      </td>
+                      <td className="px-3 py-2">
+                        {FINANCIAL_CATEGORY_LABELS[item.category] ?? item.category}
+                      </td>
                       <td className="px-3 py-2">{item.label}</td>
+                      <td className="text-fg-muted px-3 py-2">{item.note || '—'}</td>
                       <td className="tabular px-3 py-2 text-right">
                         {Number(item.amount).toLocaleString('id-ID')} {item.currency}
                       </td>

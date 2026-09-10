@@ -7,10 +7,16 @@ import { hasPermission } from '@/core/auth/principal'
 import { getServiceRoleClient } from '@/server/admin/service-client'
 
 const BUCKET = 'investor-documents'
+const FINANCIAL_BUCKET = 'financial-documents'
 const MAX_BYTES = 100 * 1024 * 1024
 const PORTAL_BUCKET = 'public-media'
 const PORTAL_MAX_BYTES = 6 * 1024 * 1024
 const PORTAL_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/avif'])
+const FINANCIAL_MIME_TYPES = new Set([
+  'application/pdf',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'text/csv',
+])
 
 const ALLOWED_MIME_TYPES = new Set([
   'application/pdf',
@@ -18,6 +24,7 @@ const ALLOWED_MIME_TYPES = new Set([
   'image/png',
   'image/webp',
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'text/csv',
   'application/vnd.openxmlformats-officedocument.presentationml.presentation',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 ])
@@ -39,7 +46,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Anda harus login.' }, { status: 401 })
   }
 
-  if (principal.kind !== 'admin' || !hasPermission(principal, 'media.upload')) {
+  if (principal.kind !== 'admin') {
     return NextResponse.json(
       { error: 'Anda tidak memiliki izin mengunggah media.' },
       { status: 403 },
@@ -48,7 +55,24 @@ export async function POST(request: Request) {
 
   const formData = await request.formData()
   const file = formData.get('file')
-  const purpose = formData.get('purpose') === 'portal' ? 'portal' : 'document'
+  const requestedPurpose = formData.get('purpose')
+  const purpose =
+    requestedPurpose === 'portal'
+      ? 'portal'
+      : requestedPurpose === 'financial-report'
+        ? 'financial-report'
+        : 'document'
+
+  const permitted =
+    purpose === 'financial-report'
+      ? hasPermission(principal, 'financial_reports.update')
+      : hasPermission(principal, 'media.upload')
+  if (!permitted) {
+    return NextResponse.json(
+      { error: 'Anda tidak memiliki izin mengunggah media.' },
+      { status: 403 },
+    )
+  }
 
   if (!(file instanceof File)) {
     return NextResponse.json({ error: 'File wajib dipilih.' }, { status: 400 })
@@ -69,9 +93,13 @@ export async function POST(request: Request) {
     )
   }
 
-  if (
-    purpose === 'portal' ? !PORTAL_MIME_TYPES.has(file.type) : !ALLOWED_MIME_TYPES.has(file.type)
-  ) {
+  const allowedMimeTypes =
+    purpose === 'portal'
+      ? PORTAL_MIME_TYPES
+      : purpose === 'financial-report'
+        ? FINANCIAL_MIME_TYPES
+        : ALLOWED_MIME_TYPES
+  if (!allowedMimeTypes.has(file.type)) {
     return NextResponse.json({ error: 'Format file tidak didukung.' }, { status: 400 })
   }
 
@@ -80,7 +108,12 @@ export async function POST(request: Request) {
 
   const assetId = randomUUID()
   const objectPath = `${assetId}/${safeFilename(file.name)}`
-  const bucket = purpose === 'portal' ? PORTAL_BUCKET : BUCKET
+  const bucket =
+    purpose === 'portal'
+      ? PORTAL_BUCKET
+      : purpose === 'financial-report'
+        ? FINANCIAL_BUCKET
+        : BUCKET
 
   const serviceClient = getServiceRoleClient()
 
