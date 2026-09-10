@@ -26,6 +26,7 @@ export interface PaymentReceiptData {
   paymentDatetime?: string | null
   paymentMethod?: string | null
   dueDate?: string | null
+  termsLink?: string | null
   companyName?: string
   companyAddress: string
   companyContact?: string | null
@@ -46,6 +47,16 @@ function formatIDR(value: number): string {
   }).format(value)
 }
 
+function safeTermsLink(value?: string | null): string | null {
+  if (!value) return null
+  try {
+    const parsed = new URL(value)
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:' ? parsed.toString() : null
+  } catch {
+    return null
+  }
+}
+
 export function PaymentReceipt({ data }: { data: PaymentReceiptData }) {
   const isPaid = data.status === 'PAID'
   const hasTax = typeof data.tax === 'number' && Number.isFinite(data.tax) && data.tax > 0
@@ -54,6 +65,7 @@ export function PaymentReceipt({ data }: { data: PaymentReceiptData }) {
   const hasOtherFee =
     typeof data.otherFee === 'number' && Number.isFinite(data.otherFee) && data.otherFee > 0
   const statusIcon = isPaid ? '/images/payment/paid.png' : '/images/payment/dp.png'
+  const termsLink = safeTermsLink(data.termsLink)
 
   return (
     <article className={styles.receipt} data-testid="payment-receipt">
@@ -240,7 +252,20 @@ export function PaymentReceipt({ data }: { data: PaymentReceiptData }) {
       </section>
 
       <footer className={styles.footer}>
-        <span>Dokumen dibuat otomatis oleh sistem Nuzultrip.</span>
+        <div className={styles.footerText}>
+          <span className={styles.termsNotice}>
+            Syarat dan ketentuan berlaku.
+            {termsLink ? (
+              <>
+                {' '}Silahkan lihat{' '}
+                <a href={termsLink} target="_blank" rel="noreferrer">
+                  {termsLink}
+                </a>
+              </>
+            ) : null}
+          </span>
+          <span>Dokumen dibuat otomatis oleh sistem Nuzultrip.</span>
+        </div>
         <div className={styles.footerRight}>
           <span>Halaman 1 dari 1</span>
           {data.companyLogoUrl ? (

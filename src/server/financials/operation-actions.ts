@@ -5,6 +5,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { ConflictError } from '@/core/errors'
 import {
   financeExpenseSchema,
+  financeInvoiceDueDateSchema,
   financeInvoiceSchema,
   financePaymentSchema,
   financeProductSchema,
@@ -89,6 +90,43 @@ export const createFinanceInvoice = defineAction({
     audit({ entityId: data, summary: `Invoice untuk ${input.customerName} dibuat.` })
     refresh()
     return { id: data }
+  },
+})
+export const updateFinanceInvoiceDueDate = defineAction({
+  access: { permission: 'financial_reports.update' },
+  input: financeInvoiceDueDateSchema,
+  audit: { action: 'finance.invoice_due_date_updated', entityType: 'finance_invoice' },
+  handler: async ({ input, supabase, audit }) => {
+    const { data: invoice, error: readError } = await supabase
+      .from('finance_invoices')
+      .select('id,status')
+      .eq('id', input.invoiceId)
+      .maybeSingle()
+    if (readError || !invoice)
+      throw new ConflictError(
+        readError?.message ?? 'Invoice tidak ditemukan.',
+        'Invoice tidak dapat ditemukan.',
+      )
+    if (!['draft', 'issued', 'partially_paid'].includes(invoice.status))
+      throw new ConflictError(
+        `Invoice status ${invoice.status} cannot change due date`,
+        'Batas pelunasan hanya dapat diubah sebelum invoice lunas atau ditutup.',
+      )
+
+    const { error } = await supabase
+      .from('finance_invoices')
+      .update({ due_on: input.dueOn })
+      .eq('id', input.invoiceId)
+    if (error)
+      throw new ConflictError(error.message, 'Batas pelunasan tidak dapat disimpan.')
+
+    audit({
+      entityId: input.invoiceId,
+      summary: `Batas pelunasan invoice diatur kasir menjadi ${input.dueOn}.`,
+    })
+    refresh()
+    revalidatePath(`/admin/financials/operations/invoices/${input.invoiceId}`)
+    return { id: input.invoiceId }
   },
 })
 export const issueFinanceInvoice = defineAction({

@@ -18,13 +18,14 @@ const baseData: PaymentReceiptData = {
   amountPaid: 5_000_000,
   balanceDue: 17_500_000,
   dueDate: '25 Sep 2026',
+  termsLink: 'https://nuzultrip.com/syarat-ketentuan',
   companyName: 'PT Swarna Dipa Wisata',
   companyAddress: 'Makassar',
   status: 'DP',
 }
 
 describe('PaymentReceipt', () => {
-  it('renders a dynamic title, DP icon, due date, and hides zero-value rows', () => {
+  it('renders a dynamic title, DP icon, due date, terms link, and hides zero-value rows', () => {
     render(<PaymentReceipt data={{ ...baseData, discount: 0, tax: 0 }} />)
 
     expect(
@@ -37,6 +38,11 @@ describe('PaymentReceipt', () => {
     expect(screen.queryByText('Potongan Harga')).toBeNull()
     expect(screen.getByText('Batas pelunasan: 25 Sep 2026')).toBeTruthy()
     expect(screen.queryByText(/Dokumen ini bukan bukti pelunasan/i)).toBeNull()
+    expect(screen.getByText(/Syarat dan ketentuan berlaku/)).toBeTruthy()
+    expect(
+      screen.getByRole('link', { name: 'https://nuzultrip.com/syarat-ketentuan' }),
+    ).toHaveAttribute('href', 'https://nuzultrip.com/syarat-ketentuan')
+    expect(screen.getByText('Dokumen dibuat otomatis oleh sistem Nuzultrip.')).toBeTruthy()
     expect(screen.getByText('PT Swarna Dipa Wisata')).toBeTruthy()
   })
 
@@ -62,9 +68,15 @@ describe('PaymentReceipt', () => {
     expect(screen.getByText('Status pembayaran: LUNAS.')).toBeTruthy()
   })
 
-  it('does not render an empty contact block', () => {
-    render(<PaymentReceipt data={{ ...baseData, companyContact: null }} />)
+  it('does not render an empty contact block or unsafe terms link', () => {
+    render(
+      <PaymentReceipt
+        data={{ ...baseData, companyContact: null, termsLink: 'javascript:alert(1)' }}
+      />,
+    )
     expect(screen.queryByText('Kontak')).toBeNull()
+    expect(screen.getByText('Syarat dan ketentuan berlaku.')).toBeTruthy()
+    expect(screen.queryByRole('link', { name: /javascript/i })).toBeNull()
   })
 
   it('renders management authorization with signature and stamp assets', () => {

@@ -11,6 +11,7 @@ const rupiah = new Intl.NumberFormat('id-ID', {
   currency: 'IDR',
   maximumFractionDigits: 0,
 })
+
 export default async function FinanceOperationsPage() {
   const principal = await adminWithPermission(
     'financial_reports.view',
@@ -22,8 +23,9 @@ export default async function FinanceOperationsPage() {
         Peran Anda tidak memiliki izin melihat transaksi keuangan.
       </Alert>
     )
+
   const supabase = await getServerSupabase()
-  const [products, settings, invoices, expenses] = await Promise.all([
+  const [products, settings, invoices, openInvoices, expenses] = await Promise.all([
     supabase
       .from('finance_products')
       .select('id,code,name,unit_label,default_unit_price,tax_rate')
@@ -41,15 +43,27 @@ export default async function FinanceOperationsPage() {
       .select('id,reference,status,customer_name,grand_total,paid_total,refunded_total,created_at')
       .order('created_at', { ascending: false })
       .limit(20),
+    supabase
+      .from('finance_invoices')
+      .select('id,reference,status,customer_name,grand_total,paid_total,refunded_total,due_on,created_at')
+      .in('status', ['issued', 'partially_paid'])
+      .order('created_at', { ascending: false })
+      .limit(100),
     supabase.from('finance_expenses').select('total_amount,status'),
   ])
-  if (products.error || settings.error || invoices.error || expenses.error)
+
+  if (products.error || settings.error || invoices.error || openInvoices.error || expenses.error)
     return (
       <Alert tone="danger" title="Modul kasir tidak dapat dimuat">
         Data transaksi belum dapat dibaca. Silakan coba lagi.
       </Alert>
     )
+
   const invoiceRows = invoices.data ?? []
+  const openInvoiceRows = (openInvoices.data ?? []).filter((invoice) => {
+    const paidNet = Math.max(Number(invoice.paid_total) - Number(invoice.refunded_total), 0)
+    return Number(invoice.grand_total) - paidNet > 0
+  })
   const expenseRows = expenses.data ?? []
   const sales = invoiceRows
     .filter((x) => x.status !== 'void')
@@ -61,6 +75,7 @@ export default async function FinanceOperationsPage() {
   const spent = expenseRows
     .filter((x) => x.status === 'recorded')
     .reduce((sum, x) => sum + Number(x.total_amount), 0)
+
   return (
     <Stack gap={8}>
       <PageHeader
@@ -73,6 +88,45 @@ export default async function FinanceOperationsPage() {
         <Summary label="Pembayaran bersih" value={rupiah.format(receipts)} />
         <Summary label="Pengeluaran tercatat" value={rupiah.format(spent)} />
       </div>
+
+      {openInvoiceRows.length ? (
+        <Card>
+          <CardBody>
+            <h2 className="font-semibold">Pelanggan belum lunas</h2>
+            <p className="text-body-sm text-fg-muted mt-1">
+              Data ditarik langsung dari transaksi kasir. Buka invoice untuk mencatat pelunasan;
+              jika sudah ada pembayaran yang dapat dikembalikan, pengajuan refund juga tersedia.
+            </p>
+            <div className="divide-border mt-3 divide-y">
+              {openInvoiceRows.map((invoice) => {
+                const paidNet = Math.max(
+                  Number(invoice.paid_total) - Number(invoice.refunded_total),
+                  0,
+                )
+                const outstanding = Math.max(Number(invoice.grand_total) - paidNet, 0)
+                return (
+                  <Link
+                    key={invoice.id}
+                    href={`/admin/financials/operations/invoices/${invoice.id}`}
+                    className="hover:bg-sunken grid gap-1 px-2 py-3 sm:grid-cols-[1fr_1fr_1fr_auto]"
+                  >
+                    <span className="text-body-sm font-mono">{invoice.reference}</span>
+                    <span className="text-body-sm">{invoice.customer_name}</span>
+                    <span className="text-body-sm">
+                      Sisa {rupiah.format(outstanding)}
+                      {paidNet > 0 ? ` · dapat direfund ${rupiah.format(paidNet)}` : ''}
+                    </span>
+                    <span className="text-body-sm font-semibold">
+                      {paidNet > 0 ? 'Pelunasan / Refund' : 'Pelunasan'} →
+                    </span>
+                  </Link>
+                )
+              })}
+            </div>
+          </CardBody>
+        </Card>
+      ) : null}
+
       {invoiceRows.length ? (
         <Card>
           <CardBody>
@@ -110,6 +164,7 @@ export default async function FinanceOperationsPage() {
     </Stack>
   )
 }
+
 function Summary({ label, value }: { label: string; value: string }) {
   return (
     <Card>
