@@ -146,10 +146,10 @@ describe('finance operations lifecycle', () => {
           const [expense] = await tx<{ id: string }[]>`
             insert into public.finance_expenses (
               reference, status, expense_on, category, description, quantity, unit_price,
-              tax_amount, total_amount, currency, recorded_by
+              tax_amount, currency, recorded_by
             ) values (
               ${`RT-EXP-${fixtures.suffix}`}, 'recorded', current_date, 'operasional',
-              'Pengeluaran sinkronisasi uji', 1, 25000, 0, 25000, 'IDR', ${fixtures.superAdmin.userId}
+              'Pengeluaran sinkronisasi uji', 1, 25000, 0, 'IDR', ${fixtures.superAdmin.userId}
             ) returning id
           `
           if (!expense) throw new Error('Realtime expense was not created.')
