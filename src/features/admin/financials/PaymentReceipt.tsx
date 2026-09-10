@@ -61,6 +61,37 @@ function safeTermsLink(value?: string | null): string | null {
   }
 }
 
+type RefundTableRow = {
+  range: string
+  refund: string
+}
+
+function parseRefundPolicyLines(lines?: string[]): {
+  sla: string | null
+  rows: RefundTableRow[]
+} {
+  if (!lines?.length) return { sla: null, rows: [] }
+
+  const [sla, ...tierLines] = lines
+  const rows = tierLines.map((line) => {
+    const separator = ': pengembalian maksimal '
+    const separatorIndex = line.indexOf(separator)
+
+    if (separatorIndex < 0) return { range: line, refund: '—' }
+
+    const range = line.slice(0, separatorIndex).trim()
+    const remainder = line.slice(separatorIndex + separator.length).trim()
+    const percentMatch = remainder.match(/^([0-9]+(?:[.,][0-9]+)?)%/)
+
+    return {
+      range,
+      refund: percentMatch ? `${percentMatch[1]}%` : remainder,
+    }
+  })
+
+  return { sla: sla ?? null, rows }
+}
+
 export function PaymentReceipt({ data }: { data: PaymentReceiptData }) {
   const isPaid = data.status === 'PAID'
   const hasTax = typeof data.tax === 'number' && Number.isFinite(data.tax) && data.tax > 0
@@ -70,9 +101,12 @@ export function PaymentReceipt({ data }: { data: PaymentReceiptData }) {
     typeof data.otherFee === 'number' && Number.isFinite(data.otherFee) && data.otherFee > 0
   const statusIcon = isPaid ? '/images/payment/paid.png' : '/images/payment/dp.png'
   const termsLink = safeTermsLink(data.termsLink)
+  const refundPolicy = parseRefundPolicyLines(data.refundPolicyLines)
 
   return (
     <div className={styles.document} data-testid="payment-receipt">
+      <div className={styles.printPageCounter} aria-hidden="true" />
+
       <article className={styles.receipt}>
         <header className={styles.header}>
           <div className={styles.headerLeft}>
@@ -265,7 +299,7 @@ export function PaymentReceipt({ data }: { data: PaymentReceiptData }) {
         <footer className={styles.footer}>
           <div className={styles.footerText}>
             <span className={styles.termsNotice}>
-              Syarat &amp; Ketentuan tercantum pada halaman 2.
+              Syarat &amp; Ketentuan tercantum mulai halaman 2.
               {termsLink ? (
                 <>
                   {' '}Referensi tambahan:{' '}
@@ -277,7 +311,7 @@ export function PaymentReceipt({ data }: { data: PaymentReceiptData }) {
             </span>
             <span>Dokumen dibuat otomatis oleh sistem Nuzultrip.</span>
           </div>
-          <FooterRight data={data} page="Halaman 1 dari 2" />
+          <FooterRight data={data} />
         </footer>
       </article>
 
@@ -316,11 +350,30 @@ export function PaymentReceipt({ data }: { data: PaymentReceiptData }) {
           {data.refundPolicyLines?.length ? (
             <div className={styles.refundTerms}>
               <h3>Kebijakan Refund</h3>
-              <ol>
-                {data.refundPolicyLines.map((line) => (
-                  <li key={line}>{line}</li>
-                ))}
-              </ol>
+              {refundPolicy.sla ? <p className={styles.refundSla}>{refundPolicy.sla}</p> : null}
+              {refundPolicy.rows.length ? (
+                <table className={styles.refundTable}>
+                  <thead>
+                    <tr>
+                      <th>Rentang pembatalan sebelum keberangkatan</th>
+                      <th>Maksimal refund</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {refundPolicy.rows.map((row) => (
+                      <tr key={`${row.range}-${row.refund}`}>
+                        <td>{row.range}</td>
+                        <td>{row.refund}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : null}
+              <p className={styles.refundTableNote}>
+                Persentase dihitung dari pembayaran yang telah diterima, dengan tetap memperhatikan
+                komponen non-refundable dan hasil rekonsiliasi transaksi sesuai Syarat &amp;
+                Ketentuan invoice.
+              </p>
             </div>
           ) : null}
 
@@ -338,17 +391,16 @@ export function PaymentReceipt({ data }: { data: PaymentReceiptData }) {
             <span>{data.companyName ?? 'PT Swarna Dipa Wisata (Nuzultrip)'}</span>
             <span>Dokumen syarat ini merupakan bagian tidak terpisahkan dari invoice.</span>
           </div>
-          <FooterRight data={data} page="Halaman 2 dari 2" />
+          <FooterRight data={data} />
         </footer>
       </article>
     </div>
   )
 }
 
-function FooterRight({ data, page }: { data: PaymentReceiptData; page: string }) {
+function FooterRight({ data }: { data: PaymentReceiptData }) {
   return (
     <div className={styles.footerRight}>
-      <span>{page}</span>
       {data.companyLogoUrl ? (
         <Image
           src={data.companyLogoUrl}
