@@ -15,11 +15,34 @@ export const refundTierSchema = z
     { message: 'Batas maksimum hari tidak boleh lebih kecil dari batas minimum.' },
   )
 
-export const refundPolicySchema = z.object({
-  processingDays: z.number().int().min(1).max(365),
-  dayBasis: refundDayBasisSchema,
-  tiers: z.array(refundTierSchema).max(20),
-})
+export type RefundTier = z.infer<typeof refundTierSchema>
+
+export function refundTiersOverlap(tiers: RefundTier[]): boolean {
+  const sorted = [...tiers].sort((a, b) => a.minDaysBeforeDeparture - b.minDaysBeforeDeparture)
+  for (let index = 1; index < sorted.length; index += 1) {
+    const previous = sorted[index - 1]
+    const current = sorted[index]
+    const previousMax = previous.maxDaysBeforeDeparture ?? Number.POSITIVE_INFINITY
+    if (current.minDaysBeforeDeparture <= previousMax) return true
+  }
+  return false
+}
+
+export const refundPolicySchema = z
+  .object({
+    processingDays: z.number().int().min(1).max(365),
+    dayBasis: refundDayBasisSchema,
+    tiers: z.array(refundTierSchema).max(20),
+  })
+  .superRefine((policy, ctx) => {
+    if (refundTiersOverlap(policy.tiers)) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['tiers'],
+        message: 'Rentang kebijakan refund tidak boleh saling tumpang tindih.',
+      })
+    }
+  })
 
 export const financePolicySettingsSchema = z.object({
   termsBody: z.string().trim().max(20_000).default(''),
@@ -33,7 +56,6 @@ export const financeInvoiceDepartureSchema = z.object({
 })
 
 export type RefundPolicy = z.infer<typeof refundPolicySchema>
-export type RefundTier = z.infer<typeof refundTierSchema>
 
 export const DEFAULT_REFUND_POLICY: RefundPolicy = {
   processingDays: 90,
