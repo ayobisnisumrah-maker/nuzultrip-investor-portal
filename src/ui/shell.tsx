@@ -54,7 +54,7 @@ export function AppShell({
   return (
     <div className="min-h-dvh lg:grid lg:grid-cols-[16rem_minmax(0,1fr)]">
       {/* Persistent sidebar — lg and up */}
-      <aside className="border-border bg-surface sticky top-0 hidden h-dvh flex-col border-r lg:flex">
+      <aside className="border-border bg-surface sticky top-0 hidden h-dvh flex-col border-r lg:flex print:hidden">
         <div className="flex h-16 shrink-0 items-center px-5">
           <Link
             href={homeHref}
@@ -67,7 +67,7 @@ export function AppShell({
       </aside>
 
       <div className="flex min-w-0 flex-col">
-        <header className="z-sticky border-border bg-canvas/85 sticky top-0 flex h-16 shrink-0 items-center gap-3 border-b px-4 backdrop-blur-sm sm:px-6">
+        <header className="z-sticky border-border bg-canvas/85 sticky top-0 flex h-16 shrink-0 items-center gap-3 border-b px-4 backdrop-blur-sm sm:px-6 print:hidden">
           <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
             <DrawerTrigger asChild>
               <Button variant="ghost" size="icon" className="lg:hidden" aria-label="Buka navigasi">
@@ -106,7 +106,7 @@ export function AppShell({
           </div>
         </header>
 
-        <main id="main" className="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-8">
+        <main id="main" className="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-8 print:p-0">
           {children}
         </main>
       </div>

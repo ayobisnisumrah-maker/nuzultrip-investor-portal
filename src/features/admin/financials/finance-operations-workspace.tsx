@@ -405,8 +405,13 @@ export function FinanceOperationsWorkspace({
             <Field label="Syarat dan ketentuan">
               <Textarea name="terms" defaultValue={settings.invoice_terms ?? ''} rows={5} />
             </Field>
-            <Field label="Catatan kaki">
-              <Input name="footer" defaultValue={settings.invoice_footer ?? ''} />
+            <Field label="Nomor telepon & email untuk footer invoice">
+              <Textarea
+                name="footer"
+                defaultValue={settings.invoice_footer ?? ''}
+                rows={3}
+                placeholder={'+62 812 3456 7890\ninfo@nuzultrip.com'}
+              />
             </Field>
             <div className="grid gap-4 md:grid-cols-3">
               <BrandAsset
@@ -492,7 +497,12 @@ function BrandAsset({
         <p className="text-caption text-fg-subtle">Belum diunggah</p>
       )}
       <div className="flex gap-2">
-        <Button type="button" variant="secondary" loading={busy} onClick={() => input.current?.click()}>
+        <Button
+          type="button"
+          variant="secondary"
+          loading={busy}
+          onClick={() => input.current?.click()}
+        >
           {assetId ? 'Ganti' : 'Unggah'}
         </Button>
         {assetId ? (

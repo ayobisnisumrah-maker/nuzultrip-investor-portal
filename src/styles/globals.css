@@ -197,19 +197,28 @@
 }
 
 @media print {
-  @page { size: A4; margin: 14mm 12mm; }
-  body { background: #fff !important; color: #20242b !important; }
-  .invoice-document { border: 0 !important; box-shadow: none !important; background: #fff !important; }
-  .invoice-document > div { padding: 0 !important; }
-  .invoice-header { border-bottom: 1px solid #d8dee8; padding-bottom: 1rem; }
-  .invoice-title { font-size: 1.35rem !important; }
-  .invoice-meta { color: #505866 !important; }
-  .invoice-customer { background: #fff !important; border-color: #cfd8e6 !important; }
-  .invoice-section-title { margin-top: .25rem; font-size: 1.05rem; }
-  .invoice-document table { border: 1px solid #cfd8e6; border-radius: 6px; overflow: hidden; }
-  .invoice-document thead { background: #f3f6fb; }
-  .invoice-document th, .invoice-document td { padding: .55rem .65rem !important; }
-  .invoice-document section { break-inside: avoid; }
+  @page {
+    size: A4 portrait;
+    margin: 0;
+  }
+  html,
+  body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+    color: #20242b !important;
+  }
+  body:has([data-testid='payment-receipt']) {
+    min-height: 0 !important;
+  }
+  body:has([data-testid='payment-receipt']) #main {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  body:has([data-testid='payment-receipt']) #main > * {
+    width: 210mm !important;
+    max-width: none !important;
+  }
 }
 
 /* -------------------------------------------------------------------------- */
