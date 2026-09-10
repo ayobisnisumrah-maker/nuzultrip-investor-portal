@@ -31,6 +31,15 @@ type ExtendedInvoice = {
   refund_policy_snapshot?: unknown
 }
 
+type FinancePolicySettings = {
+  invoice_terms?: string | null
+  invoice_terms_body?: string | null
+  terms_letterhead_asset_id?: string | null
+  refund_processing_days?: number | null
+  refund_day_basis?: string | null
+  refund_tiers?: unknown
+}
+
 function productType(name: string): string {
   const normalized = name.toLocaleLowerCase('id-ID')
   if (normalized.includes('halal tour')) return 'Halal Tour'
@@ -78,20 +87,28 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
 
   const { id } = await params
   const supabase = await getServerSupabase()
-  const [invoiceResult, itemsResult, paymentsResult, refundsResult] = await Promise.all([
-    supabase.from('finance_invoices').select('*').eq('id', id).maybeSingle(),
-    supabase.from('finance_invoice_items').select('*').eq('invoice_id', id).order('position'),
-    supabase
-      .from('finance_payments')
-      .select('id,reference,amount,method,status,created_at')
-      .eq('invoice_id', id)
-      .order('created_at'),
-    supabase
-      .from('finance_refunds')
-      .select('id,reference,amount,reason,status')
-      .eq('invoice_id', id)
-      .order('created_at'),
-  ])
+  const [invoiceResult, itemsResult, paymentsResult, refundsResult, settingsResult] =
+    await Promise.all([
+      supabase.from('finance_invoices').select('*').eq('id', id).maybeSingle(),
+      supabase.from('finance_invoice_items').select('*').eq('invoice_id', id).order('position'),
+      supabase
+        .from('finance_payments')
+        .select('id,reference,amount,method,status,created_at')
+        .eq('invoice_id', id)
+        .order('created_at'),
+      supabase
+        .from('finance_refunds')
+        .select('id,reference,amount,reason,status')
+        .eq('invoice_id', id)
+        .order('created_at'),
+      supabase
+        .from('finance_settings')
+        .select(
+          'invoice_terms,invoice_terms_body,terms_letterhead_asset_id,refund_processing_days,refund_day_basis,refund_tiers',
+        )
+        .eq('singleton', true)
+        .maybeSingle(),
+    ])
 
   if (invoiceResult.error || itemsResult.error || paymentsResult.error || refundsResult.error)
     return (
@@ -103,8 +120,18 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
   if (!invoiceResult.data) notFound()
 
   const invoice = invoiceResult.data
+
+  if (invoice.status === 'draft' && (settingsResult.error || !settingsResult.data))
+    return (
+      <Alert tone="danger" title="Preview invoice tidak lengkap">
+        Pengaturan Syarat &amp; Ketentuan tidak dapat dimuat. Silakan coba lagi sebelum menerbitkan
+        invoice.
+      </Alert>
+    )
+
   const extended = invoice as typeof invoice & ExtendedInvoice
   const company = (invoice.company_snapshot ?? {}) as Company
+  const settings = (settingsResult.data ?? null) as FinancePolicySettings | null
   const items = itemsResult.data ?? []
   const refunds = refundsResult.data ?? []
   const firstItem = items[0]
@@ -117,8 +144,22 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
   const itemTotal = items.reduce((total, item) => total + Number(item.line_total), 0)
   const assetUrl = (assetId?: string | null) =>
     assetId ? `/api/admin/finance/assets/${assetId}` : null
+  const isDraft = invoice.status === 'draft'
 
-  const policy = parseRefundPolicy(extended.refund_policy_snapshot)
+  const policySource = isDraft
+    ? {
+        processingDays: settings?.refund_processing_days ?? 90,
+        dayBasis: settings?.refund_day_basis ?? 'business_days',
+        tiers: settings?.refund_tiers ?? [],
+      }
+    : extended.refund_policy_snapshot
+  const termsLink = isDraft ? (settings?.invoice_terms ?? null) : invoice.terms_snapshot
+  const termsBody = isDraft ? (settings?.invoice_terms_body ?? null) : extended.terms_body_snapshot
+  const termsLetterheadAssetId = isDraft
+    ? (settings?.terms_letterhead_asset_id ?? null)
+    : extended.terms_letterhead_asset_id
+
+  const policy = parseRefundPolicy(policySource)
   const committedRefund = refunds
     .filter((refund) => ['requested', 'approved', 'processed'].includes(refund.status))
     .reduce((sum, refund) => sum + Number(refund.amount), 0)
@@ -143,13 +184,13 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
         refundable = Math.max(Math.min(availablePayment, policyMaximum - committedRefund), 0)
         refundPolicyNote = `${days} hari menuju keberangkatan · kebijakan maksimal ${tier.refundPercent}% dari pembayaran yang diterima.`
         if (tier.refundPercent === 0) {
-          refundPolicyNote += ' Pada rentang ini pembayaran dinyatakan hangus sesuai kebijakan snapshot invoice.'
+          refundPolicyNote += ' Pada rentang ini pembayaran dinyatakan hangus sesuai kebijakan invoice.'
         }
       }
     }
   } else if (Number(invoice.paid_total) > 0) {
     refundPolicyNote =
-      'Belum ada tier persentase refund pada snapshot invoice; batas refund mengikuti saldo pembayaran yang belum direfund.'
+      'Belum ada tier persentase refund pada kebijakan invoice; batas refund mengikuti saldo pembayaran yang belum direfund.'
   }
 
   const receipt: PaymentReceiptData = {
@@ -173,9 +214,9 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
     paymentMethod: lastPayment?.method,
     dueDate: formatInvoiceDate(invoice.due_on),
     departureDate: formatInvoiceDate(extended.departure_on),
-    termsLink: invoice.terms_snapshot,
-    termsBody: extended.terms_body_snapshot,
-    termsLetterheadUrl: assetUrl(extended.terms_letterhead_asset_id),
+    termsLink,
+    termsBody,
+    termsLetterheadUrl: assetUrl(termsLetterheadAssetId),
     refundPolicyLines: refundPolicyLines(policy),
     companyName: company.legalName,
     companyAddress: company.address ?? '',
