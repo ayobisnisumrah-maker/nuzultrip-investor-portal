@@ -111,9 +111,7 @@ export default async function Home() {
 
   const functionalNavigation = navigation.filter((item) => {
     const href = item.href.trim()
-    const label = item.label.trim().toLocaleLowerCase('id-ID')
-
-    return Boolean(href && href !== '#') && label !== 'artikel' && label !== 'artikel & berita'
+    return Boolean(href && href !== '#')
   })
 
   return (
