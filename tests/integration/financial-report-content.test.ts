@@ -115,4 +115,76 @@ describe('financial report content workflow', () => {
       expect(reviewed?.status).toBe('review')
     })
   })
+
+  it('blocks direct metadata changes after an official report is published', async () => {
+    const completedYear = 2000 + (Number.parseInt(fixtures.suffix.slice(0, 2), 16) % 25)
+
+    await as({ kind: 'authenticated', userId: fixtures.superAdmin.userId }, async (tx) => {
+      const [period] = await tx<{ id: string }[]>`
+        insert into public.financial_periods (
+          period_type, fiscal_year, period_index, starts_on, ends_on, currency, status
+        ) values (
+          'yearly',
+          ${completedYear},
+          1,
+          ${`${completedYear}-01-01`},
+          ${`${completedYear}-12-31`},
+          'IDR',
+          'closed'
+        ) returning id
+      `
+      if (!period) throw new Error('Failed to create completed financial period.')
+
+      const [report] = await tx<{ report_id: string }[]>`
+        select report_id
+        from app.create_financial_report_with_draft(
+          ${period.id}, 'Laporan resmi immutable', null, 'investors', 'audited', 'Tim Keuangan', null
+        )
+      `
+      if (!report) throw new Error('Failed to create immutable financial report fixture.')
+
+      await tx`
+        select * from app.save_financial_report_draft_content(
+          ${report.report_id},
+          ${assetId},
+          ${tx.json([
+            {
+              statement: 'income',
+              category: 'revenue',
+              line_key: 'pendapatan',
+              label: 'Pendapatan',
+              amount: 125000000,
+              currency: 'IDR',
+              position: 0,
+              note: 'Pendapatan periode berjalan',
+            },
+          ])},
+          ${tx.json([
+            {
+              kpi_key: 'margin_bersih',
+              label: 'Margin laba bersih',
+              value: 18.5,
+              unit: 'percent',
+              basis: 'reported',
+              position: 0,
+            },
+          ])}
+        )
+      `
+
+      for (const target of ['review', 'approved', 'published'] as const) {
+        await tx`select * from app.transition_financial_report(${report.report_id}, ${target}::public.publication_status)`
+      }
+
+      const directUpdate = await expectRejected(
+        () => tx`
+          update public.financial_reports
+          set title = 'Laporan resmi yang diubah setelah publish'
+          where id = ${report.report_id}
+        `,
+      )
+
+      expect(directUpdate.code).toBe('42501')
+    })
+  })
 })
