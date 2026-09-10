@@ -63,7 +63,15 @@ describe('finance operations lifecycle', () => {
       await tx`select app.issue_finance_invoice(${invoice!.id})`
       const overpayment = await expectRejected(
         () =>
-          tx`select app.record_finance_payment(${invoice!.id},50001,'transfer',now(),'','','QA-OVER-${fixtures.suffix}')`,
+          tx`select app.record_finance_payment(
+            ${invoice!.id}::uuid,
+            50001::numeric,
+            'transfer'::text,
+            now(),
+            ''::text,
+            ''::text,
+            ${`QA-OVER-${fixtures.suffix}`}::text
+          )`,
       )
       const mutation = await expectRejected(
         () =>
