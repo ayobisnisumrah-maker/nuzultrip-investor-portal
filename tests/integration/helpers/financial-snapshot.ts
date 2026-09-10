@@ -92,7 +92,9 @@ export async function createPublishedFinancialSnapshot({
 }
 
 export async function destroyFinancialSnapshot(snapshot: FinancialSnapshotFixture | null) {
-  if (!snapshot) return
-  await db()`delete from public.financial_reports where id = ${snapshot.reportId}`
-  await db()`delete from public.financial_periods where id = ${snapshot.periodId}`
+  // Published financial report versions are intentionally append-only. These
+  // fixtures run against a disposable database that is reset between CI runs,
+  // so attempting to delete them would violate the same immutability guard we
+  // are testing in production code.
+  void snapshot
 }
