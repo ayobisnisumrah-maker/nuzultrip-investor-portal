@@ -1,17 +1,66 @@
 .authTheme {
+  /*
+   * Auth is intentionally a light surface, independent from the user's global
+   * dashboard/theme preference. Keep the complete semantic colour contract
+   * local to this surface so a dark OS/theme cannot leave light text on the
+   * white authentication canvas.
+   */
   --c-canvas: #ffffff;
   --c-background: #ffffff;
   --c-surface: #ffffff;
+  --c-elevated: #ffffff;
+  --c-sunken: #f5f6f5;
   --c-inverse: #050505;
+
+  --c-fg: #151918;
+  --c-fg-muted: #59635f;
+  --c-fg-subtle: #737d79;
+  --c-fg-inverse: #f7f8f7;
+
+  --c-border: #d7dcda;
+  --c-border-strong: #68736f;
+  --c-border-subtle: #ecefed;
+
   --c-primary: #0a0a0a;
   --c-primary-hover: #262626;
   --c-primary-active: #3b3b3b;
   --c-primary-subtle: #f3f3f1;
   --c-primary-border: #cfcfcb;
   --c-on-primary: #ffffff;
+
+  --c-accent: #4d5552;
   --c-accent-solid: #111111;
+  --c-accent-hover: #262626;
+  --c-accent-subtle: #f3f3f1;
+  --c-accent-border: #cfcfcb;
   --c-on-accent: #ffffff;
+
+  --c-success: #277a5c;
+  --c-success-fg: #21664e;
+  --c-success-subtle: #edf8f3;
+  --c-success-border: #b9dfd0;
+
+  --c-warning: #a76300;
+  --c-warning-fg: #7a4800;
+  --c-warning-subtle: #fff5df;
+  --c-warning-border: #edcf91;
+
+  --c-danger: #c33b35;
+  --c-danger-fg: #a92f2a;
+  --c-danger-hover: #a92f2a;
+  --c-danger-subtle: #fff0ef;
+  --c-danger-border: #efbbb7;
+
+  --c-info: #256ba5;
+  --c-info-fg: #205d90;
+  --c-info-subtle: #edf6fc;
+  --c-info-border: #b9d8ed;
+
   --c-ring: #111111;
+  --c-overlay: rgb(0 0 0 / 0.48);
+
+  color-scheme: light;
+  color: var(--c-fg);
 }
 
 .authTheme :global(h1),
@@ -19,4 +68,26 @@
 .authTheme :global(h3) {
   font-family: Arial, Helvetica, sans-serif;
   letter-spacing: -0.035em;
+}
+
+/* Keep native/autofill text readable on the deliberately light auth surface. */
+.authTheme :global(input),
+.authTheme :global(textarea),
+.authTheme :global(select) {
+  color: var(--c-fg);
+  caret-color: var(--c-fg);
+}
+
+.authTheme :global(input::placeholder),
+.authTheme :global(textarea::placeholder) {
+  color: var(--c-fg-subtle);
+  opacity: 1;
+}
+
+.authTheme :global(input:-webkit-autofill),
+.authTheme :global(input:-webkit-autofill:hover),
+.authTheme :global(input:-webkit-autofill:focus) {
+  -webkit-text-fill-color: var(--c-fg);
+  box-shadow: 0 0 0 1000px var(--c-surface) inset;
+  caret-color: var(--c-fg);
 }
