@@ -18,6 +18,27 @@ describe('invoice A4 print layout', () => {
     expect(source).toContain('content: none !important')
   })
 
+  it('renders the browser preview as discrete A4 pages with page X of Y numbering', () => {
+    const source = fs.readFileSync(
+      path.join(process.cwd(), 'src/features/admin/financials/PaymentReceipt.tsx'),
+      'utf8',
+    )
+    const css = fs.readFileSync(
+      path.join(process.cwd(), 'src/features/admin/financials/PaymentReceipt.module.css'),
+      'utf8',
+    )
+
+    expect(source).toContain('payment-terms-preview-pages')
+    expect(source).toContain('payment-terms-preview-page')
+    expect(source).toContain('Halaman {page} dari {total}')
+    expect(source).toContain('node.scrollHeight > node.clientHeight + 1')
+    expect(css).toContain('width: 210mm')
+    expect(css).toContain('height: 297mm')
+    expect(css).toContain('max-height: 297mm')
+    expect(css).toContain('.screenTermsPages')
+    expect(css).toContain('.printOnlyTerms')
+  })
+
   it('prints one repeated footer logo and stabilizes invoice/refund table layout', () => {
     const printCss = fs.readFileSync(
       path.join(process.cwd(), 'src/styles/invoice-print-overrides.css'),
