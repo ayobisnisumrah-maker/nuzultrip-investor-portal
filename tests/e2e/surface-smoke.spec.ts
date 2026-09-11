@@ -163,8 +163,8 @@ test('Super Admin can replace the public logo from Company Profile', async ({ pa
     })
     await page.getByRole('button', { name: 'Simpan Logo' }).click()
     await expect(
-      page.getByText('Logo perusahaan berhasil diperbarui dan akan digunakan oleh portal publik.', {
-        exact: true,
+      page.getByRole('status').filter({
+        hasText: 'Logo perusahaan berhasil diperbarui dan disinkronkan',
       }),
     ).toBeVisible()
 
