@@ -115,6 +115,26 @@ export type Database = {
           version_id: string
         }[]
       }
+      create_financial_report_with_generated_draft: {
+        Args: {
+          p_financial_period_id: string
+          p_kpis: Json
+          p_line_items: Json
+          p_notes: string
+          p_prepared_by: string
+          p_source: Database["public"]["Enums"]["financial_source"]
+          p_summary: string
+          p_title: string
+          p_visibility: Database["public"]["Enums"]["visibility"]
+        }
+        Returns: {
+          kpi_count: number
+          line_item_count: number
+          report_id: string
+          status: Database["public"]["Enums"]["publication_status"]
+          version_id: string
+        }[]
+      }
       create_investor_message_request: {
         Args: { p_body: string; p_subject: string }
         Returns: string

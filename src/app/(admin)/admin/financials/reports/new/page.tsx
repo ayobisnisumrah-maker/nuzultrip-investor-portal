@@ -1,6 +1,9 @@
 import Link from 'next/link'
 
+import { isFinancialPeriodCalendarAligned } from '@/core/financials/periods'
+import { topics } from '@/core/realtime/events'
 import { FinancialReportCreateForm } from '@/features/admin/financials/financial-report-create-form'
+import { RealtimeRefresher } from '@/features/realtime/realtime-refresher'
 import { adminWithPermission } from '@/server/auth/page-guards'
 import { getServerSupabase } from '@/server/supabase/server'
 import { Alert } from '@/ui/alert'
@@ -30,8 +33,22 @@ export default async function NewFinancialReportPage() {
     (reportsResult.data ?? []).map((report) => [report.financial_period_id, report] as const),
   )
 
-  const options = (periodsResult.data ?? [])
-    .filter((period) => !existingReportByPeriod.has(period.id))
+  const periodsWithoutReports = (periodsResult.data ?? []).filter(
+    (period) => !existingReportByPeriod.has(period.id),
+  )
+  const invalidPeriods = periodsWithoutReports.filter(
+    (period) =>
+      !isFinancialPeriodCalendarAligned({
+        periodType: period.period_type,
+        fiscalYear: period.fiscal_year,
+        periodIndex: period.period_index,
+        startsOn: period.starts_on,
+        endsOn: period.ends_on,
+      }),
+  )
+
+  const options = periodsWithoutReports
+    .filter((period) => !invalidPeriods.some((invalid) => invalid.id === period.id))
     .map((period) => ({
       id: period.id,
       periodType: period.period_type,
@@ -53,6 +70,10 @@ export default async function NewFinancialReportPage() {
 
   return (
     <Stack gap={8}>
+      <RealtimeRefresher
+        topic={topics.admin()}
+        kinds={['financial_period.changed', 'financial_report.state_changed']}
+      />
       <PageHeader
         eyebrow="Keuangan"
         title="Laporan Keuangan Baru"
@@ -62,6 +83,11 @@ export default async function NewFinancialReportPage() {
       {loadError ? (
         <Alert tone="danger" title="Periode tidak dapat dimuat">
           Sistem gagal mengambil periode atau laporan keuangan yang sudah tersedia. Pembuatan laporan dinonaktifkan agar tidak terjadi duplikasi.
+        </Alert>
+      ) : null}
+      {!loadError && invalidPeriods.length ? (
+        <Alert tone="danger" title="Ada periode lama yang tidak sesuai kalender">
+          {invalidPeriods.length} periode belum dapat dipakai untuk laporan karena tanggalnya tidak sesuai jenis, tahun fiskal, dan indeks periode. Perbaiki periode tersebut di Kelola Periode Keuangan; sistem tidak akan membuat laporan dari rentang yang salah.
         </Alert>
       ) : null}
       {!loadError && existingReports.length ? (

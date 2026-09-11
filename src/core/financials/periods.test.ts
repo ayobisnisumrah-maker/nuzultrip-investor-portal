@@ -4,9 +4,12 @@ import {
   canCloseFinancialPeriod,
   canLockFinancialPeriod,
   canTransitionFinancialPeriod,
+  financialPeriodInputSchema,
   FINANCIAL_PERIOD_STATUS_LABELS,
   FINANCIAL_PERIOD_TYPE_LABELS,
+  getExpectedFinancialPeriodRange,
   getFinancialPeriodMaxIndex,
+  isFinancialPeriodCalendarAligned,
   isFinancialPeriodEditable,
 } from './periods'
 
@@ -29,7 +32,6 @@ describe('financial period lifecycle', () => {
 
   it('does not allow locked to any status', () => {
     expect(canTransitionFinancialPeriod('locked', 'open')).toBe(false)
-
     expect(canTransitionFinancialPeriod('locked', 'closed')).toBe(false)
   })
 
@@ -69,5 +71,53 @@ describe('financial period metadata', () => {
     expect(FINANCIAL_PERIOD_STATUS_LABELS.open).toBe('Terbuka')
     expect(FINANCIAL_PERIOD_STATUS_LABELS.closed).toBe('Ditutup')
     expect(FINANCIAL_PERIOD_STATUS_LABELS.locked).toBe('Terkunci')
+  })
+})
+
+describe('financial period calendar semantics', () => {
+  it('derives exact monthly ranges including leap years', () => {
+    expect(getExpectedFinancialPeriodRange('monthly', 2028, 2)).toEqual({
+      startsOn: '2028-02-01',
+      endsOn: '2028-02-29',
+    })
+  })
+
+  it('derives exact quarterly ranges', () => {
+    expect(getExpectedFinancialPeriodRange('quarterly', 2026, 3)).toEqual({
+      startsOn: '2026-07-01',
+      endsOn: '2026-09-30',
+    })
+  })
+
+  it('derives exact yearly ranges', () => {
+    expect(getExpectedFinancialPeriodRange('yearly', 2026, 1)).toEqual({
+      startsOn: '2026-01-01',
+      endsOn: '2026-12-31',
+    })
+  })
+
+  it('rejects a multi-month range labelled as monthly', () => {
+    const parsed = financialPeriodInputSchema.safeParse({
+      periodType: 'monthly',
+      fiscalYear: 2026,
+      periodIndex: 9,
+      startsOn: '2026-09-09',
+      endsOn: '2026-12-09',
+      currency: 'IDR',
+    })
+
+    expect(parsed.success).toBe(false)
+  })
+
+  it('accepts an aligned calendar month', () => {
+    expect(
+      isFinancialPeriodCalendarAligned({
+        periodType: 'monthly',
+        fiscalYear: 2026,
+        periodIndex: 9,
+        startsOn: '2026-09-01',
+        endsOn: '2026-09-30',
+      }),
+    ).toBe(true)
   })
 })

@@ -120,6 +120,22 @@ function toRpcContent(content: ReportContent) {
   }
 }
 
+function financialReportCreatePublicMessage(message: string): string {
+  if (message.includes('calendar aligned')) {
+    return 'Periode keuangan tidak sesuai kalender. Perbaiki tanggal periode terlebih dahulu sebelum membuat laporan.'
+  }
+  if (message.includes('financial_reports_period_unique') || message.includes('duplicate key')) {
+    return 'Periode tersebut sudah memiliki laporan keuangan. Buka laporan yang ada untuk melakukan revisi.'
+  }
+  if (message.includes('Locked financial period')) {
+    return 'Periode keuangan sudah dikunci dan tidak dapat menerima laporan baru.'
+  }
+  if (message.includes('financial_reports.update')) {
+    return 'Pembuatan laporan otomatis membutuhkan izin membuat dan memperbarui laporan keuangan.'
+  }
+  return 'Laporan keuangan dan isi otomatisnya tidak dapat dibuat saat ini. Tidak ada draft kosong yang disimpan.'
+}
+
 async function saveGeneratedContent(
   supabase: SupabaseClient<Database>,
   reportId: string,
@@ -139,21 +155,37 @@ export const createFinancialReport = defineAction({
   access: { permission: 'financial_reports.create' },
   input: createSchema,
   audit: { action: 'financial_report.created', entityType: 'financial_report' },
-  handler: async ({ input, principal, supabase, audit }) => {
-    const { data, error } = await appRpcClient(supabase).rpc('create_financial_report_with_draft', {
-      p_financial_period_id: input.financialPeriodId,
-      p_title: input.title,
-      p_summary: input.summary?.trim() || null,
-      p_visibility: input.visibility,
-      p_source: input.source,
-      p_prepared_by: input.preparedBy?.trim() || null,
-      p_notes: input.notes?.trim() || null,
-    })
+  handler: async ({ input, supabase, audit }) => {
+    let generated: Awaited<ReturnType<typeof buildTransactionFinancialReport>>
+    try {
+      generated = await buildTransactionFinancialReport(supabase, input.financialPeriodId)
+    } catch (error) {
+      throw new ConflictError(
+        `Failed to build transaction-backed financial report: ${error instanceof Error ? error.message : 'unknown error'}`,
+        'Data transaksi untuk periode tersebut tidak dapat dibaca secara lengkap. Laporan tidak dibuat agar angka investor tidak parsial.',
+      )
+    }
+
+    const rpcContent = toRpcContent(generated)
+    const { data, error } = await appRpcClient(supabase).rpc(
+      'create_financial_report_with_generated_draft',
+      {
+        p_financial_period_id: input.financialPeriodId,
+        p_title: input.title,
+        p_summary: input.summary?.trim() || null,
+        p_visibility: input.visibility,
+        p_source: input.source,
+        p_prepared_by: input.preparedBy?.trim() || null,
+        p_notes: input.notes?.trim() || null,
+        p_line_items: rpcContent.lineItems,
+        p_kpis: rpcContent.kpis,
+      },
+    )
 
     if (error) {
       throw new ConflictError(
-        `Failed to create financial report: ${error.message}`,
-        'Laporan keuangan tidak dapat dibuat saat ini.',
+        `Failed to atomically create generated financial report: ${error.message}`,
+        financialReportCreatePublicMessage(error.message),
       )
     }
 
@@ -161,37 +193,26 @@ export const createFinancialReport = defineAction({
     const reportId = typeof row?.report_id === 'string' ? row.report_id : null
     if (!reportId) {
       throw new ConflictError(
-        'Financial report creation returned no id.',
+        'Atomic financial report creation returned no id.',
         'Laporan keuangan tidak dapat dibuat saat ini.',
       )
     }
 
-    let generatedFromTransactions = false
-    if (principal.kind === 'admin' && principal.permissions.has('financial_reports.update')) {
-      try {
-        const generated = await buildTransactionFinancialReport(supabase, input.financialPeriodId)
-        const generatedResult = await saveGeneratedContent(supabase, reportId, null, generated)
-        generatedFromTransactions = !generatedResult.error
-      } catch {
-        generatedFromTransactions = false
-      }
-    }
-
     audit({
       entityId: reportId,
-      summary: generatedFromTransactions
-        ? `Laporan keuangan ${input.title} dibuat sebagai draft dan diisi otomatis dari transaksi.`
-        : `Laporan keuangan ${input.title} dibuat sebagai draft.`,
+      summary: `Laporan keuangan ${input.title} dibuat sebagai draft dan diisi otomatis dari transaksi.`,
       changes: {
         status: { before: null, after: 'draft' },
-        transactionSync: { before: null, after: generatedFromTransactions ? 'generated' : 'not_generated' },
+        transactionSync: { before: null, after: 'generated' },
+        lineItemCount: { before: null, after: generated.lineItems.length },
+        kpiCount: { before: null, after: generated.kpis.length },
       },
     })
 
     revalidatePath('/admin')
     revalidatePath('/admin/financials')
     revalidatePath('/admin/financials/reports')
-    return { reportId, generatedFromTransactions }
+    return { reportId, generatedFromTransactions: true }
   },
 })
 
