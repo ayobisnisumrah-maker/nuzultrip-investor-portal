@@ -9,6 +9,7 @@ import {
   listProfitDistributions,
 } from '@/server/ownership/profit-distribution-service'
 import { getServerSupabase } from '@/server/supabase/server'
+import { Alert } from '@/ui/alert'
 
 export default async function ProfitDistributionsPage() {
   const principal = await adminWithPermission(
@@ -33,29 +34,44 @@ export default async function ProfitDistributionsPage() {
   const supabase = await getServerSupabase()
   const distributions = await listProfitDistributions(supabase)
   const visibleDistributions = distributions.slice(0, 50)
-  const allocationsEntries = await Promise.all(
+
+  const allocationResults = await Promise.allSettled(
     visibleDistributions.map(async (distribution) => {
       const allocations = await listProfitDistributionAllocations(supabase, distribution.id)
       return [distribution.id, allocations] as const
     }),
   )
+
+  const allocationsEntries = allocationResults.flatMap((result) =>
+    result.status === 'fulfilled' ? [result.value] : [],
+  )
+  const failedAllocationLoads = allocationResults.filter(
+    (result) => result.status === 'rejected',
+  ).length
+
   const allocationsByDistribution = Object.fromEntries(allocationsEntries)
   const allocationIds = allocationsEntries.flatMap(([, allocations]) =>
     allocations.map((allocation) => allocation.id),
   )
 
-  const { data: proofRows } = allocationIds.length
+  const proofResult = allocationIds.length
     ? await supabase
         .from('profit_distribution_payment_proofs')
         .select('allocation_id')
         .in('allocation_id', allocationIds)
-    : { data: [] }
+    : { data: [], error: null }
 
-  const proofAllocationIds = (proofRows ?? []).map((proof) => proof.allocation_id)
+  const proofAllocationIds = (proofResult.data ?? []).map((proof) => proof.allocation_id)
+  const hasPartialReadWarning = failedAllocationLoads > 0 || Boolean(proofResult.error)
 
   return (
     <div className="space-y-5">
       <RealtimeRefresher topic={topics.admin()} kinds={['profit_distribution.changed']} />
+      {hasPartialReadWarning ? (
+        <Alert tone="warning" title="Sebagian detail distribusi belum dapat dimuat">
+          Daftar distribusi utama tetap ditampilkan, tetapi {failedAllocationLoads > 0 ? `${failedAllocationLoads} set allocation investor` : 'allocation investor'} atau bukti pembayaran belum dapat dibaca lengkap. Muat ulang halaman setelah koneksi/database normal; status distribusi utama tidak diubah.
+        </Alert>
+      ) : null}
       <div className="flex flex-wrap items-center justify-end gap-2">
         {visibleDistributions.slice(0, 5).map((distribution) => (
           <Link
