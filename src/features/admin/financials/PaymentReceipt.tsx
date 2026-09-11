@@ -1,6 +1,7 @@
 'use client'
 
 import Image from 'next/image'
+import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import styles from './PaymentReceipt.module.css'
 
 export type PaymentStatus = 'DP' | 'PAID'
@@ -66,10 +67,17 @@ type RefundTableRow = {
   refund: string
 }
 
-function parseRefundPolicyLines(lines?: string[]): {
+type RefundPolicyView = {
   sla: string | null
   rows: RefundTableRow[]
-} {
+}
+
+type TermsPreviewBlock =
+  | { id: string; kind: 'text'; text: string }
+  | { id: string; kind: 'refund' }
+  | { id: string; kind: 'acceptance' }
+
+function parseRefundPolicyLines(lines?: string[]): RefundPolicyView {
   if (!lines?.length) return { sla: null, rows: [] }
 
   const [sla, ...tierLines] = lines
@@ -92,6 +100,45 @@ function parseRefundPolicyLines(lines?: string[]): {
   return { sla: sla ?? null, rows }
 }
 
+function chunkPreviewLine(line: string, maxLength = 420): string[] {
+  const normalized = line.trim()
+  if (!normalized) return []
+  if (normalized.length <= maxLength) return [normalized]
+
+  const words = normalized.split(/\s+/)
+  const chunks: string[] = []
+  let current = ''
+
+  for (const word of words) {
+    const candidate = current ? `${current} ${word}` : word
+    if (candidate.length > maxLength && current) {
+      chunks.push(current)
+      current = word
+    } else {
+      current = candidate
+    }
+  }
+
+  if (current) chunks.push(current)
+  return chunks
+}
+
+function buildTermsPreviewBlocks(data: PaymentReceiptData): TermsPreviewBlock[] {
+  const textBlocks = (data.termsBody ?? '')
+    .split(/\r?\n/)
+    .flatMap((line) => chunkPreviewLine(line))
+    .map<TermsPreviewBlock>((text, index) => ({ id: `text-${index}`, kind: 'text', text }))
+
+  const blocks: TermsPreviewBlock[] = [...textBlocks]
+
+  if (data.refundPolicyLines?.length) {
+    blocks.push({ id: 'refund', kind: 'refund' })
+  }
+
+  blocks.push({ id: 'acceptance', kind: 'acceptance' })
+  return blocks
+}
+
 export function PaymentReceipt({ data }: { data: PaymentReceiptData }) {
   const isPaid = data.status === 'PAID'
   const hasTax = typeof data.tax === 'number' && Number.isFinite(data.tax) && data.tax > 0
@@ -102,6 +149,7 @@ export function PaymentReceipt({ data }: { data: PaymentReceiptData }) {
   const statusIcon = isPaid ? '/images/payment/paid.png' : '/images/payment/dp.png'
   const termsLink = safeTermsLink(data.termsLink)
   const refundPolicy = parseRefundPolicyLines(data.refundPolicyLines)
+  const [previewPageCount, setPreviewPageCount] = useState(2)
 
   const printLayoutCss = `
     @page {
@@ -390,28 +438,25 @@ export function PaymentReceipt({ data }: { data: PaymentReceiptData }) {
             </span>
             <span>Dokumen dibuat otomatis oleh sistem Nuzultrip.</span>
           </div>
-          <FooterRight data={data} />
+          <div className={styles.footerMeta}>
+            <PageIndicator page={1} total={previewPageCount} />
+            <FooterRight data={data} />
+          </div>
         </footer>
       </article>
 
-      <article className={`${styles.receipt} ${styles.termsPage}`} data-testid="payment-terms-page">
-        {data.termsLetterheadUrl ? (
-          <div className={styles.letterhead}>
-            <Image
-              src={data.termsLetterheadUrl}
-              alt="Kop surat Syarat & Ketentuan"
-              width={1600}
-              height={360}
-              unoptimized
-              className={styles.letterheadImage}
-            />
-          </div>
-        ) : (
-          <header className={styles.termsFallbackHeader}>
-            <strong>{data.companyName ?? 'PT Swarna Dipa Wisata (Nuzultrip)'}</strong>
-            <span>{data.companyAddress}</span>
-          </header>
-        )}
+      <ScreenTermsPages
+        data={data}
+        termsLink={termsLink}
+        refundPolicy={refundPolicy}
+        onPageCountChange={setPreviewPageCount}
+      />
+
+      <article
+        className={`${styles.receipt} ${styles.termsPage} ${styles.printOnlyTerms}`}
+        data-testid="payment-terms-page"
+      >
+        <TermsDocumentHeader data={data} />
 
         <section className={styles.termsContent}>
           <p className={styles.termsEyebrow}>INVOICE {data.orderId}</p>
@@ -426,43 +471,8 @@ export function PaymentReceipt({ data }: { data: PaymentReceiptData }) {
             </p>
           )}
 
-          {data.refundPolicyLines?.length ? (
-            <div className={styles.refundTerms}>
-              <h3>Kebijakan Refund</h3>
-              {refundPolicy.sla ? <p className={styles.refundSla}>{refundPolicy.sla}</p> : null}
-              {refundPolicy.rows.length ? (
-                <table className={styles.refundTable}>
-                  <thead>
-                    <tr>
-                      <th>Rentang pembatalan sebelum keberangkatan</th>
-                      <th>Maksimal refund</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {refundPolicy.rows.map((row) => (
-                      <tr key={`${row.range}-${row.refund}`}>
-                        <td>{row.range}</td>
-                        <td>{row.refund}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              ) : null}
-              <p className={styles.refundTableNote}>
-                Persentase dihitung dari pembayaran yang telah diterima, dengan tetap memperhatikan
-                komponen non-refundable dan hasil rekonsiliasi transaksi sesuai Syarat &amp;
-                Ketentuan invoice.
-              </p>
-            </div>
-          ) : null}
-
-          <div className={styles.acceptanceBox}>
-            <strong>Persetujuan pelanggan</strong>
-            <p>
-              Dengan melakukan pembayaran atas invoice ini, pelanggan menyatakan telah membaca,
-              memahami, dan menyetujui Syarat &amp; Ketentuan yang tercantum pada dokumen ini.
-            </p>
-          </div>
+          {data.refundPolicyLines?.length ? <RefundTerms refundPolicy={refundPolicy} /> : null}
+          <AcceptanceBox />
         </section>
 
         <footer className={`${styles.footer} ${styles.termsFooter}`}>
@@ -474,6 +484,210 @@ export function PaymentReceipt({ data }: { data: PaymentReceiptData }) {
         </footer>
       </article>
     </div>
+  )
+}
+
+function ScreenTermsPages({
+  data,
+  termsLink,
+  refundPolicy,
+  onPageCountChange,
+}: {
+  data: PaymentReceiptData
+  termsLink: string | null
+  refundPolicy: RefundPolicyView
+  onPageCountChange: (count: number) => void
+}) {
+  const blocks = useMemo(() => buildTermsPreviewBlocks(data), [data])
+  const blockKey = useMemo(
+    () => blocks.map((block) => `${block.id}:${block.kind}:${block.kind === 'text' ? block.text : ''}`).join('|'),
+    [blocks],
+  )
+  const [pages, setPages] = useState<number[][]>(() => [blocks.map((_, index) => index)])
+  const contentRefs = useRef(new Map<number, HTMLDivElement>())
+
+  useLayoutEffect(() => {
+    setPages([blocks.map((_, index) => index)])
+  }, [blockKey, blocks])
+
+  useLayoutEffect(() => {
+    const nextPages = pages.map((page) => [...page])
+    let changed = false
+
+    for (let pageIndex = 0; pageIndex < nextPages.length; pageIndex += 1) {
+      const node = contentRefs.current.get(pageIndex)
+      const page = nextPages[pageIndex]
+      if (!node || !page || page.length <= 1) continue
+
+      if (node.scrollHeight > node.clientHeight + 1) {
+        const movedBlock = page.pop()
+        if (movedBlock === undefined) continue
+
+        if (!nextPages[pageIndex + 1]) nextPages[pageIndex + 1] = []
+        nextPages[pageIndex + 1]!.unshift(movedBlock)
+        changed = true
+        break
+      }
+    }
+
+    if (changed) {
+      setPages(nextPages)
+      return
+    }
+
+    onPageCountChange(1 + pages.length)
+  }, [pages, onPageCountChange])
+
+  const totalDocumentPages = 1 + pages.length
+
+  return (
+    <div className={styles.screenTermsPages} data-testid="payment-terms-preview-pages">
+      {pages.map((pageBlocks, pageIndex) => (
+        <article
+          key={`terms-preview-${pageIndex}`}
+          className={`${styles.receipt} ${styles.screenTermsPage}`}
+          data-testid="payment-terms-preview-page"
+          data-page-number={pageIndex + 2}
+        >
+          {pageIndex === 0 ? (
+            <TermsDocumentHeader data={data} />
+          ) : (
+            <header className={styles.termsContinuationHeader}>
+              <strong>{data.companyName ?? 'PT Swarna Dipa Wisata (Nuzultrip)'}</strong>
+              <span>Syarat &amp; Ketentuan — lanjutan</span>
+            </header>
+          )}
+
+          <div
+            className={styles.screenTermsContentArea}
+            ref={(node) => {
+              if (node) contentRefs.current.set(pageIndex, node)
+              else contentRefs.current.delete(pageIndex)
+            }}
+          >
+            {pageIndex === 0 ? (
+              <div className={styles.screenTermsTitleBlock}>
+                <p className={styles.termsEyebrow}>INVOICE {data.orderId}</p>
+                <h2 className={styles.termsTitle}>
+                  Syarat &amp; Ketentuan Pemesanan dan Pembayaran
+                </h2>
+              </div>
+            ) : null}
+
+            <div className={styles.screenTermsBlocks}>
+              {pageBlocks.map((blockIndex) => {
+                const block = blocks[blockIndex]
+                if (!block) return null
+
+                if (block.kind === 'text') {
+                  return (
+                    <p key={block.id} className={styles.termsParagraph}>
+                      {block.text}
+                    </p>
+                  )
+                }
+
+                if (block.kind === 'refund') {
+                  return <RefundTerms key={block.id} refundPolicy={refundPolicy} />
+                }
+
+                return <AcceptanceBox key={block.id} />
+              })}
+
+              {!data.termsBody && pageIndex === 0 ? (
+                <p className={styles.termsEmpty}>
+                  Ketentuan tertulis belum tersedia pada snapshot invoice ini.
+                  {termsLink ? ` Referensi syarat: ${termsLink}` : ''}
+                </p>
+              ) : null}
+            </div>
+          </div>
+
+          <footer className={`${styles.footer} ${styles.screenTermsFooter}`}>
+            <div className={styles.footerText}>
+              <span>{data.companyName ?? 'PT Swarna Dipa Wisata (Nuzultrip)'}</span>
+              <span>Dokumen syarat ini merupakan bagian tidak terpisahkan dari invoice.</span>
+            </div>
+            <div className={styles.footerMeta}>
+              <PageIndicator page={pageIndex + 2} total={totalDocumentPages} />
+              <FooterRight data={data} />
+            </div>
+          </footer>
+        </article>
+      ))}
+    </div>
+  )
+}
+
+function TermsDocumentHeader({ data }: { data: PaymentReceiptData }) {
+  return data.termsLetterheadUrl ? (
+    <div className={styles.letterhead}>
+      <Image
+        src={data.termsLetterheadUrl}
+        alt="Kop surat Syarat & Ketentuan"
+        width={1600}
+        height={360}
+        unoptimized
+        className={styles.letterheadImage}
+      />
+    </div>
+  ) : (
+    <header className={styles.termsFallbackHeader}>
+      <strong>{data.companyName ?? 'PT Swarna Dipa Wisata (Nuzultrip)'}</strong>
+      <span>{data.companyAddress}</span>
+    </header>
+  )
+}
+
+function RefundTerms({ refundPolicy }: { refundPolicy: RefundPolicyView }) {
+  return (
+    <div className={styles.refundTerms}>
+      <h3>Kebijakan Refund</h3>
+      {refundPolicy.sla ? <p className={styles.refundSla}>{refundPolicy.sla}</p> : null}
+      {refundPolicy.rows.length ? (
+        <table className={styles.refundTable}>
+          <thead>
+            <tr>
+              <th>Rentang pembatalan sebelum keberangkatan</th>
+              <th>Maksimal refund</th>
+            </tr>
+          </thead>
+          <tbody>
+            {refundPolicy.rows.map((row) => (
+              <tr key={`${row.range}-${row.refund}`}>
+                <td>{row.range}</td>
+                <td>{row.refund}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      ) : null}
+      <p className={styles.refundTableNote}>
+        Persentase dihitung dari pembayaran yang telah diterima, dengan tetap memperhatikan
+        komponen non-refundable dan hasil rekonsiliasi transaksi sesuai Syarat &amp; Ketentuan
+        invoice.
+      </p>
+    </div>
+  )
+}
+
+function AcceptanceBox() {
+  return (
+    <div className={styles.acceptanceBox}>
+      <strong>Persetujuan pelanggan</strong>
+      <p>
+        Dengan melakukan pembayaran atas invoice ini, pelanggan menyatakan telah membaca,
+        memahami, dan menyetujui Syarat &amp; Ketentuan yang tercantum pada dokumen ini.
+      </p>
+    </div>
+  )
+}
+
+function PageIndicator({ page, total }: { page: number; total: number }) {
+  return (
+    <span className={styles.screenPageIndicator}>
+      Halaman {page} dari {total}
+    </span>
   )
 }
 
