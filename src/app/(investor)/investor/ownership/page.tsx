@@ -4,6 +4,7 @@ import { topics } from '@/core/realtime/events'
 import { RealtimeRefresher } from '@/features/realtime/realtime-refresher'
 import { SaleHistory } from '@/features/investor/ownership/sale-history'
 import { SellSharesForm } from '@/features/investor/ownership/sell-shares-form'
+import Link from 'next/link'
 import { requireInvestorPage } from '@/server/auth/page-guards'
 import { listInvestorSaleTransfers } from '@/server/ownership/transfer-service'
 import { getServerSupabase } from '@/server/supabase/server'
@@ -122,8 +123,7 @@ export default async function InvestorOwnershipPage() {
         topic={topics.investor(principal.investorId)}
         kinds={['ownership.changed']}
       />
-      <PageHeader
-        eyebrow="Kepemilikan"
+      <div className="flex flex-wrap items-start justify-between gap-4">\n        <PageHeader\n        eyebrow="Kepemilikan"
         title="Kepemilikan Saham"
         description="Pantau unit, porsi kepemilikan, nilai portofolio, serta pengajuan penjualan saham Anda."
       />
