@@ -149,7 +149,6 @@ export function PaymentReceipt({ data }: { data: PaymentReceiptData }) {
   const statusIcon = isPaid ? '/images/payment/paid.png' : '/images/payment/dp.png'
   const termsLink = safeTermsLink(data.termsLink)
   const refundPolicy = parseRefundPolicyLines(data.refundPolicyLines)
-  const [previewPageCount, setPreviewPageCount] = useState(2)
 
   const printLayoutCss = `
     @page {
@@ -438,19 +437,11 @@ export function PaymentReceipt({ data }: { data: PaymentReceiptData }) {
             </span>
             <span>Dokumen dibuat otomatis oleh sistem Nuzultrip.</span>
           </div>
-          <div className={styles.footerMeta}>
-            <PageIndicator page={1} total={previewPageCount} />
-            <FooterRight data={data} />
-          </div>
+          <FooterRight data={data} />
         </footer>
       </article>
 
-      <ScreenTermsPages
-        data={data}
-        termsLink={termsLink}
-        refundPolicy={refundPolicy}
-        onPageCountChange={setPreviewPageCount}
-      />
+      <ScreenTermsPages data={data} termsLink={termsLink} refundPolicy={refundPolicy} />
 
       <article
         className={`${styles.receipt} ${styles.termsPage} ${styles.printOnlyTerms}`}
@@ -491,24 +482,44 @@ function ScreenTermsPages({
   data,
   termsLink,
   refundPolicy,
-  onPageCountChange,
 }: {
   data: PaymentReceiptData
   termsLink: string | null
   refundPolicy: RefundPolicyView
-  onPageCountChange: (count: number) => void
 }) {
   const blocks = useMemo(() => buildTermsPreviewBlocks(data), [data])
   const blockKey = useMemo(
-    () => blocks.map((block) => `${block.id}:${block.kind}:${block.kind === 'text' ? block.text : ''}`).join('|'),
+    () =>
+      blocks
+        .map((block) => `${block.id}:${block.kind}:${block.kind === 'text' ? block.text : ''}`)
+        .join('|'),
     [blocks],
   )
+
+  return (
+    <PaginatedTermsPreview
+      key={blockKey}
+      data={data}
+      termsLink={termsLink}
+      refundPolicy={refundPolicy}
+      blocks={blocks}
+    />
+  )
+}
+
+function PaginatedTermsPreview({
+  data,
+  termsLink,
+  refundPolicy,
+  blocks,
+}: {
+  data: PaymentReceiptData
+  termsLink: string | null
+  refundPolicy: RefundPolicyView
+  blocks: TermsPreviewBlock[]
+}) {
   const [pages, setPages] = useState<number[][]>(() => [blocks.map((_, index) => index)])
   const contentRefs = useRef(new Map<number, HTMLDivElement>())
-
-  useLayoutEffect(() => {
-    setPages([blocks.map((_, index) => index)])
-  }, [blockKey, blocks])
 
   useLayoutEffect(() => {
     const nextPages = pages.map((page) => [...page])
@@ -531,12 +542,12 @@ function ScreenTermsPages({
     }
 
     if (changed) {
-      setPages(nextPages)
-      return
+      const frame = window.requestAnimationFrame(() => setPages(nextPages))
+      return () => window.cancelAnimationFrame(frame)
     }
 
-    onPageCountChange(1 + pages.length)
-  }, [pages, onPageCountChange])
+    return undefined
+  }, [pages])
 
   const totalDocumentPages = 1 + pages.length
 
