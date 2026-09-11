@@ -137,10 +137,11 @@ function Hero({ section }: { section?: Section }) {
   )
 }
 
-function AboutAndStats({ intro, stats }: { intro?: Section; stats?: Section }) {
+function AboutAndStats({ intro, stats, business }: { intro?: Section; stats?: Section; business?: Section }) {
   if (!intro && !stats) return null
   const c = intro?.content ?? {}
   const metrics = records(stats?.content.metrics)
+  const businessHref = business ? `#${business.anchor_id ?? 'bisnis'}` : null
   return (
     <section className={styles.section} id={intro?.anchor_id ?? 'tentang-nuzultrip'}>
       <div className={styles.shell}>
@@ -149,7 +150,7 @@ function AboutAndStats({ intro, stats }: { intro?: Section; stats?: Section }) {
           <h2>{text(c.title) || 'Nuzultrip'}</h2>
           <div className={styles.aboutText}>
             {text(c.description) ? <p>{text(c.description)}</p> : null}
-            <Link href="#bisnis" className={styles.inlineLink}>Lebih tentang kami <Arrow /></Link>
+            {businessHref ? <Link href={businessHref} className={styles.inlineLink}>Lebih tentang kami <Arrow /></Link> : null}
           </div>
         </div>
         {metrics.length ? (
@@ -529,7 +530,7 @@ export function PublicPortalExact({ page, sections, navigation, publicDocuments,
       <Header navigation={navigation} logoSrc={logoSrc} />
       <main id="main">
         <Hero section={hero} />
-        <AboutAndStats intro={intro} stats={stats} />
+        <AboutAndStats intro={intro} stats={stats} business={business} />
         <Offering section={offering} />
         <CompanyStory section={business} />
         <Services section={ecosystem} />
