@@ -25,6 +25,10 @@
   gap: 20px;
 }
 
+.printPageCounter {
+  display: none;
+}
+
 .header {
   display: flex;
   align-items: flex-start;
@@ -493,21 +497,58 @@
   margin-top: 8mm;
   padding-top: 6mm;
   border-top: 1px solid #d8dde3;
+  break-inside: avoid;
+  page-break-inside: avoid;
 }
 .refundTerms h3 {
-  margin: 0 0 10px;
+  margin: 0 0 6px;
   color: #27323a;
   font-size: 13px;
 }
-.refundTerms ol {
-  margin: 0;
-  padding-left: 20px;
+.refundSla {
+  margin: 0 0 10px;
+  color: #45515a;
+  font-size: 9px;
+  line-height: 1.6;
+}
+.refundTable {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  overflow: hidden;
+  border: 1px solid #cfd6dc;
+  border-radius: 6px;
   color: #303a42;
   font-size: 9px;
-  line-height: 1.65;
 }
-.refundTerms li + li {
-  margin-top: 4px;
+.refundTable th,
+.refundTable td {
+  padding: 8px 10px;
+  border: 1px solid #d8dde3;
+  text-align: left;
+  vertical-align: top;
+  line-height: 1.5;
+}
+.refundTable th {
+  background: #f3f6f5;
+  color: #34413f;
+  font-weight: 800;
+}
+.refundTable th:last-child,
+.refundTable td:last-child {
+  width: 26%;
+  text-align: center;
+  font-weight: 800;
+}
+.refundTable tbody tr {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+.refundTableNote {
+  margin: 8px 0 0;
+  color: #697383;
+  font-size: 8px;
+  line-height: 1.55;
 }
 .acceptanceBox {
   margin-top: 10mm;
@@ -549,6 +590,23 @@
   .termsPage {
     break-before: page;
     page-break-before: always;
+  }
+  .printPageCounter {
+    display: block;
+    position: fixed;
+    z-index: 50;
+    right: 32mm;
+    bottom: 5mm;
+    color: #818a96;
+    font-family: Inter, Arial, Helvetica, sans-serif;
+    font-size: 8px;
+    line-height: 1;
+  }
+  .printPageCounter::after {
+    content: 'Halaman ' counter(page) ' dari ' counter(pages);
+  }
+  .footerRight {
+    padding-right: 2mm;
   }
 }
 @media screen {
@@ -601,5 +659,9 @@
   }
   .termsContent {
     margin-top: 24px;
+  }
+  .refundTable th:last-child,
+  .refundTable td:last-child {
+    width: 34%;
   }
 }
