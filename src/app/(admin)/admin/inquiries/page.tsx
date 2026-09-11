@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 
+import { topics } from '@/core/realtime/events'
 import { InquiryWorkbench } from '@/features/admin/inquiry-workbench'
+import { RealtimeRefresher } from '@/features/realtime/realtime-refresher'
 import { requireAdminPage } from '@/server/auth/page-guards'
 import { getServerSupabase } from '@/server/supabase/server'
 import { Alert } from '@/ui/alert'
@@ -34,6 +36,11 @@ export default async function InquiriesPage() {
 
   return (
     <div className="space-y-6">
+      <RealtimeRefresher
+        topic={topics.admin()}
+        kinds={['inquiry.received', 'inquiry.changed']}
+      />
+
       <div>
         <p className="text-caption text-fg-subtle font-medium tracking-[0.14em] uppercase">
           Hubungan Investor
