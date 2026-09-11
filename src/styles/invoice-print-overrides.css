@@ -1,0 +1,125 @@
+@media print {
+  /*
+   * Invoice print hardening.
+   * Scoped to the payment receipt only so dashboard/public pages are unaffected.
+   */
+  [data-testid='payment-receipt'] > div[aria-hidden='true'] {
+    right: 44mm !important;
+    bottom: 4mm !important;
+    width: 22mm !important;
+    min-height: 7mm !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+  }
+
+  [data-testid='payment-receipt'] > div[aria-hidden='true'] img {
+    width: auto !important;
+    max-width: 22mm !important;
+    height: 7mm !important;
+    object-fit: contain !important;
+    object-position: right center !important;
+  }
+
+  /* Prevent the document-level FooterRight from printing in addition to the repeated page logo. */
+  [data-testid='payment-receipt'] > article:first-of-type > footer > :last-child {
+    display: none !important;
+  }
+
+  /* The terms article can fragment across several pages; its internal footer is not a page footer. */
+  [data-testid='payment-receipt'] article[data-testid='payment-terms-page'] > footer {
+    display: none !important;
+  }
+
+  /* A4 payment-detail grid: proportional columns instead of desktop pixel widths. */
+  [data-testid='payment-receipt'] > article:first-of-type > section:nth-of-type(2) > div > div:nth-child(1),
+  [data-testid='payment-receipt'] > article:first-of-type > section:nth-of-type(2) > div > div:nth-child(2) {
+    grid-template-columns: 7% 18% 42% 11% 22% !important;
+    padding-inline: 4mm !important;
+    column-gap: 0 !important;
+  }
+
+  [data-testid='payment-receipt'] > article:first-of-type > section:nth-of-type(2) > div > div:nth-child(1) {
+    min-height: 10mm !important;
+  }
+
+  [data-testid='payment-receipt'] > article:first-of-type > section:nth-of-type(2) > div > div:nth-child(2) {
+    min-height: 22mm !important;
+    padding-top: 5mm !important;
+    padding-bottom: 4mm !important;
+  }
+
+  /* Keep the totals compact and aligned with the amount column. */
+  [data-testid='payment-receipt'] > article:first-of-type > section:nth-of-type(2) > div > div:nth-child(3) {
+    width: 55% !important;
+    margin-right: 4mm !important;
+    padding-top: 3mm !important;
+    padding-bottom: 2mm !important;
+  }
+
+  [data-testid='payment-receipt'] > article:first-of-type > section:nth-of-type(2) > div > div:nth-child(3) > div {
+    grid-template-columns: minmax(0, 1fr) 36mm !important;
+    gap: 5mm !important;
+    min-height: 5.5mm !important;
+  }
+
+  [data-testid='payment-receipt'] > article:first-of-type > section:nth-of-type(2) > div > div:nth-child(4) {
+    min-height: 15mm !important;
+    padding: 3mm 4mm !important;
+    gap: 6mm !important;
+  }
+
+  /* Refund table: stable official-document proportions and non-breaking rows. */
+  [data-testid='payment-receipt'] article[data-testid='payment-terms-page'] table {
+    width: 100% !important;
+    table-layout: fixed !important;
+    border-collapse: collapse !important;
+    border: 0.25mm solid #cfd6dc !important;
+    border-radius: 0 !important;
+    overflow: visible !important;
+    font-size: 8.5px !important;
+  }
+
+  [data-testid='payment-receipt'] article[data-testid='payment-terms-page'] table th,
+  [data-testid='payment-receipt'] article[data-testid='payment-terms-page'] table td {
+    box-sizing: border-box !important;
+    padding: 2.6mm 3mm !important;
+    border: 0.2mm solid #d8dde3 !important;
+    line-height: 1.35 !important;
+    vertical-align: middle !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  [data-testid='payment-receipt'] article[data-testid='payment-terms-page'] table th:first-child,
+  [data-testid='payment-receipt'] article[data-testid='payment-terms-page'] table td:first-child {
+    width: 74% !important;
+    text-align: left !important;
+  }
+
+  [data-testid='payment-receipt'] article[data-testid='payment-terms-page'] table th:last-child,
+  [data-testid='payment-receipt'] article[data-testid='payment-terms-page'] table td:last-child {
+    width: 26% !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+  }
+
+  [data-testid='payment-receipt'] article[data-testid='payment-terms-page'] table thead {
+    display: table-header-group !important;
+  }
+
+  [data-testid='payment-receipt'] article[data-testid='payment-terms-page'] table tr,
+  [data-testid='payment-receipt'] article[data-testid='payment-terms-page'] table th,
+  [data-testid='payment-receipt'] article[data-testid='payment-terms-page'] table td {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Keep the acceptance block with its own content and away from the page footer zone. */
+  [data-testid='payment-receipt'] article[data-testid='payment-terms-page'] table + p {
+    margin-top: 2.5mm !important;
+  }
+
+  [data-testid='payment-receipt'] article[data-testid='payment-terms-page'] section > div:last-child {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+}
