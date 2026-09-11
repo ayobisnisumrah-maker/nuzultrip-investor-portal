@@ -4,7 +4,6 @@ import { z } from 'zod'
 
 import { defineAction } from '@/server/auth/guards'
 import { writeAudit } from '@/server/audit'
-import { emitBrandRefresh } from '@/server/realtime/brand-refresh'
 import { getServerSupabase } from '@/server/supabase/server'
 
 const companyIdentitySchema = z.object({
@@ -89,7 +88,6 @@ export const saveCompanyProfileIdentity = defineAction({
       })
     }
 
-    await emitBrandRefresh(profileId)
     return { profileId }
   },
 })
