@@ -17,4 +17,21 @@ describe('invoice A4 print layout', () => {
     expect(source).toContain('<FooterRight data={data} />')
     expect(source).toContain('content: none !important')
   })
+
+  it('prints a single repeated logo and keeps payment/refund tables stable on A4', () => {
+    const source = fs.readFileSync(
+      path.join(process.cwd(), 'src/styles/invoice-print-overrides.css'),
+      'utf8',
+    )
+
+    expect(source).toContain("[data-testid='payment-receipt'] > article:first-of-type > footer > :last-child")
+    expect(source).toContain("article[data-testid='payment-terms-page'] > footer")
+    expect(source).toContain('display: none !important')
+    expect(source).toContain('grid-template-columns: 7% 18% 42% 11% 22% !important')
+    expect(source).toContain('grid-template-columns: minmax(0, 1fr) 36mm !important')
+    expect(source).toContain('table-layout: fixed !important')
+    expect(source).toContain('width: 74% !important')
+    expect(source).toContain('width: 26% !important')
+    expect(source).toContain('page-break-inside: avoid !important')
+  })
 })
