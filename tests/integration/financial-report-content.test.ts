@@ -116,6 +116,83 @@ describe('financial report content workflow', () => {
     })
   })
 
+  it('creates the initial generated draft and its figures in one database operation', async () => {
+    await as({ kind: 'authenticated', userId: fixtures.superAdmin.userId }, async (tx) => {
+      const [period] = await tx<{ id: string }[]>`
+        insert into public.financial_periods (
+          period_type, fiscal_year, period_index, starts_on, ends_on, currency
+        ) values ('monthly', 2198, 11, '2198-11-01', '2198-11-30', 'IDR')
+        returning id
+      `
+      if (!period) throw new Error('Failed to create atomic-report period.')
+
+      const [created] = await tx<
+        { report_id: string; version_id: string; line_item_count: number; kpi_count: number }[]
+      >`
+        select report_id, version_id, line_item_count, kpi_count
+        from app.create_financial_report_with_generated_draft(
+          ${period.id},
+          'Laporan otomatis',
+          'Ringkasan otomatis',
+          'investors',
+          'internal',
+          'Tim Keuangan',
+          null,
+          ${tx.json([
+            {
+              statement: 'income',
+              category: 'revenue',
+              line_key: 'gross_revenue',
+              label: 'Pendapatan kotor',
+              amount: 25000000,
+              currency: 'IDR',
+              position: 0,
+              note: 'Dihitung dari invoice periode.',
+            },
+          ])},
+          ${tx.json([
+            {
+              kpi_key: 'invoice_count',
+              label: 'Jumlah invoice',
+              value: 2,
+              unit: 'count',
+              basis: 'derived',
+              position: 0,
+            },
+          ])}
+        )
+      `
+
+      expect(created).toMatchObject({ line_item_count: 1, kpi_count: 1 })
+
+      const [lineCount] = await tx<{ count: number }[]>`
+        select count(*)::integer as count
+        from public.financial_line_items
+        where financial_report_version_id = ${created!.version_id}
+      `
+      const [kpiCount] = await tx<{ count: number }[]>`
+        select count(*)::integer as count
+        from public.financial_kpis
+        where financial_report_version_id = ${created!.version_id}
+      `
+      expect(lineCount?.count).toBe(1)
+      expect(kpiCount?.count).toBe(1)
+    })
+  })
+
+  it('rejects new financial periods whose dates do not match their calendar label', async () => {
+    await as({ kind: 'authenticated', userId: fixtures.superAdmin.userId }, async (tx) => {
+      const rejected = await expectRejected(
+        () => tx`
+          insert into public.financial_periods (
+            period_type, fiscal_year, period_index, starts_on, ends_on, currency
+          ) values ('monthly', 2197, 9, '2197-09-09', '2197-12-09', 'IDR')
+        `,
+      )
+      expect(rejected.code).toBe('23514')
+    })
+  })
+
   it('blocks direct metadata changes after an official report is published', async () => {
     const completedYear = 2000 + (Number.parseInt(fixtures.suffix.slice(0, 2), 16) % 25)
 
