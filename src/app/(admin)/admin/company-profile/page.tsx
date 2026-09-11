@@ -1,8 +1,9 @@
 import type { Metadata } from 'next'
-import { Building2, History, ImageIcon } from 'lucide-react'
+import { Building2, FileText, ImageIcon } from 'lucide-react'
 
 import { CompanyLogoEditor } from '@/features/admin/company-logo-editor'
 import { CompanyProfileIdentityEditor } from '@/features/admin/company-profile-identity-editor'
+import { CompanyProfileVersionEditor } from '@/features/admin/company-profile-version-editor'
 import { adminWithPermission } from '@/server/auth/page-guards'
 import { getServerSupabase } from '@/server/supabase/server'
 import { formatDateTime } from '@/lib/format'
@@ -17,6 +18,31 @@ type BrandLogoSetting = {
   public_url?: string
   original_filename?: string
   updated_at?: string
+}
+
+type ContentBlock = {
+  text?: string
+}
+
+const EMPTY_BLOCKS = {
+  legal_information: '',
+  history: '',
+  vision: '',
+  mission: '',
+  leadership: '',
+  business_overview: '',
+  business_ecosystem: '',
+  strategic_direction: '',
+  milestones: '',
+  achievements: '',
+  statistics: '',
+  contact: '',
+}
+
+function blockText(value: unknown) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return ''
+  const text = (value as ContentBlock).text
+  return typeof text === 'string' ? text : ''
 }
 
 export default async function CompanyProfilePage() {
@@ -51,6 +77,7 @@ export default async function CompanyProfilePage() {
   }
 
   const canUpdate = principal.permissions.has('company_profile.update')
+  const canPublish = principal.permissions.has('company_profile.publish')
   const logo = logoSetting?.value && typeof logoSetting.value === 'object' && !Array.isArray(logoSetting.value)
     ? (logoSetting.value as BrandLogoSetting)
     : null
@@ -59,7 +86,7 @@ export default async function CompanyProfilePage() {
   const { data: versions } = versionIds.length
     ? await supabase
         .from('company_profile_versions')
-        .select('id, company_profile_id, version_number, status, change_note, approved_at, published_at, created_at')
+        .select('id, company_profile_id, version_number, status, change_note, approved_at, published_at, created_at, legal_information, history, vision, mission, leadership, business_overview, business_ecosystem, strategic_direction, milestones, achievements, statistics, contact')
         .in('id', versionIds)
     : { data: [] }
   const versionMap = new Map((versions ?? []).map((item) => [item.id, item]))
@@ -69,7 +96,7 @@ export default async function CompanyProfilePage() {
       <PageHeader
         eyebrow="Perusahaan"
         title="Profil Perusahaan"
-        description="Kelola identitas perusahaan dan logo resmi dari satu tempat. Perubahan identitas dan logo disiarkan ke portal, autentikasi, Admin, Investor, dan metadata browser secara realtime."
+        description="Kelola identitas, logo, dan konten profil perusahaan dari satu tempat. Identitas dan logo tetap menjadi sumber kanonik; konten naratif memakai versi Draf → Ditinjau → Disetujui → Terbit agar perubahan publik dapat diaudit."
       />
 
       <Card>
@@ -137,19 +164,54 @@ export default async function CompanyProfilePage() {
         </CardBody>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <History className="size-5" aria-hidden="true" />
-            Lifecycle profil
-          </CardTitle>
-        </CardHeader>
-        <CardBody>
-          <p className="text-body-sm text-fg-muted">
-            Identitas utama dan logo dapat dikelola langsung dari halaman ini. Konten profil berversi tetap mengikuti mekanisme draft, review, approval, dan publish agar perubahan publik dapat diaudit dan tidak melewati lifecycle publikasi.
-          </p>
-        </CardBody>
-      </Card>
+      {rows.map((profile) => {
+        const current = profile.current_version_id ? versionMap.get(profile.current_version_id) : undefined
+        const published = profile.published_version_id ? versionMap.get(profile.published_version_id) : undefined
+        const blocks = current
+          ? {
+              legal_information: blockText(current.legal_information),
+              history: blockText(current.history),
+              vision: blockText(current.vision),
+              mission: blockText(current.mission),
+              leadership: blockText(current.leadership),
+              business_overview: blockText(current.business_overview),
+              business_ecosystem: blockText(current.business_ecosystem),
+              strategic_direction: blockText(current.strategic_direction),
+              milestones: blockText(current.milestones),
+              achievements: blockText(current.achievements),
+              statistics: blockText(current.statistics),
+              contact: blockText(current.contact),
+            }
+          : EMPTY_BLOCKS
+
+        return (
+          <Card key={`version-${profile.id}`}>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="size-5" aria-hidden="true" />
+                Konten profil berversi · {profile.display_name}
+              </CardTitle>
+            </CardHeader>
+            <CardBody>
+              <CompanyProfileVersionEditor
+                profileId={profile.id}
+                status={profile.status}
+                versionNumber={current?.version_number ?? null}
+                publishedVersionNumber={published?.version_number ?? null}
+                initialBlocks={blocks}
+                canUpdate={canUpdate}
+                canPublish={canPublish}
+              />
+            </CardBody>
+          </Card>
+        )
+      })}
+
+      {!rows.length ? (
+        <Alert tone="info" title="Konten berversi belum tersedia">
+          Simpan identitas perusahaan terlebih dahulu. Setelah profil dibuat, blok legalitas, sejarah, visi, misi, bisnis, pencapaian, statistik, dan kontak dapat dikelola di halaman ini.
+        </Alert>
+      ) : null}
     </Stack>
   )
 }

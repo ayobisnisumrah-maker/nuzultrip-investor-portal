@@ -323,6 +323,13 @@ export type Database = {
         Args: { p_investor_id: string }
         Returns: string[]
       }
+      save_company_profile_draft: {
+        Args: { p_blocks: Json; p_change_note?: string; p_profile_id: string }
+        Returns: {
+          version_id: string
+          version_number: number
+        }[]
+      }
       save_financial_report_draft_content: {
         Args: {
           p_document_asset_id: string
@@ -349,6 +356,19 @@ export type Database = {
       topic_investor: { Args: { p_investor_id: string }; Returns: string }
       topic_portal: { Args: never; Returns: string }
       topic_user: { Args: { p_user_id: string }; Returns: string }
+      transition_company_profile: {
+        Args: {
+          p_profile_id: string
+          p_to_status: Database["public"]["Enums"]["publication_status"]
+        }
+        Returns: {
+          current_version_id: string
+          previous_status: Database["public"]["Enums"]["publication_status"]
+          profile_id: string
+          published_version_id: string
+          status: Database["public"]["Enums"]["publication_status"]
+        }[]
+      }
       transition_document_publication: {
         Args: {
           p_document_id: string
