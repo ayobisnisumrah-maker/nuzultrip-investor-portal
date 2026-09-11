@@ -1,6 +1,7 @@
 -- =============================================================================
 -- Harden inheritance cross-module consistency.
 -- Additive/backward-compatible; no existing business row is rewritten here.
+-- Runs after review-permission unification and keeps approve as lifecycle permission.
 -- =============================================================================
 
 alter table public.ownership_inheritance
@@ -191,7 +192,7 @@ declare
   v_remaining_units integer;
   v_remaining_bps integer;
 begin
-  if not app.has_permission('ownership_inheritance.complete') then
+  if not app.has_permission('ownership_inheritance.approve') then
     raise exception 'Anda tidak memiliki izin untuk menyelesaikan pewarisan kepemilikan.' using errcode='42501';
   end if;
   if not exists (

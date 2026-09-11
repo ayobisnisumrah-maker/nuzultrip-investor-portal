@@ -42,20 +42,15 @@ function revalidateInheritancePages() {
   revalidatePath('/admin/ownership/inheritance')
 }
 
+// Lifecycle audit is written atomically by the database trigger
+// ownership_inheritance_audit_lifecycle. Keeping audit out of the action avoids
+// duplicate audit rows and prevents a post-RPC audit failure from misrepresenting
+// an already-committed ownership mutation.
 export const createInheritanceAction = defineAction({
   access: 'investor',
   input: createSchema,
-  audit: {
-    action: 'ownership_inheritance.create',
-    entityType: 'ownership_inheritance',
-    summary: 'Investor mengajukan pewarisan kepemilikan.',
-  },
-  handler: async ({ supabase, input, audit }) => {
+  handler: async ({ supabase, input }) => {
     const requestId = await createInheritance(supabase, input)
-    audit({
-      entityId: requestId,
-      summary: 'Pengajuan pewarisan kepemilikan berhasil dibuat.',
-    })
     revalidateInheritancePages()
     return { requestId }
   },
@@ -64,17 +59,8 @@ export const createInheritanceAction = defineAction({
 export const cancelInheritanceAction = defineAction({
   access: 'investor',
   input: requestIdSchema,
-  audit: {
-    action: 'ownership_inheritance.cancel',
-    entityType: 'ownership_inheritance',
-    summary: 'Investor membatalkan pengajuan pewarisan kepemilikan.',
-  },
-  handler: async ({ supabase, input, audit }) => {
+  handler: async ({ supabase, input }) => {
     await cancelInheritance(supabase, input.requestId)
-    audit({
-      entityId: input.requestId,
-      summary: 'Pengajuan pewarisan kepemilikan dibatalkan.',
-    })
     revalidateInheritancePages()
     return { requestId: input.requestId }
   },
@@ -83,17 +69,8 @@ export const cancelInheritanceAction = defineAction({
 export const approveInheritanceAction = defineAction({
   access: { permission: 'ownership_inheritance.approve' },
   input: requestIdSchema,
-  audit: {
-    action: 'ownership_inheritance.approve',
-    entityType: 'ownership_inheritance',
-    summary: 'Admin menyetujui pengajuan pewarisan kepemilikan.',
-  },
-  handler: async ({ supabase, input, audit }) => {
+  handler: async ({ supabase, input }) => {
     await approveInheritance(supabase, input.requestId)
-    audit({
-      entityId: input.requestId,
-      summary: 'Pengajuan pewarisan kepemilikan disetujui.',
-    })
     revalidateInheritancePages()
     return { requestId: input.requestId }
   },
@@ -102,17 +79,8 @@ export const approveInheritanceAction = defineAction({
 export const rejectInheritanceAction = defineAction({
   access: { permission: 'ownership_inheritance.approve' },
   input: rejectSchema,
-  audit: {
-    action: 'ownership_inheritance.reject',
-    entityType: 'ownership_inheritance',
-    summary: 'Admin menolak pengajuan pewarisan kepemilikan.',
-  },
-  handler: async ({ supabase, input, audit }) => {
+  handler: async ({ supabase, input }) => {
     await rejectInheritance(supabase, input)
-    audit({
-      entityId: input.requestId,
-      summary: 'Pengajuan pewarisan kepemilikan ditolak.',
-    })
     revalidateInheritancePages()
     return { requestId: input.requestId }
   },
@@ -121,17 +89,8 @@ export const rejectInheritanceAction = defineAction({
 export const completeInheritanceAction = defineAction({
   access: { permission: 'ownership_inheritance.approve' },
   input: completeSchema,
-  audit: {
-    action: 'ownership_inheritance.complete',
-    entityType: 'ownership_inheritance',
-    summary: 'Admin menyelesaikan pewarisan kepemilikan.',
-  },
-  handler: async ({ supabase, input, audit }) => {
+  handler: async ({ supabase, input }) => {
     const beneficiaryHoldingId = await completeInheritance(supabase, input)
-    audit({
-      entityId: input.requestId,
-      summary: `Pewarisan kepemilikan selesai. Holding penerima: ${beneficiaryHoldingId}.`,
-    })
     revalidateInheritancePages()
     return { requestId: input.requestId, beneficiaryHoldingId }
   },
