@@ -47,6 +47,12 @@
     page-break-after: always !important;
   }
 
+  /* Do not force a page after the final explicit terms sheet. */
+  [data-testid='payment-receipt'] [data-testid='payment-terms-preview-page']:last-child {
+    break-after: auto !important;
+    page-break-after: auto !important;
+  }
+
   [data-testid='payment-receipt'] [data-testid='payment-terms-page'] {
     display: none !important;
   }
