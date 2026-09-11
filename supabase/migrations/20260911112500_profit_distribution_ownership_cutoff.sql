@@ -126,6 +126,7 @@ begin
     select
       h.id as holding_id,
       h.investor_id,
+      h.status as holding_status,
       h.ownership_bps
         + coalesce(sum(
             case
@@ -147,7 +148,8 @@ begin
     from historical
     where ownership_bps_at_cutoff > 0
       and (
-        final_transfer_at is null
+        holding_status = 'active'
+        or final_transfer_at is null
         or final_transfer_at >= v_cutoff
       )
   )
@@ -204,6 +206,7 @@ begin
       select
         h.id as holding_id,
         h.investor_id,
+        h.status as holding_status,
         h.ownership_bps
           + coalesce(sum(
               case
@@ -238,7 +241,8 @@ begin
     from historical h
     where h.ownership_bps_at_cutoff > 0
       and (
-        h.final_transfer_at is null
+        h.holding_status = 'active'
+        or h.final_transfer_at is null
         or h.final_transfer_at >= v_cutoff
       )
     order by h.holding_id;
