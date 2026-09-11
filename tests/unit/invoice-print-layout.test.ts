@@ -18,7 +18,7 @@ describe('invoice A4 print layout', () => {
     expect(source).toContain('content: none !important')
   })
 
-  it('renders the browser preview as discrete A4 pages with page X of Y numbering', () => {
+  it('renders the browser preview as discrete A4 pages with automatic page X of Y numbering', () => {
     const source = fs.readFileSync(
       path.join(process.cwd(), 'src/features/admin/financials/PaymentReceipt.tsx'),
       'utf8',
@@ -32,11 +32,26 @@ describe('invoice A4 print layout', () => {
     expect(source).toContain('payment-terms-preview-page')
     expect(source).toContain('Halaman {page} dari {total}')
     expect(source).toContain('node.scrollHeight > node.clientHeight + 1')
+    expect(source).toContain('const totalDocumentPages = 1 + pages.length')
     expect(css).toContain('width: 210mm')
     expect(css).toContain('height: 297mm')
     expect(css).toContain('max-height: 297mm')
     expect(css).toContain('.screenTermsPages')
     expect(css).toContain('.printOnlyTerms')
+  })
+
+  it('keeps preview-only numbering away from the finalized invoice page', () => {
+    const printCss = fs.readFileSync(
+      path.join(process.cwd(), 'src/styles/invoice-print-overrides.css'),
+      'utf8',
+    )
+
+    expect(printCss).toContain('@media screen')
+    expect(printCss).toContain(
+      "[data-testid='payment-receipt'] > article:first-of-type > footer > :last-child > span:first-child",
+    )
+    expect(printCss).toContain('display: contents !important')
+    expect(printCss).toContain('display: none !important')
   })
 
   it('prints one repeated footer logo and stabilizes invoice/refund table layout', () => {
