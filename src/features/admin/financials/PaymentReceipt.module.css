@@ -9,7 +9,7 @@
   width: 210mm;
   min-height: 297mm;
   margin: 0 auto;
-  padding: 14mm 12mm 10mm;
+  padding: 10mm 8mm 8mm;
   box-sizing: border-box;
   background: #fff;
   color: var(--text);
@@ -385,12 +385,12 @@
 
 .footer {
   margin-top: 18px;
-  min-height: 42px;
+  min-height: 36px;
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
   gap: 20px;
-  padding-top: 14px;
+  padding-top: 10px;
   border-top: 1px solid #e1e4e8;
   color: #818a96;
   font-size: 8px;
@@ -400,6 +400,19 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
+}
+.footerMeta {
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  gap: 10px;
+  white-space: nowrap;
+}
+.screenPageIndicator {
+  color: #818a96;
+  font-size: 8px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
 }
 .termsNotice {
   color: #687386;
@@ -431,6 +444,75 @@
 .termsPage {
   position: relative;
 }
+.printOnlyTerms {
+  display: none;
+}
+.screenTermsPages {
+  display: grid;
+  gap: 20px;
+}
+.screenTermsPage {
+  position: relative;
+  width: 210mm;
+  height: 297mm;
+  min-height: 297mm;
+  max-height: 297mm;
+  overflow: hidden;
+}
+.screenTermsContentArea {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  margin-top: 5mm;
+}
+.screenTermsTitleBlock {
+  margin-bottom: 6mm;
+}
+.screenTermsBlocks {
+  display: flex;
+  flex-direction: column;
+  gap: 2mm;
+}
+.termsParagraph {
+  margin: 0;
+  color: #303a42;
+  font-size: 10px;
+  line-height: 1.65;
+  text-align: justify;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.termsHeading {
+  margin-top: 2.5mm;
+  color: #202b33;
+  font-size: 10.5px;
+  line-height: 1.45;
+  font-weight: 800;
+  text-align: center;
+  letter-spacing: 0.1px;
+}
+.termsContinuationHeader {
+  min-height: 15mm;
+  padding-bottom: 5mm;
+  border-bottom: 1px solid #d8dde3;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+.termsContinuationHeader strong {
+  color: #303a42;
+  font-size: 11px;
+}
+.termsContinuationHeader span {
+  color: #707986;
+  font-size: 8px;
+  font-weight: 700;
+}
+.screenTermsFooter {
+  flex: none;
+  margin-top: 4mm;
+}
 .letterhead {
   width: 100%;
   min-height: 42mm;
@@ -447,12 +529,12 @@
   object-position: top center;
 }
 .termsFallbackHeader {
-  min-height: 30mm;
-  padding-bottom: 8mm;
+  min-height: 26mm;
+  padding-bottom: 6mm;
   border-bottom: 1px solid #d8dde3;
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 4px;
 }
 .termsFallbackHeader strong {
   font-size: 15px;
@@ -460,6 +542,7 @@
 .termsFallbackHeader span {
   color: #707986;
   font-size: 9px;
+  line-height: 1.55;
   white-space: pre-line;
 }
 .termsContent {
@@ -494,8 +577,8 @@
   color: #687386;
 }
 .refundTerms {
-  margin-top: 8mm;
-  padding-top: 6mm;
+  margin-top: 7mm;
+  padding-top: 5mm;
   border-top: 1px solid #d8dde3;
   break-inside: avoid;
   page-break-inside: avoid;
@@ -551,7 +634,7 @@
   line-height: 1.55;
 }
 .acceptanceBox {
-  margin-top: 10mm;
+  margin-top: 9mm;
   padding: 14px 16px;
   border: 1px solid #b8c6c1;
   border-radius: 6px;
@@ -581,32 +664,30 @@
   }
   .receipt {
     width: 210mm;
+    height: 297mm;
     min-height: 297mm;
+    max-height: 297mm;
     margin: 0;
+    padding: 10mm 8mm 8mm;
     box-shadow: none;
+    overflow: hidden;
     break-after: auto;
     page-break-after: auto;
   }
-  .termsPage {
+  .screenTermsPages {
+    display: block !important;
+  }
+  .screenTermsPage {
+    display: flex !important;
     break-before: page;
     page-break-before: always;
   }
+  .printOnlyTerms,
   .printPageCounter {
-    display: block;
-    position: fixed;
-    z-index: 50;
-    right: 32mm;
-    bottom: 5mm;
-    color: #818a96;
-    font-family: Inter, Arial, Helvetica, sans-serif;
-    font-size: 8px;
-    line-height: 1;
-  }
-  .printPageCounter::after {
-    content: 'Halaman ' counter(page) ' dari ' counter(pages);
+    display: none !important;
   }
   .footerRight {
-    padding-right: 2mm;
+    padding-right: 0;
   }
 }
 @media screen {
@@ -622,6 +703,16 @@
     width: 100%;
     min-height: auto;
     padding: 24px 18px;
+  }
+  .screenTermsPage {
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    max-height: none;
+    overflow: visible;
+  }
+  .screenTermsContentArea {
+    overflow: visible;
   }
   .customerSection {
     grid-template-columns: 1fr;

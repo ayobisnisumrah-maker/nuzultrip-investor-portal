@@ -32,7 +32,7 @@ const baseData: PaymentReceiptData = {
 }
 
 describe('PaymentReceipt', () => {
-  it('renders a dynamic title, DP icon, due date, terms page, and refund table', () => {
+  it('renders a dynamic title, DP icon, due date, paginated terms page, and refund table', () => {
     render(<PaymentReceipt data={{ ...baseData, discount: 0, tax: 0 }} />)
 
     expect(
@@ -50,22 +50,29 @@ describe('PaymentReceipt', () => {
     expect(
       screen.getByRole('link', { name: 'https://nuzultrip.com/syarat-ketentuan' }),
     ).toHaveAttribute('href', 'https://nuzultrip.com/syarat-ketentuan')
+
     expect(
-      screen.getByRole('heading', { name: 'Syarat & Ketentuan Pemesanan dan Pembayaran' }),
-    ).toBeTruthy()
-    expect(screen.getByAltText('Kop surat Syarat & Ketentuan')).toBeTruthy()
-    expect(screen.getByText(/Pembayaran DP mengikat pemesanan paket/)).toBeTruthy()
-    expect(screen.getByText(/Proses refund maksimal 90 hari kerja/)).toBeTruthy()
+      screen.getAllByRole('heading', { name: 'Syarat & Ketentuan Pemesanan dan Pembayaran' })
+        .length,
+    ).toBeGreaterThan(0)
+    expect(screen.getAllByAltText('Kop surat Syarat & Ketentuan').length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/Pembayaran DP mengikat pemesanan paket/).length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/Proses refund maksimal 90 hari kerja/).length).toBeGreaterThan(0)
     expect(
-      screen.getByRole('columnheader', { name: 'Rentang pembatalan sebelum keberangkatan' }),
-    ).toBeTruthy()
-    expect(screen.getByRole('columnheader', { name: 'Maksimal refund' })).toBeTruthy()
-    expect(screen.getByText('0–6 hari sebelum keberangkatan')).toBeTruthy()
-    expect(screen.getByText('0%')).toBeTruthy()
-    expect(screen.getByText(/Dengan melakukan pembayaran atas invoice ini/)).toBeTruthy()
+      screen.getAllByRole('columnheader', { name: 'Rentang pembatalan sebelum keberangkatan' })
+        .length,
+    ).toBeGreaterThan(0)
+    expect(screen.getAllByRole('columnheader', { name: 'Maksimal refund' }).length).toBeGreaterThan(0)
+    expect(screen.getAllByText('0–6 hari sebelum keberangkatan').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('0%').length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/Dengan melakukan pembayaran atas invoice ini/).length).toBeGreaterThan(
+      0,
+    )
     expect(screen.getByText('Dokumen dibuat otomatis oleh sistem Nuzultrip.')).toBeTruthy()
-    expect(screen.queryByText('Halaman 1 dari 2')).toBeNull()
-    expect(screen.queryByText('Halaman 2 dari 2')).toBeNull()
+
+    // The invoice and every explicit A4 terms page share the same internal footer model.
+    expect(screen.getByText('Halaman 1 dari 2')).toBeTruthy()
+    expect(screen.getByText('Halaman 2 dari 2')).toBeTruthy()
     expect(screen.getAllByText('PT Swarna Dipa Wisata').length).toBeGreaterThan(0)
   })
 
