@@ -52,7 +52,7 @@ describe('profit distribution ownership cutoff', () => {
   it('uses seller ownership at period end when a partial sale completes after the cutoff', async () => {
     const snapshot = await createPublishedFinancialSnapshot({
       suffix: `${fixtures.suffix}-cutoff`,
-      fiscalYear: 2198,
+      fiscalYear: 2188,
       revenue: 1_000_000_000,
       expenses: 100_000_000,
     })
@@ -85,7 +85,7 @@ describe('profit distribution ownership cutoff', () => {
             50,
             1,
             36,
-            '2198-01-01T00:00:00Z',
+            '2188-01-01T00:00:00Z',
             ${fixtures.superAdmin.userId},
             ${fixtures.superAdmin.userId}
           )
@@ -95,7 +95,7 @@ describe('profit distribution ownership cutoff', () => {
         offeringId = offering.id
 
         // This is the seller lot after a one-unit partial sale completed on
-        // 2199-01-15. At the 2198-12-31 cutoff the seller still owned 2 units
+        // 2189-01-15. At the 2188-12-31 cutoff the seller still owned 2 units
         // (160 bps), although the mutable holding now contains only 80 bps.
         const [source] = await tx<{ id: string }[]>`
           insert into public.ownership_holdings (
@@ -114,8 +114,8 @@ describe('profit distribution ownership cutoff', () => {
             ${fixtures.investorA.userId},
             1,
             80,
-            '2198-01-01T00:00:00Z',
-            '2198-01-01T00:00:00Z',
+            '2188-01-01T00:00:00Z',
+            '2188-01-01T00:00:00Z',
             'active',
             ${`CUT-SOURCE-${fixtures.suffix}`},
             ${fixtures.superAdmin.userId},
@@ -143,8 +143,8 @@ describe('profit distribution ownership cutoff', () => {
             ${fixtures.investorB.userId},
             1,
             80,
-            '2199-01-15T00:00:00Z',
-            '2202-01-15T00:00:00Z',
+            '2189-01-15T00:00:00Z',
+            '2192-01-15T00:00:00Z',
             'active',
             ${`SALE-CUTOFF-${fixtures.suffix}`},
             ${fixtures.superAdmin.userId},
@@ -178,16 +178,16 @@ describe('profit distribution ownership cutoff', () => {
             ${fixtures.investorA.userId},
             ${fixtures.investorB.userId},
             1,
-            '2199-01-10T00:00:00Z',
-            '2198-01-01T00:00:00Z',
+            '2189-01-10T00:00:00Z',
+            '2188-01-01T00:00:00Z',
             'completed',
-            '2199-01-11T00:00:00Z',
+            '2189-01-11T00:00:00Z',
             ${fixtures.superAdmin.userId},
-            '2199-01-15T00:00:00Z',
+            '2189-01-15T00:00:00Z',
             'sale',
             100000000,
             100000000,
-            '2199-01-12T00:00:00Z',
+            '2189-01-12T00:00:00Z',
             ${fixtures.superAdmin.userId},
             ${fixtures.superAdmin.userId}
           )
