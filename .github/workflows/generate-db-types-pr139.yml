@@ -1,0 +1,63 @@
+name: Generate DB Types PR139
+
+on:
+  push:
+    branches:
+      - feat/company-profile-version-lifecycle-main
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: feat/company-profile-version-lifecycle-main
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.28.1
+          run_install: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v2
+        with:
+          version: latest
+
+      - name: Start local Supabase
+        run: supabase start
+
+      - name: Reset schema
+        run: supabase db reset
+
+      - name: Generate database types
+        run: pnpm db:types
+
+      - name: Commit generated types and remove helper workflow
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/generate-db-types-pr139.yml
+          git add src/types/database.ts
+          git diff --cached --quiet && exit 0
+          git commit -m "chore(db): regenerate database types"
+          git push origin HEAD:feat/company-profile-version-lifecycle-main
