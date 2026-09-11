@@ -27,9 +27,13 @@ test.afterAll(async () => {
   createdAccounts.length = 0
 })
 
-test('public document request appears in Admin Permintaan Masuk without reload', async ({ browser }) => {
-  const admin = await createAdminAccount({ roleKey: 'super_admin' })
-  createdAccounts.push(admin.userId)
+test('public document request and handler handoff stay synchronized without reload', async ({ browser }) => {
+  const admin = await createAdminAccount({ roleKey: 'super_admin', fullName: 'Admin PIC Pertama' })
+  const secondAdmin = await createAdminAccount({
+    roleKey: 'super_admin',
+    fullName: 'Admin PIC Kedua',
+  })
+  createdAccounts.push(admin.userId, secondAdmin.userId)
 
   const adminContext = await browser.newContext()
   const adminPage = await adminContext.newPage()
@@ -68,17 +72,21 @@ test('public document request appears in Admin Permintaan Masuk without reload',
   await requestListItem.click()
   await expect(adminPage.locator('main')).toContainText(message)
   await expect(adminPage.locator('main')).toContainText('Informasi / dokumen untuk dipelajari')
+  await expect(adminPage.getByTestId('inquiry-handler')).toHaveText('Belum ditugaskan')
+  await expect(adminPage.getByTestId('inquiry-handled-at')).toHaveText('Belum ditindaklanjuti')
 
   const supabase = serviceClient()
   const { data: stored, error } = await supabase
     .from('portal_inquiries')
-    .select('id, status, thread_id, converted_investor_id')
+    .select('id, status, handled_by, handled_at, thread_id, converted_investor_id')
     .eq('email', email)
     .single()
 
   expect(error).toBeNull()
   expect(stored).toMatchObject({
     status: 'new',
+    handled_by: null,
+    handled_at: null,
     thread_id: null,
     converted_investor_id: null,
   })
@@ -86,18 +94,55 @@ test('public document request appears in Admin Permintaan Masuk without reload',
   const statusSelect = adminPage.getByLabel('Status permintaan Pemohon Dokumen E2E')
   await statusSelect.selectOption('in_progress')
   await expect(statusSelect).toHaveValue('in_progress')
+  await expect(adminPage.getByTestId('inquiry-handler')).toHaveText('Anda')
+  await expect(adminPage.getByTestId('inquiry-handled-at')).not.toHaveText('Belum ditindaklanjuti')
 
   await expect
     .poll(async () => {
       const { data } = await supabase
         .from('portal_inquiries')
-        .select('status')
+        .select('status, handled_by, handled_at')
         .eq('id', stored?.id ?? '')
         .single()
-      return data?.status
+      return data
     })
-    .toBe('in_progress')
+    .toMatchObject({ status: 'in_progress', handled_by: admin.userId })
 
+  // Admin kedua mengambil alih status. Browser admin pertama tidak direload;
+  // inquiry.changed harus menyegarkan status, handled_by dan handled_at dari server.
+  const secondAdminContext = await browser.newContext()
+  const secondAdminPage = await secondAdminContext.newPage()
+  await signIn(secondAdminPage, secondAdmin, '/admin')
+  await secondAdminPage.goto('/admin/inquiries')
+  await secondAdminPage.waitForLoadState('networkidle')
+  await waitForRealtime(secondAdminPage)
+
+  const secondRequestListItem = secondAdminPage.getByRole('button').filter({ hasText: email })
+  await expect(secondRequestListItem).toBeVisible()
+  await secondRequestListItem.click()
+  await secondAdminPage
+    .getByLabel('Status permintaan Pemohon Dokumen E2E')
+    .selectOption('closed')
+
+  await expect(adminPage.getByLabel('Status permintaan Pemohon Dokumen E2E')).toHaveValue('closed', {
+    timeout: 30_000,
+  })
+  await expect(adminPage.getByTestId('inquiry-handler')).toHaveText('Admin PIC Kedua', {
+    timeout: 30_000,
+  })
+
+  await expect
+    .poll(async () => {
+      const { data } = await supabase
+        .from('portal_inquiries')
+        .select('status, handled_by')
+        .eq('id', stored?.id ?? '')
+        .single()
+      return data
+    })
+    .toEqual({ status: 'closed', handled_by: secondAdmin.userId })
+
+  await secondAdminContext.close()
   await visitorContext.close()
   await adminContext.close()
 })

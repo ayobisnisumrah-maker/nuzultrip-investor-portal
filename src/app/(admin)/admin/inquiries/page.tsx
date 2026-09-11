@@ -22,7 +22,9 @@ export default async function InquiriesPage() {
   const supabase = await getServerSupabase()
   const { data: inquiries, error } = await supabase
     .from('portal_inquiries')
-    .select('id, name, email, phone, organization, message, status, created_at')
+    .select(
+      'id, name, email, phone, organization, message, status, handled_by, handled_at, created_at',
+    )
     .order('created_at', { ascending: false })
     .limit(100)
 
@@ -32,6 +34,26 @@ export default async function InquiriesPage() {
         Data permintaan masuk gagal diambil. Silakan coba lagi.
       </Alert>
     )
+  }
+
+  const handlerLabels: Record<string, string> = {}
+  const handlerIds = Array.from(
+    new Set((inquiries ?? []).map((inquiry) => inquiry.handled_by).filter(Boolean)),
+  ) as string[]
+
+  // Nama PIC hanya dibuka kepada admin yang memang boleh melihat direktori admin.
+  // Admin Hubungan Investor tanpa admins.view tetap mendapat konteks penanganan
+  // tanpa memperluas hak akses identitas staf.
+  if (handlerIds.length > 0 && principal.permissions.has('admins.view')) {
+    const { data: handlers } = await supabase
+      .from('user_accounts')
+      .select('id, full_name')
+      .eq('account_type', 'admin')
+      .in('id', handlerIds)
+
+    for (const handler of handlers ?? []) {
+      handlerLabels[handler.id] = handler.full_name
+    }
   }
 
   return (
@@ -54,6 +76,8 @@ export default async function InquiriesPage() {
       <InquiryWorkbench
         inquiries={inquiries ?? []}
         canHandle={principal.permissions.has('inquiries.handle')}
+        currentAdminId={principal.userId}
+        handlerLabels={handlerLabels}
         timezone={principal.timezone}
       />
     </div>
