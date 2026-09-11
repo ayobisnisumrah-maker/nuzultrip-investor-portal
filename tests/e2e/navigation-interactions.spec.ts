@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Page, type Response } from '@playwright/test'
 
 import {
   clearRateLimits,
@@ -86,6 +86,29 @@ async function collectDashboardLinks(page: Page, scope: DashboardScope): Promise
   ]
 }
 
+async function gotoDashboardPath(page: Page, pathname: string): Promise<Response | null> {
+  const maxAttempts = 3
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    try {
+      return await page.goto(pathname, { waitUntil: 'domcontentloaded' })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      const interrupted = /navigation.+interrupted by another navigation/i.test(message)
+
+      if (!interrupted || attempt === maxAttempts) throw error
+
+      // WebKit can surface an App Router hydration/refresh navigation as a
+      // competing navigation. Let that navigation settle, then retry the exact
+      // path. Redirects are not accepted here: the caller still validates that
+      // the final pathname exactly matches the requested pathname.
+      await page.waitForLoadState('domcontentloaded').catch(() => undefined)
+    }
+  }
+
+  return null
+}
+
 async function crawlDashboard(page: Page, scope: DashboardScope): Promise<string[]> {
   const pending: string[] = [scope]
   const visited = new Set<string>()
@@ -96,7 +119,7 @@ async function crawlDashboard(page: Page, scope: DashboardScope): Promise<string
     if (visited.has(pathname)) continue
     visited.add(pathname)
 
-    const response = await page.goto(pathname, { waitUntil: 'domcontentloaded' })
+    const response = await gotoDashboardPath(page, pathname)
     const status = response?.status() ?? 0
     const finalPath = new URL(page.url()).pathname
 
