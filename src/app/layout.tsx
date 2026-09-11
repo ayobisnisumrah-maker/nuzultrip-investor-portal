@@ -7,6 +7,7 @@ import '@/styles/public-portal-rounded.css'
 import '@/styles/public-portal-hero-title.css'
 import '@/styles/public-portal-functional.css'
 import '@/styles/global-typography.css'
+import '@/styles/invoice-print-overrides.css'
 
 import { getClientEnv } from '@/lib/env'
 import { getPublicBrandLogo } from '@/server/portal/public-branding'
