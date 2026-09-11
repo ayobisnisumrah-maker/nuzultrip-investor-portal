@@ -10,7 +10,12 @@ export type E2EFinancialSnapshot = {
 
 function fiscalYearFromToken(token: string): number {
   const numeric = Number.parseInt(token.slice(0, 8), 16)
-  return 3000 + (Number.isFinite(numeric) ? numeric % 6000 : Math.floor(Math.random() * 6000))
+  const offset = Number.isFinite(numeric) ? numeric % 100 : Math.floor(Math.random() * 100)
+
+  // financial_periods_year_sane constrains fiscal_year to 2000..2200.
+  // Keep E2E fixtures in a valid future-only band that does not overlap normal
+  // application data while retaining enough entropy to avoid parallel collisions.
+  return 2101 + offset
 }
 
 export async function createPublishedFinancialSnapshot({
