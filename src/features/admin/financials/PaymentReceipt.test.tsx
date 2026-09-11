@@ -32,7 +32,7 @@ const baseData: PaymentReceiptData = {
 }
 
 describe('PaymentReceipt', () => {
-  it('renders a dynamic title, DP icon, due date, terms page, and refund table', () => {
+  it('renders a dynamic title, DP icon, due date, paginated terms page, and refund table', () => {
     render(<PaymentReceipt data={{ ...baseData, discount: 0, tax: 0 }} />)
 
     expect(
@@ -51,8 +51,6 @@ describe('PaymentReceipt', () => {
       screen.getByRole('link', { name: 'https://nuzultrip.com/syarat-ketentuan' }),
     ).toHaveAttribute('href', 'https://nuzultrip.com/syarat-ketentuan')
 
-    // The terms content is rendered once for the paginated browser preview and once for
-    // the print-only document. Both copies must stay semantically equivalent.
     expect(
       screen.getAllByRole('heading', { name: 'Syarat & Ketentuan Pemesanan dan Pembayaran' })
         .length,
@@ -70,11 +68,10 @@ describe('PaymentReceipt', () => {
     expect(screen.getAllByText(/Dengan melakukan pembayaran atas invoice ini/).length).toBeGreaterThan(
       0,
     )
-    expect(screen.getAllByText('Dokumen dibuat otomatis oleh sistem Nuzultrip.').length).toBeGreaterThan(
-      0,
-    )
-    // The finalized invoice page itself does not receive a preview page label. Terms pages do.
-    expect(screen.queryByText('Halaman 1 dari 2')).toBeNull()
+    expect(screen.getByText('Dokumen dibuat otomatis oleh sistem Nuzultrip.')).toBeTruthy()
+
+    // The invoice and every explicit A4 terms page share the same internal footer model.
+    expect(screen.getByText('Halaman 1 dari 2')).toBeTruthy()
     expect(screen.getByText('Halaman 2 dari 2')).toBeTruthy()
     expect(screen.getAllByText('PT Swarna Dipa Wisata').length).toBeGreaterThan(0)
   })
