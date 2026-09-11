@@ -27,7 +27,9 @@ test.afterAll(async () => {
   createdAccounts.length = 0
 })
 
-test('public document request and handler handoff stay synchronized without reload', async ({ browser }) => {
+test('public request, handler handoff, and activity timeline stay synchronized without reload', async ({
+  browser,
+}) => {
   const admin = await createAdminAccount({ roleKey: 'super_admin', fullName: 'Admin PIC Pertama' })
   const secondAdmin = await createAdminAccount({
     roleKey: 'super_admin',
@@ -65,8 +67,6 @@ test('public document request and handler handoff stay synchronized without relo
     timeout: 30_000,
   })
 
-  // Browser Admin tidak direload atau dinavigasi setelah inquiry dikirim.
-  // Munculnya item unik ini membuktikan event inquiry.received memicu refresh server snapshot.
   const requestListItem = adminPage.getByRole('button').filter({ hasText: email })
   await expect(requestListItem).toBeVisible({ timeout: 30_000 })
   await requestListItem.click()
@@ -74,6 +74,7 @@ test('public document request and handler handoff stay synchronized without relo
   await expect(adminPage.locator('main')).toContainText('Informasi / dokumen untuk dipelajari')
   await expect(adminPage.getByTestId('inquiry-handler')).toHaveText('Belum ditugaskan')
   await expect(adminPage.getByTestId('inquiry-handled-at')).toHaveText('Belum ditindaklanjuti')
+  await expect(adminPage.getByTestId('inquiry-activity')).toContainText('Belum ada perubahan status tercatat.')
 
   const supabase = serviceClient()
   const { data: stored, error } = await supabase
@@ -96,6 +97,10 @@ test('public document request and handler handoff stay synchronized without relo
   await expect(statusSelect).toHaveValue('in_progress')
   await expect(adminPage.getByTestId('inquiry-handler')).toHaveText('Anda')
   await expect(adminPage.getByTestId('inquiry-handled-at')).not.toHaveText('Belum ditindaklanjuti')
+  await expect(adminPage.getByTestId('inquiry-activity')).toContainText('Baru → Diproses', {
+    timeout: 30_000,
+  })
+  await expect(adminPage.getByTestId('inquiry-activity')).toContainText('oleh Anda')
 
   await expect
     .poll(async () => {
@@ -108,8 +113,6 @@ test('public document request and handler handoff stay synchronized without relo
     })
     .toMatchObject({ status: 'in_progress', handled_by: admin.userId })
 
-  // Admin kedua mengambil alih status. Browser admin pertama tidak direload;
-  // inquiry.changed harus menyegarkan status, handled_by dan handled_at dari server.
   const secondAdminContext = await browser.newContext()
   const secondAdminPage = await secondAdminContext.newPage()
   await signIn(secondAdminPage, secondAdmin, '/admin')
@@ -130,6 +133,13 @@ test('public document request and handler handoff stay synchronized without relo
   await expect(adminPage.getByTestId('inquiry-handler')).toHaveText('Admin PIC Kedua', {
     timeout: 30_000,
   })
+  await expect(adminPage.getByTestId('inquiry-activity')).toContainText('Diproses → Selesai', {
+    timeout: 30_000,
+  })
+  await expect(adminPage.getByTestId('inquiry-activity')).toContainText('oleh Admin PIC Kedua', {
+    timeout: 30_000,
+  })
+  await expect(adminPage.getByTestId('inquiry-activity')).toContainText('2 aktivitas')
 
   await expect
     .poll(async () => {
