@@ -17,7 +17,7 @@ create or replace function app.regenerate_profit_distribution_allocations(
 )
 returns setof public.profit_distribution_allocations
 language plpgsql
-security invoker
+security definer
 set search_path = ''
 as $$
 declare
