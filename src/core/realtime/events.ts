@@ -86,9 +86,15 @@ export const TOPIC_EVENTS: Readonly<Record<string, readonly EventKind[]>> = {
     'portal.theme_updated',
     'portal.navigation_updated',
     'document.published',
+    // A published public document can become internal/restricted/archived.
+    // Public clients must refetch immediately so stale access disappears.
+    'document.state_changed',
   ],
   'investors:all': [
     'document.published',
+    // Visibility/status changes can both add and remove a document from the
+    // investor-visible result set. The event only triggers an RLS-guarded refetch.
+    'document.state_changed',
     'financial_report.published',
     'finance.cashflow_changed',
     'portal.theme_updated',
@@ -121,6 +127,9 @@ export function eventsForTopic(topic: string): readonly EventKind[] {
       'profit_distribution.changed',
       'message.received',
       'document.published',
+      // Includes visibility changes such as investors -> internal and lifecycle
+      // changes such as published -> archived.
+      'document.state_changed',
       'portal.theme_updated',
     ]
   }
