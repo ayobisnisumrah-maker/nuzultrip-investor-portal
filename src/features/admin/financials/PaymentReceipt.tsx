@@ -103,9 +103,88 @@ export function PaymentReceipt({ data }: { data: PaymentReceiptData }) {
   const termsLink = safeTermsLink(data.termsLink)
   const refundPolicy = parseRefundPolicyLines(data.refundPolicyLines)
 
+  const printLayoutCss = `
+    @page {
+      size: A4 portrait;
+      margin: 12mm 12mm 16mm;
+      @bottom-right {
+        content: 'Halaman ' counter(page) ' dari ' counter(pages);
+        color: #818a96;
+        font-family: Inter, Arial, Helvetica, sans-serif;
+        font-size: 8px;
+        line-height: 1;
+        vertical-align: middle;
+      }
+    }
+
+    @media print {
+      .${styles.document} {
+        display: block !important;
+      }
+
+      .${styles.receipt} {
+        width: 186mm !important;
+        min-height: 269mm !important;
+        margin: 0 !important;
+        padding: 2mm 0 0 !important;
+        box-sizing: border-box !important;
+        box-shadow: none !important;
+      }
+
+      .${styles.termsPage} {
+        break-before: page !important;
+        page-break-before: always !important;
+      }
+
+      .${styles.printPageCounter} {
+        display: flex !important;
+        position: fixed !important;
+        z-index: 50 !important;
+        right: 45mm !important;
+        bottom: 4mm !important;
+        width: 24mm !important;
+        min-height: 7mm !important;
+        align-items: center !important;
+        justify-content: flex-end !important;
+        color: #818a96 !important;
+      }
+
+      .${styles.printPageCounter}::after {
+        content: none !important;
+      }
+
+      .${styles.printPageCounter} .${styles.footerRight} {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: flex-end !important;
+        gap: 0 !important;
+        padding: 0 !important;
+      }
+
+      .${styles.printPageCounter} .${styles.footerLogo} {
+        width: auto !important;
+        max-width: 22mm !important;
+        height: 7mm !important;
+        object-fit: contain !important;
+        object-position: right center !important;
+      }
+
+      .${styles.printPageCounter} .${styles.footerBrand} {
+        font-size: 8px !important;
+      }
+
+      .${styles.footerRight} {
+        padding-right: 0 !important;
+      }
+    }
+  `
+
   return (
     <div className={styles.document} data-testid="payment-receipt">
-      <div className={styles.printPageCounter} aria-hidden="true" />
+      <style>{printLayoutCss}</style>
+      <div className={styles.printPageCounter} aria-hidden="true">
+        <FooterRight data={data} />
+      </div>
 
       <article className={styles.receipt}>
         <header className={styles.header}>
