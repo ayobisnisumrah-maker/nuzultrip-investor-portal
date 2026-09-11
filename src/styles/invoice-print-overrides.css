@@ -123,3 +123,18 @@
     page-break-inside: avoid !important;
   }
 }
+
+@media screen {
+  /*
+   * The invoice itself is final. Dynamic preview numbering belongs only to
+   * the Terms & Conditions pages, so preserve the existing invoice footer
+   * appearance and hide the preview-only counter on page 1.
+   */
+  [data-testid='payment-receipt'] > article:first-of-type > footer > :last-child {
+    display: contents !important;
+  }
+
+  [data-testid='payment-receipt'] > article:first-of-type > footer > :last-child > span:first-child {
+    display: none !important;
+  }
+}
