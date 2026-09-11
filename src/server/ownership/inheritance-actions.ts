@@ -3,7 +3,6 @@
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 
-import type { Permission } from '@/core/rbac/permissions'
 import { defineAction } from '@/server/auth/guards'
 import {
   approveInheritance,
@@ -101,7 +100,7 @@ export const approveInheritanceAction = defineAction({
 })
 
 export const rejectInheritanceAction = defineAction({
-  access: { permission: 'ownership_inheritance.reject' as Permission },
+  access: { permission: 'ownership_inheritance.approve' },
   input: rejectSchema,
   audit: {
     action: 'ownership_inheritance.reject',
@@ -120,7 +119,7 @@ export const rejectInheritanceAction = defineAction({
 })
 
 export const completeInheritanceAction = defineAction({
-  access: { permission: 'ownership_inheritance.complete' as Permission },
+  access: { permission: 'ownership_inheritance.approve' },
   input: completeSchema,
   audit: {
     action: 'ownership_inheritance.complete',
