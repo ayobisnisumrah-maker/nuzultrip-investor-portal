@@ -56,6 +56,46 @@ export default async function InquiriesPage() {
     }
   }
 
+  const activitiesByInquiry: Record<
+    string,
+    Array<{
+      id: string
+      actorLabel: string
+      changes: unknown
+      createdAt: string
+    }>
+  > = {}
+
+  const inquiryIds = (inquiries ?? []).map((inquiry) => inquiry.id)
+  if (inquiryIds.length > 0 && principal.permissions.has('audit_logs.view')) {
+    const { data: activityRows } = await supabase
+      .from('audit_logs')
+      .select('id, entity_id, actor_id, actor_label, changes, created_at')
+      .eq('entity_type', 'portal_inquiry')
+      .eq('action', 'inquiry.status_changed')
+      .in('entity_id', inquiryIds)
+      .order('created_at', { ascending: false })
+      .limit(300)
+
+    for (const row of activityRows ?? []) {
+      if (!row.entity_id) continue
+      const actorLabel =
+        row.actor_id === principal.userId
+          ? 'Anda'
+          : principal.permissions.has('admins.view')
+            ? row.actor_label || 'Staf internal'
+            : 'Staf internal'
+
+      activitiesByInquiry[row.entity_id] ??= []
+      activitiesByInquiry[row.entity_id]?.push({
+        id: row.id,
+        actorLabel,
+        changes: row.changes,
+        createdAt: row.created_at,
+      })
+    }
+  }
+
   return (
     <div className="space-y-6">
       <RealtimeRefresher
@@ -76,8 +116,10 @@ export default async function InquiriesPage() {
       <InquiryWorkbench
         inquiries={inquiries ?? []}
         canHandle={principal.permissions.has('inquiries.handle')}
+        canViewActivity={principal.permissions.has('audit_logs.view')}
         currentAdminId={principal.userId}
         handlerLabels={handlerLabels}
+        activitiesByInquiry={activitiesByInquiry}
         timezone={principal.timezone}
       />
     </div>

@@ -23,6 +23,13 @@ type Inquiry = {
   created_at: string
 }
 
+type InquiryActivity = {
+  id: string
+  actorLabel: string
+  changes: unknown
+  createdAt: string
+}
+
 const STATUS_LABELS: Record<InquiryStatus, string> = {
   new: 'Baru',
   in_progress: 'Diproses',
@@ -48,17 +55,38 @@ function formatReceivedAt(value: string, timezone: string) {
   }
 }
 
+function activityStatus(activity: InquiryActivity) {
+  if (!activity.changes || typeof activity.changes !== 'object' || Array.isArray(activity.changes)) {
+    return null
+  }
+
+  const status = (activity.changes as Record<string, unknown>)['status']
+  if (!status || typeof status !== 'object' || Array.isArray(status)) return null
+
+  const before = (status as Record<string, unknown>)['before']
+  const after = (status as Record<string, unknown>)['after']
+  if (typeof before !== 'string' || typeof after !== 'string') return null
+
+  const beforeLabel = STATUS_LABELS[before as InquiryStatus] ?? before
+  const afterLabel = STATUS_LABELS[after as InquiryStatus] ?? after
+  return `${beforeLabel} → ${afterLabel}`
+}
+
 export function InquiryWorkbench({
   inquiries,
   canHandle,
+  canViewActivity,
   currentAdminId,
   handlerLabels,
+  activitiesByInquiry,
   timezone,
 }: {
   inquiries: Inquiry[]
   canHandle: boolean
+  canViewActivity: boolean
   currentAdminId: string
   handlerLabels: Record<string, string>
+  activitiesByInquiry: Record<string, InquiryActivity[]>
   timezone: string
 }) {
   const router = useRouter()
@@ -71,6 +99,7 @@ export function InquiryWorkbench({
 
   const selectedInquiry =
     inquiries.find((inquiry) => inquiry.id === selectedInquiryId) ?? inquiries[0] ?? null
+  const selectedActivities = selectedInquiry ? (activitiesByInquiry[selectedInquiry.id] ?? []) : []
 
   function handlerLabel(inquiry: Inquiry) {
     if (!inquiry.handled_by) return 'Belum ditugaskan'
@@ -260,6 +289,43 @@ export function InquiryWorkbench({
                 ) : (
                   <p className="text-caption text-fg-subtle mt-6">Akses baca saja.</p>
                 )}
+
+                {canViewActivity ? (
+                  <div className="border-border mt-6 border-t pt-5" data-testid="inquiry-activity">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-body-sm text-fg font-semibold">Riwayat aktivitas</p>
+                        <p className="text-caption text-fg-muted mt-1">
+                          Perubahan status tercatat otomatis dari audit log dan tidak dapat diubah.
+                        </p>
+                      </div>
+                      <span className="text-caption text-fg-subtle">{selectedActivities.length} aktivitas</span>
+                    </div>
+
+                    {selectedActivities.length > 0 ? (
+                      <ol className="mt-4 space-y-3">
+                        {selectedActivities.map((activity) => (
+                          <li
+                            key={activity.id}
+                            className="border-border bg-surface-muted/35 rounded-xl border px-4 py-3"
+                          >
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <span className="text-body-sm text-fg font-medium">
+                                {activityStatus(activity) ?? 'Status diperbarui'}
+                              </span>
+                              <time className="text-caption text-fg-subtle" dateTime={activity.createdAt}>
+                                {formatReceivedAt(activity.createdAt, timezone)}
+                              </time>
+                            </div>
+                            <p className="text-caption text-fg-muted mt-1">oleh {activity.actorLabel}</p>
+                          </li>
+                        ))}
+                      </ol>
+                    ) : (
+                      <p className="text-body-sm text-fg-muted mt-4">Belum ada perubahan status tercatat.</p>
+                    )}
+                  </div>
+                ) : null}
               </div>
             ) : null}
           </section>
