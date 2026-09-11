@@ -18,6 +18,8 @@ type Inquiry = {
   organization: string | null
   message: string
   status: InquiryStatus
+  handled_by: string | null
+  handled_at: string | null
   created_at: string
 }
 
@@ -49,10 +51,14 @@ function formatReceivedAt(value: string, timezone: string) {
 export function InquiryWorkbench({
   inquiries,
   canHandle,
+  currentAdminId,
+  handlerLabels,
   timezone,
 }: {
   inquiries: Inquiry[]
   canHandle: boolean
+  currentAdminId: string
+  handlerLabels: Record<string, string>
   timezone: string
 }) {
   const router = useRouter()
@@ -65,6 +71,12 @@ export function InquiryWorkbench({
 
   const selectedInquiry =
     inquiries.find((inquiry) => inquiry.id === selectedInquiryId) ?? inquiries[0] ?? null
+
+  function handlerLabel(inquiry: Inquiry) {
+    if (!inquiry.handled_by) return 'Belum ditugaskan'
+    if (inquiry.handled_by === currentAdminId) return 'Anda'
+    return handlerLabels[inquiry.handled_by] ?? 'Staf internal'
+  }
 
   function changeStatus(inquiryId: string, status: EditableInquiryStatus) {
     if (pending) return
@@ -193,16 +205,30 @@ export function InquiryWorkbench({
                       {selectedInquiry.organization || 'Tidak dicantumkan'}
                     </dd>
                   </div>
-                  <div className="border-border p-4 sm:border-r">
+                  <div className="border-border border-b p-4 sm:border-r">
                     <dt className="text-caption text-fg-subtle">Diterima</dt>
                     <dd className="text-body-sm text-fg mt-1 font-medium">
                       {formatReceivedAt(selectedInquiry.created_at, timezone)}
                     </dd>
                   </div>
-                  <div className="p-4">
+                  <div className="border-border border-b p-4">
                     <dt className="text-caption text-fg-subtle">Jenis permintaan</dt>
                     <dd className="text-body-sm text-fg mt-1 font-medium">
                       Informasi / dokumen untuk dipelajari
+                    </dd>
+                  </div>
+                  <div className="border-border border-b p-4 sm:border-r sm:border-b-0">
+                    <dt className="text-caption text-fg-subtle">PIC terakhir</dt>
+                    <dd className="text-body-sm text-fg mt-1 font-medium" data-testid="inquiry-handler">
+                      {handlerLabel(selectedInquiry)}
+                    </dd>
+                  </div>
+                  <div className="p-4">
+                    <dt className="text-caption text-fg-subtle">Terakhir ditangani</dt>
+                    <dd className="text-body-sm text-fg mt-1 font-medium" data-testid="inquiry-handled-at">
+                      {selectedInquiry.handled_at
+                        ? formatReceivedAt(selectedInquiry.handled_at, timezone)
+                        : 'Belum ditindaklanjuti'}
                     </dd>
                   </div>
                 </dl>
