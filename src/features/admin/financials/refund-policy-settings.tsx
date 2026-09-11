@@ -11,7 +11,8 @@ import { updateFinancePolicySettings } from '@/server/financials/policy-actions'
 import { Alert } from '@/ui/alert'
 import { Button } from '@/ui/button'
 import { Card, CardBody } from '@/ui/card'
-import { Input, Textarea } from '@/ui/input'
+import { Input } from '@/ui/input'
+import { TermsEditor } from './terms-editor'
 
 type Props = {
   termsBody: string
@@ -124,16 +125,13 @@ export function RefundPolicySettings({ termsBody, refundPolicy }: Props) {
         >
           <section className="grid gap-3">
             <div>
-              <h3 className="font-semibold">Halaman 2 — Syarat & Ketentuan</h3>
+              <h3 className="font-semibold">Halaman 2 dan seterusnya — Syarat & Ketentuan</h3>
               <p className="text-caption text-fg-muted mt-1">
-                Isi berikut dicetak langsung sebagai halaman kedua PDF invoice. Pembayaran pelanggan
-                menjadi bukti persetujuan atas syarat yang tercantum pada snapshot invoice tersebut.
+                Gunakan mode besar untuk membaca dokumen panjang. Pratinjau membedakan judul/PASAL
+                dari isi agar struktur dokumen lebih mudah diperiksa sebelum disimpan.
               </p>
             </div>
-            <label className="text-body-sm grid gap-1.5">
-              <span>Isi syarat & ketentuan</span>
-              <Textarea name="termsBody" defaultValue={termsBody} rows={12} maxLength={20_000} />
-            </label>
+            <TermsEditor defaultValue={termsBody} />
           </section>
 
           <section className="grid gap-4">
