@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
-import { asCommitted, cleanup, closeDb } from './helpers/db'
+import { asCommitted, cleanup, closeDb, db } from './helpers/db'
 import { createFixtures, destroyFixtures, type Fixtures } from './helpers/fixtures'
 import {
   createPublishedFinancialSnapshot,
@@ -58,7 +58,7 @@ describe('profit distribution ownership cutoff', () => {
     })
     financialSnapshot = snapshot
 
-    const result = await asCommitted(
+    const ownership = await asCommitted(
       { kind: 'authenticated', userId: fixtures.superAdmin.userId },
       async (tx) => {
         const [offering] = await tx<{ id: string }[]>`
@@ -155,51 +155,60 @@ describe('profit distribution ownership cutoff', () => {
         if (!buyer) throw new Error('Failed to create buyer holding.')
         buyerHoldingId = buyer.id
 
-        const [transfer] = await tx<{ id: string }[]>`
-          insert into public.ownership_transfers (
-            holding_id,
-            from_investor_id,
-            to_investor_id,
-            units,
-            requested_at,
-            eligible_at,
-            status,
-            approved_at,
-            approved_by,
-            completed_at,
-            transfer_kind,
-            requested_unit_price,
-            agreed_unit_price,
-            processing_at,
-            processing_by,
-            completed_by
-          ) values (
-            ${source.id},
-            ${fixtures.investorA.userId},
-            ${fixtures.investorB.userId},
-            1,
-            '2189-01-10T00:00:00Z',
-            '2188-01-01T00:00:00Z',
-            'completed',
-            '2189-01-11T00:00:00Z',
-            ${fixtures.superAdmin.userId},
-            '2189-01-15T00:00:00Z',
-            'sale',
-            100000000,
-            100000000,
-            '2189-01-12T00:00:00Z',
-            ${fixtures.superAdmin.userId},
-            ${fixtures.superAdmin.userId}
-          )
-          returning id
-        `
-        if (!transfer) throw new Error('Failed to create completed transfer history.')
-        transferId = transfer.id
+        return { offeringId: offering.id, sourceHoldingId: source.id }
+      },
+    )
 
+    // The row below is historical test-fixture state, not an application write.
+    // Production transfer creation remains behind the share-sale workflow/RLS.
+    const [transfer] = await db()<{ id: string }[]>`
+      insert into public.ownership_transfers (
+        holding_id,
+        from_investor_id,
+        to_investor_id,
+        units,
+        requested_at,
+        eligible_at,
+        status,
+        approved_at,
+        approved_by,
+        completed_at,
+        transfer_kind,
+        requested_unit_price,
+        agreed_unit_price,
+        processing_at,
+        processing_by,
+        completed_by
+      ) values (
+        ${ownership.sourceHoldingId},
+        ${fixtures.investorA.userId},
+        ${fixtures.investorB.userId},
+        1,
+        '2189-01-10T00:00:00Z',
+        '2188-01-01T00:00:00Z',
+        'completed',
+        '2189-01-11T00:00:00Z',
+        ${fixtures.superAdmin.userId},
+        '2189-01-15T00:00:00Z',
+        'sale',
+        100000000,
+        100000000,
+        '2189-01-12T00:00:00Z',
+        ${fixtures.superAdmin.userId},
+        ${fixtures.superAdmin.userId}
+      )
+      returning id
+    `
+    if (!transfer) throw new Error('Failed to create completed transfer history.')
+    transferId = transfer.id
+
+    const result = await asCommitted(
+      { kind: 'authenticated', userId: fixtures.superAdmin.userId },
+      async (tx) => {
         const [distribution] = await tx<{ id: string }[]>`
           select id
           from app.create_profit_distribution(
-            ${offering.id},
+            ${ownership.offeringId},
             ${snapshot.versionId},
             6000,
             4000,
