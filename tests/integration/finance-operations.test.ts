@@ -1,9 +1,35 @@
 // @vitest-environment node
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { as, asCommitted, cleanup, closeDb, expectRejected } from './helpers/db'
+import {
+  as,
+  asCommitted,
+  cleanup,
+  closeDb,
+  db,
+  expectRejected,
+} from './helpers/db'
 import { createFixtures, destroyFixtures, type Fixtures } from './helpers/fixtures'
 
 let fixtures: Fixtures
+
+async function createPaymentProof(filename: string) {
+  const [proof] = await db()<[{ id: string }]>`
+    insert into public.media_assets(
+      bucket,path,original_filename,mime_type,byte_size,visibility,finalized_at
+    ) values (
+      'financial-documents',
+      ${`tests/${fixtures.suffix}/${filename}`},
+      ${filename},
+      'application/pdf',
+      1,
+      'restricted',
+      now()
+    ) returning id
+  `
+  if (!proof) throw new Error('Bukti pembayaran uji gagal dibuat.')
+  return proof.id
+}
+
 beforeAll(async () => {
   fixtures = await createFixtures()
 })
@@ -14,63 +40,59 @@ afterAll(async () => {
 
 describe('finance operations lifecycle', () => {
   it('calculates pax sales, reconciled payment, and refund atomically', async () => {
-    await as({ kind: 'authenticated', userId: fixtures.superAdmin.userId }, async (tx) => {
-      const [invoice] = await tx<{ id: string }[]>`
-        select app.create_finance_invoice(
-          'Pelanggan Uji', 'qa@nuzultrip.invalid', '', '', current_date + 7, '',
-          ${tx.json([{ product_id: null, product_code: 'QA-PAX', name: 'Paket Uji', description: '', quantity: 2, unit_label: 'pax', unit_price: 100000, discount_amount: 10000, tax_rate: 0, position: 0 }])}
-        ) as id
-      `
-      if (!invoice) throw new Error('Invoice was not created.')
-      await tx`select app.issue_finance_invoice(${invoice.id})`
-      const [payment] = await tx<{ id: string }[]>`
-        select app.record_finance_payment(${invoice.id}, 190000, 'transfer', now(), 'QA', '', ${`QA-${fixtures.suffix}`}) as id
-      `
-      if (!payment) throw new Error('Payment was not created.')
+    const proofAssetId = await createPaymentProof('payment-proof-1.pdf')
+    try {
+      await as({ kind: 'authenticated', userId: fixtures.superAdmin.userId }, async (tx) => {
+        const [invoice] = await tx<{ id: string }[]>`
+          select app.create_finance_invoice(
+            'Pelanggan Uji', 'qa@nuzultrip.invalid', '', '', current_date + 7, '',
+            ${tx.json([{ product_id: null, product_code: 'QA-PAX', name: 'Paket Uji', description: '', quantity: 2, unit_label: 'pax', unit_price: 100000, discount_amount: 10000, tax_rate: 0, position: 0 }])}
+          ) as id
+        `
+        if (!invoice) throw new Error('Invoice was not created.')
+        await tx`select app.issue_finance_invoice(${invoice.id})`
+        const [payment] = await tx<{ id: string }[]>`
+          select app.record_finance_payment(${invoice.id}, 190000, 'transfer', now(), 'QA', '', ${`QA-${fixtures.suffix}`}) as id
+        `
+        if (!payment) throw new Error('Payment was not created.')
 
-      const [proof] = await tx<{ id: string }[]>`
-        insert into public.media_assets(
-          bucket,path,original_filename,mime_type,byte_size,visibility,finalized_at
-        ) values (
-          'financial-documents',
-          ${`tests/${fixtures.suffix}/payment-proof-1.pdf`},
-          'payment-proof.pdf','application/pdf',1,'restricted',now()
-        ) returning id
-      `
-      if (!proof) throw new Error('Payment proof was not created.')
+        await tx`
+          select app.reconcile_finance_payment(
+            ${payment.id}, ${proofAssetId}, 'BANK-QA', 190000, now(), 'Rekonsiliasi uji'
+          )
+        `
 
-      await tx`
-        select app.reconcile_finance_payment(
-          ${payment.id}, ${proof.id}, 'BANK-QA', 190000, now(), 'Rekonsiliasi uji'
-        )
-      `
-
-      const [refund] = await tx<{ id: string }[]>`
-        select app.process_finance_refund(${invoice.id}, ${payment.id}, 50000, 'Uji refund', '') as id
-      `
-      const [actual] = await tx<
-        {
-          status: string
-          subtotal: string
-          discount_total: string
-          grand_total: string
-          paid_total: string
-          refunded_total: string
-        }[]
-      >`
-        select status, subtotal, discount_total, grand_total, paid_total, refunded_total
-        from public.finance_invoices where id=${invoice.id}
-      `
-      expect(refund?.id).toBeTruthy()
-      expect(actual).toMatchObject({
-        status: 'partially_paid',
-        subtotal: '200000.00',
-        discount_total: '10000.00',
-        grand_total: '190000.00',
-        paid_total: '190000.00',
-        refunded_total: '50000.00',
+        const [refund] = await tx<{ id: string }[]>`
+          select app.process_finance_refund(${invoice.id}, ${payment.id}, 50000, 'Uji refund', '') as id
+        `
+        const [actual] = await tx<
+          {
+            status: string
+            subtotal: string
+            discount_total: string
+            grand_total: string
+            paid_total: string
+            refunded_total: string
+          }[]
+        >`
+          select status, subtotal, discount_total, grand_total, paid_total, refunded_total
+          from public.finance_invoices where id=${invoice.id}
+        `
+        expect(refund?.id).toBeTruthy()
+        expect(actual).toMatchObject({
+          status: 'partially_paid',
+          subtotal: '200000.00',
+          discount_total: '10000.00',
+          grand_total: '190000.00',
+          paid_total: '190000.00',
+          refunded_total: '50000.00',
+        })
       })
-    })
+    } finally {
+      await cleanup(async (tx) => {
+        await tx`delete from public.media_assets where id=${proofAssetId}`
+      })
+    }
   })
 
   it('requires bank reconciliation before a payment becomes confirmed', async () => {
@@ -84,18 +106,20 @@ describe('finance operations lifecycle', () => {
       if (!invoice) throw new Error('Invoice rekonsiliasi tidak dibuat.')
       await tx`select app.issue_finance_invoice(${invoice.id})`
 
-      const [payment] = await tx<{ id: string; status: string }[]>`
-        select p.id, p.status::text
-        from public.finance_payments p
-        where p.id = app.record_finance_payment(
+      const [created] = await tx<{ id: string }[]>`
+        select app.record_finance_payment(
           ${invoice.id},75000,'transfer',now(),'QA-PENDING','',${`QA-RECON-${fixtures.suffix}`}
-        )
+        ) as id
+      `
+      if (!created) throw new Error('Pembayaran rekonsiliasi tidak dibuat.')
+      const [payment] = await tx<{ status: string }[]>`
+        select status::text from public.finance_payments where id=${created.id}
       `
       expect(payment?.status).toBe('pending')
 
       await tx`savepoint direct_confirmation_assertion`
       const directConfirmation = await expectRejected(
-        () => tx`update public.finance_payments set status='confirmed' where id=${payment!.id}`,
+        () => tx`update public.finance_payments set status='confirmed' where id=${created.id}`,
       )
       await tx`rollback to savepoint direct_confirmation_assertion`
       await tx`release savepoint direct_confirmation_assertion`
@@ -171,7 +195,7 @@ describe('finance operations lifecycle', () => {
 
     let invoiceId = ''
     let paymentId = ''
-    let proofAssetId = ''
+    const proofAssetId = await createPaymentProof('payment-proof-realtime.pdf')
     let expenseId = ''
 
     try {
@@ -193,21 +217,9 @@ describe('finance operations lifecycle', () => {
           if (!payment) throw new Error('Realtime payment was not created.')
           paymentId = payment.id
 
-          const [proof] = await tx<{ id: string }[]>`
-            insert into public.media_assets(
-              bucket,path,original_filename,mime_type,byte_size,visibility,finalized_at
-            ) values (
-              'financial-documents',
-              ${`tests/${fixtures.suffix}/payment-proof-realtime.pdf`},
-              'payment-proof-realtime.pdf','application/pdf',1,'restricted',now()
-            ) returning id
-          `
-          if (!proof) throw new Error('Realtime payment proof was not created.')
-          proofAssetId = proof.id
-
           await tx`
             select app.reconcile_finance_payment(
-              ${payment.id}, ${proof.id}, 'BANK-SYNC', 300000, now(), 'Sinkronisasi uji'
+              ${payment.id}, ${proofAssetId}, 'BANK-SYNC', 300000, now(), 'Sinkronisasi uji'
             )
           `
           await tx`select app.process_finance_refund(${invoice.id}, ${payment.id}, 50000, 'Sinkronisasi uji', '')`
@@ -249,7 +261,7 @@ describe('finance operations lifecycle', () => {
           await tx`delete from public.finance_payments where id=${paymentId}`
         }
         if (invoiceId) await tx`delete from public.finance_invoices where id=${invoiceId}`
-        if (proofAssetId) await tx`delete from public.media_assets where id=${proofAssetId}`
+        await tx`delete from public.media_assets where id=${proofAssetId}`
       })
     }
   })
@@ -286,7 +298,7 @@ describe('finance operations lifecycle', () => {
       const rejection = await expectRejected(
         () => tx`select * from app.investor_monthly_cashflow_summary(6)`,
       )
-      expect(rejection.message).toContain('active investor required')
+      expect(rejection.message).toContain('Investor aktif diperlukan')
     })
   })
 
