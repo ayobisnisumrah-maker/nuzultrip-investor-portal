@@ -23,7 +23,9 @@ const ADMIN_ROUTES = [
   '/admin/financials',
   '/admin/financials/kpis',
   '/admin/financials/periods',
+  '/admin/financials/periods/new',
   '/admin/financials/reports',
+  '/admin/financials/reports/new',
   '/admin/inquiries',
   '/admin/investor-documents',
   '/admin/investors',
@@ -44,6 +46,7 @@ const ADMIN_ROUTES = [
   '/admin/portal/pages',
   '/admin/portal/pages/new',
   '/admin/profit-distributions',
+  '/admin/profit-distributions/new',
   '/admin/roles',
   '/admin/settings',
 ] as const
@@ -104,6 +107,32 @@ test('public portal and authentication routes render cleanly', async ({ page }) 
   const failures = runtimeFailures(page)
   await expectHealthyRoutes(page, PUBLIC_ROUTES, 'public')
 
+  await page.goto('/')
+  const headline = page.locator('h1').first()
+  await expect(headline).toBeVisible()
+  const clippedHeadlineLines = await page.locator('h1, h1 span').evaluateAll((lines) =>
+    lines
+      .filter((line) => {
+        const bounds = line.getBoundingClientRect()
+        return (
+          line.scrollWidth > line.clientWidth + 1 ||
+          bounds.left < -1 ||
+          bounds.right > document.documentElement.clientWidth + 1
+        )
+      })
+      .map((line) => line.textContent?.trim()),
+  )
+  expect(clippedHeadlineLines, 'public: hero headline is clipped by the viewport').toEqual([])
+
+  const missingAnchorTargets = await page
+    .locator('a[href^="#"]')
+    .evaluateAll((links) =>
+      links
+        .map((link) => link.getAttribute('href'))
+        .filter((href): href is string => Boolean(href && !document.querySelector(href))),
+    )
+  expect(missingAnchorTargets, 'public: navigation points to a missing section').toEqual([])
+
   await page.goto('/hubungi')
   await expect(page.getByLabel('Nama lengkap')).toBeVisible()
   await expect(page.getByLabel('Email')).toBeVisible()
@@ -114,6 +143,41 @@ test('public portal and authentication routes render cleanly', async ({ page }) 
   await expect(page.getByLabel(/Kata sandi/)).toBeVisible()
 
   expect(failures).toEqual([])
+})
+
+test('Super Admin can replace the public logo from Company Profile', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium', 'The storage mutation runs once.')
+  const admin = await createAdminAccount({ roleKey: 'super_admin' })
+  const onePixelPng = Buffer.from(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+    'base64',
+  )
+
+  try {
+    await signIn(page, admin, '/admin')
+    await page.goto('/admin/company-profile')
+    await page.getByLabel(/Ganti logo/).setInputFiles({
+      name: 'logo-e2e.png',
+      mimeType: 'image/png',
+      buffer: onePixelPng,
+    })
+    await page.getByRole('button', { name: 'Simpan Logo' }).click()
+    await expect(
+      page.getByRole('status').filter({
+        hasText: 'Logo perusahaan berhasil diperbarui dan disinkronkan',
+      }),
+    ).toBeVisible()
+
+    await page.goto('/')
+    const publicLogo = page.locator('header img[alt="Nuzultrip"]')
+    if (await publicLogo.count()) {
+      expect(await publicLogo.getAttribute('src')).toContain('public-media')
+    } else {
+      await expect(page.getByRole('heading', { name: 'Portal belum diterbitkan' })).toBeVisible()
+    }
+  } finally {
+    await deleteAccounts([admin.userId])
+  }
 })
 
 test('every static Super Admin route renders without server or layout errors', async ({ page }) => {

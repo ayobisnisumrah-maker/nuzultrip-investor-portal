@@ -8,7 +8,6 @@ import { COMPANY_LOGO_MAX_BYTES, detectCompanyLogoMime } from '@/core/media/logo
 import { getServiceRoleClient } from '@/server/admin/service-client'
 import { getPrincipal } from '@/server/auth/session'
 import { writeAudit } from '@/server/audit'
-import { emitBrandRefresh } from '@/server/realtime/brand-refresh'
 
 const BUCKET = 'public-media'
 
@@ -161,8 +160,6 @@ export async function POST(request: Request) {
   ) {
     await serviceClient.storage.from(BUCKET).remove([previousPath])
   }
-
-  await emitBrandRefresh()
 
   return NextResponse.json({ ok: true, logo: value })
 }
