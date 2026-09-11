@@ -73,8 +73,9 @@ describe('PaymentReceipt', () => {
     expect(screen.getAllByText('Dokumen dibuat otomatis oleh sistem Nuzultrip.').length).toBeGreaterThan(
       0,
     )
+    // The finalized invoice page itself does not receive a preview page label. Terms pages do.
     expect(screen.queryByText('Halaman 1 dari 2')).toBeNull()
-    expect(screen.queryByText('Halaman 2 dari 2')).toBeNull()
+    expect(screen.getByText('Halaman 2 dari 2')).toBeTruthy()
     expect(screen.getAllByText('PT Swarna Dipa Wisata').length).toBeGreaterThan(0)
   })
 
