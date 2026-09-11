@@ -166,13 +166,3 @@
     page-break-inside: avoid !important;
   }
 }
-
-@media screen {
-  [data-testid='payment-receipt'] > article:first-of-type > footer > :last-child {
-    display: contents !important;
-  }
-
-  [data-testid='payment-receipt'] > article:first-of-type > footer > :last-child > span:first-child {
-    display: none !important;
-  }
-}
