@@ -139,6 +139,12 @@ function buildTermsPreviewBlocks(data: PaymentReceiptData): TermsPreviewBlock[] 
   return blocks
 }
 
+function isTermsHeading(text: string): boolean {
+  return /^(PASAL\s+\d+|BAB\s+[IVXLCDM]+|SYARAT\s*&?\s*KETENTUAN|KEBIJAKAN\s+REFUND|PT\s+SWARNA\s+DIPA\s+WISATA)/i.test(
+    text.trim(),
+  )
+}
+
 export function PaymentReceipt({ data }: { data: PaymentReceiptData }) {
   const isPaid = data.status === 'PAID'
   const hasTax = typeof data.tax === 'number' && Number.isFinite(data.tax) && data.tax > 0
@@ -149,19 +155,13 @@ export function PaymentReceipt({ data }: { data: PaymentReceiptData }) {
   const statusIcon = isPaid ? '/images/payment/paid.png' : '/images/payment/dp.png'
   const termsLink = safeTermsLink(data.termsLink)
   const refundPolicy = parseRefundPolicyLines(data.refundPolicyLines)
+  const [termsPageCount, setTermsPageCount] = useState(1)
+  const totalDocumentPages = 1 + termsPageCount
 
   const printLayoutCss = `
     @page {
       size: A4 portrait;
-      margin: 12mm 12mm 16mm;
-      @bottom-right {
-        content: 'Halaman ' counter(page) ' dari ' counter(pages);
-        color: #818a96;
-        font-family: Inter, Arial, Helvetica, sans-serif;
-        font-size: 8px;
-        line-height: 1;
-        vertical-align: middle;
-      }
+      margin: 0;
     }
 
     @media print {
@@ -170,58 +170,32 @@ export function PaymentReceipt({ data }: { data: PaymentReceiptData }) {
       }
 
       .${styles.receipt} {
-        width: 186mm !important;
-        min-height: 269mm !important;
+        width: 210mm !important;
+        height: 297mm !important;
+        min-height: 297mm !important;
+        max-height: 297mm !important;
         margin: 0 !important;
-        padding: 2mm 0 0 !important;
+        padding: 10mm 8mm 8mm !important;
         box-sizing: border-box !important;
         box-shadow: none !important;
+        overflow: hidden !important;
       }
 
-      .${styles.termsPage} {
+      .${styles.screenTermsPages} {
+        display: block !important;
+      }
+
+      .${styles.screenTermsPage} {
+        display: flex !important;
         break-before: page !important;
         page-break-before: always !important;
+        break-after: page !important;
+        page-break-after: always !important;
       }
 
-      .${styles.printPageCounter} {
-        display: flex !important;
-        position: fixed !important;
-        z-index: 50 !important;
-        right: 45mm !important;
-        bottom: 4mm !important;
-        width: 24mm !important;
-        min-height: 7mm !important;
-        align-items: center !important;
-        justify-content: flex-end !important;
-        color: #818a96 !important;
-      }
-
-      .${styles.printPageCounter}::after {
-        content: none !important;
-      }
-
-      .${styles.printPageCounter} .${styles.footerRight} {
-        display: flex !important;
-        align-items: center !important;
-        justify-content: flex-end !important;
-        gap: 0 !important;
-        padding: 0 !important;
-      }
-
-      .${styles.printPageCounter} .${styles.footerLogo} {
-        width: auto !important;
-        max-width: 22mm !important;
-        height: 7mm !important;
-        object-fit: contain !important;
-        object-position: right center !important;
-      }
-
-      .${styles.printPageCounter} .${styles.footerBrand} {
-        font-size: 8px !important;
-      }
-
-      .${styles.footerRight} {
-        padding-right: 0 !important;
+      .${styles.printPageCounter},
+      .${styles.printOnlyTerms} {
+        display: none !important;
       }
     }
   `
@@ -229,9 +203,6 @@ export function PaymentReceipt({ data }: { data: PaymentReceiptData }) {
   return (
     <div className={styles.document} data-testid="payment-receipt">
       <style>{printLayoutCss}</style>
-      <div className={styles.printPageCounter} aria-hidden="true">
-        <FooterRight data={data} />
-      </div>
 
       <article className={styles.receipt}>
         <header className={styles.header}>
@@ -437,43 +408,19 @@ export function PaymentReceipt({ data }: { data: PaymentReceiptData }) {
             </span>
             <span>Dokumen dibuat otomatis oleh sistem Nuzultrip.</span>
           </div>
-          <FooterRight data={data} />
-        </footer>
-      </article>
-
-      <ScreenTermsPages data={data} termsLink={termsLink} refundPolicy={refundPolicy} />
-
-      <article
-        className={`${styles.receipt} ${styles.termsPage} ${styles.printOnlyTerms}`}
-        data-testid="payment-terms-page"
-      >
-        <TermsDocumentHeader data={data} />
-
-        <section className={styles.termsContent}>
-          <p className={styles.termsEyebrow}>INVOICE {data.orderId}</p>
-          <h2 className={styles.termsTitle}>Syarat &amp; Ketentuan Pemesanan dan Pembayaran</h2>
-
-          {data.termsBody ? (
-            <div className={styles.termsBody}>{data.termsBody}</div>
-          ) : (
-            <p className={styles.termsEmpty}>
-              Ketentuan tertulis belum tersedia pada snapshot invoice ini.
-              {termsLink ? ` Referensi syarat: ${termsLink}` : ''}
-            </p>
-          )}
-
-          {data.refundPolicyLines?.length ? <RefundTerms refundPolicy={refundPolicy} /> : null}
-          <AcceptanceBox />
-        </section>
-
-        <footer className={`${styles.footer} ${styles.termsFooter}`}>
-          <div className={styles.footerText}>
-            <span>{data.companyName ?? 'PT Swarna Dipa Wisata (Nuzultrip)'}</span>
-            <span>Dokumen syarat ini merupakan bagian tidak terpisahkan dari invoice.</span>
+          <div className={styles.footerMeta}>
+            <PageIndicator page={1} total={totalDocumentPages} />
+            <FooterRight data={data} />
           </div>
-          <FooterRight data={data} />
         </footer>
       </article>
+
+      <ScreenTermsPages
+        data={data}
+        termsLink={termsLink}
+        refundPolicy={refundPolicy}
+        onPageCountChange={setTermsPageCount}
+      />
     </div>
   )
 }
@@ -482,10 +429,12 @@ function ScreenTermsPages({
   data,
   termsLink,
   refundPolicy,
+  onPageCountChange,
 }: {
   data: PaymentReceiptData
   termsLink: string | null
   refundPolicy: RefundPolicyView
+  onPageCountChange: (count: number) => void
 }) {
   const blocks = useMemo(() => buildTermsPreviewBlocks(data), [data])
   const blockKey = useMemo(
@@ -503,6 +452,7 @@ function ScreenTermsPages({
       termsLink={termsLink}
       refundPolicy={refundPolicy}
       blocks={blocks}
+      onPageCountChange={onPageCountChange}
     />
   )
 }
@@ -512,11 +462,13 @@ function PaginatedTermsPreview({
   termsLink,
   refundPolicy,
   blocks,
+  onPageCountChange,
 }: {
   data: PaymentReceiptData
   termsLink: string | null
   refundPolicy: RefundPolicyView
   blocks: TermsPreviewBlock[]
+  onPageCountChange: (count: number) => void
 }) {
   const [pages, setPages] = useState<number[][]>(() => [blocks.map((_, index) => index)])
   const contentRefs = useRef(new Map<number, HTMLDivElement>())
@@ -549,6 +501,10 @@ function PaginatedTermsPreview({
     return undefined
   }, [pages])
 
+  useLayoutEffect(() => {
+    onPageCountChange(pages.length)
+  }, [onPageCountChange, pages.length])
+
   const totalDocumentPages = 1 + pages.length
 
   return (
@@ -560,14 +516,7 @@ function PaginatedTermsPreview({
           data-testid="payment-terms-preview-page"
           data-page-number={pageIndex + 2}
         >
-          {pageIndex === 0 ? (
-            <TermsDocumentHeader data={data} />
-          ) : (
-            <header className={styles.termsContinuationHeader}>
-              <strong>{data.companyName ?? 'PT Swarna Dipa Wisata (Nuzultrip)'}</strong>
-              <span>Syarat &amp; Ketentuan — lanjutan</span>
-            </header>
-          )}
+          <TermsDocumentHeader data={data} />
 
           <div
             className={styles.screenTermsContentArea}
@@ -592,7 +541,10 @@ function PaginatedTermsPreview({
 
                 if (block.kind === 'text') {
                   return (
-                    <p key={block.id} className={styles.termsParagraph}>
+                    <p
+                      key={block.id}
+                      className={`${styles.termsParagraph} ${isTermsHeading(block.text) ? styles.termsHeading : ''}`}
+                    >
                       {block.text}
                     </p>
                   )
