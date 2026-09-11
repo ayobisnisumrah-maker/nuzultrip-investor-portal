@@ -179,7 +179,8 @@ async function loadPublishedPortalPage(slug: string) {
       id: section.id,
       section_kind: section.section_kind,
       position: section.position,
-      anchor_id: section.anchor_id,
+      anchor_id:
+        section.anchor_id ?? (section.section_kind === 'business_overview' ? 'bisnis' : null),
       content: contentById.get(section.published_version_id!) ?? {},
     }))
     .filter((section) => hasMeaningfulContent(section.section_kind, section.content))
