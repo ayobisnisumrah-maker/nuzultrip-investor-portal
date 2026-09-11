@@ -401,6 +401,19 @@
   flex-direction: column;
   gap: 4px;
 }
+.footerMeta {
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  gap: 12px;
+  white-space: nowrap;
+}
+.screenPageIndicator {
+  color: #818a96;
+  font-size: 8px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
 .termsNotice {
   color: #687386;
 }
@@ -430,6 +443,65 @@
 
 .termsPage {
   position: relative;
+}
+.printOnlyTerms {
+  display: none;
+}
+.screenTermsPages {
+  display: grid;
+  gap: 20px;
+}
+.screenTermsPage {
+  position: relative;
+  width: 210mm;
+  height: 297mm;
+  min-height: 297mm;
+  max-height: 297mm;
+  overflow: hidden;
+}
+.screenTermsContentArea {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  margin-top: 7mm;
+}
+.screenTermsTitleBlock {
+  margin-bottom: 7mm;
+}
+.screenTermsBlocks {
+  display: flex;
+  flex-direction: column;
+  gap: 2.2mm;
+}
+.termsParagraph {
+  margin: 0;
+  color: #303a42;
+  font-size: 10px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.termsContinuationHeader {
+  min-height: 15mm;
+  padding-bottom: 5mm;
+  border-bottom: 1px solid #d8dde3;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+.termsContinuationHeader strong {
+  color: #303a42;
+  font-size: 11px;
+}
+.termsContinuationHeader span {
+  color: #707986;
+  font-size: 8px;
+  font-weight: 700;
+}
+.screenTermsFooter {
+  flex: none;
+  margin-top: 6mm;
 }
 .letterhead {
   width: 100%;
@@ -587,6 +659,13 @@
     break-after: auto;
     page-break-after: auto;
   }
+  .screenTermsPages,
+  .screenPageIndicator {
+    display: none !important;
+  }
+  .printOnlyTerms {
+    display: flex !important;
+  }
   .termsPage {
     break-before: page;
     page-break-before: always;
@@ -622,6 +701,16 @@
     width: 100%;
     min-height: auto;
     padding: 24px 18px;
+  }
+  .screenTermsPage {
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    max-height: none;
+    overflow: visible;
+  }
+  .screenTermsContentArea {
+    overflow: visible;
   }
   .customerSection {
     grid-template-columns: 1fr;
