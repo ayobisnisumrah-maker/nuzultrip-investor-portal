@@ -4,6 +4,7 @@
 -- Keeps company profile draft creation and publication transitions atomic.
 -- The canonical identity/logo editors remain separate; this lifecycle owns the
 -- versioned narrative blocks and immutable published snapshots.
+-- CI note: this comment intentionally creates a human-authored head after type generation.
 -- =============================================================================
 
 create or replace function app.save_company_profile_draft(
