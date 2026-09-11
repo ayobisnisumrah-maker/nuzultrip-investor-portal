@@ -2,7 +2,14 @@ import { randomUUID } from 'node:crypto'
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
-import { as, cleanup, closeDb, db, expectRejected } from './helpers/db'
+import {
+  as,
+  asCommitted,
+  cleanup,
+  closeDb,
+  db,
+  expectRejected,
+} from './helpers/db'
 import {
   createFixtures,
   destroyFixtures,
@@ -90,7 +97,7 @@ afterAll(async () => {
 
 describe('workflow pewarisan kepemilikan', () => {
   it('investor membuat pengajuan hanya dari holding miliknya', async () => {
-    requestId = await as(
+    requestId = await asCommitted(
       { kind: 'authenticated', userId: fixtures.investorA.userId },
       async (tx) => {
         const [row] = await tx<{ id: string }[]>`
@@ -176,7 +183,7 @@ describe('workflow pewarisan kepemilikan', () => {
   })
 
   it('admin berizin dapat menyetujui dan menyelesaikan ke cap table resmi', async () => {
-    await as(
+    await asCommitted(
       { kind: 'authenticated', userId: fixtures.superAdmin.userId },
       async (tx) => {
         await tx`select app.approve_ownership_inheritance(${requestId})`
