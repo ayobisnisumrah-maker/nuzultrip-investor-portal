@@ -20,9 +20,6 @@ export function FinanceInvoiceActions({
   outstanding,
   refundable,
   refundPolicyNote,
-  documentTitle,
-  customerName,
-  issuedOn,
   currentDueOn,
   currentDepartureOn,
 }: {
@@ -31,9 +28,6 @@ export function FinanceInvoiceActions({
   outstanding: number
   refundable: number
   refundPolicyNote?: string | null
-  documentTitle: string
-  customerName: string
-  issuedOn: string | null
   currentDueOn: string | null
   currentDepartureOn: string | null
 }) {
@@ -65,26 +59,7 @@ export function FinanceInvoiceActions({
         <Button
           variant="secondary"
           onClick={() => {
-            const safe = (value: string) =>
-              value
-                .normalize('NFKD')
-                .replace(/[\u0300-\u036f]/g, '')
-                .replace(/[^a-zA-Z0-9]+/g, '-')
-                .replace(/^-+|-+$/g, '')
-                .slice(0, 90)
-            const previousTitle = document.title
-            document.title = [
-              customerName,
-              issuedOn ?? new Date().toISOString().slice(0, 10),
-              documentTitle,
-            ]
-              .map(safe)
-              .filter(Boolean)
-              .join('-')
-            window.print()
-            window.setTimeout(() => {
-              document.title = previousTitle
-            }, 1000)
+            window.open(`/print/invoices/${invoiceId}`, '_blank', 'noopener,noreferrer')
           }}
         >
           Cetak / Simpan PDF

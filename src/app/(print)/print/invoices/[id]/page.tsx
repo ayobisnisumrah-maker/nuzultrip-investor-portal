@@ -1,17 +1,10 @@
 import { notFound } from 'next/navigation'
 
-import {
-  daysBeforeDeparture,
-  matchingRefundTier,
-  parseRefundPolicy,
-  refundPolicyLines,
-} from '@/core/financials/refund-policy'
-import { FinanceInvoiceActions } from '@/features/admin/financials/finance-invoice-actions'
+import { parseRefundPolicy, refundPolicyLines } from '@/core/financials/refund-policy'
 import { PaymentReceipt, type PaymentReceiptData } from '@/features/admin/financials/PaymentReceipt'
 import { adminWithPermission } from '@/server/auth/page-guards'
 import { getServerSupabase } from '@/server/supabase/server'
 import { Alert } from '@/ui/alert'
-import { PageHeader, Stack } from '@/ui/layout'
 
 type Company = {
   legalName?: string
@@ -72,71 +65,70 @@ function formatInvoiceDate(value: string | null | undefined): string | null {
   }).format(parsed)
 }
 
-export default async function InvoicePage({ params }: { params: Promise<{ id: string }> }) {
-  const principal = await adminWithPermission(
-    'financial_reports.view',
-    '/admin/financials/operations',
-  )
-
-  if (!principal)
-    return (
-      <Alert tone="info" title="Akses terbatas">
-        Anda tidak memiliki izin melihat invoice.
-      </Alert>
-    )
-
+export default async function InvoicePrintPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const supabase = await getServerSupabase()
-  const [invoiceResult, itemsResult, paymentsResult, refundsResult, settingsResult] =
-    await Promise.all([
-      supabase.from('finance_invoices').select('*').eq('id', id).maybeSingle(),
-      supabase.from('finance_invoice_items').select('*').eq('invoice_id', id).order('position'),
-      supabase
-        .from('finance_payments')
-        .select('id,reference,amount,method,status,created_at')
-        .eq('invoice_id', id)
-        .order('created_at'),
-      supabase
-        .from('finance_refunds')
-        .select('id,reference,amount,reason,status')
-        .eq('invoice_id', id)
-        .order('created_at'),
-      supabase
-        .from('finance_settings')
-        .select(
-          'invoice_terms,invoice_terms_body,terms_letterhead_asset_id,refund_processing_days,refund_day_basis,refund_tiers',
-        )
-        .eq('singleton', true)
-        .maybeSingle(),
-    ])
+  const principal = await adminWithPermission('financial_reports.view', `/print/invoices/${id}`)
 
-  if (invoiceResult.error || itemsResult.error || paymentsResult.error || refundsResult.error)
+  if (!principal) {
     return (
-      <Alert tone="danger" title="Invoice tidak dapat dimuat">
-        Silakan coba lagi.
-      </Alert>
+      <main className="mx-auto max-w-xl p-8">
+        <Alert tone="info" title="Akses terbatas">
+          Anda tidak memiliki izin melihat invoice ini.
+        </Alert>
+      </main>
     )
+  }
+
+  const supabase = await getServerSupabase()
+  const [invoiceResult, itemsResult, paymentsResult, settingsResult] = await Promise.all([
+    supabase.from('finance_invoices').select('*').eq('id', id).maybeSingle(),
+    supabase.from('finance_invoice_items').select('*').eq('invoice_id', id).order('position'),
+    supabase
+      .from('finance_payments')
+      .select('id,reference,amount,method,status,created_at')
+      .eq('invoice_id', id)
+      .order('created_at'),
+    supabase
+      .from('finance_settings')
+      .select(
+        'invoice_terms,invoice_terms_body,terms_letterhead_asset_id,refund_processing_days,refund_day_basis,refund_tiers',
+      )
+      .eq('singleton', true)
+      .maybeSingle(),
+  ])
+
+  if (invoiceResult.error || itemsResult.error || paymentsResult.error) {
+    return (
+      <main className="mx-auto max-w-xl p-8">
+        <Alert tone="danger" title="Invoice tidak dapat dimuat">
+          Silakan coba lagi.
+        </Alert>
+      </main>
+    )
+  }
 
   if (!invoiceResult.data) notFound()
 
   const invoice = invoiceResult.data
+  const isDraft = invoice.status === 'draft'
 
-  if (invoice.status === 'draft' && (settingsResult.error || !settingsResult.data))
+  if (isDraft && (settingsResult.error || !settingsResult.data)) {
     return (
-      <Alert tone="danger" title="Preview invoice tidak lengkap">
-        Pengaturan Syarat &amp; Ketentuan tidak dapat dimuat. Silakan coba lagi sebelum menerbitkan
-        invoice.
-      </Alert>
+      <main className="mx-auto max-w-xl p-8">
+        <Alert tone="danger" title="Preview invoice tidak lengkap">
+          Pengaturan Syarat &amp; Ketentuan tidak dapat dimuat. Silakan coba lagi sebelum menerbitkan
+          invoice.
+        </Alert>
+      </main>
     )
+  }
 
   const extended = invoice as typeof invoice & ExtendedInvoice
   const company = (invoice.company_snapshot ?? {}) as Company
   const settings = (settingsResult.data ?? null) as FinancePolicySettings | null
   const items = itemsResult.data ?? []
-  const refunds = refundsResult.data ?? []
   const firstItem = items[0]
   const packageName = firstItem?.name || 'Pesanan'
-  const documentTitle = `Bukti Pembayaran ${packageName}`
   const paidNet = Math.max(Number(invoice.paid_total) - Number(invoice.refunded_total), 0)
   const outstanding = Math.max(Number(invoice.grand_total) - paidNet, 0)
   const isPaid = paidNet > 0 && outstanding === 0
@@ -144,7 +136,6 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
   const itemTotal = items.reduce((total, item) => total + Number(item.line_total), 0)
   const assetUrl = (assetId?: string | null) =>
     assetId ? `/api/admin/finance/assets/${assetId}` : null
-  const isDraft = invoice.status === 'draft'
 
   const policySource = isDraft
     ? {
@@ -153,45 +144,12 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
         tiers: settings?.refund_tiers ?? [],
       }
     : extended.refund_policy_snapshot
+  const policy = parseRefundPolicy(policySource)
   const termsLink = isDraft ? (settings?.invoice_terms ?? null) : invoice.terms_snapshot
   const termsBody = isDraft ? (settings?.invoice_terms_body ?? null) : extended.terms_body_snapshot
   const termsLetterheadAssetId = isDraft
     ? (settings?.terms_letterhead_asset_id ?? null)
     : extended.terms_letterhead_asset_id
-
-  const policy = parseRefundPolicy(policySource)
-  const committedRefund = refunds
-    .filter((refund) => ['requested', 'approved', 'processed'].includes(refund.status))
-    .reduce((sum, refund) => sum + Number(refund.amount), 0)
-  const availablePayment = Math.max(Number(invoice.paid_total) - committedRefund, 0)
-  let refundable = availablePayment
-  let refundPolicyNote: string | null = null
-
-  if (policy.tiers.length > 0) {
-    if (!extended.departure_on) {
-      refundable = 0
-      refundPolicyNote =
-        'Atur tanggal keberangkatan terlebih dahulu agar sistem dapat menentukan batas refund sesuai kebijakan invoice.'
-    } else {
-      const days = daysBeforeDeparture(new Date(), extended.departure_on)
-      const tier = days === null ? null : matchingRefundTier(policy, days)
-      if (days === null || !tier) {
-        refundable = 0
-        refundPolicyNote =
-          'Tidak ada aturan refund yang cocok untuk jarak keberangkatan saat ini. Periksa tanggal keberangkatan dan pengaturan kebijakan.'
-      } else {
-        const policyMaximum = (Number(invoice.paid_total) * tier.refundPercent) / 100
-        refundable = Math.max(Math.min(availablePayment, policyMaximum - committedRefund), 0)
-        refundPolicyNote = `${days} hari menuju keberangkatan · kebijakan maksimal ${tier.refundPercent}% dari pembayaran yang diterima.`
-        if (tier.refundPercent === 0) {
-          refundPolicyNote += ' Pada rentang ini pembayaran dinyatakan hangus sesuai kebijakan invoice.'
-        }
-      }
-    }
-  } else if (Number(invoice.paid_total) > 0) {
-    refundPolicyNote =
-      'Belum ada tier persentase refund pada kebijakan invoice; batas refund mengikuti saldo pembayaran yang belum direfund.'
-  }
 
   const receipt: PaymentReceiptData = {
     orderId: invoice.reference,
@@ -230,26 +188,8 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
   }
 
   return (
-    <Stack gap={6} className="print:gap-0">
-      <div className="print:hidden">
-        <PageHeader
-          eyebrow="Bukti Pembayaran"
-          title={documentTitle}
-          description={`${invoice.reference} · ${invoice.customer_name}`}
-        />
-      </div>
-
-      <FinanceInvoiceActions
-        invoiceId={id}
-        status={invoice.status}
-        outstanding={outstanding}
-        refundable={refundable}
-        refundPolicyNote={refundPolicyNote}
-        currentDueOn={invoice.due_on}
-        currentDepartureOn={extended.departure_on ?? null}
-      />
-
+    <main className="min-h-screen bg-white print:min-h-0">
       <PaymentReceipt data={receipt} />
-    </Stack>
+    </main>
   )
 }
