@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState, useTransition } from 'react'
+import { useState, useTransition } from 'react'
 
 import {
   refundPolicySchema,
@@ -21,46 +21,10 @@ type Props = {
 
 type Result = { ok: boolean; error?: { message: string } }
 
-export function RefundPolicySettings({
-  termsBody,
-  termsLetterheadAssetId,
-  refundPolicy,
-}: Props) {
-  const fileInput = useRef<HTMLInputElement>(null)
-  const [letterheadId, setLetterheadId] = useState(termsLetterheadAssetId)
-  const [uploading, setUploading] = useState(false)
+export function RefundPolicySettings({ termsBody, refundPolicy }: Props) {
   const [pending, startTransition] = useTransition()
   const [notice, setNotice] = useState<{ ok: boolean; text: string } | null>(null)
   const rows = Array.from({ length: 5 }, (_, index) => refundPolicy.tiers[index] ?? null)
-
-  async function uploadLetterhead(file: File | null) {
-    if (!file) return
-    setUploading(true)
-    setNotice(null)
-    try {
-      const body = new FormData()
-      body.append('file', file)
-      body.append('purpose', 'finance-branding')
-      const response = await fetch('/api/admin/media/upload', { method: 'POST', body })
-      const payload = (await response.json()) as {
-        ok?: boolean
-        asset?: { id: string }
-        error?: string
-      }
-      if (!response.ok || !payload.ok || !payload.asset)
-        throw new Error(payload.error || 'Kop surat gagal diunggah.')
-      setLetterheadId(payload.asset.id)
-      setNotice({ ok: true, text: 'Kop surat berhasil diunggah. Simpan pengaturan untuk menerapkannya.' })
-    } catch (error) {
-      setNotice({
-        ok: false,
-        text: error instanceof Error ? error.message : 'Kop surat gagal diunggah.',
-      })
-    } finally {
-      setUploading(false)
-      if (fileInput.current) fileInput.current.value = ''
-    }
-  }
 
   function collectTiers(form: FormData): RefundTier[] {
     const tiers: RefundTier[] = []
@@ -98,7 +62,7 @@ export function RefundPolicySettings({
       const result = await task()
       setNotice(
         result.ok
-          ? { ok: true, text: 'Syarat, kop surat, dan kebijakan refund berhasil disimpan.' }
+          ? { ok: true, text: 'Syarat dan kebijakan refund berhasil disimpan.' }
           : {
               ok: false,
               text: result.error?.message ?? 'Pengaturan tidak dapat disimpan.',
@@ -146,7 +110,7 @@ export function RefundPolicySettings({
               run(() =>
                 updateFinancePolicySettings({
                   termsBody: String(form.get('termsBody') ?? ''),
-                  termsLetterheadAssetId: letterheadId,
+                  termsLetterheadAssetId: null,
                   refundPolicy: parsed.data,
                 }),
               )
@@ -170,47 +134,6 @@ export function RefundPolicySettings({
               <span>Isi syarat & ketentuan</span>
               <Textarea name="termsBody" defaultValue={termsBody} rows={12} maxLength={20_000} />
             </label>
-
-            <div className="border-border grid gap-3 rounded-xl border p-4">
-              <div>
-                <p className="text-body-sm font-medium">Kop surat halaman 2</p>
-                <p className="text-caption text-fg-subtle">
-                  PNG, JPG, atau WebP; maksimal 6 MB. Kop surat dicetak di bagian atas halaman syarat.
-                </p>
-              </div>
-              {letterheadId ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={`/api/admin/finance/assets/${letterheadId}`}
-                  alt="Kop surat syarat dan ketentuan"
-                  className="max-h-32 w-full object-contain object-left"
-                />
-              ) : (
-                <p className="text-caption text-fg-subtle">Belum ada kop surat.</p>
-              )}
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  loading={uploading}
-                  onClick={() => fileInput.current?.click()}
-                >
-                  {letterheadId ? 'Ganti kop surat' : 'Unggah kop surat'}
-                </Button>
-                {letterheadId ? (
-                  <Button type="button" variant="ghost" disabled={uploading} onClick={() => setLetterheadId(null)}>
-                    Hapus
-                  </Button>
-                ) : null}
-              </div>
-              <input
-                ref={fileInput}
-                type="file"
-                className="hidden"
-                accept="image/png,image/jpeg,image/webp"
-                onChange={(event) => void uploadLetterhead(event.target.files?.[0] ?? null)}
-              />
-            </div>
           </section>
 
           <section className="grid gap-4">
