@@ -8,9 +8,7 @@ import {
   completeInheritanceAction,
   rejectInheritanceAction,
 } from '@/server/ownership/inheritance-actions'
-import type {
-  InheritanceRequest,
-} from '@/server/ownership/inheritance-service'
+import type { InheritanceRequest } from '@/server/ownership/inheritance-service'
 
 type InvestorOption = {
   id: string
@@ -33,9 +31,7 @@ export function OwnershipInheritanceActions({
   const [beneficiaryInvestorId, setBeneficiaryInvestorId] = useState('')
   const router = useRouter()
 
-  const canApprove = permissions.includes('ownership_inheritance.approve')
-  const canReject = permissions.includes('ownership_inheritance.reject')
-  const canComplete = permissions.includes('ownership_inheritance.complete')
+  const canReview = permissions.includes('ownership_inheritance.approve')
 
   const run = (operation: () => Promise<{ ok: boolean; error?: { message: string } }>) => {
     setError(null)
@@ -51,7 +47,7 @@ export function OwnershipInheritanceActions({
 
   return (
     <div className="grid gap-3">
-      {request.status === 'pending' && canApprove ? (
+      {request.status === 'pending' && canReview ? (
         <button
           type="button"
           disabled={pending}
@@ -62,7 +58,7 @@ export function OwnershipInheritanceActions({
         </button>
       ) : null}
 
-      {['pending', 'approved'].includes(request.status) && canReject ? (
+      {['pending', 'approved'].includes(request.status) && canReview ? (
         <div className="grid gap-2">
           <textarea
             value={reason}
@@ -89,7 +85,7 @@ export function OwnershipInheritanceActions({
         </div>
       ) : null}
 
-      {request.status === 'approved' && canComplete ? (
+      {request.status === 'approved' && canReview ? (
         <div className="grid gap-2">
           <label className="grid gap-1 text-body-sm">
             Investor penerima resmi
