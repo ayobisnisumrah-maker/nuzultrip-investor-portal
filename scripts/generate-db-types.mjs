@@ -12,13 +12,12 @@
  *   SUPABASE_PROJECT_REF=xxx pnpm db:types --remote
  */
 import { execSync } from 'node:child_process'
-import { mkdirSync, readFileSync, writeFileSync, existsSync, unlinkSync } from 'node:fs'
+import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const outputPath = resolve(root, 'src/types/database.ts')
-const generatedPreviewPath = resolve(root, '.database.generated.ts')
 
 const args = new Set(process.argv.slice(2))
 const checkOnly = args.has('--check')
@@ -43,6 +42,9 @@ function run() {
       console.error('SUPABASE_PROJECT_REF must be set when using --remote.')
       process.exit(1)
     }
+    // The command is run through a shell (the Windows CLI ships as a .cmd shim
+    // and cannot be spawned directly), so the one externally-supplied value is
+    // validated rather than trusted.
     if (!/^[a-z0-9]{16,32}$/.test(ref)) {
       console.error(`SUPABASE_PROJECT_REF is not a valid project ref: ${ref}`)
       process.exit(1)
@@ -73,24 +75,6 @@ function run() {
   }
 }
 
-function printGeneratedDiff(current, generated) {
-  writeFileSync(generatedPreviewPath, generated, 'utf8')
-  try {
-    execSync(`git diff --no-index -- "${outputPath}" "${generatedPreviewPath}"`, {
-      cwd: root,
-      encoding: 'utf8',
-      maxBuffer: 32 * 1024 * 1024,
-      stdio: ['ignore', 'pipe', 'pipe'],
-    })
-  } catch (error) {
-    if (error && typeof error === 'object' && 'stdout' in error && error.stdout) {
-      console.error(String(error.stdout))
-    }
-  } finally {
-    unlinkSync(generatedPreviewPath)
-  }
-}
-
 const generated = HEADER + run().trimStart()
 
 if (checkOnly) {
@@ -101,7 +85,6 @@ if (checkOnly) {
   const current = readFileSync(outputPath, 'utf8')
   if (current.trim() !== generated.trim()) {
     console.error('\nsrc/types/database.ts is out of date with the migrations.')
-    printGeneratedDiff(current, generated)
     console.error('Run `pnpm db:types` and commit the result.\n')
     process.exit(1)
   }
