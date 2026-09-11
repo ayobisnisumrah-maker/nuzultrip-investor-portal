@@ -11,6 +11,7 @@ import {
   signIn,
   waitForRealtime,
 } from './helpers/accounts'
+import { createPublishedFinancialSnapshot } from './helpers/financial-snapshot'
 
 const createdAccounts: string[] = []
 
@@ -207,20 +208,22 @@ test('payable allocation changing to paid updates the open investor page automat
     if (holdingError || !holding) throw new Error(`holding setup failed: ${holdingError?.message}`)
     holdingId = holding.id as string
 
+    const snapshot = await createPublishedFinancialSnapshot({ token })
+
     const { data: distribution, error: distributionError } = await supabase
       .from('profit_distributions')
       .insert({
         offering_id: offeringId,
-        period_start: '2026-01-01',
-        period_end: '2026-06-30',
+        financial_report_version_id: snapshot.versionId,
+        period_start: snapshot.startsOn,
+        period_end: snapshot.endsOn,
         revenue_amount: 100_000_000,
         opex_amount: 75_000_000,
         profit_amount: 25_000_000,
         company_share_bps: 6000,
         investor_pool_bps: 4000,
         investor_pool_amount: 10_000_000,
-        status: 'payable',
-        approved_at: new Date().toISOString(),
+        status: 'draft',
       })
       .select('id')
       .single()
@@ -242,6 +245,17 @@ test('payable allocation changing to paid updates the open investor page automat
       .single()
     if (allocationError || !allocation) throw new Error(`allocation setup failed: ${allocationError?.message}`)
     allocationId = allocation.id as string
+
+    for (const status of ['review', 'approved', 'payable'] as const) {
+      const { error } = await supabase
+        .from('profit_distributions')
+        .update({
+          status,
+          ...(status === 'approved' ? { approved_at: new Date().toISOString() } : {}),
+        })
+        .eq('id', distributionId)
+      if (error) throw new Error(`distribution ${status} transition failed: ${error.message}`)
+    }
 
     await signIn(page, investor, '/investor/distributions')
     await page.waitForLoadState('networkidle')

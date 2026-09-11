@@ -10,6 +10,7 @@ import {
   signIn,
   waitForRealtime,
 } from './helpers/accounts'
+import { createPublishedFinancialSnapshot } from './helpers/financial-snapshot'
 
 const createdAccounts: string[] = []
 
@@ -77,107 +78,22 @@ test('distribution and allocation changes update an open admin detail page autom
     if (holdingError || !holding) throw new Error(`holding setup failed: ${holdingError?.message}`)
     holdingId = holding.id as string
 
-    const { data: period, error: periodError } = await supabase
-      .from('financial_periods')
-      .insert({
-        period_type: 'yearly',
-        fiscal_year: 2198,
-        period_index: 1,
-        starts_on: '2198-01-01',
-        ends_on: '2198-12-31',
-        currency: 'IDR',
-        status: 'closed',
-      })
-      .select('id')
-      .single()
-    if (periodError || !period) throw new Error(`financial period setup failed: ${periodError?.message}`)
-
-    const { data: report, error: reportError } = await supabase
-      .from('financial_reports')
-      .insert({
-        financial_period_id: period.id,
-        title: `Realtime distribution snapshot ${token}`,
-        visibility: 'investors',
-        status: 'draft',
-      })
-      .select('id')
-      .single()
-    if (reportError || !report) throw new Error(`financial report setup failed: ${reportError?.message}`)
-
-    const { data: version, error: versionError } = await supabase
-      .from('financial_report_versions')
-      .insert({
-        financial_report_id: report.id,
-        version_number: 1,
-        status: 'draft',
-        source: 'audited',
-      })
-      .select('id')
-      .single()
-    if (versionError || !version) throw new Error(`financial version setup failed: ${versionError?.message}`)
-
-    const { error: linesError } = await supabase.from('financial_line_items').insert([
-      {
-        financial_report_version_id: version.id,
-        statement: 'income',
-        category: 'revenue',
-        line_key: 'revenue',
-        label: 'Revenue',
-        amount: 100_000_000,
-        currency: 'IDR',
-        position: 0,
-      },
-      {
-        financial_report_version_id: version.id,
-        statement: 'income',
-        category: 'expense',
-        line_key: 'expenses',
-        label: 'Expenses',
-        amount: 75_000_000,
-        currency: 'IDR',
-        position: 1,
-      },
-    ])
-    if (linesError) throw new Error(`financial lines setup failed: ${linesError.message}`)
-
-    for (const status of ['review', 'approved', 'published'] as const) {
-      const { error } = await supabase
-        .from('financial_report_versions')
-        .update({ status, ...(status === 'published' ? { published_at: new Date().toISOString() } : {}) })
-        .eq('id', version.id)
-      if (error) throw new Error(`financial version ${status} transition failed: ${error.message}`)
-    }
-
-    for (const status of ['review', 'approved'] as const) {
-      const { error } = await supabase
-        .from('financial_reports')
-        .update({ status, current_version_id: version.id })
-        .eq('id', report.id)
-      if (error) throw new Error(`financial report ${status} transition failed: ${error.message}`)
-    }
-    const { error: reportPublishedError } = await supabase
-      .from('financial_reports')
-      .update({ status: 'published', current_version_id: version.id, published_version_id: version.id })
-      .eq('id', report.id)
-    if (reportPublishedError) {
-      throw new Error(`financial report published transition failed: ${reportPublishedError.message}`)
-    }
+    const snapshot = await createPublishedFinancialSnapshot({ token })
 
     const { data: distribution, error: distributionError } = await supabase
       .from('profit_distributions')
       .insert({
         offering_id: offeringId,
-        financial_report_version_id: version.id,
-        period_start: '2198-01-01',
-        period_end: '2198-12-31',
+        financial_report_version_id: snapshot.versionId,
+        period_start: snapshot.startsOn,
+        period_end: snapshot.endsOn,
         revenue_amount: 100_000_000,
         opex_amount: 75_000_000,
         profit_amount: 25_000_000,
         company_share_bps: 6000,
         investor_pool_bps: 4000,
         investor_pool_amount: 10_000_000,
-        status: 'payable',
-        approved_at: new Date().toISOString(),
+        status: 'draft',
       })
       .select('id')
       .single()
@@ -199,6 +115,17 @@ test('distribution and allocation changes update an open admin detail page autom
       .single()
     if (allocationError || !allocation) throw new Error(`allocation setup failed: ${allocationError?.message}`)
     allocationId = allocation.id as string
+
+    for (const status of ['review', 'approved', 'payable'] as const) {
+      const { error } = await supabase
+        .from('profit_distributions')
+        .update({
+          status,
+          ...(status === 'approved' ? { approved_at: new Date().toISOString() } : {}),
+        })
+        .eq('id', distributionId)
+      if (error) throw new Error(`distribution ${status} transition failed: ${error.message}`)
+    }
 
     await signIn(page, admin, `/admin/profit-distributions/${distributionId}`)
     await page.waitForLoadState('networkidle')
