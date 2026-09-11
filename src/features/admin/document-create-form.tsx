@@ -80,8 +80,10 @@ export function DocumentCreateForm() {
   const [slugTouched, setSlugTouched] = useState(false)
   const [kind, setKind] = useState<(typeof KIND_OPTIONS)[number]['value']>('investment_proposal')
   const [summary, setSummary] = useState('')
+  // Safe-by-default: an uploaded document stays admin-only unless an admin
+  // explicitly chooses a broader audience.
   const [visibility, setVisibility] =
-    useState<(typeof VISIBILITY_OPTIONS)[number]['value']>('investors')
+    useState<(typeof VISIBILITY_OPTIONS)[number]['value']>('internal')
 
   const [uploadedAsset, setUploadedAsset] = useState<UploadedAsset | null>(null)
   const [uploadPending, setUploadPending] = useState(false)
@@ -293,6 +295,10 @@ export function DocumentCreateForm() {
               </option>
             ))}
           </select>
+
+          <p className="text-muted-foreground mt-1 text-xs">
+            Internal hanya dapat dilihat admin. Investor tidak akan melihat dokumen ini di portal.
+          </p>
 
           <FieldError message={action.fieldError('visibility')} />
         </div>
