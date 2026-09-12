@@ -2,19 +2,8 @@ import { randomUUID } from 'node:crypto'
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
-import {
-  as,
-  asCommitted,
-  cleanup,
-  closeDb,
-  db,
-  expectRejected,
-} from './helpers/db'
-import {
-  createFixtures,
-  destroyFixtures,
-  type Fixtures,
-} from './helpers/fixtures'
+import { as, asCommitted, cleanup, closeDb, db, expectRejected } from './helpers/db'
+import { createFixtures, destroyFixtures, type Fixtures } from './helpers/fixtures'
 
 let fixtures: Fixtures
 let offeringId: string
@@ -228,7 +217,7 @@ describe('workflow pewarisan kepemilikan', () => {
     expect(beneficiary?.status).toBe('active')
   })
 
-  it('trigger realtime pewarisan terpasang pada tabel sumber', async () => {
+  it('realtime pewarisan menginvalidation dashboard Investor dan Admin', async () => {
     const [trigger] = await db()<[{ definition: string }]>`
       select pg_get_triggerdef(t.oid) as definition
       from pg_trigger t
@@ -241,5 +230,32 @@ describe('workflow pewarisan kepemilikan', () => {
     `
 
     expect(trigger?.definition).toContain('app.emit_ownership_inheritance_events')
+
+    const [emitter] = await db()<[{ definition: string }]>`
+      select pg_get_functiondef('app.emit_ownership_inheritance_events()'::regprocedure) as definition
+    `
+
+    expect(emitter?.definition).toContain('app.topic_investor')
+    expect(emitter?.definition).toContain('app.topic_admin')
+    expect(emitter?.definition).toContain('ownership.changed')
+    expect(emitter?.definition).toContain('app.emit_event')
+
+    const [investorPolicy] = await db()<[{ expression: string }]>`
+      select coalesce(qual, '') as expression
+      from pg_policies
+      where schemaname = 'realtime'
+        and tablename = 'messages'
+        and policyname = 'realtime_investor_own'
+    `
+    const [adminPolicy] = await db()<[{ expression: string }]>`
+      select coalesce(qual, '') as expression
+      from pg_policies
+      where schemaname = 'realtime'
+        and tablename = 'messages'
+        and policyname = 'realtime_admin_global'
+    `
+
+    expect(investorPolicy?.expression).toContain('topic_investor')
+    expect(adminPolicy?.expression).toContain('topic_admin')
   })
 })
