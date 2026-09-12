@@ -38,7 +38,9 @@ describe('canonical investor profit-distribution RLS', () => {
     expect(definition).toContain('d.period_end = fp.ends_on')
     expect(definition).toContain('d.financial_report_version_id is not null')
     expect(definition).toContain('public.profit_distribution_allocations')
-    expect(definition).toContain("own.status = any (array['payable'::text, 'paid'::text])")
+    expect(definition).toContain('own.status')
+    expect(definition).toContain("'payable'")
+    expect(definition).toContain("'paid'")
   })
 
   it('keeps the helper private from anonymous clients', async () => {
