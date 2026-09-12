@@ -11,11 +11,18 @@ const FINANCIAL_BUCKET = 'financial-documents'
 const MAX_BYTES = 100 * 1024 * 1024
 const PORTAL_BUCKET = 'public-media'
 const PORTAL_MAX_BYTES = 6 * 1024 * 1024
+const PAYMENT_PROOF_MAX_BYTES = 15 * 1024 * 1024
 const PORTAL_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/avif'])
 const FINANCIAL_MIME_TYPES = new Set([
   'application/pdf',
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   'text/csv',
+])
+const PAYMENT_PROOF_MIME_TYPES = new Set([
+  'application/pdf',
+  'image/jpeg',
+  'image/png',
+  'image/webp',
 ])
 
 const ALLOWED_MIME_TYPES = new Set([
@@ -63,10 +70,14 @@ export async function POST(request: Request) {
         ? 'financial-report'
         : requestedPurpose === 'finance-branding'
           ? 'finance-branding'
-        : 'document'
+          : requestedPurpose === 'payment-proof'
+            ? 'payment-proof'
+            : 'document'
 
   const permitted =
-    purpose === 'financial-report' || purpose === 'finance-branding'
+    purpose === 'financial-report' ||
+    purpose === 'finance-branding' ||
+    purpose === 'payment-proof'
       ? hasPermission(principal, 'financial_reports.update')
       : hasPermission(principal, 'media.upload')
   if (!permitted) {
@@ -84,12 +95,21 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'File kosong tidak diperbolehkan.' }, { status: 400 })
   }
 
-  const maxBytes = purpose === 'portal' || purpose === 'finance-branding' ? PORTAL_MAX_BYTES : MAX_BYTES
+  const maxBytes =
+    purpose === 'portal' || purpose === 'finance-branding'
+      ? PORTAL_MAX_BYTES
+      : purpose === 'payment-proof'
+        ? PAYMENT_PROOF_MAX_BYTES
+        : MAX_BYTES
   if (file.size > maxBytes) {
     return NextResponse.json(
       {
         error:
-          purpose === 'portal' || purpose === 'finance-branding' ? 'Ukuran gambar maksimal 6 MB.' : 'Ukuran file maksimal 100 MB.',
+          purpose === 'portal' || purpose === 'finance-branding'
+            ? 'Ukuran gambar maksimal 6 MB.'
+            : purpose === 'payment-proof'
+              ? 'Ukuran bukti pembayaran maksimal 15 MB.'
+              : 'Ukuran file maksimal 100 MB.',
       },
       { status: 400 },
     )
@@ -98,9 +118,11 @@ export async function POST(request: Request) {
   const allowedMimeTypes =
     purpose === 'portal' || purpose === 'finance-branding'
       ? PORTAL_MIME_TYPES
-      : purpose === 'financial-report'
-        ? FINANCIAL_MIME_TYPES
-        : ALLOWED_MIME_TYPES
+      : purpose === 'payment-proof'
+        ? PAYMENT_PROOF_MIME_TYPES
+        : purpose === 'financial-report'
+          ? FINANCIAL_MIME_TYPES
+          : ALLOWED_MIME_TYPES
   if (!allowedMimeTypes.has(file.type)) {
     return NextResponse.json({ error: 'Format file tidak didukung.' }, { status: 400 })
   }
@@ -113,15 +135,16 @@ export async function POST(request: Request) {
   const bucket =
     purpose === 'portal'
       ? PORTAL_BUCKET
-      : purpose === 'financial-report'
+      : purpose === 'financial-report' || purpose === 'payment-proof'
         ? FINANCIAL_BUCKET
         : BUCKET
 
   const serviceClient = getServiceRoleClient()
 
   /*
-   * Service-role is required here because investor-documents is a private
-   * bucket and Storage object writes are brokered server-side.
+   * Service-role is required because private storage object writes are brokered
+   * exclusively server-side. Authenticated clients never receive direct write
+   * privileges on private document buckets or media_assets.
    */
   const { error: uploadError } = await serviceClient.storage
     .from(bucket)
@@ -152,9 +175,6 @@ export async function POST(request: Request) {
     .single()
 
   if (assetError || !asset) {
-    /*
-     * Roll back the Storage object if metadata finalisation fails.
-     */
     await serviceClient.storage.from(bucket).remove([objectPath])
 
     return NextResponse.json({ error: 'Metadata file gagal disimpan.' }, { status: 500 })
