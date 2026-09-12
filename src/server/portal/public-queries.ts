@@ -1,5 +1,7 @@
 import 'server-only'
 
+import { cache } from 'react'
+
 import { getServerSupabase } from '@/server/supabase/server'
 
 export type PublicPortalSection = {
@@ -108,7 +110,7 @@ function hasMeaningfulContent(sectionKind: string, content: Record<string, unkno
   return Object.keys(content).some((key) => key !== 'kind')
 }
 
-async function loadPublishedPortalPage(slug: string) {
+const loadPublishedPortalPage = cache(async (slug: string) => {
   const supabase = await getServerSupabase()
 
   /*
@@ -189,7 +191,7 @@ async function loadPublishedPortalPage(slug: string) {
     page,
     sections: publishedSections,
   }
-}
+})
 
 export async function getPublishedHomePage() {
   return loadPublishedPortalPage('home')
