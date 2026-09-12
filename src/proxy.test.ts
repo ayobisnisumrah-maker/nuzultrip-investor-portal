@@ -25,3 +25,31 @@ describe('production hostname routing', () => {
     expect(response.headers.get('location')).toBeNull()
   })
 })
+
+describe('requested path forwarding', () => {
+  it('forwards the exact internal path and query for auth continuation', () => {
+    const response = proxy(
+      new NextRequest(
+        'https://www.nuzultrip.click/investor/ownership/inheritance?tab=history',
+      ),
+    )
+
+    expect(response.headers.get('x-middleware-request-x-nuzultrip-request-path')).toBe(
+      '/investor/ownership/inheritance?tab=history',
+    )
+  })
+
+  it('overwrites a client-supplied continuation header', () => {
+    const response = proxy(
+      new NextRequest('https://www.nuzultrip.click/investor/ownership/inheritance', {
+        headers: {
+          'x-nuzultrip-request-path': '//evil.example/steal-session',
+        },
+      }),
+    )
+
+    expect(response.headers.get('x-middleware-request-x-nuzultrip-request-path')).toBe(
+      '/investor/ownership/inheritance',
+    )
+  })
+})
