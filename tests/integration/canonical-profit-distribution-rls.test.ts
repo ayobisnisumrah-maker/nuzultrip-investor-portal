@@ -15,7 +15,7 @@ describe('canonical investor profit-distribution RLS', () => {
       select pg_get_functiondef(p.oid) as definition
       from pg_proc p
       join pg_namespace n on n.oid = p.pronamespace
-      where n.nspname = 'app'
+      where n.nspname = 'private'
         and p.proname = 'investor_can_read_canonical_distribution'
         and pg_get_function_identity_arguments(p.oid) = 'p_distribution_id uuid, p_investor_id uuid, p_allocation_id uuid'
     `
@@ -48,17 +48,17 @@ describe('canonical investor profit-distribution RLS', () => {
       select
         has_function_privilege(
           'anon',
-          'app.investor_can_read_canonical_distribution(uuid,uuid,uuid)',
+          'private.investor_can_read_canonical_distribution(uuid,uuid,uuid)',
           'EXECUTE'
         ) as anon_can_execute,
         has_function_privilege(
           'authenticated',
-          'app.investor_can_read_canonical_distribution(uuid,uuid,uuid)',
+          'private.investor_can_read_canonical_distribution(uuid,uuid,uuid)',
           'EXECUTE'
         ) as authenticated_can_execute,
         has_function_privilege(
           'service_role',
-          'app.investor_can_read_canonical_distribution(uuid,uuid,uuid)',
+          'private.investor_can_read_canonical_distribution(uuid,uuid,uuid)',
           'EXECUTE'
         ) as service_can_execute
     `
@@ -93,7 +93,7 @@ describe('canonical investor profit-distribution RLS', () => {
     const proof = byPolicy.get('profit_distribution_payment_proofs_select_self') ?? ''
 
     for (const qual of [distribution, allocation, proof]) {
-      expect(qual).toContain('app.investor_can_read_canonical_distribution')
+      expect(qual).toContain('private.investor_can_read_canonical_distribution')
     }
 
     expect(distribution).toContain('app.current_investor_id()')
