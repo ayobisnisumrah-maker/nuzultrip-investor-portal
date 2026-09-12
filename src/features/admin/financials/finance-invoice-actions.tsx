@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 
 import {
   issueFinanceInvoice,
+  reconcileFinancePayment,
   recordFinancePayment,
   updateFinanceInvoiceDueDate,
 } from '@/server/financials/operation-actions'
@@ -14,6 +15,27 @@ import { Alert } from '@/ui/alert'
 import { Button } from '@/ui/button'
 import { Input } from '@/ui/input'
 
+type PendingPayment = {
+  id: string
+  reference: string
+  amount: number
+  method: string
+  receivedAt: string
+  externalReference: string | null
+}
+
+type UploadResponse = {
+  ok?: boolean
+  error?: string
+  asset?: { id?: string }
+}
+
+const rupiah = new Intl.NumberFormat('id-ID', {
+  style: 'currency',
+  currency: 'IDR',
+  maximumFractionDigits: 0,
+})
+
 export function FinanceInvoiceActions({
   invoiceId,
   status,
@@ -22,6 +44,7 @@ export function FinanceInvoiceActions({
   refundPolicyNote,
   currentDueOn,
   currentDepartureOn,
+  pendingPayments,
 }: {
   invoiceId: string
   status: string
@@ -30,6 +53,7 @@ export function FinanceInvoiceActions({
   refundPolicyNote?: string | null
   currentDueOn: string | null
   currentDepartureOn: string | null
+  pendingPayments: PendingPayment[]
 }) {
   const router = useRouter()
   const [pending, startTransition] = useTransition()
@@ -41,6 +65,61 @@ export function FinanceInvoiceActions({
       const result = await task()
       if (!result.ok) setError(result.error?.message ?? 'Terjadi kesalahan pada sistem.')
       else router.refresh()
+    })
+  }
+
+  const reconcile = (form: HTMLFormElement, payment: PendingPayment) => {
+    const fields = new FormData(form)
+    const proof = fields.get('proof')
+    const receivedAt = String(fields.get('bankReceivedAt') ?? '')
+    const parsedReceivedAt = new Date(receivedAt)
+
+    if (!(proof instanceof File) || proof.size <= 0) {
+      setError('Bukti pembayaran wajib dipilih sebelum rekonsiliasi.')
+      return
+    }
+    if (Number.isNaN(parsedReceivedAt.getTime())) {
+      setError('Waktu penerimaan dana dari bank tidak valid.')
+      return
+    }
+
+    setError(null)
+    startTransition(async () => {
+      try {
+        const upload = new FormData()
+        upload.set('file', proof)
+        upload.set('purpose', 'payment-proof')
+        const response = await fetch('/api/admin/media/upload', {
+          method: 'POST',
+          body: upload,
+        })
+        const payload = (await response.json()) as UploadResponse
+        const proofAssetId = payload.asset?.id
+
+        if (!response.ok || !payload.ok || !proofAssetId) {
+          setError(payload.error ?? 'Bukti pembayaran tidak dapat diunggah.')
+          return
+        }
+
+        const result = await reconcileFinancePayment({
+          paymentId: payment.id,
+          proofAssetId,
+          bankReference: String(fields.get('bankReference') ?? ''),
+          bankAmount: payment.amount,
+          bankReceivedAt: parsedReceivedAt.toISOString(),
+          notes: String(fields.get('notes') ?? ''),
+        })
+
+        if (!result.ok) {
+          setError(result.error.message)
+          return
+        }
+
+        form.reset()
+        router.refresh()
+      } catch {
+        setError('Rekonsiliasi pembayaran tidak dapat diproses. Silakan coba lagi.')
+      }
     })
   }
 
@@ -149,6 +228,13 @@ export function FinanceInvoiceActions({
             )
           }}
         >
+          <div className="sm:col-span-3">
+            <h3 className="font-semibold">Catat pembayaran masuk</h3>
+            <p className="text-caption text-fg-muted mt-1">
+              Pembayaran baru berstatus Menunggu Rekonsiliasi dan belum menambah saldo terbayar
+              sampai bukti pembayaran cocok dengan transaksi bank.
+            </p>
+          </div>
           <label className="text-body-sm grid gap-1">
             <span>Nominal pembayaran</span>
             <Input
@@ -165,15 +251,71 @@ export function FinanceInvoiceActions({
             <Input name="method" required />
           </label>
           <label className="text-body-sm grid gap-1">
-            <span>Referensi</span>
+            <span>Referensi awal</span>
             <Input name="reference" />
           </label>
           <div className="sm:col-span-3">
             <Button type="submit" loading={pending}>
-              Catat pembayaran
+              Catat untuk Rekonsiliasi
             </Button>
           </div>
         </form>
+      ) : null}
+
+      {pendingPayments.length > 0 ? (
+        <div className="grid gap-3">
+          <Alert tone="info" title="Pembayaran menunggu rekonsiliasi">
+            Konfirmasi hanya dilakukan setelah bukti pembayaran dan transaksi bank cocok. Nominal
+            rekonsiliasi mengikuti pembayaran yang sudah dicatat dan tidak dapat diubah dari form ini.
+          </Alert>
+          {pendingPayments.map((payment) => (
+            <form
+              key={payment.id}
+              className="border-border grid gap-3 rounded-xl border p-4 sm:grid-cols-2 lg:grid-cols-4"
+              onSubmit={(event) => {
+                event.preventDefault()
+                reconcile(event.currentTarget, payment)
+              }}
+            >
+              <div className="sm:col-span-2 lg:col-span-4">
+                <h3 className="font-semibold">{payment.reference}</h3>
+                <p className="text-caption text-fg-muted mt-1">
+                  {rupiah.format(payment.amount)} · {payment.method}
+                  {payment.externalReference ? ` · ${payment.externalReference}` : ''}
+                </p>
+              </div>
+              <label className="text-body-sm grid gap-1">
+                <span>Referensi transaksi bank</span>
+                <Input name="bankReference" maxLength={200} required />
+              </label>
+              <label className="text-body-sm grid gap-1">
+                <span>Waktu dana diterima bank</span>
+                <Input name="bankReceivedAt" type="datetime-local" required />
+              </label>
+              <label className="text-body-sm grid gap-1 sm:col-span-2">
+                <span>Bukti pembayaran</span>
+                <Input
+                  name="proof"
+                  type="file"
+                  accept="application/pdf,image/jpeg,image/png,image/webp"
+                  required
+                />
+                <span className="text-caption text-fg-muted">
+                  PDF, JPG, PNG, atau WebP. Maksimal 15 MB.
+                </span>
+              </label>
+              <label className="text-body-sm grid gap-1 sm:col-span-2 lg:col-span-3">
+                <span>Catatan rekonsiliasi</span>
+                <Input name="notes" maxLength={2000} />
+              </label>
+              <div className="flex items-end">
+                <Button type="submit" loading={pending}>
+                  Cocokkan & Konfirmasi
+                </Button>
+              </div>
+            </form>
+          ))}
+        </div>
       ) : null}
 
       {refundable > 0 ? (
@@ -215,11 +357,7 @@ export function FinanceInvoiceActions({
             <span>Nominal pengajuan refund</span>
             <Input name="amount" type="number" min="1" max={refundable} required />
             <span className="text-caption text-fg-muted">
-              Maksimal berdasarkan pembayaran dan kebijakan: {new Intl.NumberFormat('id-ID', {
-                style: 'currency',
-                currency: 'IDR',
-                maximumFractionDigits: 0,
-              }).format(refundable)}
+              Maksimal berdasarkan pembayaran dan kebijakan: {rupiah.format(refundable)}
             </span>
           </label>
           <label className="text-body-sm grid gap-1">
