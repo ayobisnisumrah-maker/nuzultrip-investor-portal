@@ -80,6 +80,14 @@ export const financePaymentSchema = z.object({
   externalReference: z.string().trim().max(160).default(''),
   notes: z.string().trim().max(1000).default(''),
 })
+export const financePaymentReconciliationSchema = z.object({
+  paymentId: z.string().uuid(),
+  proofAssetId: z.string().uuid(),
+  bankReference: z.string().trim().min(2).max(200),
+  bankAmount: z.number().finite().positive().max(999_999_999_999_999),
+  bankReceivedAt: z.string().datetime({ offset: true }),
+  notes: z.string().trim().max(2000).default(''),
+})
 export const financeRefundSchema = z.object({
   invoiceId: z.string().uuid(),
   paymentId: z.string().uuid().nullable(),
