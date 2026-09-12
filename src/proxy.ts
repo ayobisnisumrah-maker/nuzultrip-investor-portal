@@ -2,6 +2,8 @@ import { NextResponse, type NextRequest } from 'next/server'
 
 import { getClientEnv } from '@/lib/env'
 
+const REQUEST_PATH_HEADER = 'x-nuzultrip-request-path'
+
 function createNonce(): string {
   const bytes = new Uint8Array(16)
   crypto.getRandomValues(bytes)
@@ -64,6 +66,10 @@ export function proxy(request: NextRequest) {
 
   requestHeaders.set('x-nonce', nonce)
   requestHeaders.set('content-security-policy', csp)
+  requestHeaders.set(
+    REQUEST_PATH_HEADER,
+    `${request.nextUrl.pathname}${request.nextUrl.search}`,
+  )
 
   const response = NextResponse.next({
     request: {

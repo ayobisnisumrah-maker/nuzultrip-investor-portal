@@ -1,10 +1,13 @@
 import 'server-only'
 
+import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import type { AdminPrincipal, InvestorPrincipal } from '@/core/auth/principal'
 import type { Permission } from '@/core/rbac/permissions'
 import { hasPermission } from '@/core/auth/principal'
 import { getPrincipal } from './session'
+
+const REQUEST_PATH_HEADER = 'x-nuzultrip-request-path'
 
 /**
  * Page-level guards.
@@ -19,10 +22,24 @@ function signInWith(pathname: string): never {
   redirect(`/masuk?lanjut=${encodeURIComponent(pathname)}`)
 }
 
-export async function requireAdminPage(pathname = '/admin'): Promise<AdminPrincipal> {
+function isSafeInternalPath(pathname: string): boolean {
+  return pathname.startsWith('/') && !pathname.startsWith('//')
+}
+
+async function resolveRequestedPath(explicitPathname: string | undefined, fallback: string) {
+  if (explicitPathname) return explicitPathname
+
+  const requestHeaders = await headers()
+  const requestedPath = requestHeaders.get(REQUEST_PATH_HEADER)
+
+  return requestedPath && isSafeInternalPath(requestedPath) ? requestedPath : fallback
+}
+
+export async function requireAdminPage(pathname?: string): Promise<AdminPrincipal> {
+  const requestedPath = await resolveRequestedPath(pathname, '/admin')
   const principal = await getPrincipal()
 
-  if (principal.kind === 'anonymous') signInWith(pathname)
+  if (principal.kind === 'anonymous') signInWith(requestedPath)
   // An investor who lands on an admin URL is sent to their own surface rather
   // than shown a forbidden page: it is almost always a stale link, not an
   // attempt, and a dead end helps nobody.
@@ -31,10 +48,11 @@ export async function requireAdminPage(pathname = '/admin'): Promise<AdminPrinci
   return principal
 }
 
-export async function requireInvestorPage(pathname = '/investor'): Promise<InvestorPrincipal> {
+export async function requireInvestorPage(pathname?: string): Promise<InvestorPrincipal> {
+  const requestedPath = await resolveRequestedPath(pathname, '/investor')
   const principal = await getPrincipal()
 
-  if (principal.kind === 'anonymous') signInWith(pathname)
+  if (principal.kind === 'anonymous') signInWith(requestedPath)
   if (principal.kind === 'admin') redirect('/admin')
 
   return principal
@@ -47,9 +65,10 @@ export async function requireInvestorPage(pathname = '/investor'): Promise<Inves
  * own application/account status and status history.
  */
 export async function requireInvestorDataPage(
-  pathname = '/investor',
+  pathname?: string,
 ): Promise<InvestorPrincipal> {
-  const principal = await requireInvestorPage(pathname)
+  const requestedPath = await resolveRequestedPath(pathname, '/investor')
+  const principal = await requireInvestorPage(requestedPath)
 
   if (!principal.hasDataAccess) redirect('/investor')
 
