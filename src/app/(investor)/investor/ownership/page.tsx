@@ -69,18 +69,11 @@ export default async function InvestorOwnershipPage() {
   const offeringMap = new Map((offerings ?? []).map((offering) => [offering.id, offering]))
 
   const activeHoldings = allHoldings.filter((holding) => holding.status === 'active')
-
   const totalUnits = activeHoldings.reduce((sum, holding) => sum + Number(holding.units), 0)
-
   const totalBps = activeHoldings.reduce(
     (sum, holding) => sum + Number(holding.ownership_bps),
     0,
   )
-
-  const totalPortfolioValue = activeHoldings.reduce((sum, holding) => {
-    const offering = offeringMap.get(holding.offering_id)
-    return sum + Number(holding.units) * Number(offering?.unit_price ?? 0)
-  }, 0)
 
   const reservedSaleUnitsByHolding = new Map<string, number>()
   for (const transfer of saleTransfers) {
@@ -115,7 +108,7 @@ export default async function InvestorOwnershipPage() {
       <PageHeader
         eyebrow="Kepemilikan"
         title="Kepemilikan Saham"
-        description="Pantau unit, porsi kepemilikan, nilai portofolio, penjualan saham, serta pengajuan pewarisan Anda."
+        description="Pantau unit, porsi kepemilikan, penjualan saham, serta pengajuan pewarisan berdasarkan cap table resmi."
         actions={
           <Button asChild variant="secondary">
             <Link href="/investor/ownership/inheritance">Kelola Pewaris</Link>
@@ -144,9 +137,9 @@ export default async function InvestorOwnershipPage() {
           <div className="grid gap-4 sm:grid-cols-3">
             <Card>
               <CardBody>
-                <div className="text-caption text-fg-subtle">Nilai Portofolio</div>
+                <div className="text-caption text-fg-subtle">Holding Aktif</div>
                 <div className="text-heading-lg tabular mt-1 font-semibold">
-                  {formatRupiah(totalPortfolioValue)}
+                  {activeHoldings.length.toLocaleString('id-ID')}
                 </div>
               </CardBody>
             </Card>
@@ -183,7 +176,7 @@ export default async function InvestorOwnershipPage() {
               const transferEligibleAt = new Date(holding.transfer_eligible_at)
               const isEligible =
                 Number.isFinite(transferEligibleAt.getTime()) && transferEligibleAt.getTime() <= now
-              const unitPrice = Number(offering?.unit_price ?? 0)
+              const referenceUnitPrice = Number(offering?.unit_price ?? 0)
 
               return (
                 <Card key={holding.id}>
@@ -225,14 +218,12 @@ export default async function InvestorOwnershipPage() {
                       </div>
 
                       <div>
-                        <span className="text-fg-subtle">Harga Referensi / Unit</span>
-                        <div className="tabular font-semibold">{formatRupiah(unitPrice)}</div>
-                      </div>
-
-                      <div>
-                        <span className="text-fg-subtle">Nilai Kepemilikan</span>
+                        <span className="text-fg-subtle">Harga Penawaran / Unit</span>
                         <div className="tabular font-semibold">
-                          {formatRupiah(units * unitPrice)}
+                          {formatRupiah(referenceUnitPrice)}
+                        </div>
+                        <div className="text-caption mt-1 text-fg-subtle">
+                          Term resmi dari penawaran kepemilikan, bukan valuasi portofolio.
                         </div>
                       </div>
 
@@ -274,7 +265,7 @@ export default async function InvestorOwnershipPage() {
                             holdingId={holding.id}
                             offeringName={offering?.name ?? 'Kepemilikan Saham'}
                             availableUnits={availableUnits}
-                            referenceUnitPrice={unitPrice}
+                            referenceUnitPrice={referenceUnitPrice}
                           />
                         )}
                       </div>
