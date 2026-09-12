@@ -75,16 +75,8 @@ jobs:
       - name: Reset local schema from migrations
         run: supabase db reset
 
-      - name: Generate database types for PR verification
-        run: pnpm db:types
-
-      - name: Upload generated database types
-        uses: actions/upload-artifact@v4
-        with:
-          name: generated-database-types
-          path: src/types/database.ts
-          if-no-files-found: error
-          retention-days: 1
+      - name: Verify generated database types
+        run: pnpm db:types --check
 
       - name: Typecheck
         run: pnpm typecheck
