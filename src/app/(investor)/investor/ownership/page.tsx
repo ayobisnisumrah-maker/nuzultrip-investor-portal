@@ -6,6 +6,7 @@ import { RealtimeRefresher } from '@/features/realtime/realtime-refresher'
 import { SaleHistory } from '@/features/investor/ownership/sale-history'
 import { SellSharesForm } from '@/features/investor/ownership/sell-shares-form'
 import { requireInvestorPage } from '@/server/auth/page-guards'
+import { listMyInheritance } from '@/server/ownership/inheritance-service'
 import { listInvestorSaleTransfers } from '@/server/ownership/transfer-service'
 import { getServerSupabase } from '@/server/supabase/server'
 import { Button } from '@/ui/button'
@@ -15,11 +16,8 @@ import { EmptyState } from '@/ui/states'
 
 export const metadata: Metadata = { title: 'Kepemilikan' }
 
-const RESERVED_SALE_STATUSES = new Set([
-  'pending',
-  'approved',
-  'processing',
-])
+const RESERVED_SALE_STATUSES = new Set(['pending', 'approved', 'processing'])
+const RESERVED_INHERITANCE_STATUSES = new Set(['pending', 'approved'])
 
 const HOLDING_STATUS_LABELS: Record<string, string> = {
   reserved: 'Dicadangkan',
@@ -46,7 +44,7 @@ export default async function InvestorOwnershipPage() {
   const principal = await requireInvestorPage('/investor/ownership')
   const supabase = await getServerSupabase()
 
-  const [{ data: holdings }, saleTransfers] = await Promise.all([
+  const [{ data: holdings }, saleTransfers, inheritanceRequests] = await Promise.all([
     supabase
       .from('ownership_holdings')
       .select(
@@ -55,12 +53,11 @@ export default async function InvestorOwnershipPage() {
       .eq('investor_id', principal.investorId)
       .order('acquisition_at', { ascending: false }),
     listInvestorSaleTransfers(supabase),
+    listMyInheritance(supabase),
   ])
 
   const allHoldings = holdings ?? []
-  const offeringIds = [
-    ...new Set(allHoldings.map((holding) => holding.offering_id)),
-  ]
+  const offeringIds = [...new Set(allHoldings.map((holding) => holding.offering_id))]
 
   const { data: offerings } = offeringIds.length
     ? await supabase
@@ -69,18 +66,11 @@ export default async function InvestorOwnershipPage() {
         .in('id', offeringIds)
     : { data: [] }
 
-  const offeringMap = new Map(
-    (offerings ?? []).map((offering) => [offering.id, offering]),
-  )
+  const offeringMap = new Map((offerings ?? []).map((offering) => [offering.id, offering]))
 
-  const activeHoldings = allHoldings.filter(
-    (holding) => holding.status === 'active',
-  )
+  const activeHoldings = allHoldings.filter((holding) => holding.status === 'active')
 
-  const totalUnits = activeHoldings.reduce(
-    (sum, holding) => sum + Number(holding.units),
-    0,
-  )
+  const totalUnits = activeHoldings.reduce((sum, holding) => sum + Number(holding.units), 0)
 
   const totalBps = activeHoldings.reduce(
     (sum, holding) => sum + Number(holding.ownership_bps),
@@ -92,13 +82,21 @@ export default async function InvestorOwnershipPage() {
     return sum + Number(holding.units) * Number(offering?.unit_price ?? 0)
   }, 0)
 
-  const reservedUnitsByHolding = new Map<string, number>()
+  const reservedSaleUnitsByHolding = new Map<string, number>()
   for (const transfer of saleTransfers) {
     if (!RESERVED_SALE_STATUSES.has(transfer.status)) continue
-    reservedUnitsByHolding.set(
+    reservedSaleUnitsByHolding.set(
       transfer.holding_id,
-      (reservedUnitsByHolding.get(transfer.holding_id) ?? 0) +
-        Number(transfer.units),
+      (reservedSaleUnitsByHolding.get(transfer.holding_id) ?? 0) + Number(transfer.units),
+    )
+  }
+
+  const reservedInheritanceUnitsByHolding = new Map<string, number>()
+  for (const request of inheritanceRequests) {
+    if (!RESERVED_INHERITANCE_STATUSES.has(request.status)) continue
+    reservedInheritanceUnitsByHolding.set(
+      request.holding_id,
+      (reservedInheritanceUnitsByHolding.get(request.holding_id) ?? 0) + Number(request.units),
     )
   }
 
@@ -176,21 +174,21 @@ export default async function InvestorOwnershipPage() {
             {allHoldings.map((holding) => {
               const offering = offeringMap.get(holding.offering_id)
               const units = Number(holding.units)
-              const reservedUnits = reservedUnitsByHolding.get(holding.id) ?? 0
+              const reservedSaleUnits = reservedSaleUnitsByHolding.get(holding.id) ?? 0
+              const reservedInheritanceUnits =
+                reservedInheritanceUnitsByHolding.get(holding.id) ?? 0
+              const reservedUnits = reservedSaleUnits + reservedInheritanceUnits
               const availableUnits = Math.max(0, units - reservedUnits)
               const isActive = holding.status === 'active'
               const transferEligibleAt = new Date(holding.transfer_eligible_at)
               const isEligible =
-                Number.isFinite(transferEligibleAt.getTime()) &&
-                transferEligibleAt.getTime() <= now
+                Number.isFinite(transferEligibleAt.getTime()) && transferEligibleAt.getTime() <= now
               const unitPrice = Number(offering?.unit_price ?? 0)
 
               return (
                 <Card key={holding.id}>
                   <CardHeader>
-                    <CardTitle>
-                      {offering?.name ?? 'Kepemilikan Saham'}
-                    </CardTitle>
+                    <CardTitle>{offering?.name ?? 'Kepemilikan Saham'}</CardTitle>
                   </CardHeader>
 
                   <CardBody>
@@ -209,7 +207,12 @@ export default async function InvestorOwnershipPage() {
                         </div>
                         {reservedUnits > 0 ? (
                           <div className="text-caption mt-1 text-fg-subtle">
-                            {reservedUnits.toLocaleString('id-ID')} unit sedang dalam proses penjualan
+                            {reservedUnits.toLocaleString('id-ID')} unit sedang dicadangkan
+                            {reservedSaleUnits > 0 && reservedInheritanceUnits > 0
+                              ? ' untuk penjualan dan pewarisan'
+                              : reservedInheritanceUnits > 0
+                                ? ' untuk pewarisan'
+                                : ' untuk penjualan'}
                           </div>
                         ) : null}
                       </div>
@@ -223,9 +226,7 @@ export default async function InvestorOwnershipPage() {
 
                       <div>
                         <span className="text-fg-subtle">Harga Referensi / Unit</span>
-                        <div className="tabular font-semibold">
-                          {formatRupiah(unitPrice)}
-                        </div>
+                        <div className="tabular font-semibold">{formatRupiah(unitPrice)}</div>
                       </div>
 
                       <div>
@@ -254,9 +255,7 @@ export default async function InvestorOwnershipPage() {
 
                       <div>
                         <span className="text-fg-subtle">Referensi</span>
-                        <div className="font-mono">
-                          {holding.acquisition_reference ?? '—'}
-                        </div>
+                        <div className="font-mono">{holding.acquisition_reference ?? '—'}</div>
                       </div>
                     </div>
 
@@ -268,7 +267,7 @@ export default async function InvestorOwnershipPage() {
                           </div>
                         ) : availableUnits <= 0 ? (
                           <div className="text-body-sm text-fg-subtle">
-                            Seluruh unit tersedia sedang berada dalam proses penjualan.
+                            Seluruh unit tersedia sedang dicadangkan untuk proses aktif.
                           </div>
                         ) : (
                           <SellSharesForm
