@@ -73,7 +73,7 @@ describe('profit distribution ownership cutoff missing history', () => {
         )
         returning id
       `
-      if (!offering) throw new Error('Failed to create offering fixture.')
+      if (!offering) throw new Error('Gagal membuat fixture penawaran.')
       offeringId = offering.id
 
       const [holding] = await tx<{ id: string }[]>`
@@ -102,7 +102,7 @@ describe('profit distribution ownership cutoff missing history', () => {
         )
         returning id
       `
-      if (!holding) throw new Error('Failed to create transferred holding fixture.')
+      if (!holding) throw new Error('Gagal membuat fixture holding yang dialihkan.')
       holdingId = holding.id
 
       const [distribution] = await tx<{ id: string }[]>`
@@ -112,10 +112,10 @@ describe('profit distribution ownership cutoff missing history', () => {
           ${snapshot.versionId},
           6000,
           4000,
-          'Regression: missing historical transfer must fail closed.'
+          'Regresi: histori transfer yang hilang harus gagal secara tertutup.'
         )
       `
-      if (!distribution) throw new Error('Failed to create distribution fixture.')
+      if (!distribution) throw new Error('Gagal membuat fixture distribusi.')
       distributionId = distribution.id
 
       return distribution.id
@@ -129,7 +129,7 @@ describe('profit distribution ownership cutoff missing history', () => {
 
     expect(error.code).toBe('23514')
     expect(error.message).toContain(
-      'Historical ownership cannot be reconstructed for a transferred holding without completion history.',
+      'Riwayat kepemilikan tidak dapat direkonstruksi karena holding yang dialihkan tidak memiliki transaksi penyelesaian.',
     )
   }, 60_000)
 })
