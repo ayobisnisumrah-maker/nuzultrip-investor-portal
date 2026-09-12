@@ -4574,6 +4574,7 @@ export type Database = {
         | "message_received"
         | "inquiry_received"
         | "account_invited"
+        | "ownership_updated"
       ownership_holding_status:
         | "reserved"
         | "active"
@@ -4829,6 +4830,7 @@ export const Constants = {
         "message_received",
         "inquiry_received",
         "account_invited",
+        "ownership_updated",
       ],
       ownership_holding_status: [
         "reserved",
