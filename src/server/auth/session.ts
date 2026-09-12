@@ -8,23 +8,38 @@ import { getServerSupabase } from '@/server/supabase/server'
 /**
  * Resolve the calling principal.
  *
- * One `current_principal()` round trip returns identity, role and the complete
- * effective permission set. `cache()` scopes the result to the request, so a
- * page that calls `requirePermission` five times pays for one query.
+ * Anonymous requests are identified by the absence of a Supabase session and
+ * never call the privileged `current_principal()` RPC. When a session exists,
+ * the RPC remains the authoritative source for identity, role and the complete
+ * effective permission set.
  *
- * The result reflects the **database**, not the JWT. That is deliberate: an
- * account disabled a moment ago must lose access on the next request, and a
- * token cannot be un-issued (docs/RBAC.md §4).
+ * `getSession()` is deliberately used only as an absence check. Its embedded
+ * user data is not trusted for authorisation; a forged/stale session still has
+ * to pass PostgREST JWT verification and the database-backed principal resolver.
+ *
+ * `cache()` scopes the result to the request, so a page that calls
+ * `requirePermission` five times resolves the principal once.
  */
 export const getPrincipal = cache(async (): Promise<Principal> => {
   const supabase = await getServerSupabase()
 
+  const {
+    data: { session },
+    error: sessionError,
+  } = await supabase.auth.getSession()
+
+  if (sessionError) {
+    throw new InternalError(`Failed to inspect the auth session: ${sessionError.message}`, sessionError)
+  }
+
+  if (!session) return ANONYMOUS
+
   const { data, error } = await supabase.rpc('current_principal')
 
   if (error) {
-    // A failure here must never be treated as "no permissions" and quietly
-    // continue — that would turn a transient database problem into a silent
-    // authorisation change. Fail loudly instead.
+    // A failure for a request that claims to have a session must never be
+    // treated as "no permissions". A stale/forged token, database outage or
+    // RPC failure therefore stays fail-closed and visible.
     throw new InternalError(`Failed to resolve the principal: ${error.message}`, error)
   }
 

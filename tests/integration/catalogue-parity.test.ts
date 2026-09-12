@@ -254,11 +254,21 @@ describe('schema hygiene', () => {
     expect(rows.map((row) => `${row['relname']} (${row['missing']})`)).toEqual([])
   })
 
-  it('lets an anonymous caller resolve a null principal', async () => {
-    const [row] = await db()<{ can_execute: boolean }[]>`
-      select has_function_privilege('anon', 'public.current_principal()', 'EXECUTE') as can_execute
+  it('keeps current principal private to authenticated and service contexts', async () => {
+    const [row] = await db()<
+      { anon_can_execute: boolean; authenticated_can_execute: boolean; service_can_execute: boolean }[]
+    >`
+      select
+        has_function_privilege('anon', 'public.current_principal()', 'EXECUTE') as anon_can_execute,
+        has_function_privilege('authenticated', 'public.current_principal()', 'EXECUTE') as authenticated_can_execute,
+        has_function_privilege('service_role', 'public.current_principal()', 'EXECUTE') as service_can_execute
     `
-    expect(row!['can_execute']).toBe(true)
+
+    expect(row).toEqual({
+      anon_can_execute: false,
+      authenticated_can_execute: true,
+      service_can_execute: true,
+    })
   })
 
   it('keeps the privileged database functions out of client reach', async () => {
