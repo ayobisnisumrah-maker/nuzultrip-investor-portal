@@ -90,5 +90,17 @@ jobs:
       - name: Database and RLS integration tests
         run: pnpm test:db:only --no-file-parallelism
 
+      - name: Functional test share sale
+        env:
+          PGPASSWORD: postgres
+        run: |
+          psql \
+            --host=127.0.0.1 \
+            --port=54322 \
+            --username=postgres \
+            --dbname=postgres \
+            --set=ON_ERROR_STOP=1 \
+            --file=scripts/local-tests/ownership-share-sale-functional.sql
+
       - name: Production build
         run: pnpm build
