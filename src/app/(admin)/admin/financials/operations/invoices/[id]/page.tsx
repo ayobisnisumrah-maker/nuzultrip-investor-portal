@@ -93,9 +93,9 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
       supabase.from('finance_invoice_items').select('*').eq('invoice_id', id).order('position'),
       supabase
         .from('finance_payments')
-        .select('id,reference,amount,method,status,created_at')
+        .select('id,reference,amount,method,status,received_at,external_reference')
         .eq('invoice_id', id)
-        .order('created_at'),
+        .order('received_at'),
       supabase
         .from('finance_refunds')
         .select('id,reference,amount,reason,status')
@@ -134,13 +134,16 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
   const settings = (settingsResult.data ?? null) as FinancePolicySettings | null
   const items = itemsResult.data ?? []
   const refunds = refundsResult.data ?? []
+  const payments = paymentsResult.data ?? []
+  const confirmedPayments = payments.filter((payment) => payment.status === 'confirmed')
+  const pendingPayments = payments.filter((payment) => payment.status === 'pending')
   const firstItem = items[0]
   const packageName = firstItem?.name || 'Pesanan'
   const documentTitle = `Bukti Pembayaran ${packageName}`
   const paidNet = Math.max(Number(invoice.paid_total) - Number(invoice.refunded_total), 0)
   const outstanding = Math.max(Number(invoice.grand_total) - paidNet, 0)
   const isPaid = paidNet > 0 && outstanding === 0
-  const lastPayment = paymentsResult.data?.at(-1)
+  const lastPayment = confirmedPayments.at(-1)
   const itemTotal = items.reduce((total, item) => total + Number(item.line_total), 0)
   const assetUrl = (assetId?: string | null) =>
     assetId ? `/api/admin/finance/assets/${assetId}` : null
@@ -210,7 +213,7 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
     invoiceTotal: Number(invoice.grand_total),
     amountPaid: paidNet,
     balanceDue: outstanding,
-    paymentDatetime: formatPaymentDatetime(lastPayment?.created_at),
+    paymentDatetime: formatPaymentDatetime(lastPayment?.received_at),
     paymentMethod: lastPayment?.method,
     dueDate: formatInvoiceDate(invoice.due_on),
     departureDate: formatInvoiceDate(extended.departure_on),
@@ -247,6 +250,14 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
         refundPolicyNote={refundPolicyNote}
         currentDueOn={invoice.due_on}
         currentDepartureOn={extended.departure_on ?? null}
+        pendingPayments={pendingPayments.map((payment) => ({
+          id: payment.id,
+          reference: payment.reference,
+          amount: Number(payment.amount),
+          method: payment.method,
+          receivedAt: payment.received_at,
+          externalReference: payment.external_reference,
+        }))}
       />
 
       <PaymentReceipt data={receipt} />

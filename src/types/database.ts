@@ -41,6 +41,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      approve_ownership_inheritance: {
+        Args: { p_request_id: string }
+        Returns: undefined
+      }
       approve_ownership_sale: {
         Args: { p_transfer_id: string }
         Returns: undefined
@@ -57,9 +61,17 @@ export type Database = {
         Args: { p_token: string }
         Returns: boolean
       }
+      cancel_ownership_inheritance_request: {
+        Args: { p_request_id: string }
+        Returns: undefined
+      }
       cancel_ownership_sale_request: {
         Args: { p_transfer_id: string }
         Returns: undefined
+      }
+      complete_ownership_inheritance: {
+        Args: { p_beneficiary_investor_id: string; p_request_id: string }
+        Returns: string
       }
       complete_ownership_sale: {
         Args: { p_transfer_id: string }
@@ -143,6 +155,17 @@ export type Database = {
         Args: { p_body: string; p_investor_id: string; p_subject: string }
         Returns: string
       }
+      create_ownership_inheritance_request: {
+        Args: {
+          p_beneficiary_email?: string
+          p_beneficiary_name: string
+          p_beneficiary_phone?: string
+          p_holding_id: string
+          p_notes?: string
+          p_units?: number
+        }
+        Returns: string
+      }
       create_ownership_sale_request: {
         Args: {
           p_holding_id: string
@@ -216,12 +239,32 @@ export type Database = {
         Args: { p_invoice_id: string }
         Returns: undefined
       }
+      list_admin_ownership_inheritance: {
+        Args: never
+        Returns: Database["public"]["Tables"]["ownership_inheritance"]["Row"][]
+        SetofOptions: {
+          from: "*"
+          to: "ownership_inheritance"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       list_admin_ownership_sales: {
         Args: never
         Returns: Database["public"]["Tables"]["ownership_transfers"]["Row"][]
         SetofOptions: {
           from: "*"
           to: "ownership_transfers"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      list_my_ownership_inheritance: {
+        Args: never
+        Returns: Database["public"]["Tables"]["ownership_inheritance"]["Row"][]
+        SetofOptions: {
+          from: "*"
+          to: "ownership_inheritance"
           isOneToOne: false
           isSetofReturn: true
         }
@@ -293,6 +336,17 @@ export type Database = {
         Args: { p_invoice_id: string }
         Returns: undefined
       }
+      reconcile_finance_payment: {
+        Args: {
+          p_bank_amount: number
+          p_bank_received_at: string
+          p_bank_reference: string
+          p_notes?: string
+          p_payment_id: string
+          p_proof_asset_id: string
+        }
+        Returns: string
+      }
       record_finance_payment: {
         Args: {
           p_amount: number
@@ -314,6 +368,10 @@ export type Database = {
           isOneToOne: false
           isSetofReturn: true
         }
+      }
+      reject_ownership_inheritance: {
+        Args: { p_reason: string; p_request_id: string }
+        Returns: undefined
       }
       reject_ownership_sale: {
         Args: { p_reason: string; p_transfer_id: string }
@@ -1136,6 +1194,73 @@ export type Database = {
             columns: ["published_version_id"]
             isOneToOne: false
             referencedRelation: "document_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_bank_reconciliations: {
+        Row: {
+          bank_amount: number
+          bank_received_at: string
+          bank_reference: string
+          created_at: string
+          id: string
+          invoice_id: string
+          notes: string | null
+          payment_id: string
+          proof_asset_id: string
+          reconciled_at: string
+          reconciled_by: string | null
+          status: Database["public"]["Enums"]["finance_reconciliation_status"]
+        }
+        Insert: {
+          bank_amount: number
+          bank_received_at: string
+          bank_reference: string
+          created_at?: string
+          id?: string
+          invoice_id: string
+          notes?: string | null
+          payment_id: string
+          proof_asset_id: string
+          reconciled_at?: string
+          reconciled_by?: string | null
+          status: Database["public"]["Enums"]["finance_reconciliation_status"]
+        }
+        Update: {
+          bank_amount?: number
+          bank_received_at?: string
+          bank_reference?: string
+          created_at?: string
+          id?: string
+          invoice_id?: string
+          notes?: string | null
+          payment_id?: string
+          proof_asset_id?: string
+          reconciled_at?: string
+          reconciled_by?: string | null
+          status?: Database["public"]["Enums"]["finance_reconciliation_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_bank_reconciliations_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "finance_invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_bank_reconciliations_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: true
+            referencedRelation: "finance_payments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_bank_reconciliations_proof_asset_id_fkey"
+            columns: ["proof_asset_id"]
+            isOneToOne: false
+            referencedRelation: "media_assets"
             referencedColumns: ["id"]
           },
         ]
@@ -3007,13 +3132,17 @@ export type Database = {
           approved_at: string | null
           approved_by: string | null
           beneficiary_email: string | null
+          beneficiary_holding_id: string | null
+          beneficiary_investor_id: string | null
           beneficiary_name: string
           beneficiary_phone: string | null
           completed_at: string | null
+          completed_by: string | null
           created_at: string
           current_investor_id: string
           holding_id: string
           id: string
+          inherited_ownership_bps: number | null
           notes: string | null
           rejection_reason: string | null
           requested_at: string
@@ -3025,13 +3154,17 @@ export type Database = {
           approved_at?: string | null
           approved_by?: string | null
           beneficiary_email?: string | null
+          beneficiary_holding_id?: string | null
+          beneficiary_investor_id?: string | null
           beneficiary_name: string
           beneficiary_phone?: string | null
           completed_at?: string | null
+          completed_by?: string | null
           created_at?: string
           current_investor_id: string
           holding_id: string
           id?: string
+          inherited_ownership_bps?: number | null
           notes?: string | null
           rejection_reason?: string | null
           requested_at?: string
@@ -3043,13 +3176,17 @@ export type Database = {
           approved_at?: string | null
           approved_by?: string | null
           beneficiary_email?: string | null
+          beneficiary_holding_id?: string | null
+          beneficiary_investor_id?: string | null
           beneficiary_name?: string
           beneficiary_phone?: string | null
           completed_at?: string | null
+          completed_by?: string | null
           created_at?: string
           current_investor_id?: string
           holding_id?: string
           id?: string
+          inherited_ownership_bps?: number | null
           notes?: string | null
           rejection_reason?: string | null
           requested_at?: string
@@ -3061,6 +3198,27 @@ export type Database = {
           {
             foreignKeyName: "ownership_inheritance_approved_by_fkey"
             columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "admins"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ownership_inheritance_beneficiary_holding_id_fkey"
+            columns: ["beneficiary_holding_id"]
+            isOneToOne: false
+            referencedRelation: "ownership_holdings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ownership_inheritance_beneficiary_investor_id_fkey"
+            columns: ["beneficiary_investor_id"]
+            isOneToOne: false
+            referencedRelation: "investors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ownership_inheritance_completed_by_fkey"
+            columns: ["completed_by"]
             isOneToOne: false
             referencedRelation: "admins"
             referencedColumns: ["id"]
@@ -4379,6 +4537,7 @@ export type Database = {
         | "paid"
         | "void"
       finance_payment_status: "pending" | "confirmed" | "failed" | "refunded"
+      finance_reconciliation_status: "matched" | "rejected"
       finance_refund_status: "requested" | "approved" | "processed" | "rejected"
       financial_category:
         | "revenue"
@@ -4415,6 +4574,7 @@ export type Database = {
         | "message_received"
         | "inquiry_received"
         | "account_invited"
+        | "ownership_updated"
       ownership_holding_status:
         | "reserved"
         | "active"
@@ -4631,6 +4791,7 @@ export const Constants = {
         "void",
       ],
       finance_payment_status: ["pending", "confirmed", "failed", "refunded"],
+      finance_reconciliation_status: ["matched", "rejected"],
       finance_refund_status: ["requested", "approved", "processed", "rejected"],
       financial_category: [
         "revenue",
@@ -4669,6 +4830,7 @@ export const Constants = {
         "message_received",
         "inquiry_received",
         "account_invited",
+        "ownership_updated",
       ],
       ownership_holding_status: [
         "reserved",

@@ -85,9 +85,10 @@ export default async function InvoicePrintPage({ params }: { params: Promise<{ i
     supabase.from('finance_invoice_items').select('*').eq('invoice_id', id).order('position'),
     supabase
       .from('finance_payments')
-      .select('id,reference,amount,method,status,created_at')
+      .select('id,reference,amount,method,status,received_at')
       .eq('invoice_id', id)
-      .order('created_at'),
+      .eq('status', 'confirmed')
+      .order('received_at'),
     supabase
       .from('finance_settings')
       .select(
@@ -168,7 +169,7 @@ export default async function InvoicePrintPage({ params }: { params: Promise<{ i
     invoiceTotal: Number(invoice.grand_total),
     amountPaid: paidNet,
     balanceDue: outstanding,
-    paymentDatetime: formatPaymentDatetime(lastPayment?.created_at),
+    paymentDatetime: formatPaymentDatetime(lastPayment?.received_at),
     paymentMethod: lastPayment?.method,
     dueDate: formatInvoiceDate(invoice.due_on),
     departureDate: formatInvoiceDate(extended.departure_on),
