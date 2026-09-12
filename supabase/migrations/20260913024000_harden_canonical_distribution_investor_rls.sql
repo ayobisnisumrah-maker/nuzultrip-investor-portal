@@ -7,7 +7,7 @@
 -- between profit_distributions and profit_distribution_allocations.
 -- =============================================================================
 
-create or replace function app.investor_can_read_canonical_distribution(
+create or replace function private.investor_can_read_canonical_distribution(
   p_distribution_id uuid,
   p_investor_id uuid,
   p_allocation_id uuid default null
@@ -56,15 +56,15 @@ as $$
     );
 $$;
 
-revoke all on function app.investor_can_read_canonical_distribution(uuid, uuid, uuid)
+revoke all on function private.investor_can_read_canonical_distribution(uuid, uuid, uuid)
   from public, anon;
-grant execute on function app.investor_can_read_canonical_distribution(uuid, uuid, uuid)
+grant execute on function private.investor_can_read_canonical_distribution(uuid, uuid, uuid)
   to authenticated, service_role;
 
 alter policy profit_distributions_select_self
   on public.profit_distributions
   using (
-    app.investor_can_read_canonical_distribution(
+    private.investor_can_read_canonical_distribution(
       id,
       app.current_investor_id(),
       null::uuid
@@ -76,7 +76,7 @@ alter policy profit_distribution_allocations_select_self
   using (
     investor_id = app.current_investor_id()
     and status in ('payable', 'paid')
-    and app.investor_can_read_canonical_distribution(
+    and private.investor_can_read_canonical_distribution(
       distribution_id,
       investor_id,
       id
@@ -87,7 +87,7 @@ alter policy profit_distribution_payment_proofs_select_self
   on public.profit_distribution_payment_proofs
   using (
     investor_id = app.current_investor_id()
-    and app.investor_can_read_canonical_distribution(
+    and private.investor_can_read_canonical_distribution(
       null::uuid,
       investor_id,
       allocation_id
