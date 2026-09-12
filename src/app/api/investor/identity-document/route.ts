@@ -3,12 +3,15 @@ import 'server-only'
 import { randomUUID } from 'node:crypto'
 import { NextResponse } from 'next/server'
 
+import {
+  INVESTOR_IDENTITY_DOCUMENT_MAX_BYTES,
+  isMatchingInvestorIdentityDocument,
+} from '@/core/media/identity-document-file'
 import { getPrincipal } from '@/server/auth/session'
 import { getServiceRoleClient } from '@/server/admin/service-client'
 import { writeAudit } from '@/server/audit'
 
 const BUCKET = 'investor-documents'
-const MAX_BYTES = 10 * 1024 * 1024
 const ALLOWED_MIME_TYPES = new Set(['application/pdf', 'image/jpeg', 'image/png', 'image/webp'])
 
 function safeFilename(filename: string) {
@@ -40,7 +43,7 @@ export async function POST(request: Request) {
   if (!(file instanceof File)) {
     return NextResponse.json({ error: 'Dokumen identitas wajib dipilih.' }, { status: 400 })
   }
-  if (file.size <= 0 || file.size > MAX_BYTES) {
+  if (file.size <= 0 || file.size > INVESTOR_IDENTITY_DOCUMENT_MAX_BYTES) {
     return NextResponse.json({ error: 'Ukuran dokumen harus lebih dari 0 dan maksimal 10 MB.' }, { status: 400 })
   }
   if (!ALLOWED_MIME_TYPES.has(file.type)) {
@@ -48,6 +51,13 @@ export async function POST(request: Request) {
   }
 
   const bytes = Buffer.from(await file.arrayBuffer())
+  if (!isMatchingInvestorIdentityDocument(bytes, file.type)) {
+    return NextResponse.json(
+      { error: 'Isi file tidak sesuai dengan format PDF, JPG, PNG, atau WebP yang dipilih.' },
+      { status: 400 },
+    )
+  }
+
   const objectPath = `${principal.investorId}/identity/${randomUUID()}-${safeFilename(file.name)}`
   const serviceClient = getServiceRoleClient()
 
