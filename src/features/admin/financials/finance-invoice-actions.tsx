@@ -20,7 +20,7 @@ type PendingPayment = {
   reference: string
   amount: number
   method: string
-  receivedAt: string
+  receivedAt: string | null
   externalReference: string | null
 }
 
