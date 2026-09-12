@@ -10,6 +10,7 @@ import {
   listMyInheritance,
   type OwnershipInheritanceStatus,
 } from '@/server/ownership/inheritance-service'
+import { listInvestorSaleTransfers } from '@/server/ownership/transfer-service'
 import { getServerSupabase } from '@/server/supabase/server'
 import { Button } from '@/ui/button'
 import { Card, CardBody, CardHeader, CardTitle } from '@/ui/card'
@@ -26,12 +27,15 @@ const STATUS_LABELS: Record<OwnershipInheritanceStatus, string> = {
   cancelled: 'Dibatalkan',
 }
 
+const RESERVED_SALE_STATUSES = new Set(['pending', 'approved', 'processing'])
+
 export default async function InvestorInheritancePage() {
   const principal = await requireInvestorPage('/investor/ownership/inheritance')
   const supabase = await getServerSupabase()
 
-  const [requests, { data: holdings }] = await Promise.all([
+  const [requests, saleTransfers, { data: holdings }] = await Promise.all([
     listMyInheritance(supabase),
+    listInvestorSaleTransfers(supabase),
     supabase
       .from('ownership_holdings')
       .select('id, offering_id, units, status, acquisition_reference')
@@ -41,27 +45,29 @@ export default async function InvestorInheritancePage() {
   ])
 
   const activeHoldings = holdings ?? []
-  const offeringIds = [
-    ...new Set(activeHoldings.map((holding) => holding.offering_id)),
-  ]
+  const offeringIds = [...new Set(activeHoldings.map((holding) => holding.offering_id))]
 
   const { data: offerings } = offeringIds.length
-    ? await supabase
-        .from('ownership_offerings')
-        .select('id, name')
-        .in('id', offeringIds)
+    ? await supabase.from('ownership_offerings').select('id, name').in('id', offeringIds)
     : { data: [] }
 
-  const offeringMap = new Map(
-    (offerings ?? []).map((offering) => [offering.id, offering.name]),
-  )
+  const offeringMap = new Map((offerings ?? []).map((offering) => [offering.id, offering.name]))
 
-  const reservedByHolding = new Map<string, number>()
+  const reservedInheritanceByHolding = new Map<string, number>()
   for (const request of requests) {
     if (!['pending', 'approved'].includes(request.status)) continue
-    reservedByHolding.set(
+    reservedInheritanceByHolding.set(
       request.holding_id,
-      (reservedByHolding.get(request.holding_id) ?? 0) + Number(request.units),
+      (reservedInheritanceByHolding.get(request.holding_id) ?? 0) + Number(request.units),
+    )
+  }
+
+  const reservedSaleByHolding = new Map<string, number>()
+  for (const transfer of saleTransfers) {
+    if (!RESERVED_SALE_STATUSES.has(transfer.status)) continue
+    reservedSaleByHolding.set(
+      transfer.holding_id,
+      (reservedSaleByHolding.get(transfer.holding_id) ?? 0) + Number(transfer.units),
     )
   }
 
@@ -96,7 +102,9 @@ export default async function InvestorInheritancePage() {
           ) : (
             <div className="grid gap-4">
               {activeHoldings.map((holding) => {
-                const reserved = reservedByHolding.get(holding.id) ?? 0
+                const inheritanceReserved = reservedInheritanceByHolding.get(holding.id) ?? 0
+                const saleReserved = reservedSaleByHolding.get(holding.id) ?? 0
+                const reserved = inheritanceReserved + saleReserved
                 const available = Math.max(0, Number(holding.units) - reserved)
 
                 return (
@@ -111,16 +119,23 @@ export default async function InvestorInheritancePage() {
                           ? ` · Referensi ${holding.acquisition_reference}`
                           : ''}
                       </p>
+                      {reserved > 0 ? (
+                        <p className="text-caption mt-1 text-fg-subtle">
+                          {reserved.toLocaleString('id-ID')} unit sedang dicadangkan
+                          {saleReserved > 0 && inheritanceReserved > 0
+                            ? ' untuk penjualan dan pewarisan aktif.'
+                            : saleReserved > 0
+                              ? ' untuk penjualan aktif.'
+                              : ' untuk pewarisan aktif.'}
+                        </p>
+                      ) : null}
                     </div>
 
                     {available > 0 ? (
-                      <InheritanceForm
-                        holdingId={holding.id}
-                        maxUnits={available}
-                      />
+                      <InheritanceForm holdingId={holding.id} maxUnits={available} />
                     ) : (
                       <p className="text-body-sm text-fg-subtle">
-                        Seluruh unit pada kepemilikan ini sedang berada dalam pengajuan pewarisan aktif.
+                        Seluruh unit pada kepemilikan ini sedang dicadangkan untuk proses aktif.
                       </p>
                     )}
                   </div>
