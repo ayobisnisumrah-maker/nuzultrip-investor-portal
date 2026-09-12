@@ -7,6 +7,7 @@ import {
   financeExpenseSchema,
   financeInvoiceDueDateSchema,
   financeInvoiceSchema,
+  financePaymentReconciliationSchema,
   financePaymentSchema,
   financeProductSchema,
   financeRefundSchema,
@@ -165,9 +166,62 @@ export const recordFinancePayment = defineAction({
         error?.message ?? 'Payment RPC returned no id',
         'Pembayaran tidak dapat dicatat.',
       )
-    audit({ entityId: data, summary: `Pembayaran invoice ${input.invoiceId} dicatat.` })
+    audit({
+      entityId: data,
+      summary: `Pembayaran invoice ${input.invoiceId} dicatat dan menunggu rekonsiliasi bank.`,
+    })
     refresh()
+    revalidatePath(`/admin/financials/operations/invoices/${input.invoiceId}`)
     return { id: data }
+  },
+})
+export const reconcileFinancePayment = defineAction({
+  access: { permission: 'financial_reports.update' },
+  input: financePaymentReconciliationSchema,
+  audit: { action: 'finance.payment_reconciled', entityType: 'finance_payment' },
+  handler: async ({ input, supabase, audit }) => {
+    const { data: payment, error: paymentError } = await supabase
+      .from('finance_payments')
+      .select('id,invoice_id,status,amount')
+      .eq('id', input.paymentId)
+      .maybeSingle()
+    if (paymentError || !payment)
+      throw new ConflictError(
+        paymentError?.message ?? 'Pembayaran tidak ditemukan.',
+        'Pembayaran tidak dapat ditemukan.',
+      )
+    if (payment.status !== 'pending')
+      throw new ConflictError(
+        `Payment status ${payment.status} cannot be reconciled`,
+        'Hanya pembayaran berstatus Menunggu Rekonsiliasi yang dapat dikonfirmasi.',
+      )
+    if (Number(payment.amount) !== input.bankAmount)
+      throw new ConflictError(
+        'Bank amount differs from recorded payment amount',
+        'Nominal transaksi bank harus sama dengan nominal pembayaran yang dicatat.',
+      )
+
+    const { data, error } = await appRpc(supabase).rpc('reconcile_finance_payment', {
+      p_payment_id: input.paymentId,
+      p_proof_asset_id: input.proofAssetId,
+      p_bank_reference: input.bankReference,
+      p_bank_amount: input.bankAmount,
+      p_bank_received_at: input.bankReceivedAt,
+      p_notes: input.notes,
+    })
+    if (error || typeof data !== 'string')
+      throw new ConflictError(
+        error?.message ?? 'Reconciliation RPC returned no id',
+        'Rekonsiliasi pembayaran tidak dapat diselesaikan.',
+      )
+
+    audit({
+      entityId: input.paymentId,
+      summary: `Pembayaran invoice ${payment.invoice_id} dikonfirmasi dari bukti pembayaran dan rekonsiliasi bank.`,
+    })
+    refresh()
+    revalidatePath(`/admin/financials/operations/invoices/${payment.invoice_id}`)
+    return { id: data, paymentId: input.paymentId, invoiceId: payment.invoice_id }
   },
 })
 export const processFinanceRefund = defineAction({
