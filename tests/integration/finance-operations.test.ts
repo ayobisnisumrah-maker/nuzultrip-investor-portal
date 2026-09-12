@@ -123,7 +123,7 @@ describe('finance operations lifecycle', () => {
       )
       await tx`rollback to savepoint direct_confirmation_assertion`
       await tx`release savepoint direct_confirmation_assertion`
-      expect(directConfirmation.code).toBe('42501')
+      expect(directConfirmation.code).toBe('23514')
     })
   })
 
