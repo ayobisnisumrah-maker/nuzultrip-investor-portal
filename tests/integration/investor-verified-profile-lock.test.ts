@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
-import { as, closeDb, db, expectRejected } from './helpers/db'
+import { as, asCommitted, closeDb, db, expectRejected } from './helpers/db'
 import { createFixtures, destroyFixtures, type Fixtures } from './helpers/fixtures'
 
 let fixtures: Fixtures
@@ -89,36 +89,33 @@ describe('verified investor profile lock and training isolation', () => {
   })
 
   it('applies an approved bank/contact request while preserving legal identity', async () => {
-    await as({ kind: 'authenticated', userId: fixtures.investorA.userId }, async (tx) => {
-      const [request] = await tx<{ id: string }[]>`
-        select app.request_investor_profile_change(
-          ${tx.json({
-            whatsapp_number: '+628133333333',
-            bank_name: 'Bank Uji',
-            bank_account_name: 'Investor A Uji',
-            bank_account_number: '1234567890',
-          })},
-          'Pengujian perubahan rekening dan kontak'
-        ) as id
-      `
-      expect(request?.id).toBeTruthy()
-    })
-
-    const [request] = await db()<{ id: string }[]>`
-      select id from public.investor_profile_change_requests
-      where investor_id=${fixtures.investorA.userId} and status='pending'
-      order by requested_at desc limit 1
-    `
-    if (!request) throw new Error('Profile change request fixture was not created.')
+    const requestId = await asCommitted(
+      { kind: 'authenticated', userId: fixtures.investorA.userId },
+      async (tx) => {
+        const [request] = await tx<{ id: string }[]>`
+          select app.request_investor_profile_change(
+            ${tx.json({
+              whatsapp_number: '+628133333333',
+              bank_name: 'Bank Uji',
+              bank_account_name: 'Investor A Uji',
+              bank_account_number: '1234567890',
+            })},
+            'Pengujian perubahan rekening dan kontak'
+          ) as id
+        `
+        if (!request) throw new Error('Profile change request fixture was not created.')
+        return request.id
+      },
+    )
 
     await as({ kind: 'authenticated', userId: fixtures.superAdmin.userId }, async (tx) => {
       await tx`
         select app.review_investor_profile_change_request(
-          ${request.id}, 'approved', 'Data pendukung sesuai.'
+          ${requestId}, 'approved', 'Data pendukung sesuai.'
         )
       `
       await tx`
-        select app.apply_investor_profile_change_request(${request.id}, false)
+        select app.apply_investor_profile_change_request(${requestId}, false)
       `
       const [investor] = await tx<{
         legal_name: string
