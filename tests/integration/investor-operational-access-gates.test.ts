@@ -48,39 +48,23 @@ async function createOperationalContent(sql: Sql, f: Fixtures): Promise<Operatio
     `
     if (!message) throw new Error(`Failed to create ${label} message.`)
 
-    await sql`
-      insert into public.message_reads (message_id, user_id)
-      values (${message.id}, ${userId})
-    `
+    await sql`insert into public.message_reads (message_id, user_id) values (${message.id}, ${userId})`
 
     const [notification] = await sql<{ id: string }[]>`
       insert into public.notifications (recipient_id, kind, title, body)
-      values (
-        ${userId},
-        'message_received',
-        ${`Operational notification ${label} ${f.suffix}`},
-        ${`Sensitive notification body ${label} ${f.suffix}`}
-      )
+      values (${userId}, 'message_received', ${`Operational notification ${label} ${f.suffix}`}, ${`Sensitive notification body ${label} ${f.suffix}`})
       returning id
     `
     if (!notification) throw new Error(`Failed to create ${label} notification.`)
 
     const [object] = await sql<{ id: string }[]>`
       insert into storage.objects (bucket_id, name)
-      values (
-        'profit-distribution-proofs',
-        ${`${userId}/operational-gate-${label}-${f.suffix}.pdf`}
-      )
+      values ('profit-distribution-proofs', ${`${userId}/operational-gate-${label}-${f.suffix}.pdf`})
       returning id
     `
     if (!object) throw new Error(`Failed to create ${label} storage object.`)
 
-    return {
-      threadId: thread.id,
-      messageId: message.id,
-      notificationId: notification.id,
-      storageObjectId: object.id,
-    }
+    return { threadId: thread.id, messageId: message.id, notificationId: notification.id, storageObjectId: object.id }
   }
 
   const active = await createForInvestor(f.investorA.userId, 'active')
@@ -91,11 +75,9 @@ async function createOperationalContent(sql: Sql, f: Fixtures): Promise<Operatio
       name, code, status, total_offered_bps, unit_ownership_bps, unit_price,
       total_units, distribution_cadence_months, transfer_lock_months
     ) values (
-      ${`Operational Gate Offering ${f.suffix}`},
-      ${`operational-gate-${f.suffix}`},
+      ${`Operational Gate Offering ${f.suffix}`}, ${`operational-gate-${f.suffix}`},
       'open', 200, 100, 100000000, 2, 6, 36
-    )
-    returning id
+    ) returning id
   `
   if (!offering) throw new Error('Failed to create ownership offering.')
   const offeringId = offering.id
@@ -106,12 +88,9 @@ async function createOperationalContent(sql: Sql, f: Fixtures): Promise<Operatio
         offering_id, investor_id, units, ownership_bps, acquisition_at,
         transfer_eligible_at, status, acquisition_reference
       ) values (
-        ${offeringId}, ${userId}, 1, 100,
-        now() - interval '37 months',
-        now() - interval '1 month',
-        'active', ${`OP-GATE-${label}-${f.suffix}`}
-      )
-      returning id
+        ${offeringId}, ${userId}, 1, 100, now() - interval '37 months',
+        now() - interval '1 month', 'active', ${`OP-GATE-${label}-${f.suffix}`}
+      ) returning id
     `
     if (!holding) throw new Error(`Failed to create ${label} holding.`)
 
@@ -120,15 +99,11 @@ async function createOperationalContent(sql: Sql, f: Fixtures): Promise<Operatio
         holding_id, from_investor_id, units, eligible_at, status,
         transfer_kind, requested_unit_price, notes
       ) values (
-        ${holding.id}, ${userId}, 1,
-        ${new Date(Date.now() - 60_000).toISOString()},
-        'pending', 'sale', 100000000,
-        ${`Operational sale ${label} ${f.suffix}`}
-      )
-      returning id
+        ${holding.id}, ${userId}, 1, ${new Date(Date.now() - 60_000).toISOString()},
+        'pending', 'sale', 100000000, ${`Operational sale ${label} ${f.suffix}`}
+      ) returning id
     `
     if (!transfer) throw new Error(`Failed to create ${label} transfer.`)
-
     return { holdingId: holding.id, transferId: transfer.id }
   }
 
@@ -186,20 +161,19 @@ describe('investor operational lifecycle gates', () => {
     expect(await as(principal, (tx) => tx`select message_id from public.message_reads where message_id = ${c.activeMessageId} and user_id = ${f.investorA.userId}`)).toHaveLength(1)
     expect(await as(principal, (tx) => tx`select id from public.notifications where id = ${c.activeNotificationId}`)).toHaveLength(1)
     expect(await as(principal, (tx) => tx`select id from storage.objects where id = ${c.activeStorageObjectId}`)).toHaveLength(1)
-
     const sales = await as(principal, (tx) => tx`select id from app.list_my_ownership_sales()`)
     expect(sales.map((row) => row['id'])).toContain(c.activeTransferId)
   })
 
-  it('revokes all operational data from an inactive investor', async () => {
+  it('preserves historical messaging but revokes operational data from an inactive investor', async () => {
     if (!fixtures || !content) throw new Error('Operational gate fixtures were not initialized.')
     const f = fixtures
     const c = content
     const principal = { kind: 'authenticated' as const, userId: f.investorInactive.userId }
 
-    expect(await as(principal, (tx) => tx`select id from public.message_threads where id = ${c.inactiveThreadId}`)).toHaveLength(0)
-    expect(await as(principal, (tx) => tx`select id from public.messages where id = ${c.inactiveMessageId}`)).toHaveLength(0)
-    expect(await as(principal, (tx) => tx`select user_id from public.thread_participants where thread_id = ${c.inactiveThreadId} and user_id = ${f.investorInactive.userId}`)).toHaveLength(0)
+    expect(await as(principal, (tx) => tx`select id from public.message_threads where id = ${c.inactiveThreadId}`)).toHaveLength(1)
+    expect(await as(principal, (tx) => tx`select id from public.messages where id = ${c.inactiveMessageId}`)).toHaveLength(1)
+    expect(await as(principal, (tx) => tx`select user_id from public.thread_participants where thread_id = ${c.inactiveThreadId} and user_id = ${f.investorInactive.userId}`)).toHaveLength(1)
     expect(await as(principal, (tx) => tx`select message_id from public.message_reads where message_id = ${c.inactiveMessageId} and user_id = ${f.investorInactive.userId}`)).toHaveLength(0)
     expect(await as(principal, (tx) => tx`select id from public.notifications where id = ${c.inactiveNotificationId}`)).toHaveLength(0)
     expect(await as(principal, (tx) => tx`select id from storage.objects where id = ${c.inactiveStorageObjectId}`)).toHaveLength(0)
@@ -213,9 +187,7 @@ describe('investor operational lifecycle gates', () => {
     const principal = { kind: 'authenticated' as const, userId: f.investorInactive.userId }
 
     const createError = await expectRejected(() =>
-      as(principal, (tx) =>
-        tx`select app.create_ownership_sale_request(${c.inactiveHoldingId}, 1, 100000000, 'should fail')`,
-      ),
+      as(principal, (tx) => tx`select app.create_ownership_sale_request(${c.inactiveHoldingId}, 1, 100000000, 'should fail')`),
     )
     expect(createError.code).toBe('42501')
 
