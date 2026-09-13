@@ -40,7 +40,7 @@ describe('FinancialReportContentEditor balance sheet template', () => {
     expect(screen.getByDisplayValue('Modal Disetor')).toBeTruthy()
     expect(screen.getByDisplayValue('Saldo Laba')).toBeTruthy()
     expect(screen.getByText('Posisi keuangan perlu rekonsiliasi')).toBeTruthy()
-    expect(screen.getByText(/7 pos template posisi keuangan ditambahkan/i)).toBeTruthy()
+    expect(screen.getByText(/7 pos posisi keuangan ditambahkan/i)).toBeTruthy()
   })
 
   it('does not duplicate template positions when applied more than once', () => {
