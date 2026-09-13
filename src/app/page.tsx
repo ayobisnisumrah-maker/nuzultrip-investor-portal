@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 
+import { PublicConnectLinks } from '@/features/portal/public-connect-links'
 import { PublicPortalExact } from '@/features/portal/public-portal-exact'
 import { PublicRealtimeSurface } from '@/features/realtime/public-realtime-surface'
 import { getPublicBrandLogo } from '@/server/portal/public-branding'
@@ -224,6 +225,8 @@ export default async function Home() {
         publicDocuments={publicDocuments}
         brandLogoUrl={brandLogoUrl}
       />
+
+      <PublicConnectLinks navigation={functionalNavigation} />
     </PublicRealtimeSurface>
   )
 }
