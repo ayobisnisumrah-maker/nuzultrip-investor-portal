@@ -45,6 +45,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      apply_investor_profile_change_request: {
+        Args: { p_email_applied?: boolean; p_request_id: string }
+        Returns: string
+      }
       approve_ownership_inheritance: {
         Args: { p_request_id: string }
         Returns: undefined
@@ -64,6 +68,10 @@ export type Database = {
       authorize_rejected_purge_scheduler: {
         Args: { p_token: string }
         Returns: boolean
+      }
+      cancel_investor_profile_change_request: {
+        Args: { p_request_id: string }
+        Returns: undefined
       }
       cancel_ownership_inheritance_request: {
         Args: { p_request_id: string }
@@ -432,6 +440,10 @@ export type Database = {
         Args: { p_investor_id: string }
         Returns: string[]
       }
+      request_investor_profile_change: {
+        Args: { p_changes: Json; p_reason: string }
+        Returns: string
+      }
       require_reserved_matter_authorization: {
         Args: {
           p_controlled_action: string
@@ -446,6 +458,10 @@ export type Database = {
           p_resolution: string
           p_resolution_note: string
         }
+        Returns: undefined
+      }
+      review_investor_profile_change_request: {
+        Args: { p_decision: string; p_note?: string; p_request_id: string }
         Returns: undefined
       }
       save_company_profile_draft: {
@@ -588,6 +604,10 @@ export type Database = {
           p_terms_letterhead_asset_id: string
         }
         Returns: string
+      }
+      validate_investor_profile_change_payload: {
+        Args: { p_changes: Json }
+        Returns: undefined
       }
     }
     Enums: {
@@ -2417,6 +2437,79 @@ export type Database = {
           },
         ]
       }
+      investor_profile_change_requests: {
+        Row: {
+          applied_at: string | null
+          applied_by: string | null
+          cancelled_at: string | null
+          created_at: string
+          id: string
+          investor_id: string
+          reason: string
+          requested_at: string
+          requested_changes: Json
+          review_note: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          applied_at?: string | null
+          applied_by?: string | null
+          cancelled_at?: string | null
+          created_at?: string
+          id?: string
+          investor_id: string
+          reason: string
+          requested_at?: string
+          requested_changes: Json
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          applied_at?: string | null
+          applied_by?: string | null
+          cancelled_at?: string | null
+          created_at?: string
+          id?: string
+          investor_id?: string
+          reason?: string
+          requested_at?: string
+          requested_changes?: Json
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "investor_profile_change_requests_applied_by_fkey"
+            columns: ["applied_by"]
+            isOneToOne: false
+            referencedRelation: "admins"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "investor_profile_change_requests_investor_id_fkey"
+            columns: ["investor_id"]
+            isOneToOne: false
+            referencedRelation: "investors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "investor_profile_change_requests_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "admins"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       investor_requests: {
         Row: {
           access_link: string | null
@@ -2595,6 +2688,7 @@ export type Database = {
           id: string
           identity_number_hash: string | null
           investor_type: Database["public"]["Enums"]["investor_type"]
+          is_training: boolean
           ktp_file_size_bytes: number | null
           ktp_mime_type: string | null
           ktp_original_file_name: string | null
@@ -2630,6 +2724,7 @@ export type Database = {
           id: string
           identity_number_hash?: string | null
           investor_type?: Database["public"]["Enums"]["investor_type"]
+          is_training?: boolean
           ktp_file_size_bytes?: number | null
           ktp_mime_type?: string | null
           ktp_original_file_name?: string | null
@@ -2665,6 +2760,7 @@ export type Database = {
           id?: string
           identity_number_hash?: string | null
           investor_type?: Database["public"]["Enums"]["investor_type"]
+          is_training?: boolean
           ktp_file_size_bytes?: number | null
           ktp_mime_type?: string | null
           ktp_original_file_name?: string | null

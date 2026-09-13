@@ -37,6 +37,15 @@ export async function POST(request: Request) {
       { status: 403 },
     )
   }
+  if (['approved', 'active', 'inactive'].includes(principal.status)) {
+    return NextResponse.json(
+      {
+        error:
+          'Dokumen identitas terkunci setelah verifikasi dan tidak dapat diganti. Perubahan pemegang dilakukan melalui Pewaris atau Jual/Transfer Saham.',
+      },
+      { status: 409 },
+    )
+  }
 
   const formData = await request.formData()
   const file = formData.get('file')
@@ -105,7 +114,7 @@ export async function POST(request: Request) {
     action: 'investor.identity_document_uploaded',
     entityType: 'investor',
     entityId: principal.investorId,
-    summary: `Investor ${principal.referenceCode} mengunggah dokumen identitas.`,
+    summary: `Investor ${principal.referenceCode} mengunggah dokumen identitas sebelum verifikasi.`,
     changes: {
       identityDocument: {
         before: { fileName: previous?.ktp_original_file_name ?? null },

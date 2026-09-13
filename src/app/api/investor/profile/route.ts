@@ -39,6 +39,15 @@ export async function PATCH(request: Request) {
       { status: 403 },
     )
   }
+  if (['approved', 'active', 'inactive'].includes(principal.status)) {
+    return NextResponse.json(
+      {
+        error:
+          'Profil investor terverifikasi tidak dapat diedit langsung. Gunakan pengajuan perubahan untuk kontak, email, alamat, atau rekening. Nama legal dan identitas tetap terkunci.',
+      },
+      { status: 409 },
+    )
+  }
 
   let payload: unknown
   try {
@@ -98,7 +107,7 @@ export async function PATCH(request: Request) {
     action: 'investor.profile_updated',
     entityType: 'investor',
     entityId: principal.investorId,
-    summary: `Investor ${principal.referenceCode} memperbarui profil dan/atau rekening.`,
+    summary: `Investor ${principal.referenceCode} memperbarui profil dan/atau rekening sebelum verifikasi.`,
     changes: { profile: { before, after: next } },
   })
 
