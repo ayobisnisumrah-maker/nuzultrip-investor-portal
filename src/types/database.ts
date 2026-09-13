@@ -455,19 +455,37 @@ export type Database = {
           version_number: number
         }[]
       }
-      save_financial_report_draft_content: {
-        Args: {
-          p_document_asset_id: string
-          p_kpis: Json
-          p_line_items: Json
-          p_report_id: string
-        }
-        Returns: {
-          document_asset_id: string
-          kpi_count: number
-          line_item_count: number
-        }[]
-      }
+      save_financial_report_draft_content:
+        | {
+            Args: {
+              p_document_asset_id: string
+              p_kpis: Json
+              p_line_items: Json
+              p_report_id: string
+            }
+            Returns: {
+              document_asset_id: string
+              kpi_count: number
+              line_item_count: number
+            }[]
+          }
+        | {
+            Args: {
+              p_accounting_framework: string
+              p_basis_of_preparation: string
+              p_disclosures: Json
+              p_document_asset_id: string
+              p_kpis: Json
+              p_line_items: Json
+              p_report_id: string
+            }
+            Returns: {
+              disclosure_count: number
+              document_asset_id: string
+              kpi_count: number
+              line_item_count: number
+            }[]
+          }
       set_finance_invoice_departure: {
         Args: { p_departure_on: string; p_invoice_id: string }
         Returns: undefined
@@ -2109,10 +2127,50 @@ export type Database = {
         }
         Relationships: []
       }
+      financial_report_disclosures: {
+        Row: {
+          content: string
+          created_at: string
+          disclosure_key: string
+          financial_report_version_id: string
+          id: string
+          position: number
+          title: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          disclosure_key: string
+          financial_report_version_id: string
+          id?: string
+          position?: number
+          title: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          disclosure_key?: string
+          financial_report_version_id?: string
+          id?: string
+          position?: number
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_report_disclosures_financial_report_version_id_fkey"
+            columns: ["financial_report_version_id"]
+            isOneToOne: false
+            referencedRelation: "financial_report_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       financial_report_versions: {
         Row: {
+          accounting_framework: string | null
           approved_at: string | null
           approved_by: string | null
+          basis_of_preparation: string | null
           change_note: string | null
           created_at: string
           created_by: string | null
@@ -2127,8 +2185,10 @@ export type Database = {
           version_number: number
         }
         Insert: {
+          accounting_framework?: string | null
           approved_at?: string | null
           approved_by?: string | null
+          basis_of_preparation?: string | null
           change_note?: string | null
           created_at?: string
           created_by?: string | null
@@ -2143,8 +2203,10 @@ export type Database = {
           version_number: number
         }
         Update: {
+          accounting_framework?: string | null
           approved_at?: string | null
           approved_by?: string | null
+          basis_of_preparation?: string | null
           change_note?: string | null
           created_at?: string
           created_by?: string | null
@@ -4930,7 +4992,11 @@ export type Database = {
         | "investing"
         | "financing"
       financial_source: "internal" | "reviewed" | "audited"
-      financial_statement: "income" | "balance" | "cash_flow"
+      financial_statement:
+        | "income"
+        | "balance"
+        | "cash_flow"
+        | "changes_in_equity"
       inquiry_status: "new" | "in_progress" | "converted" | "closed"
       investor_status:
         | "prospective"
@@ -5185,7 +5251,12 @@ export const Constants = {
         "financing",
       ],
       financial_source: ["internal", "reviewed", "audited"],
-      financial_statement: ["income", "balance", "cash_flow"],
+      financial_statement: [
+        "income",
+        "balance",
+        "cash_flow",
+        "changes_in_equity",
+      ],
       inquiry_status: ["new", "in_progress", "converted", "closed"],
       investor_status: [
         "prospective",
