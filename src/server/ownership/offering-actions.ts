@@ -9,13 +9,15 @@ import {
   createOwnershipOffering as createOwnershipOfferingService,
   getOwnershipOffering as getOwnershipOfferingService,
   listOwnershipOfferings as listOwnershipOfferingsService,
-  publishOwnershipOffering as publishOwnershipOfferingService,
-  pauseOwnershipOffering as pauseOwnershipOfferingService,
-  resumeOwnershipOffering as resumeOwnershipOfferingService,
-  closeOwnershipOffering as closeOwnershipOfferingService,
-  archiveOwnershipOffering as archiveOwnershipOfferingService,
   updateOwnershipOffering as updateOwnershipOfferingService,
 } from './offering-service'
+import {
+  archiveOwnershipOffering as archiveOwnershipOfferingService,
+  closeOwnershipOffering as closeOwnershipOfferingService,
+  pauseOwnershipOffering as pauseOwnershipOfferingService,
+  publishOwnershipOffering as publishOwnershipOfferingService,
+  resumeOwnershipOffering as resumeOwnershipOfferingService,
+} from './offering-lifecycle-service'
 
 const offeringIdSchema = z.object({
   offeringId: z.uuid('Penawaran kepemilikan tidak valid.'),
