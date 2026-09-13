@@ -1,167 +1,147 @@
-import postgres, { type Sql } from 'postgres'
+// @vitest-environment node
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import type { Sql } from 'postgres'
 
-import { closeDb, db } from './db'
-import { as, expectRejected } from './rls-test-helpers'
-import { createRlsFixtures, destroyFixtures, type RlsFixtures } from './rls-fixtures'
+import { as, cleanup, closeDb, db, expectRejected } from './helpers/db'
+import { createFixtures, destroyFixtures, type Fixtures } from './helpers/fixtures'
 
 type OperationalContent = {
   activeThreadId: string
   activeMessageId: string
   activeNotificationId: string
   activeStorageObjectId: string
-  activeTransferId: string
   inactiveThreadId: string
   inactiveMessageId: string
   inactiveNotificationId: string
   inactiveStorageObjectId: string
-  inactiveTransferId: string
+  offeringId: string
+  activeHoldingId: string
   inactiveHoldingId: string
+  activeTransferId: string
+  inactiveTransferId: string
 }
 
-let fixtures: RlsFixtures | null = null
-let content: OperationalContent | null = null
+let fixtures: Fixtures | undefined
+let content: OperationalContent | undefined
 
-async function createOperationalContent(sql: Sql, f: RlsFixtures): Promise<OperationalContent> {
-  const [activeThread] = await sql<{ id: string }[]>`
-    insert into public.message_threads (thread_kind, subject, investor_id, created_by)
-    values ('investor_admin', 'Active lifecycle thread', ${f.investorA.investorId}, ${f.admin.userId})
-    returning id
-  `
-  const [inactiveThread] = await sql<{ id: string }[]>`
-    insert into public.message_threads (thread_kind, subject, investor_id, created_by)
-    values ('investor_admin', 'Historical lifecycle thread', ${f.investorInactive.investorId}, ${f.admin.userId})
-    returning id
-  `
+async function createOperationalContent(sql: Sql, f: Fixtures): Promise<OperationalContent> {
+  const owner = f.internalAdmin.userId
 
-  await sql`
-    insert into public.thread_participants (thread_id, user_id, role)
-    values
-      (${activeThread.id}, ${f.investorA.userId}, 'investor'),
-      (${activeThread.id}, ${f.admin.userId}, 'admin'),
-      (${inactiveThread.id}, ${f.investorInactive.userId}, 'investor'),
-      (${inactiveThread.id}, ${f.admin.userId}, 'admin')
-  `
+  async function createForInvestor(userId: string, label: string) {
+    const [thread] = await sql<{ id: string }[]>`
+      insert into public.message_threads (subject, thread_kind, investor_id, created_by)
+      values (${`Operational gate ${label} ${f.suffix}`}, 'investor_admin', ${userId}, ${owner})
+      returning id
+    `
+    if (!thread) throw new Error(`Failed to create ${label} thread.`)
 
-  const [activeMessage] = await sql<{ id: string }[]>`
-    insert into public.messages (thread_id, sender_id, sender_label, body_text)
-    values (${activeThread.id}, ${f.admin.userId}, 'Admin', 'Active lifecycle message')
-    returning id
-  `
-  const [inactiveMessage] = await sql<{ id: string }[]>`
-    insert into public.messages (thread_id, sender_id, sender_label, body_text)
-    values (${inactiveThread.id}, ${f.admin.userId}, 'Admin', 'Historical lifecycle message')
-    returning id
-  `
+    await sql`
+      insert into public.thread_participants (thread_id, user_id, role) values
+        (${thread.id}, ${userId}, 'investor'),
+        (${thread.id}, ${owner}, 'admin')
+    `
 
-  await sql`
-    insert into public.message_reads (message_id, user_id)
-    values
-      (${activeMessage.id}, ${f.investorA.userId}),
-      (${inactiveMessage.id}, ${f.investorInactive.userId})
-  `
+    const [message] = await sql<{ id: string }[]>`
+      insert into public.messages (thread_id, sender_id, body_text)
+      values (${thread.id}, ${owner}, ${`Operational message ${label} ${f.suffix}`})
+      returning id
+    `
+    if (!message) throw new Error(`Failed to create ${label} message.`)
 
-  const [activeNotification] = await sql<{ id: string }[]>`
-    insert into public.notifications (recipient_id, kind, title, body)
-    values (${f.investorA.userId}, 'ownership_updated', 'Active notification', 'Active investor notification')
-    returning id
-  `
-  const [inactiveNotification] = await sql<{ id: string }[]>`
-    insert into public.notifications (recipient_id, kind, title, body)
-    values (${f.investorInactive.userId}, 'ownership_updated', 'Inactive notification', 'Inactive investor notification')
-    returning id
-  `
+    await sql`insert into public.message_reads (message_id, user_id) values (${message.id}, ${userId})`
 
-  const activeStorageName = `${f.investorA.investorId}/active-proof.pdf`
-  const inactiveStorageName = `${f.investorInactive.investorId}/inactive-proof.pdf`
-  const [activeStorage] = await sql<{ id: string }[]>`
-    insert into storage.objects (bucket_id, name, owner_id, metadata)
-    values ('profit-distribution-proofs', ${activeStorageName}, ${f.investorA.userId}, '{}'::jsonb)
-    returning id
-  `
-  const [inactiveStorage] = await sql<{ id: string }[]>`
-    insert into storage.objects (bucket_id, name, owner_id, metadata)
-    values ('profit-distribution-proofs', ${inactiveStorageName}, ${f.investorInactive.userId}, '{}'::jsonb)
-    returning id
-  `
+    const [notification] = await sql<{ id: string }[]>`
+      insert into public.notifications (recipient_id, kind, title, body)
+      values (${userId}, 'message_received', ${`Operational notification ${label} ${f.suffix}`}, ${`Sensitive notification body ${label} ${f.suffix}`})
+      returning id
+    `
+    if (!notification) throw new Error(`Failed to create ${label} notification.`)
+
+    const [object] = await sql<{ id: string }[]>`
+      insert into storage.objects (bucket_id, name)
+      values ('profit-distribution-proofs', ${`${userId}/operational-gate-${label}-${f.suffix}.pdf`})
+      returning id
+    `
+    if (!object) throw new Error(`Failed to create ${label} storage object.`)
+
+    return { threadId: thread.id, messageId: message.id, notificationId: notification.id, storageObjectId: object.id }
+  }
+
+  const active = await createForInvestor(f.investorA.userId, 'active')
+  const inactive = await createForInvestor(f.investorInactive.userId, 'inactive')
 
   const [offering] = await sql<{ id: string }[]>`
     insert into public.ownership_offerings (
-      code, name, total_units, unit_price, unit_ownership_bps, offered_ownership_bps,
-      transfer_lock_months, status, published_at, created_by, updated_by
+      name, code, status, total_offered_bps, unit_ownership_bps, unit_price,
+      total_units, distribution_cadence_months, transfer_lock_months
     ) values (
-      'OP-GATE-' || substr(gen_random_uuid()::text, 1, 8), 'Operational Gate Offering',
-      100, 100000000, 80, 4000, 0, 'open', now(), ${f.admin.userId}, ${f.admin.userId}
+      ${`Operational Gate Offering ${f.suffix}`}, ${`operational-gate-${f.suffix}`},
+      'open', 200, 100, 100000000, 2, 6, 36
     ) returning id
   `
+  if (!offering) throw new Error('Failed to create ownership offering.')
 
-  const [activeHolding] = await sql<{ id: string }[]>`
-    insert into public.ownership_holdings (
-      offering_id, investor_id, units, ownership_bps, acquisition_at,
-      transfer_eligible_at, status, acquisition_reference, created_by, updated_by
-    ) values (
-      ${offering.id}, ${f.investorA.investorId}, 2, 160, now() - interval '2 months',
-      now() - interval '1 month', 'active', 'OP-ACTIVE', ${f.admin.userId}, ${f.admin.userId}
-    ) returning id
-  `
-  const [inactiveHolding] = await sql<{ id: string }[]>`
-    insert into public.ownership_holdings (
-      offering_id, investor_id, units, ownership_bps, acquisition_at,
-      transfer_eligible_at, status, acquisition_reference, created_by, updated_by
-    ) values (
-      ${offering.id}, ${f.investorInactive.investorId}, 1, 80, now() - interval '2 months',
-      now() - interval '1 month', 'active', 'OP-INACTIVE', ${f.admin.userId}, ${f.admin.userId}
-    ) returning id
-  `
+  async function createSaleFixture(userId: string, label: string) {
+    const [holding] = await sql<{ id: string }[]>`
+      insert into public.ownership_holdings (
+        offering_id, investor_id, units, ownership_bps, acquisition_at,
+        transfer_eligible_at, status, acquisition_reference
+      ) values (
+        ${offering.id}, ${userId}, 1, 100, now() - interval '37 months',
+        now() - interval '1 month', 'active', ${`OP-GATE-${label}-${f.suffix}`}
+      ) returning id
+    `
+    if (!holding) throw new Error(`Failed to create ${label} holding.`)
 
-  const [activeTransfer] = await sql<{ id: string }[]>`
-    insert into public.ownership_transfers (
-      holding_id, from_investor_id, units, requested_at, eligible_at, status,
-      notes, transfer_kind, requested_unit_price
-    ) values (
-      ${activeHolding.id}, ${f.investorA.investorId}, 1, now(), now() - interval '1 month',
-      'pending', 'Active transfer', 'sale', 100000000
-    ) returning id
-  `
-  const [inactiveTransfer] = await sql<{ id: string }[]>`
-    insert into public.ownership_transfers (
-      holding_id, from_investor_id, units, requested_at, eligible_at, status,
-      notes, transfer_kind, requested_unit_price
-    ) values (
-      ${inactiveHolding.id}, ${f.investorInactive.investorId}, 1, now(), now() - interval '1 month',
-      'pending', 'Inactive transfer', 'sale', 100000000
-    ) returning id
-  `
+    const [transfer] = await sql<{ id: string }[]>`
+      insert into public.ownership_transfers (
+        holding_id, from_investor_id, units, eligible_at, status,
+        transfer_kind, requested_unit_price, notes
+      ) values (
+        ${holding.id}, ${userId}, 1, ${new Date(Date.now() - 60_000).toISOString()},
+        'pending', 'sale', 100000000, ${`Operational sale ${label} ${f.suffix}`}
+      ) returning id
+    `
+    if (!transfer) throw new Error(`Failed to create ${label} transfer.`)
+    return { holdingId: holding.id, transferId: transfer.id }
+  }
+
+  const activeSale = await createSaleFixture(f.investorA.userId, 'active')
+  const inactiveSale = await createSaleFixture(f.investorInactive.userId, 'inactive')
 
   return {
-    activeThreadId: activeThread.id,
-    activeMessageId: activeMessage.id,
-    activeNotificationId: activeNotification.id,
-    activeStorageObjectId: activeStorage.id,
-    activeTransferId: activeTransfer.id,
-    inactiveThreadId: inactiveThread.id,
-    inactiveMessageId: inactiveMessage.id,
-    inactiveNotificationId: inactiveNotification.id,
-    inactiveStorageObjectId: inactiveStorage.id,
-    inactiveTransferId: inactiveTransfer.id,
-    inactiveHoldingId: inactiveHolding.id,
+    activeThreadId: active.threadId,
+    activeMessageId: active.messageId,
+    activeNotificationId: active.notificationId,
+    activeStorageObjectId: active.storageObjectId,
+    inactiveThreadId: inactive.threadId,
+    inactiveMessageId: inactive.messageId,
+    inactiveNotificationId: inactive.notificationId,
+    inactiveStorageObjectId: inactive.storageObjectId,
+    offeringId: offering.id,
+    activeHoldingId: activeSale.holdingId,
+    inactiveHoldingId: inactiveSale.holdingId,
+    activeTransferId: activeSale.transferId,
+    inactiveTransferId: inactiveSale.transferId,
   }
 }
 
 beforeAll(async () => {
-  fixtures = await createRlsFixtures()
+  fixtures = await createFixtures()
   content = await createOperationalContent(db(), fixtures)
-})
+}, 60_000)
 
 afterAll(async () => {
-  if (content) {
-    const sql = db()
-    await sql`delete from public.ownership_transfers where id in (${content.activeTransferId}, ${content.inactiveTransferId})`
-    await sql`delete from public.ownership_holdings where id = ${content.inactiveHoldingId} or acquisition_reference = 'OP-ACTIVE'`
-    await sql`delete from public.ownership_offerings where name = 'Operational Gate Offering'`
-    await sql`delete from public.notifications where id in (${content.activeNotificationId}, ${content.inactiveNotificationId})`
-    await sql`delete from storage.objects where id in (${content.activeStorageObjectId}, ${content.inactiveStorageObjectId})`
-    await sql`delete from public.message_threads where id in (${content.activeThreadId}, ${content.inactiveThreadId})`
+  const c = content
+  if (c) {
+    await cleanup(async (tx) => {
+      await tx`delete from storage.objects where id in (${c.activeStorageObjectId}, ${c.inactiveStorageObjectId})`
+      await tx`delete from public.notifications where id in (${c.activeNotificationId}, ${c.inactiveNotificationId})`
+      await tx`delete from public.message_threads where id in (${c.activeThreadId}, ${c.inactiveThreadId})`
+      await tx`delete from public.ownership_transfers where id in (${c.activeTransferId}, ${c.inactiveTransferId})`
+      await tx`delete from public.ownership_holdings where id in (${c.activeHoldingId}, ${c.inactiveHoldingId})`
+      await tx`delete from public.ownership_offerings where id = ${c.offeringId}`
+    })
   }
   if (fixtures) await destroyFixtures(fixtures)
   await closeDb()
@@ -180,23 +160,19 @@ describe('investor operational lifecycle gates', () => {
     expect(await as(principal, (tx) => tx`select message_id from public.message_reads where message_id = ${c.activeMessageId} and user_id = ${f.investorA.userId}`)).toHaveLength(1)
     expect(await as(principal, (tx) => tx`select id from public.notifications where id = ${c.activeNotificationId}`)).toHaveLength(1)
     expect(await as(principal, (tx) => tx`select id from storage.objects where id = ${c.activeStorageObjectId}`)).toHaveLength(1)
-
     const sales = await as(principal, (tx) => tx`select id from app.list_my_ownership_sales()`)
     expect(sales.map((row) => row['id'])).toContain(c.activeTransferId)
   })
 
-  it('keeps only historical communication readable to an inactive former investor', async () => {
+  it('preserves historical messaging but revokes operational data from an inactive investor', async () => {
     if (!fixtures || !content) throw new Error('Operational gate fixtures were not initialized.')
     const f = fixtures
     const c = content
     const principal = { kind: 'authenticated' as const, userId: f.investorInactive.userId }
 
-    // Full-exit mode intentionally preserves old communication history.
     expect(await as(principal, (tx) => tx`select id from public.message_threads where id = ${c.inactiveThreadId}`)).toHaveLength(1)
     expect(await as(principal, (tx) => tx`select id from public.messages where id = ${c.inactiveMessageId}`)).toHaveLength(1)
     expect(await as(principal, (tx) => tx`select user_id from public.thread_participants where thread_id = ${c.inactiveThreadId} and user_id = ${f.investorInactive.userId}`)).toHaveLength(1)
-
-    // Operational/mutable data remains revoked after exit.
     expect(await as(principal, (tx) => tx`select message_id from public.message_reads where message_id = ${c.inactiveMessageId} and user_id = ${f.investorInactive.userId}`)).toHaveLength(0)
     expect(await as(principal, (tx) => tx`select id from public.notifications where id = ${c.inactiveNotificationId}`)).toHaveLength(0)
     expect(await as(principal, (tx) => tx`select id from storage.objects where id = ${c.inactiveStorageObjectId}`)).toHaveLength(0)
@@ -210,9 +186,7 @@ describe('investor operational lifecycle gates', () => {
     const principal = { kind: 'authenticated' as const, userId: f.investorInactive.userId }
 
     const createError = await expectRejected(() =>
-      as(principal, (tx) =>
-        tx`select app.create_ownership_sale_request(${c.inactiveHoldingId}, 1, 100000000, 'should fail')`,
-      ),
+      as(principal, (tx) => tx`select app.create_ownership_sale_request(${c.inactiveHoldingId}, 1, 100000000, 'should fail')`),
     )
     expect(createError.code).toBe('42501')
 
