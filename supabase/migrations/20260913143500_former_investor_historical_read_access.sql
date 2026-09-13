@@ -1,10 +1,11 @@
 -- Historical read-only access for a fully exited investor.
 --
 -- `app.current_investor_id()` intentionally stays narrow because many mutation
--- policies use it. Historical reads use a separate helper so inactive former
--- investors cannot accidentally regain write capabilities.
+-- policies use it. Historical reads use an internal helper so inactive former
+-- investors cannot accidentally regain write capabilities and the helper does
+-- not become part of the generated application RPC surface.
 
-create or replace function app.current_historical_investor_id()
+create or replace function private.current_historical_investor_id()
 returns uuid
 language sql
 stable
@@ -19,13 +20,13 @@ as $$
     and i.status in ('approved', 'active', 'inactive');
 $$;
 
-revoke all on function app.current_historical_investor_id() from public, anon;
-grant execute on function app.current_historical_investor_id() to authenticated, service_role;
+revoke all on function private.current_historical_investor_id() from public, anon;
+grant execute on function private.current_historical_investor_id() to authenticated, service_role;
 
 -- Own holdings include transferred lots so the seller can retain cap-table history.
 alter policy ownership_holdings_select_self
   on public.ownership_holdings
-  using (investor_id = app.current_historical_investor_id());
+  using (investor_id = private.current_historical_investor_id());
 
 -- A former investor remains a participant for SELECT/history only. Message INSERT
 -- policies still depend on app.current_investor_id() through participates/write
@@ -43,7 +44,7 @@ as $$
     where tp.thread_id = p_thread_id
       and tp.user_id = (select auth.uid())
       and (
-        app.current_historical_investor_id() is not null
+        private.current_historical_investor_id() is not null
         or app.has_permission('messages.view')
       )
   );
@@ -57,7 +58,7 @@ alter policy thread_participants_select_own
   using (
     user_id = app.current_user_id()
     and (
-      app.current_historical_investor_id() is not null
+      private.current_historical_investor_id() is not null
       or app.has_permission('messages.view')
     )
   );
