@@ -522,6 +522,19 @@ export type Database = {
           version_id: string
         }[]
       }
+      transition_ownership_offering: {
+        Args: {
+          p_offering_id: string
+          p_target_status: Database["public"]["Enums"]["ownership_offering_status"]
+        }
+        Returns: Database["public"]["Tables"]["ownership_offerings"]["Row"]
+        SetofOptions: {
+          from: "*"
+          to: "ownership_offerings"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       transition_portal_page: {
         Args: {
           p_page_id: string
