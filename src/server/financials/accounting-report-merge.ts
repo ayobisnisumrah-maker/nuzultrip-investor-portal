@@ -5,7 +5,7 @@ import type {
 } from '@/server/financials/transaction-report-service'
 
 export type ExistingFinancialLineItem = {
-  statement: 'income' | 'balance' | 'cash_flow'
+  statement: 'income' | 'balance' | 'cash_flow' | 'changes_in_equity'
   category:
     | 'revenue'
     | 'expense'

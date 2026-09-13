@@ -9,7 +9,7 @@ type DbClient = SupabaseClient<Database>
 const PAX_UNIT_LABELS = new Set(['pax', 'jamaah', 'orang', 'person'])
 
 export type GeneratedFinancialLineItem = {
-  statement: 'income' | 'balance' | 'cash_flow'
+  statement: 'income' | 'balance' | 'cash_flow' | 'changes_in_equity'
   category:
     | 'revenue'
     | 'expense'
@@ -118,96 +118,51 @@ export async function buildTransactionFinancialReport(
     : { data: [], error: null }
 
   if (itemsResult.error) {
-    throw new Error('Finance invoice items could not be loaded for report generation.')
+    throw new Error('Invoice items could not be loaded for report generation.')
   }
 
   const grossRevenue = invoices.reduce((sum, invoice) => sum + finite(invoice.grand_total), 0)
-  const invoiceCollected = invoices.reduce(
-    (sum, invoice) =>
-      sum + Math.max(finite(invoice.paid_total) - finite(invoice.refunded_total), 0),
-    0,
-  )
+  const refunds = (refundsResult.data ?? []).reduce((sum, refund) => sum + finite(refund.amount), 0)
+  const expenses = (expensesResult.data ?? []).reduce((sum, expense) => sum + finite(expense.total_amount), 0)
+  const cashIn = (paymentsResult.data ?? []).reduce((sum, payment) => sum + finite(payment.amount), 0)
+  const cashOut = refunds + expenses
+  const netCashflow = cashIn - cashOut
+  const operatingResult = grossRevenue - refunds - expenses
   const receivables = invoices.reduce(
     (sum, invoice) =>
-      sum +
-      Math.max(
-        finite(invoice.grand_total) - finite(invoice.paid_total) + finite(invoice.refunded_total),
-        0,
-      ),
-    0,
-  )
-  const cashIn = (paymentsResult.data ?? []).reduce(
-    (sum, payment) => sum + finite(payment.amount),
-    0,
-  )
-  const refunds = (refundsResult.data ?? []).reduce((sum, refund) => sum + finite(refund.amount), 0)
-  const expenses = (expensesResult.data ?? []).reduce(
-    (sum, expense) => sum + finite(expense.total_amount),
+      sum + Math.max(0, finite(invoice.grand_total) - finite(invoice.paid_total) - finite(invoice.refunded_total)),
     0,
   )
   const pax = (itemsResult.data ?? []).reduce((sum, item) => {
-    if (!PAX_UNIT_LABELS.has(item.unit_label.trim().toLowerCase())) return sum
-    return sum + finite(item.quantity)
+    const unit = String(item.unit_label ?? '').trim().toLowerCase()
+    return sum + (PAX_UNIT_LABELS.has(unit) ? finite(item.quantity) : 0)
   }, 0)
-  const netRevenue = grossRevenue - refunds
-  const operatingResult = netRevenue - expenses
-  const cashOut = refunds + expenses
-  const netCashflow = cashIn - cashOut
-  const collectionRate = grossRevenue > 0 ? (invoiceCollected / grossRevenue) * 100 : 0
-  const averageRevenuePerPax = pax > 0 ? grossRevenue / pax : 0
 
   const lineItems: GeneratedFinancialLineItem[] = [
     {
       statement: 'income',
       category: 'revenue',
       lineKey: 'gross_revenue',
-      label: 'Pendapatan bruto terinvois',
+      label: 'Pendapatan bruto',
       amount: grossRevenue,
       currency,
-      note: 'Otomatis dari invoice non-void yang terbit pada periode laporan.',
+      note: 'Dibentuk dari invoice non-void pada periode laporan.',
     },
     {
       statement: 'income',
-      category: 'revenue',
-      lineKey: 'refunds_processed',
-      label: 'Refund diproses',
-      amount: -refunds,
+      category: 'expense',
+      lineKey: 'refunds',
+      label: 'Refund',
+      amount: refunds,
       currency,
-      note: 'Kontra pendapatan dari refund berstatus processed pada periode laporan.',
+      note: 'Refund berstatus processed pada periode laporan.',
     },
     {
       statement: 'income',
       category: 'expense',
       lineKey: 'operating_expenses',
-      label: 'Pengeluaran operasional tercatat',
+      label: 'Beban operasional',
       amount: expenses,
-      currency,
-      note: 'Otomatis dari pengeluaran berstatus recorded pada periode laporan.',
-    },
-    {
-      statement: 'cash_flow',
-      category: 'operating',
-      lineKey: 'cash_received',
-      label: 'Kas masuk dari pembayaran',
-      amount: cashIn,
-      currency,
-      note: 'Pembayaran berstatus confirmed berdasarkan tanggal penerimaan.',
-    },
-    {
-      statement: 'cash_flow',
-      category: 'operating',
-      lineKey: 'refund_cash_out',
-      label: 'Kas keluar untuk refund',
-      amount: -refunds,
-      currency,
-      note: 'Refund berstatus processed berdasarkan tanggal diproses.',
-    },
-    {
-      statement: 'cash_flow',
-      category: 'operating',
-      lineKey: 'expense_cash_out',
-      label: 'Kas keluar untuk pengeluaran',
-      amount: -expenses,
       currency,
       note: 'Pengeluaran berstatus recorded pada periode laporan.',
     },
@@ -215,22 +170,32 @@ export async function buildTransactionFinancialReport(
       statement: 'balance',
       category: 'asset',
       lineKey: 'accounts_receivable',
-      label: 'Piutang invoice periode',
+      label: 'Piutang usaha',
       amount: receivables,
       currency,
-      note: 'Sisa tagihan invoice periode setelah pembayaran dikurangi refund.',
+      note: 'Sisa tagihan invoice non-void yang belum dibayar/refund.',
+    },
+    {
+      statement: 'cash_flow',
+      category: 'operating',
+      lineKey: 'cash_in',
+      label: 'Kas masuk',
+      amount: cashIn,
+      currency,
+      note: 'Pembayaran yang telah direkonsiliasi/confirmed pada periode laporan.',
+    },
+    {
+      statement: 'cash_flow',
+      category: 'operating',
+      lineKey: 'cash_out',
+      label: 'Kas keluar',
+      amount: cashOut,
+      currency,
+      note: 'Refund processed dan pengeluaran recorded pada periode laporan.',
     },
   ]
 
   const kpis: GeneratedFinancialKpi[] = [
-    { kpiKey: 'pax_sold', label: 'Pax terjual', value: pax, unit: 'count', basis: 'derived' },
-    {
-      kpiKey: 'invoice_count',
-      label: 'Invoice terbit',
-      value: invoices.length,
-      unit: 'count',
-      basis: 'derived',
-    },
     {
       kpiKey: 'gross_revenue',
       label: 'Pendapatan bruto',
@@ -238,10 +203,23 @@ export async function buildTransactionFinancialReport(
       unit: 'currency',
       basis: 'derived',
     },
-    { kpiKey: 'cash_in', label: 'Arus masuk', value: cashIn, unit: 'currency', basis: 'derived' },
+    {
+      kpiKey: 'operating_result',
+      label: 'Hasil operasional',
+      value: operatingResult,
+      unit: 'currency',
+      basis: 'derived',
+    },
+    {
+      kpiKey: 'cash_in',
+      label: 'Kas masuk',
+      value: cashIn,
+      unit: 'currency',
+      basis: 'derived',
+    },
     {
       kpiKey: 'cash_out',
-      label: 'Arus keluar',
+      label: 'Kas keluar',
       value: cashOut,
       unit: 'currency',
       basis: 'derived',
@@ -254,24 +232,10 @@ export async function buildTransactionFinancialReport(
       basis: 'derived',
     },
     {
-      kpiKey: 'operating_result',
-      label: 'Hasil operasional',
-      value: operatingResult,
-      unit: 'currency',
-      basis: 'derived',
-    },
-    {
-      kpiKey: 'collection_rate',
-      label: 'Tingkat kolektibilitas invoice',
-      value: collectionRate,
-      unit: 'percent',
-      basis: 'derived',
-    },
-    {
-      kpiKey: 'average_revenue_per_pax',
-      label: 'Rata-rata pendapatan per pax',
-      value: averageRevenuePerPax,
-      unit: 'currency',
+      kpiKey: 'pax_sold',
+      label: 'Pax terjual',
+      value: pax,
+      unit: 'count',
       basis: 'derived',
     },
   ]

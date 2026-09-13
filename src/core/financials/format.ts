@@ -17,9 +17,10 @@ export function formatFinancialKpi(value: number | string, unit: string, currenc
 }
 
 export const FINANCIAL_STATEMENT_LABELS: Record<string, string> = {
-  income: 'Laba rugi',
-  balance: 'Neraca',
-  cash_flow: 'Arus kas',
+  income: 'Laporan Laba Rugi',
+  balance: 'Laporan Posisi Keuangan',
+  cash_flow: 'Laporan Arus Kas',
+  changes_in_equity: 'Laporan Perubahan Ekuitas',
 }
 
 export const FINANCIAL_CATEGORY_LABELS: Record<string, string> = {
@@ -42,4 +43,10 @@ export const FINANCIAL_SOURCE_LABELS: Record<string, string> = {
 export const KPI_BASIS_LABELS: Record<string, string> = {
   reported: 'Dilaporkan',
   derived: 'Dihitung dari rincian laporan',
+}
+
+export const ACCOUNTING_FRAMEWORK_LABELS: Record<string, string> = {
+  sak_ep: 'SAK Entitas Privat (SAK EP)',
+  sak_indonesia: 'SAK Indonesia',
+  other: 'Kerangka akuntansi lain',
 }

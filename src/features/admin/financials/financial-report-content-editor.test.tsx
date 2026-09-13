@@ -39,8 +39,8 @@ describe('FinancialReportContentEditor balance sheet template', () => {
     expect(screen.getByDisplayValue('Kewajiban Lainnya')).toBeTruthy()
     expect(screen.getByDisplayValue('Modal Disetor')).toBeTruthy()
     expect(screen.getByDisplayValue('Saldo Laba')).toBeTruthy()
-    expect(screen.getByText('Neraca perlu rekonsiliasi')).toBeTruthy()
-    expect(screen.getByText(/7 pos template posisi keuangan ditambahkan/i)).toBeTruthy()
+    expect(screen.getByText('Posisi keuangan perlu rekonsiliasi')).toBeTruthy()
+    expect(screen.getByText(/7 pos posisi keuangan ditambahkan/i)).toBeTruthy()
   })
 
   it('does not duplicate template positions when applied more than once', () => {
@@ -59,7 +59,7 @@ describe('FinancialReportContentEditor balance sheet template', () => {
 
     expect(screen.getAllByDisplayValue('Kas & Bank')).toHaveLength(1)
     expect(screen.getAllByDisplayValue('Modal Disetor')).toHaveLength(1)
-    expect(screen.getByText('Neraca seimbang')).toBeTruthy()
+    expect(screen.getByText('Posisi keuangan seimbang')).toBeTruthy()
     expect(screen.getByText(/semua pos template posisi keuangan sudah tersedia/i)).toBeTruthy()
   })
 })
