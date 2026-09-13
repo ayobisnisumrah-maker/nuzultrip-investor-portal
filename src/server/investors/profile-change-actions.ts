@@ -22,7 +22,7 @@ export const reviewInvestorProfileChangeRequest = defineAction({
     const { error } = await supabase.schema('app').rpc('review_investor_profile_change_request', {
       p_request_id: input.requestId,
       p_decision: input.decision,
-      p_note: input.note ?? null,
+      p_note: input.note ?? undefined,
     })
     if (error) {
       throw new ConflictError(error.message, 'Pengajuan perubahan tidak dapat ditinjau.')
