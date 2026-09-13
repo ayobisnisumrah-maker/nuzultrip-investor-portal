@@ -218,7 +218,7 @@ describe('Indonesian financial reporting snapshot foundation', () => {
       },
     )
 
-    const [persisted] = await db()<[{ id: string; status: string }] | { id: string; status: string }[]>`
+    const [persisted] = await db()<{ id: string; status: string }[]>`
       select d.id, v.status
       from public.financial_report_disclosures d
       join public.financial_report_versions v on v.id = d.financial_report_version_id
