@@ -44,44 +44,92 @@ export const applyInvestorProfileChangeRequest = defineAction({
 
     if (requestError || !request) throw new NotFoundError('Pengajuan perubahan profil')
     if (request.status !== 'approved') {
-      throw new ConflictError('Profile change request is not approved.', 'Pengajuan harus disetujui sebelum diterapkan.')
+      throw new ConflictError(
+        'Profile change request is not approved.',
+        'Pengajuan harus disetujui sebelum diterapkan.',
+      )
     }
 
     const changes = request.requested_changes as Record<string, unknown>
     const requestedEmail = typeof changes.email === 'string' ? changes.email.trim() : null
     const serviceClient = getServiceRoleClient()
-    let previousEmail: string | null = null
+    let previousAuthEmail: string | null = null
+    let previousAccountEmail: string | null = null
     let emailApplied = false
 
     if (requestedEmail) {
-      const { data: currentUser, error: currentUserError } = await serviceClient.auth.admin.getUserById(request.investor_id)
-      if (currentUserError || !currentUser.user) {
-        throw new ConflictError('Unable to read Auth user.', 'Akun autentikasi investor tidak dapat dibaca.')
+      const [{ data: currentUser, error: currentUserError }, { data: currentAccount, error: accountError }] =
+        await Promise.all([
+          serviceClient.auth.admin.getUserById(request.investor_id),
+          serviceClient
+            .from('user_accounts')
+            .select('email')
+            .eq('id', request.investor_id)
+            .maybeSingle(),
+        ])
+
+      if (currentUserError || !currentUser.user || accountError || !currentAccount) {
+        throw new ConflictError(
+          'Unable to read canonical investor email.',
+          'Email investor saat ini tidak dapat dibaca.',
+        )
       }
-      previousEmail = currentUser.user.email ?? null
-      if (previousEmail !== requestedEmail) {
-        const { error: emailError } = await serviceClient.auth.admin.updateUserById(request.investor_id, {
-          email: requestedEmail,
-          email_confirm: true,
-        })
-        if (emailError) {
-          throw new ConflictError(emailError.message, 'Email baru tidak dapat diterapkan.')
+
+      previousAuthEmail = currentUser.user.email ?? null
+      previousAccountEmail = currentAccount.email
+
+      if (previousAuthEmail !== requestedEmail) {
+        const { error: authEmailError } = await serviceClient.auth.admin.updateUserById(
+          request.investor_id,
+          { email: requestedEmail, email_confirm: true },
+        )
+        if (authEmailError) {
+          throw new ConflictError(authEmailError.message, 'Email login baru tidak dapat diterapkan.')
         }
       }
+
+      const { error: accountEmailError } = await serviceClient
+        .from('user_accounts')
+        .update({ email: requestedEmail })
+        .eq('id', request.investor_id)
+
+      if (accountEmailError) {
+        if (previousAuthEmail && previousAuthEmail !== requestedEmail) {
+          await serviceClient.auth.admin.updateUserById(request.investor_id, {
+            email: previousAuthEmail,
+            email_confirm: true,
+          })
+        }
+        throw new ConflictError(
+          accountEmailError.message,
+          'Email akun investor tidak dapat disinkronkan.',
+        )
+      }
+
       emailApplied = true
     }
 
-    const { error: applyError } = await supabase.schema('app').rpc('apply_investor_profile_change_request', {
-      p_request_id: input.requestId,
-      p_email_applied: emailApplied,
-    })
+    const { error: applyError } = await supabase
+      .schema('app')
+      .rpc('apply_investor_profile_change_request', {
+        p_request_id: input.requestId,
+        p_email_applied: emailApplied,
+      })
 
     if (applyError) {
-      if (requestedEmail && previousEmail && previousEmail !== requestedEmail) {
-        await serviceClient.auth.admin.updateUserById(request.investor_id, {
-          email: previousEmail,
-          email_confirm: true,
-        })
+      if (requestedEmail) {
+        if (previousAccountEmail && previousAccountEmail !== requestedEmail) {
+          await serviceClient
+            .from('user_accounts')
+            .update({ email: previousAccountEmail })
+            .eq('id', request.investor_id)
+        }
+        if (previousAuthEmail && previousAuthEmail !== requestedEmail) {
+          await serviceClient.auth.admin.updateUserById(request.investor_id, {
+            email: previousAuthEmail,
+            email_confirm: true,
+          })
+        }
       }
       throw new ConflictError(applyError.message, 'Perubahan profil tidak dapat diterapkan.')
     }
