@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - feat/investor-inheritance-workflow
+      - feat/investor-verified-profile-lock-training
     paths:
       - 'supabase/migrations/**'
       - 'scripts/generate-db-types.mjs'
