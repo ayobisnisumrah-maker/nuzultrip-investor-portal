@@ -6,6 +6,7 @@ import { as, asCommitted, cleanup, closeDb, db, expectRejected } from './helpers
 import { createFixtures, destroyFixtures, type Fixtures } from './helpers/fixtures'
 
 let fixtures: Fixtures | undefined
+let publishRuleId: string | undefined
 const offeringIds: string[] = []
 const ruleIds: string[] = []
 const matterIds: string[] = []
@@ -93,10 +94,11 @@ async function createDraftOffering(): Promise<string> {
   return id
 }
 
-async function createApprovedPublishMatter(offeringId: string): Promise<string> {
+async function ensurePublishRule(): Promise<string> {
+  if (publishRuleId) return publishRuleId
+
   const f = requireFixtures()
   const suffix = randomUUID().replaceAll('-', '').slice(0, 10)
-
   const rules = await asCommitted(
     { kind: 'authenticated', userId: f.superAdmin.userId },
     (tx) => tx<{ id: string }[]>`
@@ -119,6 +121,14 @@ async function createApprovedPublishMatter(offeringId: string): Promise<string> 
   await asCommitted({ kind: 'authenticated', userId: f.superAdmin.userId }, (tx) =>
     tx`select app.activate_governance_rule(${ruleId})`,
   )
+
+  publishRuleId = ruleId
+  return ruleId
+}
+
+async function createApprovedPublishMatter(offeringId: string): Promise<string> {
+  const f = requireFixtures()
+  const ruleId = await ensurePublishRule()
 
   const matters = await asCommitted(
     { kind: 'authenticated', userId: f.managerAdmin.userId },
