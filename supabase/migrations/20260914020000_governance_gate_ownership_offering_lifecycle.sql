@@ -43,6 +43,7 @@ as $$
 declare
   v_actor uuid := app.current_user_id();
   v_offering public.ownership_offerings;
+  v_from_status public.ownership_offering_status;
   v_permission text;
   v_audit_action text;
   v_matter_id uuid;
@@ -70,24 +71,26 @@ begin
     raise exception 'Penawaran kepemilikan tidak ditemukan.' using errcode = 'P0002';
   end if;
 
+  v_from_status := v_offering.status;
+
   -- Resolve the only allowed lifecycle edges and their dedicated permission.
-  if v_offering.status = 'draft' and p_target_status = 'open' then
+  if v_from_status = 'draft' and p_target_status = 'open' then
     v_permission := 'ownership_offerings.publish';
     v_audit_action := 'ownership_offering.publish';
-  elsif v_offering.status = 'open' and p_target_status = 'paused' then
+  elsif v_from_status = 'open' and p_target_status = 'paused' then
     v_permission := 'ownership_offerings.pause';
     v_audit_action := 'ownership_offering.pause';
-  elsif v_offering.status = 'paused' and p_target_status = 'open' then
+  elsif v_from_status = 'paused' and p_target_status = 'open' then
     v_permission := 'ownership_offerings.resume';
     v_audit_action := 'ownership_offering.resume';
-  elsif v_offering.status in ('open', 'paused') and p_target_status = 'closed' then
+  elsif v_from_status in ('open', 'paused') and p_target_status = 'closed' then
     v_permission := 'ownership_offerings.close';
     v_audit_action := 'ownership_offering.close';
-  elsif v_offering.status = 'closed' and p_target_status = 'archived' then
+  elsif v_from_status = 'closed' and p_target_status = 'archived' then
     v_permission := 'ownership_offerings.archive';
     v_audit_action := 'ownership_offering.archive';
   else
-    raise exception 'Transisi status penawaran dari % ke % tidak diizinkan.', v_offering.status, p_target_status
+    raise exception 'Transisi status penawaran dari % ke % tidak diizinkan.', v_from_status, p_target_status
       using errcode = '55000';
   end if;
 
@@ -99,7 +102,7 @@ begin
   -- Publishing is the controlled action for issuing/opening a new ownership offer.
   -- Validate the canonical economic contract in the database because this RPC is
   -- callable independently from the TypeScript service layer.
-  if v_offering.status = 'draft' and p_target_status = 'open' then
+  if v_from_status = 'draft' and p_target_status = 'open' then
     if not app.has_permission('reserved_matters.execute') then
       raise exception 'Eksekusi penerbitan penawaran memerlukan izin Reserved Matters execute.'
         using errcode = '42501';
@@ -109,7 +112,7 @@ begin
       raise exception 'Nama penawaran wajib diisi sebelum diterbitkan.' using errcode = '22023';
     end if;
 
-    if v_offering.code !~ '^[a-z0-9]+(?:-[a-z0-9]+)*$' then
+    if v_offering.code !~ '^[a-z0-9]+(-[a-z0-9]+)*$' then
       raise exception 'Kode penawaran tidak valid untuk diterbitkan.' using errcode = '22023';
     end if;
 
@@ -147,7 +150,7 @@ begin
     status = p_target_status,
     updated_by = v_actor,
     effective_from = case
-      when v_offering.status = 'draft' and p_target_status = 'open'
+      when v_from_status = 'draft' and p_target_status = 'open'
         then coalesce(oo.effective_from, now())
       else oo.effective_from
     end
@@ -177,7 +180,7 @@ begin
     p_offering_id,
     'Mengubah lifecycle penawaran kepemilikan melalui RPC terkontrol.',
     jsonb_build_object(
-      'from_status', v_offering.status,
+      'from_status', v_from_status,
       'to_status', p_target_status,
       'reserved_matter_id', v_matter_id
     )
