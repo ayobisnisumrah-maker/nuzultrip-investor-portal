@@ -41,12 +41,6 @@ export default async function SignInPage({
             Pulihkan akses
           </Link>
         </p>
-        <p>
-          Belum menjadi investor?{' '}
-          <Link href="/daftar-investor" className="text-primary underline-offset-4 hover:underline">
-            Ajukan pendaftaran
-          </Link>
-        </p>
       </div>
     </div>
   )
