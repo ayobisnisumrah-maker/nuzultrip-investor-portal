@@ -59,18 +59,15 @@ const categoryLabels: Record<LineItem['category'], string> = {
 }
 
 const balanceSheetTemplate: LineItem[] = [
-  ['asset', 'cash_and_bank', 'Kas & Bank', 'Rekonsiliasi dengan saldo kas dan rekening bank.'],
-  ['asset', 'accounts_receivable', 'Piutang Usaha', 'Rekonsiliasi dengan invoice yang belum tertagih.'],
-  ['asset', 'prepaid_expenses', 'Uang Muka & Biaya Dibayar Dimuka', 'Rekonsiliasi dengan uang muka vendor dan biaya dibayar dimuka.'],
-  ['liability', 'accounts_payable', 'Utang Vendor', 'Rekonsiliasi dengan kewajiban vendor yang belum dibayar.'],
-  ['liability', 'customer_advances', 'Uang Muka / Titipan Pelanggan', 'Pembayaran pelanggan yang belum memenuhi pengakuan pendapatan.'],
-  ['liability', 'other_liabilities', 'Kewajiban Lainnya', 'Isi hanya kewajiban yang memiliki dasar dan bukti rekonsiliasi.'],
-  ['equity', 'paid_in_capital', 'Modal Disetor', 'Rekonsiliasi dengan dokumen setoran modal.'],
-  ['equity', 'retained_earnings', 'Saldo Laba', 'Rekonsiliasi saldo awal, laba/rugi periode, dan distribusi/penyesuaian.'],
-].map(([category, lineKey, label, note]) => ({
-  statement: 'balance' as const,
-  category: category as LineItem['category'], lineKey, label, amount: '0', currency: 'IDR', note,
-}))
+  { statement: 'balance', category: 'asset', lineKey: 'cash_and_bank', label: 'Kas & Bank', amount: '0', currency: 'IDR', note: 'Rekonsiliasi dengan saldo kas dan rekening bank.' },
+  { statement: 'balance', category: 'asset', lineKey: 'accounts_receivable', label: 'Piutang Usaha', amount: '0', currency: 'IDR', note: 'Rekonsiliasi dengan invoice yang belum tertagih.' },
+  { statement: 'balance', category: 'asset', lineKey: 'prepaid_expenses', label: 'Uang Muka & Biaya Dibayar Dimuka', amount: '0', currency: 'IDR', note: 'Rekonsiliasi dengan uang muka vendor dan biaya dibayar dimuka.' },
+  { statement: 'balance', category: 'liability', lineKey: 'accounts_payable', label: 'Utang Vendor', amount: '0', currency: 'IDR', note: 'Rekonsiliasi dengan kewajiban vendor yang belum dibayar.' },
+  { statement: 'balance', category: 'liability', lineKey: 'customer_advances', label: 'Uang Muka / Titipan Pelanggan', amount: '0', currency: 'IDR', note: 'Pembayaran pelanggan yang belum memenuhi pengakuan pendapatan.' },
+  { statement: 'balance', category: 'liability', lineKey: 'other_liabilities', label: 'Kewajiban Lainnya', amount: '0', currency: 'IDR', note: 'Isi hanya kewajiban yang memiliki dasar dan bukti rekonsiliasi.' },
+  { statement: 'balance', category: 'equity', lineKey: 'paid_in_capital', label: 'Modal Disetor', amount: '0', currency: 'IDR', note: 'Rekonsiliasi dengan dokumen setoran modal.' },
+  { statement: 'balance', category: 'equity', lineKey: 'retained_earnings', label: 'Saldo Laba', amount: '0', currency: 'IDR', note: 'Rekonsiliasi saldo awal, laba/rugi periode, dan distribusi/penyesuaian.' },
+]
 
 const equityTemplate: LineItem[] = [
   { statement: 'changes_in_equity', category: 'equity', lineKey: 'opening_equity', label: 'Ekuitas awal periode', amount: '0', currency: 'IDR', note: 'Saldo ekuitas pada awal periode yang direkonsiliasi dengan laporan sebelumnya.' },
@@ -189,7 +186,7 @@ export function FinancialReportContentEditor({ reportId, initialLines, initialKp
       <div className="flex flex-wrap items-center justify-between gap-3"><div><h3 className="font-semibold">Rincian laporan keuangan</h3><p className="text-caption text-fg-subtle">Laba Rugi, Posisi Keuangan, Arus Kas, dan Perubahan Ekuitas berada dalam satu snapshot versi.</p></div><div className="flex flex-wrap gap-2"><Button variant="secondary" disabled={busy} onClick={() => addMissingTemplate(balanceSheetTemplate, 'Posisi Keuangan')}>Template posisi keuangan</Button><Button variant="secondary" disabled={busy} onClick={() => addMissingTemplate(equityTemplate, 'Perubahan Ekuitas')}>Template perubahan ekuitas</Button><Button variant="secondary" disabled={busy} onClick={() => setLines((current) => [...current, { statement: 'income', category: 'revenue', lineKey: `pos_${current.length + 1}`, label: '', amount: '', currency: 'IDR', note: '' }])}><Plus className="size-4" /> Tambah pos</Button></div></div>
       <p className="border-border bg-surface-subtle text-fg-subtle rounded-lg border p-3 text-sm">Nilai Rp0 dari template adalah nilai awal, bukan angka terverifikasi. Setiap pos wajib direkonsiliasi dengan data perusahaan sebelum review.</p>
       {lines.map((line, index) => <div key={`${line.lineKey}-${index}`} className="border-border grid gap-4 rounded-xl border p-4 lg:grid-cols-12">
-        <Field className="lg:col-span-2" label="Jenis laporan" hint="Menentukan laporan utama tempat pos disajikan."><select value={line.statement} onChange={(e) => { const statement = e.target.value as LineItem['statement']; const category = lineCategories[statement][0]; setLines((all) => all.map((item, i) => i === index ? { ...item, statement, category } : item)) }} className="border-border bg-canvas h-10 rounded-lg border px-2">{Object.entries(statementLabels).map(([value,label]) => <option key={value} value={value}>{label}</option>)}</select></Field>
+        <Field className="lg:col-span-2" label="Jenis laporan" hint="Menentukan laporan utama tempat pos disajikan."><select value={line.statement} onChange={(e) => { const statement = e.target.value as LineItem['statement']; const category = lineCategories[statement][0] ?? 'equity'; setLines((all) => all.map((item, i) => i === index ? { ...item, statement, category } : item)) }} className="border-border bg-canvas h-10 rounded-lg border px-2">{Object.entries(statementLabels).map(([value,label]) => <option key={value} value={value}>{label}</option>)}</select></Field>
         <Field className="lg:col-span-2" label="Kategori" hint="Mengelompokkan pos untuk penyajian dan rekonsiliasi."><select value={line.category} onChange={(e) => setLines((all) => all.map((item,i) => i === index ? { ...item, category: e.target.value as LineItem['category'] } : item))} className="border-border bg-canvas h-10 rounded-lg border px-2">{lineCategories[line.statement].map((category) => <option key={category} value={category}>{categoryLabels[category]}</option>)}</select></Field>
         <Field className="lg:col-span-3" label="Nama pos" hint="Nama akun/pos yang akan dibaca Admin dan Investor."><Input value={line.label} onChange={(e) => setLines((all) => all.map((item,i) => i === index ? { ...item, label: e.target.value, lineKey: keyFromLabel(e.target.value,item.lineKey) } : item))} /></Field>
         <Field className="lg:col-span-2" label="Nilai" hint="Saldo/nilai periode berdasarkan data yang telah direkonsiliasi."><Input inputMode="decimal" value={line.amount} onChange={(e) => setLines((all) => all.map((item,i) => i === index ? { ...item, amount: e.target.value } : item))} /></Field>
