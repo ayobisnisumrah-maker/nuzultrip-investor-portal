@@ -98,7 +98,7 @@ test('financial report detail receives line item and KPI changes automatically',
     await waitForRealtime(page)
 
     await expect(page.locator('main')).toContainText(title)
-    await expect(page.locator('main')).toContainText('Line items (0)')
+    await expect(page.locator('main')).toContainText('Rincian laporan (0)')
     await expect(page.locator('main')).toContainText('KPI (0)')
 
     const { data: line, error: lineError } = await supabase
@@ -119,7 +119,7 @@ test('financial report detail receives line item and KPI changes automatically',
     lineId = line.id as string
 
     await expect(page.locator('main')).toContainText(lineLabel, { timeout: 30_000 })
-    await expect(page.locator('main')).toContainText('Line items (1)')
+    await expect(page.locator('main')).toContainText('Rincian laporan (1)')
     await expect(page).toHaveURL(new RegExp(`/admin/financials/reports/${reportId}$`))
 
     const { data: kpi, error: kpiError } = await supabase
