@@ -5,12 +5,10 @@ on:
     branches:
       - main
       - feat/investor-inheritance-workflow
-      - fix/governance-gate-ownership-offering-publish
     paths:
       - 'supabase/migrations/**'
       - 'scripts/generate-db-types.mjs'
       - 'supabase/config.toml'
-      - '.github/workflows/db-types-sync.yml'
   workflow_dispatch:
     inputs:
       reason:
