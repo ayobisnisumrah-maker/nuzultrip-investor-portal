@@ -301,18 +301,59 @@ describe('D05/D04 live database governance enforcement', () => {
     expect(authorization?.id).toBe(matterId)
   })
 
-  it('keeps decision evidence append-only even for a privileged connection', async () => {
+  it('keeps decision evidence append-only through privilege and trigger defense-in-depth', async () => {
+    const f = requireFixtures()
     const decisionId = createdDecisionIds.find(Boolean)
     if (!decisionId) throw new Error('No decision fixture is available for immutability test.')
 
-    const updateRejection = await expectRejected(() =>
-      db()`update public.reserved_matter_decisions set rationale = 'rewritten' where id = ${decisionId}`,
-    )
-    expect(updateRejection.code).toBe('55000')
+    const [privileges] = await db()<{
+      can_update: boolean
+      can_delete: boolean
+    }[]>`
+      select
+        has_table_privilege(
+          'authenticated',
+          'public.reserved_matter_decisions',
+          'UPDATE'
+        ) as can_update,
+        has_table_privilege(
+          'authenticated',
+          'public.reserved_matter_decisions',
+          'DELETE'
+        ) as can_delete
+    `
+    expect(privileges).toEqual({ can_update: false, can_delete: false })
 
-    const deleteRejection = await expectRejected(() =>
-      db()`delete from public.reserved_matter_decisions where id = ${decisionId}`,
+    const [trigger] = await db()<{
+      enabled: string
+    }[]>`
+      select t.tgenabled as enabled
+      from pg_catalog.pg_trigger t
+      join pg_catalog.pg_class c on c.oid = t.tgrelid
+      join pg_catalog.pg_namespace n on n.oid = c.relnamespace
+      where n.nspname = 'public'
+        and c.relname = 'reserved_matter_decisions'
+        and t.tgname = 'reserved_matter_decisions_append_only'
+        and not t.tgisinternal
+    `
+    expect(trigger?.enabled).toBe('O')
+
+    const updateRejection = await as(
+      { kind: 'authenticated', userId: f.superAdmin.userId },
+      (tx) =>
+        expectRejected(() =>
+          tx`update public.reserved_matter_decisions set rationale = 'rewritten' where id = ${decisionId}`,
+        ),
     )
-    expect(deleteRejection.code).toBe('55000')
+    expect(updateRejection.code).toBe('42501')
+
+    const deleteRejection = await as(
+      { kind: 'authenticated', userId: f.superAdmin.userId },
+      (tx) =>
+        expectRejected(() =>
+          tx`delete from public.reserved_matter_decisions where id = ${decisionId}`,
+        ),
+    )
+    expect(deleteRejection.code).toBe('42501')
   })
 })
