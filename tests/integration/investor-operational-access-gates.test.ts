@@ -80,6 +80,7 @@ async function createOperationalContent(sql: Sql, f: Fixtures): Promise<Operatio
     ) returning id
   `
   if (!offering) throw new Error('Failed to create ownership offering.')
+  const offeringId = offering.id
 
   async function createSaleFixture(userId: string, label: string) {
     const [holding] = await sql<{ id: string }[]>`
@@ -87,7 +88,7 @@ async function createOperationalContent(sql: Sql, f: Fixtures): Promise<Operatio
         offering_id, investor_id, units, ownership_bps, acquisition_at,
         transfer_eligible_at, status, acquisition_reference
       ) values (
-        ${offering.id}, ${userId}, 1, 100, now() - interval '37 months',
+        ${offeringId}, ${userId}, 1, 100, now() - interval '37 months',
         now() - interval '1 month', 'active', ${`OP-GATE-${label}-${f.suffix}`}
       ) returning id
     `
@@ -118,7 +119,7 @@ async function createOperationalContent(sql: Sql, f: Fixtures): Promise<Operatio
     inactiveMessageId: inactive.messageId,
     inactiveNotificationId: inactive.notificationId,
     inactiveStorageObjectId: inactive.storageObjectId,
-    offeringId: offering.id,
+    offeringId,
     activeHoldingId: activeSale.holdingId,
     inactiveHoldingId: inactiveSale.holdingId,
     activeTransferId: activeSale.transferId,
