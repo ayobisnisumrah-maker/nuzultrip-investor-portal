@@ -1,0 +1,60 @@
+name: Governance DB Types Artifact
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.28.1
+          run_install: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v2
+        with:
+          version: latest
+          github-token: ${{ github.token }}
+
+      - name: Start local Supabase
+        run: supabase start
+
+      - name: Reset local schema
+        run: supabase db reset
+
+      - name: Generate database types
+        run: pnpm db:types
+
+      - name: Upload generated database types
+        uses: actions/upload-artifact@v4
+        with:
+          name: governance-database-types
+          path: src/types/database.ts
+          if-no-files-found: error
+
+      - name: Stop local Supabase
+        if: always()
+        run: supabase stop --no-backup
