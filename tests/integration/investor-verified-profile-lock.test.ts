@@ -47,21 +47,41 @@ describe('verified investor profile lock and training isolation', () => {
     expect(rejected.code).toBe('42501')
   })
 
-  it('still permits direct completion while the investor is not yet verified', async () => {
-    await as({ kind: 'authenticated', userId: fixtures.investorPending.userId }, async (tx) => {
-      await tx`
+  it('does not freeze profile completion before the investor is verified', async () => {
+    const [before] = await db()<{
+      legal_name: string
+      whatsapp_number: string | null
+    }[]>`
+      select legal_name, whatsapp_number
+      from public.investors
+      where id=${fixtures.investorPending.userId}
+    `
+
+    try {
+      await db()`
         update public.investors
         set legal_name='Investor Menunggu Diperbaiki', whatsapp_number='+628122222222'
         where id=${fixtures.investorPending.userId}
       `
-      const [row] = await tx<{ legal_name: string; whatsapp_number: string | null }[]>`
-        select legal_name, whatsapp_number from public.investors where id=${fixtures.investorPending.userId}
+      const [row] = await db()<{
+        legal_name: string
+        whatsapp_number: string | null
+      }[]>`
+        select legal_name, whatsapp_number
+        from public.investors
+        where id=${fixtures.investorPending.userId}
       `
       expect(row).toMatchObject({
         legal_name: 'Investor Menunggu Diperbaiki',
         whatsapp_number: '+628122222222',
       })
-    })
+    } finally {
+      await db()`
+        update public.investors
+        set legal_name=${before!.legal_name}, whatsapp_number=${before!.whatsapp_number}
+        where id=${fixtures.investorPending.userId}
+      `
+    }
   })
 
   it('rejects legal name or identity fields from the change-request payload', async () => {
@@ -75,7 +95,9 @@ describe('verified investor profile lock and training isolation', () => {
         `,
       )
       expect(legalName.code).toBe('22023')
+    })
 
+    await as({ kind: 'authenticated', userId: fixtures.investorA.userId }, async (tx) => {
       const identity = await expectRejected(
         () => tx`
           select app.request_investor_profile_change(
@@ -136,33 +158,37 @@ describe('verified investor profile lock and training isolation', () => {
   it('prevents training accounts from entering the canonical cap table', async () => {
     await db()`update public.investors set is_training=true where id=${fixtures.investorB.userId}`
 
+    const offeringCode = `TRAIN${fixtures.suffix.toUpperCase()}`
     const [offering] = await db()<{ id: string }[]>`
       insert into public.ownership_offerings (
         name, code, status, total_offered_bps, unit_ownership_bps,
         unit_price, total_units, created_by, updated_by
       ) values (
         ${`Training isolation ${fixtures.suffix}`},
-        ${`TRAIN-${fixtures.suffix}`},
+        ${offeringCode},
         'draft', 4000, 80, 100000000, 50,
         ${fixtures.superAdmin.userId}, ${fixtures.superAdmin.userId}
       ) returning id
     `
     if (!offering) throw new Error('Offering fixture was not created.')
 
-    const rejected = await expectRejected(
-      () => db()`
-        insert into public.ownership_holdings (
-          offering_id, investor_id, units, ownership_bps, acquisition_at,
-          transfer_eligible_at, status, acquisition_reference, created_by, updated_by
-        ) values (
-          ${offering.id}, ${fixtures.investorB.userId}, 1, 80, now(), now(),
-          'active', ${`TRAIN-HOLD-${fixtures.suffix}`},
-          ${fixtures.superAdmin.userId}, ${fixtures.superAdmin.userId}
-        )
-      `,
-    )
-    expect(rejected.code).toBe('42501')
-
-    await db()`delete from public.ownership_offerings where id=${offering.id}`
+    try {
+      const rejected = await expectRejected(
+        () => db()`
+          insert into public.ownership_holdings (
+            offering_id, investor_id, units, ownership_bps, acquisition_at,
+            transfer_eligible_at, status, acquisition_reference, created_by, updated_by
+          ) values (
+            ${offering.id}, ${fixtures.investorB.userId}, 1, 80, now(), now(),
+            'active', ${`TRAINHOLD${fixtures.suffix.toUpperCase()}`},
+            ${fixtures.superAdmin.userId}, ${fixtures.superAdmin.userId}
+          )
+        `,
+      )
+      expect(rejected.code).toBe('42501')
+    } finally {
+      await db()`delete from public.ownership_offerings where id=${offering.id}`
+      await db()`update public.investors set is_training=false where id=${fixtures.investorB.userId}`
+    }
   })
 })
