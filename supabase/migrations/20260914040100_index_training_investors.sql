@@ -1,0 +1,3 @@
+create index if not exists investors_training_status_idx
+  on public.investors (status, created_at desc)
+  where is_training;
