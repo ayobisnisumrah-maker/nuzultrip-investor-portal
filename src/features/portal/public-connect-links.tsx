@@ -47,7 +47,7 @@ export function PublicConnectLinks({ navigation }: PublicConnectLinksProps) {
 
         <div className="grid gap-1">
           {links.map((item) => {
-            const opensNewTab = item.target === '_blank' || item.href.startsWith('https://')
+            const opensNewTab = item.target === '_blank'
 
             return (
               <Link
