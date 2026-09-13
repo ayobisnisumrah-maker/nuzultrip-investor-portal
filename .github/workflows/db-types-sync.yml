@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - feat/investor-inheritance-workflow
+      - feat/financial-reporting-sak-foundation
     paths:
       - 'supabase/migrations/**'
       - 'scripts/generate-db-types.mjs'
