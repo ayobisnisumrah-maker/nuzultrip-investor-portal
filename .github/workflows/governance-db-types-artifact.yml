@@ -5,7 +5,7 @@ on:
     branches: [main]
 
 permissions:
-  contents: read
+  contents: write
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -17,6 +17,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -48,12 +51,18 @@ jobs:
       - name: Generate database types
         run: pnpm db:types
 
-      - name: Upload generated database types
-        uses: actions/upload-artifact@v4
-        with:
-          name: governance-database-types
-          path: src/types/database.ts
-          if-no-files-found: error
+      - name: Commit generated database types
+        shell: bash
+        run: |
+          if git diff --quiet -- src/types/database.ts; then
+            echo "Database types are already synchronized."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/types/database.ts
+          git commit -m "chore: sync governance database types"
+          git push origin HEAD:${GITHUB_HEAD_REF}
 
       - name: Stop local Supabase
         if: always()
