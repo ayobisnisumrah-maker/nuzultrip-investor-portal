@@ -158,7 +158,7 @@ describe('verified investor profile lock and training isolation', () => {
   it('prevents training accounts from entering the canonical cap table', async () => {
     await db()`update public.investors set is_training=true where id=${fixtures.investorB.userId}`
 
-    const offeringCode = `TRAIN${fixtures.suffix.toUpperCase()}`
+    const offeringCode = `train-${fixtures.suffix}`
     const [offering] = await db()<{ id: string }[]>`
       insert into public.ownership_offerings (
         name, code, status, total_offered_bps, unit_ownership_bps,
