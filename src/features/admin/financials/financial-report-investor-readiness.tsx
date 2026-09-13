@@ -3,7 +3,7 @@ import { Alert } from '@/ui/alert'
 import { Card, CardBody, CardHeader, CardTitle } from '@/ui/card'
 
 type LineItem = {
-  statement: 'income' | 'balance' | 'cash_flow'
+  statement: 'income' | 'balance' | 'cash_flow' | 'changes_in_equity'
   category: string
   line_key: string
   label: string
