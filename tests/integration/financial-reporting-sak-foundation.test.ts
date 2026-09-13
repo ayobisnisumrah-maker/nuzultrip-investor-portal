@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
-import { as, cleanup, closeDb, db, expectRejected } from './helpers/db'
+import { as, asCommitted, cleanup, closeDb, db, expectRejected } from './helpers/db'
 import { createFixtures, destroyFixtures, type Fixtures } from './helpers/fixtures'
 
 let fixtures: Fixtures
@@ -118,7 +118,8 @@ describe('Indonesian financial reporting snapshot foundation', () => {
         {
           disclosure_key: 'basis_penyusunan',
           title: 'Dasar penyusunan',
-          content: 'Disusun berdasarkan data akuntansi perusahaan yang telah direkonsiliasi untuk periode laporan.',
+          content:
+            'Disusun berdasarkan data akuntansi perusahaan yang telah direkonsiliasi untuk periode laporan.',
           position: 0,
         },
       ]
@@ -154,54 +155,109 @@ describe('Indonesian financial reporting snapshot foundation', () => {
   it('freezes CALK with the exact published version', async () => {
     const completedYear = 2000 + (Number.parseInt(fixtures.suffix.slice(0, 2), 16) % 20)
 
-    let disclosureId = ''
-    await as({ kind: 'authenticated', userId: fixtures.superAdmin.userId }, async (tx) => {
-      const [period] = await tx<{ id: string }[]>`
-        insert into public.financial_periods (
-          period_type, fiscal_year, period_index, starts_on, ends_on, currency, status
-        ) values (
-          'yearly', ${completedYear}, 1, ${`${completedYear}-01-01`},
-          ${`${completedYear}-12-31`}, 'IDR', 'closed'
-        ) returning id
-      `
-      const [report] = await tx<{ report_id: string; version_id: string }[]>`
-        select report_id, version_id from app.create_financial_report_with_draft(
-          ${period!.id}, 'Published framework report', null, 'investors', 'audited', 'Tim Keuangan', null
-        )
-      `
-      const lines = [
-        ...incomeOnly,
-        {
-          statement: 'changes_in_equity', category: 'equity', line_key: 'modal_akhir',
-          label: 'Modal akhir', amount: 100000000, currency: 'IDR', position: 0, note: null,
-        },
-      ]
-      await tx`
-        select * from app.save_financial_report_draft_content(
-          ${report!.report_id}, ${assetId}, ${tx.json(lines)}, ${tx.json(kpis)},
-          'sak_ep', 'Basis akrual.',
-          ${tx.json([{ disclosure_key: 'kebijakan', title: 'Kebijakan akuntansi', content: 'Kebijakan yang telah direview.', position: 0 }])}
-        )
-      `
+    const published = await asCommitted(
+      { kind: 'authenticated', userId: fixtures.superAdmin.userId },
+      async (tx) => {
+        const [period] = await tx<{ id: string }[]>`
+          insert into public.financial_periods (
+            period_type, fiscal_year, period_index, starts_on, ends_on, currency, status
+          ) values (
+            'yearly', ${completedYear}, 1, ${`${completedYear}-01-01`},
+            ${`${completedYear}-12-31`}, 'IDR', 'closed'
+          ) returning id
+        `
+        const [report] = await tx<{ report_id: string; version_id: string }[]>`
+          select report_id, version_id from app.create_financial_report_with_draft(
+            ${period!.id}, 'Published framework report', null, 'investors', 'audited', 'Tim Keuangan', null
+          )
+        `
+        const lines = [
+          ...incomeOnly,
+          {
+            statement: 'changes_in_equity',
+            category: 'equity',
+            line_key: 'modal_akhir',
+            label: 'Modal akhir',
+            amount: 100000000,
+            currency: 'IDR',
+            position: 0,
+            note: null,
+          },
+        ]
+        await tx`
+          select * from app.save_financial_report_draft_content(
+            ${report!.report_id}, ${assetId}, ${tx.json(lines)}, ${tx.json(kpis)},
+            'sak_ep', 'Basis akrual.',
+            ${tx.json([
+              {
+                disclosure_key: 'kebijakan',
+                title: 'Kebijakan akuntansi',
+                content: 'Kebijakan yang telah direview.',
+                position: 0,
+              },
+            ])}
+          )
+        `
 
-      for (const target of ['review', 'approved', 'published'] as const) {
-        await tx`select * from app.transition_financial_report(${report!.report_id}, ${target}::public.publication_status)`
-      }
+        for (const target of ['review', 'approved', 'published'] as const) {
+          await tx`select * from app.transition_financial_report(${report!.report_id}, ${target}::public.publication_status)`
+        }
 
-      const [disclosure] = await tx<{ id: string }[]>`
-        select id from public.financial_report_disclosures
-        where financial_report_version_id = ${report!.version_id}
-      `
-      disclosureId = disclosure!.id
-    })
+        const [disclosure] = await tx<{ id: string }[]>`
+          select id from public.financial_report_disclosures
+          where financial_report_version_id = ${report!.version_id}
+        `
+        if (!disclosure) throw new Error('Published disclosure fixture was not created.')
 
-    const mutation = await expectRejected(
+        return {
+          periodId: period!.id,
+          reportId: report!.report_id,
+          versionId: report!.version_id,
+          disclosureId: disclosure.id,
+        }
+      },
+    )
+
+    const [persisted] = await db()<[{ id: string; status: string }] | { id: string; status: string }[]>`
+      select d.id, v.status
+      from public.financial_report_disclosures d
+      join public.financial_report_versions v on v.id = d.financial_report_version_id
+      where d.id = ${published.disclosureId}
+    `
+    expect(persisted).toMatchObject({ id: published.disclosureId, status: 'published' })
+
+    const updateMutation = await expectRejected(
       () => db()`
         update public.financial_report_disclosures
         set content = 'Mutasi setelah publish tidak boleh berhasil.'
-        where id = ${disclosureId}
+        where id = ${published.disclosureId}
       `,
     )
-    expect(mutation.code).toBe('42501')
+    expect(updateMutation.code).toBe('42501')
+
+    const deleteMutation = await expectRejected(
+      () => db()`
+        delete from public.financial_report_disclosures
+        where id = ${published.disclosureId}
+      `,
+    )
+    expect(deleteMutation.code).toBe('42501')
+
+    const insertMutation = await expectRejected(
+      () => db()`
+        insert into public.financial_report_disclosures (
+          financial_report_version_id, disclosure_key, title, content, position
+        ) values (
+          ${published.versionId}, 'tambahan_setelah_publish', 'Catatan tambahan',
+          'Tidak boleh ditambahkan ke snapshot yang sudah dipublikasikan.', 99
+        )
+      `,
+    )
+    expect(insertMutation.code).toBe('42501')
+
+    await cleanup(async (tx) => {
+      await tx`delete from public.financial_reports where id = ${published.reportId}`
+      await tx`delete from public.financial_periods where id = ${published.periodId}`
+    })
   })
 })
