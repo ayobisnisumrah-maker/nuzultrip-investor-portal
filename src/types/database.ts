@@ -24,6 +24,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      activate_governance_rule: {
+        Args: { p_rule_id: string }
+        Returns: undefined
+      }
       admin_role_key: { Args: never; Returns: string }
       allocate_ownership_holding: {
         Args: {
@@ -69,6 +73,10 @@ export type Database = {
         Args: { p_transfer_id: string }
         Returns: undefined
       }
+      cancel_reserved_matter: {
+        Args: { p_matter_id: string; p_reason: string }
+        Returns: undefined
+      }
       complete_ownership_inheritance: {
         Args: { p_beneficiary_investor_id: string; p_request_id: string }
         Returns: string
@@ -76,6 +84,10 @@ export type Database = {
       complete_ownership_sale: {
         Args: { p_transfer_id: string }
         Returns: string
+      }
+      consume_reserved_matter_authorization: {
+        Args: { p_matter_id: string }
+        Returns: undefined
       }
       create_document_with_draft: {
         Args: {
@@ -147,6 +159,19 @@ export type Database = {
           version_id: string
         }[]
       }
+      create_governance_rule: {
+        Args: {
+          p_approval_ratio_pct?: number
+          p_controlled_action: string
+          p_description: string
+          p_key: string
+          p_name: string
+          p_quorum_count?: number
+          p_required_approvals?: number
+          p_supersedes_rule_id?: string
+        }
+        Returns: string
+      }
       create_investor_message_request: {
         Args: { p_body: string; p_subject: string }
         Returns: string
@@ -191,9 +216,27 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      create_reserved_matter: {
+        Args: {
+          p_rule_id: string
+          p_subject_entity_id: string
+          p_subject_entity_type: string
+          p_summary: string
+          p_title: string
+        }
+        Returns: string
+      }
       current_actor_type: { Args: never; Returns: string }
       current_investor_id: { Args: never; Returns: string }
       current_user_id: { Args: never; Returns: string }
+      disclose_reserved_matter_conflict: {
+        Args: {
+          p_conflict_type: string
+          p_details: string
+          p_matter_id: string
+        }
+        Returns: string
+      }
       document_workflow_permission_allowed: {
         Args: { p_target: Database["public"]["Enums"]["publication_status"] }
         Returns: boolean
@@ -210,6 +253,10 @@ export type Database = {
         Returns: undefined
       }
       expire_message_threads: { Args: never; Returns: number }
+      finalise_reserved_matter: {
+        Args: { p_matter_id: string; p_note?: string; p_outcome: string }
+        Returns: undefined
+      }
       finance_reference: { Args: { p_prefix: string }; Returns: string }
       has_permission: { Args: { p_key: string }; Returns: boolean }
       investor_granted_document: {
@@ -359,6 +406,10 @@ export type Database = {
         }
         Returns: string
       }
+      record_reserved_matter_decision: {
+        Args: { p_decision: string; p_matter_id: string; p_rationale?: string }
+        Returns: string
+      }
       regenerate_profit_distribution_allocations: {
         Args: { p_distribution_id: string }
         Returns: Database["public"]["Tables"]["profit_distribution_allocations"]["Row"][]
@@ -380,6 +431,22 @@ export type Database = {
       rejected_investor_purge_blockers: {
         Args: { p_investor_id: string }
         Returns: string[]
+      }
+      require_reserved_matter_authorization: {
+        Args: {
+          p_controlled_action: string
+          p_subject_entity_id: string
+          p_subject_entity_type: string
+        }
+        Returns: string
+      }
+      resolve_reserved_matter_conflict: {
+        Args: {
+          p_disclosure_id: string
+          p_resolution: string
+          p_resolution_note: string
+        }
+        Returns: undefined
       }
       save_company_profile_draft: {
         Args: { p_blocks: Json; p_change_note?: string; p_profile_id: string }
@@ -403,6 +470,10 @@ export type Database = {
       }
       set_finance_invoice_departure: {
         Args: { p_departure_on: string; p_invoice_id: string }
+        Returns: undefined
+      }
+      submit_reserved_matter: {
+        Args: { p_matter_id: string }
         Returns: undefined
       }
       thread_accepts_investor_reply: {
@@ -808,6 +879,73 @@ export type Database = {
             columns: ["published_version_id"]
             isOneToOne: false
             referencedRelation: "company_profile_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conflict_disclosures: {
+        Row: {
+          admin_id: string
+          conflict_type: string
+          created_at: string
+          details: string
+          id: string
+          reserved_matter_id: string
+          resolution_note: string | null
+          restriction: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          admin_id: string
+          conflict_type: string
+          created_at?: string
+          details: string
+          id?: string
+          reserved_matter_id: string
+          resolution_note?: string | null
+          restriction?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          admin_id?: string
+          conflict_type?: string
+          created_at?: string
+          details?: string
+          id?: string
+          reserved_matter_id?: string
+          resolution_note?: string | null
+          restriction?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conflict_disclosures_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "admins"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conflict_disclosures_reserved_matter_id_fkey"
+            columns: ["reserved_matter_id"]
+            isOneToOne: false
+            referencedRelation: "reserved_matters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conflict_disclosures_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "admins"
             referencedColumns: ["id"]
           },
         ]
@@ -2108,6 +2246,98 @@ export type Database = {
             columns: ["published_version_id"]
             isOneToOne: false
             referencedRelation: "financial_report_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      governance_rules: {
+        Row: {
+          activated_at: string | null
+          activated_by: string | null
+          approval_ratio_pct: number | null
+          controlled_action: string
+          created_at: string
+          created_by: string
+          description: string
+          id: string
+          key: string
+          name: string
+          quorum_count: number | null
+          required_approvals: number | null
+          retired_at: string | null
+          retired_by: string | null
+          status: string
+          supersedes_rule_id: string | null
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          activated_at?: string | null
+          activated_by?: string | null
+          approval_ratio_pct?: number | null
+          controlled_action: string
+          created_at?: string
+          created_by: string
+          description?: string
+          id?: string
+          key: string
+          name: string
+          quorum_count?: number | null
+          required_approvals?: number | null
+          retired_at?: string | null
+          retired_by?: string | null
+          status?: string
+          supersedes_rule_id?: string | null
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          activated_at?: string | null
+          activated_by?: string | null
+          approval_ratio_pct?: number | null
+          controlled_action?: string
+          created_at?: string
+          created_by?: string
+          description?: string
+          id?: string
+          key?: string
+          name?: string
+          quorum_count?: number | null
+          required_approvals?: number | null
+          retired_at?: string | null
+          retired_by?: string | null
+          status?: string
+          supersedes_rule_id?: string | null
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "governance_rules_activated_by_fkey"
+            columns: ["activated_by"]
+            isOneToOne: false
+            referencedRelation: "admins"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "governance_rules_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admins"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "governance_rules_retired_by_fkey"
+            columns: ["retired_by"]
+            isOneToOne: false
+            referencedRelation: "admins"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "governance_rules_supersedes_rule_id_fkey"
+            columns: ["supersedes_rule_id"]
+            isOneToOne: false
+            referencedRelation: "governance_rules"
             referencedColumns: ["id"]
           },
         ]
@@ -4160,6 +4390,144 @@ export type Database = {
           topic?: string
         }
         Relationships: []
+      }
+      reserved_matter_decisions: {
+        Row: {
+          admin_id: string
+          created_at: string
+          decision: string
+          id: string
+          rationale: string
+          reserved_matter_id: string
+        }
+        Insert: {
+          admin_id: string
+          created_at?: string
+          decision: string
+          id?: string
+          rationale?: string
+          reserved_matter_id: string
+        }
+        Update: {
+          admin_id?: string
+          created_at?: string
+          decision?: string
+          id?: string
+          rationale?: string
+          reserved_matter_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reserved_matter_decisions_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "admins"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reserved_matter_decisions_reserved_matter_id_fkey"
+            columns: ["reserved_matter_id"]
+            isOneToOne: false
+            referencedRelation: "reserved_matters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reserved_matters: {
+        Row: {
+          created_at: string
+          executed_at: string | null
+          executed_by: string | null
+          final_decision_note: string | null
+          finalised_at: string | null
+          finalised_by: string | null
+          id: string
+          requested_by: string
+          rule_id: string
+          status: string
+          subject_entity_id: string
+          subject_entity_type: string
+          submitted_at: string | null
+          submitted_by: string | null
+          summary: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          executed_at?: string | null
+          executed_by?: string | null
+          final_decision_note?: string | null
+          finalised_at?: string | null
+          finalised_by?: string | null
+          id?: string
+          requested_by: string
+          rule_id: string
+          status?: string
+          subject_entity_id: string
+          subject_entity_type: string
+          submitted_at?: string | null
+          submitted_by?: string | null
+          summary?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          executed_at?: string | null
+          executed_by?: string | null
+          final_decision_note?: string | null
+          finalised_at?: string | null
+          finalised_by?: string | null
+          id?: string
+          requested_by?: string
+          rule_id?: string
+          status?: string
+          subject_entity_id?: string
+          subject_entity_type?: string
+          submitted_at?: string | null
+          submitted_by?: string | null
+          summary?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reserved_matters_executed_by_fkey"
+            columns: ["executed_by"]
+            isOneToOne: false
+            referencedRelation: "admins"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reserved_matters_finalised_by_fkey"
+            columns: ["finalised_by"]
+            isOneToOne: false
+            referencedRelation: "admins"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reserved_matters_requested_by_fkey"
+            columns: ["requested_by"]
+            isOneToOne: false
+            referencedRelation: "admins"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reserved_matters_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "governance_rules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reserved_matters_submitted_by_fkey"
+            columns: ["submitted_by"]
+            isOneToOne: false
+            referencedRelation: "admins"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       role_permissions: {
         Row: {
