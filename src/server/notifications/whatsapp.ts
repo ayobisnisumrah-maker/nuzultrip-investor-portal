@@ -31,29 +31,29 @@ export async function sendInvestorInvitationWhatsApp(input: {
   name: string
   email: string
 }): Promise<WhatsAppDeliveryResult> {
-  const settings = await getWhatsAppSettings()
-
-  if (!settings.enabled || !settings.investorInvitation.enabled) {
-    return { status: 'skipped', reason: 'WhatsApp notification is disabled.' }
-  }
-
-  const phone = normalizeIndonesianPhone(input.phone)
-  if (!isValidE164Phone(phone)) {
-    return { status: 'failed', reason: 'Investor phone number is invalid.' }
-  }
-
-  const accessToken = process.env.WHATSAPP_ACCESS_TOKEN?.trim()
-  const graphVersion = process.env.WHATSAPP_GRAPH_API_VERSION?.trim()
-  const phoneNumberId = settings.phoneNumberId.trim()
-
-  if (!accessToken || !graphVersion || !phoneNumberId) {
-    return {
-      status: 'skipped',
-      reason: 'WhatsApp Cloud API server credentials are not configured.',
-    }
-  }
-
   try {
+    const settings = await getWhatsAppSettings()
+
+    if (!settings.enabled || !settings.investorInvitation.enabled) {
+      return { status: 'skipped', reason: 'WhatsApp notification is disabled.' }
+    }
+
+    const phone = normalizeIndonesianPhone(input.phone)
+    if (!isValidE164Phone(phone)) {
+      return { status: 'failed', reason: 'Investor phone number is invalid.' }
+    }
+
+    const accessToken = process.env.WHATSAPP_ACCESS_TOKEN?.trim()
+    const graphVersion = process.env.WHATSAPP_GRAPH_API_VERSION?.trim()
+    const phoneNumberId = settings.phoneNumberId.trim()
+
+    if (!accessToken || !graphVersion || !phoneNumberId) {
+      return {
+        status: 'skipped',
+        reason: 'WhatsApp Cloud API server credentials are not configured.',
+      }
+    }
+
     const response = await fetch(
       `https://graph.facebook.com/${encodeURIComponent(graphVersion)}/${encodeURIComponent(phoneNumberId)}/messages`,
       {
