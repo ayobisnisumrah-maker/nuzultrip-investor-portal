@@ -1,5 +1,6 @@
 import 'server-only'
 
+import { getServerEnv } from '@/lib/server-env'
 import { getWhatsAppSettings } from '@/server/settings/whatsapp'
 
 export type WhatsAppDeliveryResult =
@@ -43,8 +44,9 @@ export async function sendInvestorInvitationWhatsApp(input: {
       return { status: 'failed', reason: 'Investor phone number is invalid.' }
     }
 
-    const accessToken = process.env.WHATSAPP_ACCESS_TOKEN?.trim()
-    const graphVersion = process.env.WHATSAPP_GRAPH_API_VERSION?.trim()
+    const env = getServerEnv()
+    const accessToken = env.WHATSAPP_ACCESS_TOKEN?.trim()
+    const graphVersion = env.WHATSAPP_GRAPH_API_VERSION?.trim()
     const phoneNumberId = settings.phoneNumberId.trim()
 
     if (!accessToken || !graphVersion || !phoneNumberId) {
