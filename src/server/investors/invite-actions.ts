@@ -1,18 +1,38 @@
 'use server'
 
+import { createHash } from 'node:crypto'
 import { z } from 'zod'
 
 import { ConflictError } from '@/core/errors'
 import { getClientEnv } from '@/lib/env'
+import { getServerEnv } from '@/lib/server-env'
 import { getServiceRoleClient } from '@/server/admin/service-client'
 import { defineAction } from '@/server/auth/guards'
+import { sendInvestorInvitationWhatsApp } from '@/server/notifications/whatsapp-delivery'
 
 const inviteInvestorSchema = z.object({
   legalName: z.string().trim().min(2, 'Nama investor wajib diisi.').max(160),
+  identityNumber: z
+    .string()
+    .trim()
+    .regex(/^\d{16}$/, 'Nomor KTP/NIK wajib terdiri dari 16 digit.'),
+  whatsappNumber: z
+    .string()
+    .trim()
+    .min(8, 'Nomor WhatsApp terlalu pendek.')
+    .max(32)
+    .regex(/^\+?[0-9()\-\s]+$/, 'Format nomor WhatsApp tidak valid.'),
   email: z.string().trim().email('Format surel tidak valid.').max(320),
+  address: z.string().trim().min(5, 'Alamat wajib diisi.').max(500),
   investorType: z.enum(['individual', 'institution']).default('individual'),
   organizationName: z.string().trim().max(200).nullable().optional(),
 })
+
+function hashIdentityNumber(value: string): string {
+  return createHash('sha256')
+    .update(`${getServerEnv().IDENTITY_HASH_SALT}:${value.replace(/\s+/g, '')}`)
+    .digest('hex')
+}
 
 export const inviteInvestor = defineAction({
   access: { permission: 'investors.create' },
@@ -55,58 +75,60 @@ export const inviteInvestor = defineAction({
 
     const userId = invited.user.id
 
-    const { error: accountError } = await service.from('user_accounts').insert({
-      id: userId,
-      account_type: 'investor',
-      email: normalizedEmail,
-      full_name: input.legalName,
-    })
-
-    if (accountError) {
-      await service.auth.admin.deleteUser(userId)
-      throw new ConflictError(
-        accountError.message,
-        'Akun investor tidak dapat dibuat. Undangan telah dibatalkan.',
-      )
-    }
-
-    const { data: investor, error: investorError } = await service
-      .from('investors')
-      .insert({
-        id: userId,
-        reference_code: '',
-        investor_type: input.investorType,
-        legal_name: input.legalName,
-        organization_name:
-          input.investorType === 'institution' ? (input.organizationName?.trim() ?? null) : null,
+    try {
+      const { data, error } = await service.rpc('provision_investor_account', {
+        p_user_id: userId,
+        p_email: normalizedEmail,
+        p_full_name: input.legalName,
+        p_legal_name: input.legalName,
+        p_investor_type: input.investorType,
+        p_phone: input.whatsappNumber.trim(),
+        p_country: 'ID',
+        p_address: input.address.trim(),
+        p_organization_name:
+          input.investorType === 'institution' ? input.organizationName?.trim() || undefined : undefined,
+        p_identity_number_hash: hashIdentityNumber(input.identityNumber),
       })
-      .select('id, reference_code, status')
-      .single()
 
-    if (investorError || !investor) {
-      await service.from('user_accounts').delete().eq('id', userId)
-      await service.auth.admin.deleteUser(userId)
-      throw new ConflictError(
-        investorError?.message ?? 'Investor record was not created.',
-        'Profil investor tidak dapat dibuat. Undangan telah dibatalkan.',
-      )
-    }
+      if (error) {
+        throw new ConflictError(
+          error.message,
+          'Profil calon investor tidak dapat dibuat. Undangan telah dibatalkan.',
+        )
+      }
 
-    audit({
-      entityId: investor.id,
-      summary: `Undangan investor ${investor.reference_code} dikirim ke ${normalizedEmail}.`,
-      changes: {
-        referenceCode: { before: null, after: investor.reference_code },
-        email: { before: null, after: normalizedEmail },
-        investorType: { before: null, after: input.investorType },
-      },
-    })
+      const provisioned = data as { investorId: string; referenceCode: string }
 
-    return {
-      investorId: investor.id,
-      referenceCode: investor.reference_code,
-      status: investor.status,
-      email: normalizedEmail,
+      const whatsapp = await sendInvestorInvitationWhatsApp({
+        to: input.whatsappNumber,
+        investorName: input.legalName,
+        email: normalizedEmail,
+      })
+
+      audit({
+        entityId: provisioned.investorId,
+        summary: `Calon investor ${provisioned.referenceCode} didaftarkan oleh Admin dan tautan aktivasi dikirim ke ${normalizedEmail}.`,
+        changes: {
+          referenceCode: { before: null, after: provisioned.referenceCode },
+          email: { before: null, after: normalizedEmail },
+          investorType: { before: null, after: input.investorType },
+          identityNumber: { before: null, after: '[hashed]' },
+          whatsappConfigured: { before: null, after: true },
+          addressConfigured: { before: null, after: true },
+          whatsappDelivery: { before: null, after: whatsapp.status },
+        },
+      })
+
+      return {
+        investorId: provisioned.investorId,
+        referenceCode: provisioned.referenceCode,
+        status: 'pending_verification' as const,
+        email: normalizedEmail,
+        whatsappDelivery: whatsapp.status,
+      }
+    } catch (error) {
+      await service.auth.admin.deleteUser(userId).catch(() => {})
+      throw error
     }
   },
 })
