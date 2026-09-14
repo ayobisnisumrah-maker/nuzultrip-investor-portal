@@ -14,7 +14,6 @@ export default async function SignInPage({
 }: {
   searchParams: Promise<{ lanjut?: string; galat?: string }>
 }) {
-  // Someone already signed in has no business on the sign-in page.
   const principal = await getPrincipal()
   if (principal.kind === 'admin') redirect('/admin')
   if (principal.kind === 'investor') redirect('/investor')
@@ -41,22 +40,14 @@ export default async function SignInPage({
             Pulihkan akses
           </Link>
         </p>
-        <p>
-          Belum menjadi investor?{' '}
-          <Link href="/daftar-investor" className="text-primary underline-offset-4 hover:underline">
-            Ajukan pendaftaran
-          </Link>
+        <p className="text-caption text-fg-subtle">
+          Akses investor dibuat oleh tim admin. Undangan aktivasi dan pembuatan kata sandi akan dikirim ke surel investor yang didaftarkan.
         </p>
       </div>
     </div>
   )
 }
 
-/**
- * Callback failures arrive as a query parameter. They are mapped to a fixed set
- * of messages rather than echoed, so nothing attacker-controlled is ever
- * rendered from the URL.
- */
 function describeCallbackError(code: string): string {
   switch (code) {
     case 'tautan_tidak_valid':
