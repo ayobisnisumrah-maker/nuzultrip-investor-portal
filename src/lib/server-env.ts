@@ -47,6 +47,14 @@ const serverSchema = z.object({
   EMAIL_FROM_ADDRESS: z.email().optional(),
   EMAIL_FROM_NAME: z.string().optional(),
 
+  /**
+   * WhatsApp provider credentials stay in the environment, never in site_settings.
+   * The Graph base URL includes the provider API version, for example:
+   * https://graph.facebook.com/vXX.X
+   */
+  WHATSAPP_ACCESS_TOKEN: z.string().min(20).optional(),
+  WHATSAPP_GRAPH_API_BASE_URL: z.url().optional(),
+
   NODE_ENV: z
     .enum(['development', 'test', 'production'])
     .default('development'),
@@ -90,6 +98,8 @@ export function getServerEnv(): ServerEnv {
     RESEND_API_KEY: process.env.RESEND_API_KEY,
     EMAIL_FROM_ADDRESS: process.env.EMAIL_FROM_ADDRESS,
     EMAIL_FROM_NAME: process.env.EMAIL_FROM_NAME,
+    WHATSAPP_ACCESS_TOKEN: process.env.WHATSAPP_ACCESS_TOKEN,
+    WHATSAPP_GRAPH_API_BASE_URL: process.env.WHATSAPP_GRAPH_API_BASE_URL,
     NODE_ENV: process.env.NODE_ENV,
   })
 
