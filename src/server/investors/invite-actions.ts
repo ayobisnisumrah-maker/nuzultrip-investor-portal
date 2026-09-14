@@ -3,6 +3,7 @@
 import { z } from 'zod'
 
 import { ConflictError } from '@/core/errors'
+import { getClientEnv } from '@/lib/env'
 import { getServiceRoleClient } from '@/server/admin/service-client'
 import { defineAction } from '@/server/auth/guards'
 
@@ -22,14 +23,7 @@ export const inviteInvestor = defineAction({
   },
   handler: async ({ input, audit }) => {
     const service = getServiceRoleClient()
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim().replace(/\/$/, '')
-
-    if (!siteUrl || !/^https?:\/\//i.test(siteUrl)) {
-      throw new ConflictError(
-        'NEXT_PUBLIC_SITE_URL is missing or invalid.',
-        'Alamat portal belum dikonfigurasi untuk tautan undangan.',
-      )
-    }
+    const siteUrl = getClientEnv().NEXT_PUBLIC_SITE_URL.replace(/\/$/, '')
 
     if (input.investorType === 'institution' && !input.organizationName?.trim()) {
       throw new ConflictError(
