@@ -47,6 +47,10 @@ const serverSchema = z.object({
   EMAIL_FROM_ADDRESS: z.email().optional(),
   EMAIL_FROM_NAME: z.string().optional(),
 
+  /** WhatsApp Cloud API secrets. Optional until WhatsApp delivery is enabled. */
+  WHATSAPP_ACCESS_TOKEN: z.string().min(20).optional(),
+  WHATSAPP_GRAPH_API_VERSION: z.string().regex(/^v\d+\.\d+$/).optional(),
+
   NODE_ENV: z
     .enum(['development', 'test', 'production'])
     .default('development'),
@@ -90,6 +94,8 @@ export function getServerEnv(): ServerEnv {
     RESEND_API_KEY: process.env.RESEND_API_KEY,
     EMAIL_FROM_ADDRESS: process.env.EMAIL_FROM_ADDRESS,
     EMAIL_FROM_NAME: process.env.EMAIL_FROM_NAME,
+    WHATSAPP_ACCESS_TOKEN: process.env.WHATSAPP_ACCESS_TOKEN || undefined,
+    WHATSAPP_GRAPH_API_VERSION: process.env.WHATSAPP_GRAPH_API_VERSION || undefined,
     NODE_ENV: process.env.NODE_ENV,
   })
 
