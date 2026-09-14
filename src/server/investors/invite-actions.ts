@@ -74,6 +74,7 @@ export const inviteInvestor = defineAction({
     }
 
     const userId = invited.user.id
+    let provisioned: { investorId: string; referenceCode: string }
 
     try {
       const { data, error } = await service.rpc('provision_investor_account', {
@@ -97,38 +98,47 @@ export const inviteInvestor = defineAction({
         )
       }
 
-      const provisioned = data as { investorId: string; referenceCode: string }
+      provisioned = data as { investorId: string; referenceCode: string }
+    } catch (error) {
+      await service.auth.admin.deleteUser(userId).catch(() => {})
+      throw error
+    }
 
-      const whatsapp = await sendInvestorInvitationWhatsApp({
+    // Delivery is deliberately outside the provisioning rollback boundary. Once
+    // the Auth + domain account exists, a provider outage must never delete the
+    // newly-created account or leave the investor unable to use the email invite.
+    let whatsapp: { status: 'sent' | 'skipped' | 'failed' }
+    try {
+      const delivery = await sendInvestorInvitationWhatsApp({
         to: input.whatsappNumber,
         investorName: input.legalName,
         email: normalizedEmail,
       })
+      whatsapp = { status: delivery.status }
+    } catch {
+      whatsapp = { status: 'failed' }
+    }
 
-      audit({
-        entityId: provisioned.investorId,
-        summary: `Calon investor ${provisioned.referenceCode} didaftarkan oleh Admin dan tautan aktivasi dikirim ke ${normalizedEmail}.`,
-        changes: {
-          referenceCode: { before: null, after: provisioned.referenceCode },
-          email: { before: null, after: normalizedEmail },
-          investorType: { before: null, after: input.investorType },
-          identityNumber: { before: null, after: '[hashed]' },
-          whatsappConfigured: { before: null, after: true },
-          addressConfigured: { before: null, after: true },
-          whatsappDelivery: { before: null, after: whatsapp.status },
-        },
-      })
+    audit({
+      entityId: provisioned.investorId,
+      summary: `Calon investor ${provisioned.referenceCode} didaftarkan oleh Admin dan tautan aktivasi dikirim ke ${normalizedEmail}.`,
+      changes: {
+        referenceCode: { before: null, after: provisioned.referenceCode },
+        email: { before: null, after: normalizedEmail },
+        investorType: { before: null, after: input.investorType },
+        identityNumber: { before: null, after: '[hashed]' },
+        whatsappConfigured: { before: null, after: true },
+        addressConfigured: { before: null, after: true },
+        whatsappDelivery: { before: null, after: whatsapp.status },
+      },
+    })
 
-      return {
-        investorId: provisioned.investorId,
-        referenceCode: provisioned.referenceCode,
-        status: 'pending_verification' as const,
-        email: normalizedEmail,
-        whatsappDelivery: whatsapp.status,
-      }
-    } catch (error) {
-      await service.auth.admin.deleteUser(userId).catch(() => {})
-      throw error
+    return {
+      investorId: provisioned.investorId,
+      referenceCode: provisioned.referenceCode,
+      status: 'prospective' as const,
+      email: normalizedEmail,
+      whatsappDelivery: whatsapp.status,
     }
   },
 })
