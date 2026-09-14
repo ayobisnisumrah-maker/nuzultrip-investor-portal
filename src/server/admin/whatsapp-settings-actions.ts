@@ -3,24 +3,43 @@
 import { z } from 'zod'
 
 import { defineAction } from '@/server/auth/guards'
-import { writeAudit } from '@/server/audit'
 import { getWhatsAppSettings } from '@/server/settings/whatsapp'
 import { getServerSupabase } from '@/server/supabase/server'
 
-const whatsappSettingsSchema = z.object({
-  enabled: z.boolean(),
-  senderPhone: z.string().trim().max(24),
-  phoneNumberId: z.string().trim().max(120),
-  investorInvitationEnabled: z.boolean(),
-  templateName: z
-    .string()
-    .trim()
-    .min(1, 'Nama template wajib diisi.')
-    .max(512)
-    .regex(/^[a-z0-9_]+$/, 'Nama template hanya boleh memakai huruf kecil, angka, dan underscore.'),
-  languageCode: z.string().trim().min(2).max(20),
-  preview: z.string().trim().min(10).max(2000),
-})
+const whatsappSettingsSchema = z
+  .object({
+    enabled: z.boolean(),
+    senderPhone: z.string().trim().max(24),
+    phoneNumberId: z.string().trim().max(120),
+    investorInvitationEnabled: z.boolean(),
+    templateName: z
+      .string()
+      .trim()
+      .min(1, 'Nama template wajib diisi.')
+      .max(512)
+      .regex(/^[a-z0-9_]+$/, 'Nama template hanya boleh memakai huruf kecil, angka, dan underscore.'),
+    languageCode: z.string().trim().min(2).max(20),
+    preview: z.string().trim().min(10).max(2000),
+  })
+  .superRefine((input, context) => {
+    if (!input.enabled) return
+
+    if (!input.senderPhone) {
+      context.addIssue({
+        code: 'custom',
+        path: ['senderPhone'],
+        message: 'Nomor WhatsApp pengirim wajib diisi ketika WhatsApp diaktifkan.',
+      })
+    }
+
+    if (!input.phoneNumberId) {
+      context.addIssue({
+        code: 'custom',
+        path: ['phoneNumberId'],
+        message: 'Phone Number ID wajib diisi ketika WhatsApp diaktifkan.',
+      })
+    }
+  })
 
 export const updateAdminWhatsAppSettings = defineAction({
   access: { permission: 'settings.update' },
@@ -41,7 +60,7 @@ export const updateAdminWhatsAppSettings = defineAction({
           sender_phone: input.senderPhone,
           phone_number_id: input.phoneNumberId,
         },
-        description: 'Konfigurasi publik non-secret untuk WhatsApp Cloud API.',
+        description: 'Konfigurasi non-secret untuk WhatsApp Cloud API.',
         is_public: false,
       },
       {
