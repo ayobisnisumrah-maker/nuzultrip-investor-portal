@@ -80,6 +80,7 @@ export const inviteInvestor = defineAction({
       .from('investors')
       .insert({
         id: userId,
+        reference_code: '',
         investor_type: input.investorType,
         legal_name: input.legalName,
         organization_name:
@@ -100,10 +101,10 @@ export const inviteInvestor = defineAction({
     audit({
       entityId: investor.id,
       summary: `Undangan investor ${investor.reference_code} dikirim ke ${normalizedEmail}.`,
-      metadata: {
-        referenceCode: investor.reference_code,
-        email: normalizedEmail,
-        investorType: input.investorType,
+      changes: {
+        referenceCode: { before: null, after: investor.reference_code },
+        email: { before: null, after: normalizedEmail },
+        investorType: { before: null, after: input.investorType },
       },
     })
 
