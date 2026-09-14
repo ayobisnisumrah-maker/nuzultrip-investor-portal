@@ -4,11 +4,13 @@ import { BrandSettingsForm } from '@/features/admin/brand-settings-form'
 import { EmailSettingsForm } from '@/features/admin/email-settings-form'
 import { NotificationSoundSettingsForm } from '@/features/admin/notification-sound-settings-form'
 import { TypographySettingsForm } from '@/features/admin/typography-settings-form'
+import { WhatsAppSettingsForm } from '@/features/admin/whatsapp-settings-form'
 import { adminWithPermission } from '@/server/auth/page-guards'
 import { getBrandSettings } from '@/server/settings/brand'
 import { getEmailSettings } from '@/server/settings/email'
 import { getNotificationSoundSettings } from '@/server/settings/notification-sound'
 import { getTypographySettings } from '@/server/settings/typography'
+import { getWhatsAppSettings } from '@/server/settings/whatsapp'
 
 export const metadata: Metadata = {
   title: 'Pengaturan',
@@ -33,11 +35,18 @@ export default async function AdminSettingsPage() {
     )
   }
 
-  const [brandSettings, typographySettings, emailSettings, notificationSound] = await Promise.all([
+  const [
+    brandSettings,
+    typographySettings,
+    emailSettings,
+    notificationSound,
+    whatsappSettings,
+  ] = await Promise.all([
     getBrandSettings(),
     getTypographySettings(),
     getEmailSettings(),
     getNotificationSoundSettings(),
+    getWhatsAppSettings(),
   ])
   const canUpdate = principal.permissions.has('settings.update')
 
@@ -100,6 +109,19 @@ export default async function AdminSettingsPage() {
         </div>
 
         <EmailSettingsForm settings={emailSettings} canUpdate={canUpdate} />
+      </section>
+
+      <section className="flex flex-col gap-5">
+        <div>
+          <h2 className="font-display text-heading-md text-fg">
+            WhatsApp
+          </h2>
+          <p className="text-body-sm text-fg-muted mt-1">
+            Atur nomor bisnis, Phone Number ID, bahasa, dan template pesan untuk notifikasi WhatsApp otomatis. Access token tetap disimpan sebagai secret environment dan tidak pernah ditampilkan di Admin.
+          </p>
+        </div>
+
+        <WhatsAppSettingsForm settings={whatsappSettings} canUpdate={canUpdate} />
       </section>
     </div>
   )

@@ -8,6 +8,7 @@ import { getBrandSettings } from '@/server/settings/brand'
 import { getEmailSettings } from '@/server/settings/email'
 import { getNotificationSoundSettings } from '@/server/settings/notification-sound'
 import { getTypographySettings } from '@/server/settings/typography'
+import { getWhatsAppSettings } from '@/server/settings/whatsapp'
 import { getServerSupabase } from '@/server/supabase/server'
 
 const brandSettingsSchema = z.object({
@@ -24,6 +25,25 @@ const emailSettingsSchema = z.object({
   passwordReset: z.boolean(),
   investorInvitation: z.boolean(),
   securityAlert: z.boolean(),
+})
+
+const whatsappSettingsSchema = z.object({
+  enabled: z.boolean(),
+  senderNumber: z.string().trim().max(32),
+  phoneNumberId: z.string().trim().max(120),
+  languageCode: z.string().trim().min(2).max(12),
+  investorInvitationTemplate: z
+    .string()
+    .trim()
+    .min(1, 'Nama template undangan wajib diisi.')
+    .max(160),
+  investorInvitationPreview: z.string().trim().min(1).max(2000),
+  inquiryCompletedTemplate: z
+    .string()
+    .trim()
+    .min(1, 'Nama template penyelesaian permintaan wajib diisi.')
+    .max(160),
+  inquiryCompletedPreview: z.string().trim().min(1).max(2000),
 })
 
 const notificationSoundSchema = z.object({
@@ -150,6 +170,77 @@ export const loadAdminEmailSettings = defineAction({
   access: { permission: 'settings.view' },
   handler: async () => {
     return await getEmailSettings()
+  },
+})
+
+export const getAdminWhatsAppSettings = defineAction({
+  access: { permission: 'settings.view' },
+  handler: async () => {
+    return await getWhatsAppSettings()
+  },
+})
+
+export const updateAdminWhatsAppSettings = defineAction({
+  access: { permission: 'settings.update' },
+  input: whatsappSettingsSchema,
+  handler: async ({ input, principal }) => {
+    const supabase = await getServerSupabase()
+    const before = await getWhatsAppSettings()
+
+    const value = {
+      enabled: input.enabled,
+      sender_number: input.senderNumber,
+      phone_number_id: input.phoneNumberId,
+      language_code: input.languageCode,
+      investor_invitation_template: input.investorInvitationTemplate,
+      investor_invitation_preview: input.investorInvitationPreview,
+      inquiry_completed_template: input.inquiryCompletedTemplate,
+      inquiry_completed_preview: input.inquiryCompletedPreview,
+    }
+
+    const { error } = await supabase.from('site_settings').upsert(
+      {
+        key: 'whatsapp.notifications',
+        value,
+        description:
+          'Konfigurasi pengirim dan template WhatsApp untuk undangan investor dan penyelesaian permintaan.',
+        is_public: false,
+        updated_by: principal.kind === 'anonymous' ? null : principal.userId,
+      },
+      { onConflict: 'key' },
+    )
+
+    if (error) {
+      throw new Error(`Gagal menyimpan konfigurasi WhatsApp: ${error.message}`)
+    }
+
+    if (principal.kind !== 'anonymous') {
+      await writeAudit(principal, {
+        action: 'settings.whatsapp_updated',
+        entityType: 'site_setting',
+        entityId: null,
+        summary: 'Konfigurasi WhatsApp diperbarui dari Pengaturan.',
+        changes: {
+          enabled: { before: before.enabled, after: input.enabled },
+          sender_number: { before: before.sender_number, after: input.senderNumber },
+          phone_number_id: {
+            before: before.phone_number_id ? '[configured]' : null,
+            after: input.phoneNumberId ? '[configured]' : null,
+          },
+          language_code: { before: before.language_code, after: input.languageCode },
+          investor_invitation_template: {
+            before: before.investor_invitation_template,
+            after: input.investorInvitationTemplate,
+          },
+          inquiry_completed_template: {
+            before: before.inquiry_completed_template,
+            after: input.inquiryCompletedTemplate,
+          },
+        },
+      })
+    }
+
+    return { updated: true }
   },
 })
 

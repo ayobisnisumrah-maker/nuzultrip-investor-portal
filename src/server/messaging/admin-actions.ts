@@ -5,6 +5,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 
 import { ConflictError, NotFoundError } from '@/core/errors'
 import { defineAction, requireAdmin, requireAuthenticated } from '@/server/auth/guards'
+import { sendInquiryCompletedWhatsApp } from '@/server/notifications/whatsapp-delivery'
 import type { Database } from '@/types/database'
 
 type AppRpcClient = {
@@ -156,7 +157,7 @@ export const updateInquiryStatus = defineAction({
   handler: async ({ input, supabase, audit }) => {
     const { data: current, error: readError } = await supabase
       .from('portal_inquiries')
-      .select('id, status')
+      .select('id, status, name, phone')
       .eq('id', input.inquiryId)
       .maybeSingle()
     if (readError)
@@ -182,6 +183,16 @@ export const updateInquiryStatus = defineAction({
         'Status permintaan tidak dapat diperbarui.',
       )
 
+    let whatsappDelivery: 'sent' | 'skipped' | 'failed' = 'skipped'
+
+    if (input.status === 'closed' && current.status !== 'closed' && current.phone?.trim()) {
+      const delivery = await sendInquiryCompletedWhatsApp({
+        to: current.phone,
+        requesterName: current.name,
+      })
+      whatsappDelivery = delivery.status
+    }
+
     audit({
       entityId: updated.id,
       summary: `Status permintaan diubah dari ${current.status} menjadi ${updated.status}.`,
@@ -190,9 +201,21 @@ export const updateInquiryStatus = defineAction({
           before: current.status,
           after: updated.status,
         },
+        ...(input.status === 'closed'
+          ? {
+              whatsappDelivery: {
+                before: null,
+                after: current.phone?.trim() ? whatsappDelivery : 'no_phone',
+              },
+            }
+          : {}),
       },
     })
 
-    return updated
+    return {
+      ...updated,
+      whatsappDelivery,
+      whatsappAttempted: input.status === 'closed' && current.status !== 'closed' && Boolean(current.phone?.trim()),
+    }
   },
 })
