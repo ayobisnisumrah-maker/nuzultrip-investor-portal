@@ -63,7 +63,6 @@ export const inviteInvestor = defineAction({
     }
 
     const redirectTo = `${siteUrl}/atur-sandi?undangan=1`
-
     const { data: invited, error: inviteError } = await service.auth.admin.inviteUserByEmail(
       normalizedEmail,
       {
@@ -83,6 +82,8 @@ export const inviteInvestor = defineAction({
     }
 
     const userId = invited.user.id
+    let investorId: string
+    let referenceCode: string
 
     try {
       const { data: provisioned, error: provisionError } = await service.rpc(
@@ -108,52 +109,49 @@ export const inviteInvestor = defineAction({
         throw new Error(provisionError?.message ?? 'Investor provisioning returned no data.')
       }
 
-      const provisionedRecord = provisioned as { investorId?: string; referenceCode?: string }
-      const investorId = provisionedRecord.investorId ?? userId
-
-      const { data: investor, error: investorError } = await service
-        .from('investors')
-        .select('id, reference_code, status')
-        .eq('id', investorId)
-        .single()
-
-      if (investorError || !investor) {
-        throw new Error(investorError?.message ?? 'Investor record was not readable after provisioning.')
-      }
-
-      const whatsapp = await sendInvestorInvitationWhatsApp({
-        phone: normalizedPhone,
-        name: input.legalName,
-        email: normalizedEmail,
-      })
-
-      audit({
-        entityId: investor.id,
-        summary: `Investor ${investor.reference_code} didaftarkan oleh admin dan undangan aktivasi dikirim.`,
-        changes: {
-          referenceCode: { before: null, after: investor.reference_code },
-          email: { before: null, after: normalizedEmail },
-          phone: { before: null, after: normalizedPhone },
-          addressProvided: { before: false, after: true },
-          identityNumberHashProvided: { before: false, after: true },
-          whatsappDelivery: { before: null, after: whatsapp.status },
-        },
-      })
-
-      return {
-        investorId: investor.id,
-        referenceCode: investor.reference_code,
-        status: investor.status,
-        email: normalizedEmail,
-        phone: normalizedPhone,
-        whatsappStatus: whatsapp.status,
-      }
+      const result = provisioned as { investorId: string; referenceCode: string }
+      investorId = result.investorId
+      referenceCode = result.referenceCode
     } catch (error) {
       await service.auth.admin.deleteUser(userId).catch(() => {})
       throw new ConflictError(
         error instanceof Error ? error.message : 'Investor provisioning failed.',
         'Profil investor tidak dapat dibuat. Undangan telah dibatalkan agar dapat dicoba kembali.',
       )
+    }
+
+    const { data: investor } = await service
+      .from('investors')
+      .select('status')
+      .eq('id', investorId)
+      .maybeSingle()
+
+    const whatsapp = await sendInvestorInvitationWhatsApp({
+      phone: normalizedPhone,
+      name: input.legalName,
+      email: normalizedEmail,
+    })
+
+    audit({
+      entityId: investorId,
+      summary: `Investor ${referenceCode} didaftarkan oleh admin dan undangan aktivasi dikirim.`,
+      changes: {
+        referenceCode: { before: null, after: referenceCode },
+        email: { before: null, after: normalizedEmail },
+        phone: { before: null, after: normalizedPhone },
+        addressProvided: { before: false, after: true },
+        identityNumberHashProvided: { before: false, after: true },
+        whatsappDelivery: { before: null, after: whatsapp.status },
+      },
+    })
+
+    return {
+      investorId,
+      referenceCode,
+      status: investor?.status ?? 'pending',
+      email: normalizedEmail,
+      phone: normalizedPhone,
+      whatsappStatus: whatsapp.status,
     }
   },
 })
