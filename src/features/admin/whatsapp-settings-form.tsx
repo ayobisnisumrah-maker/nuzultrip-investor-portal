@@ -100,7 +100,12 @@ export function WhatsAppSettingsForm({
               <Input name="languageCode" defaultValue={settings.investorInvitation.languageCode} disabled={disabled} required />
             </Field>
 
-            <Field label="Pratinjau pesan" hint="Dokumentasi isi template di Admin. Gunakan {{name}} dan {{email}} sebagai penanda variabel; pengiriman resmi tetap memakai template provider yang disetujui." error={fieldError('preview')} required>
+            <Field
+              label="Pratinjau pesan"
+              hint={'Dokumentasi isi template di Admin. Gunakan {{name}} dan {{email}} sebagai penanda variabel; pengiriman resmi tetap memakai template provider yang disetujui.'}
+              error={fieldError('preview')}
+              required
+            >
               <textarea
                 name="preview"
                 rows={5}
