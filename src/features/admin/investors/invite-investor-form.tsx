@@ -22,7 +22,10 @@ export function InviteInvestorForm() {
     startTransition(async () => {
       const result = await inviteInvestor({
         legalName: String(formData.get('legalName') ?? ''),
+        identityNumber: String(formData.get('identityNumber') ?? ''),
+        phone: String(formData.get('phone') ?? ''),
         email: String(formData.get('email') ?? ''),
+        address: String(formData.get('address') ?? ''),
         investorType,
         organizationName:
           investorType === 'institution' ? String(formData.get('organizationName') ?? '') : null,
@@ -35,8 +38,8 @@ export function InviteInvestorForm() {
 
       push({
         tone: 'success',
-        title: 'Undangan investor dikirim',
-        description: `Surel aktivasi telah dikirim ke ${result.data.email}.`,
+        title: 'Investor berhasil didaftarkan',
+        description: `Tautan pembuatan kata sandi telah dikirim ke ${result.data.email}.`,
       })
       router.push(`/admin/investors/${result.data.investorId}`)
       router.refresh()
@@ -69,7 +72,7 @@ export function InviteInvestorForm() {
 
       <div className="space-y-2">
         <label htmlFor="invite-legal-name" className="text-body-sm text-fg font-medium">
-          Nama legal
+          Nama lengkap
         </label>
         <input
           id="invite-legal-name"
@@ -82,7 +85,7 @@ export function InviteInvestorForm() {
           className="border-border bg-canvas text-body-sm text-fg focus:border-accent-solid h-11 w-full rounded-lg border px-3 outline-none"
         />
         <p className="text-caption text-fg-subtle">
-          Gunakan nama sesuai identitas resmi. Setelah investor terverifikasi, nama legal akan terkunci.
+          Gunakan nama sesuai identitas resmi. Data ini menjadi identitas utama profil investor.
         </p>
       </div>
 
@@ -99,8 +102,53 @@ export function InviteInvestorForm() {
             disabled={pending}
             className="border-border bg-canvas text-body-sm text-fg focus:border-accent-solid h-11 w-full rounded-lg border px-3 outline-none"
           />
+          <p className="text-caption text-fg-subtle">
+            Diisi untuk investor berbentuk institusi atau badan usaha.
+          </p>
         </div>
       ) : null}
+
+      <div className="space-y-2">
+        <label htmlFor="invite-identity-number" className="text-body-sm text-fg font-medium">
+          No. KTP
+        </label>
+        <input
+          id="invite-identity-number"
+          name="identityNumber"
+          inputMode="numeric"
+          pattern="[0-9]{16}"
+          minLength={16}
+          maxLength={16}
+          required
+          disabled={pending}
+          autoComplete="off"
+          className="border-border bg-canvas text-body-sm text-fg focus:border-accent-solid h-11 w-full rounded-lg border px-3 outline-none"
+        />
+        <p className="text-caption text-fg-subtle">
+          Harus 16 digit. Sistem menyimpan bentuk hash untuk pencocokan dan pencegahan duplikasi, bukan nomor KTP mentah.
+        </p>
+      </div>
+
+      <div className="space-y-2">
+        <label htmlFor="invite-phone" className="text-body-sm text-fg font-medium">
+          No. HP / WhatsApp
+        </label>
+        <input
+          id="invite-phone"
+          name="phone"
+          type="tel"
+          required
+          minLength={10}
+          maxLength={24}
+          disabled={pending}
+          autoComplete="tel"
+          placeholder="0812xxxxxxx"
+          className="border-border bg-canvas text-body-sm text-fg focus:border-accent-solid h-11 w-full rounded-lg border px-3 outline-none"
+        />
+        <p className="text-caption text-fg-subtle">
+          Nomor Indonesia yang aktif. Digunakan untuk notifikasi layanan, termasuk konfirmasi aktivasi setelah kanal WhatsApp terhubung.
+        </p>
+      </div>
 
       <div className="space-y-2">
         <label htmlFor="invite-email" className="text-body-sm text-fg font-medium">
@@ -121,15 +169,35 @@ export function InviteInvestorForm() {
         </p>
       </div>
 
+      <div className="space-y-2">
+        <label htmlFor="invite-address" className="text-body-sm text-fg font-medium">
+          Alamat
+        </label>
+        <textarea
+          id="invite-address"
+          name="address"
+          required
+          minLength={5}
+          maxLength={500}
+          rows={4}
+          disabled={pending}
+          autoComplete="street-address"
+          className="border-border bg-canvas text-body-sm text-fg focus:border-accent-solid w-full rounded-lg border px-3 py-2.5 outline-none"
+        />
+        <p className="text-caption text-fg-subtle">
+          Alamat domisili atau alamat korespondensi yang digunakan pada administrasi investor.
+        </p>
+      </div>
+
       {error ? (
-        <Alert tone="danger" title="Undangan tidak dapat dikirim">
+        <Alert tone="danger" title="Investor tidak dapat didaftarkan">
           {error}
         </Alert>
       ) : null}
 
       <div className="flex justify-end">
         <Button type="submit" loading={pending} disabled={pending}>
-          Kirim undangan investor
+          Daftarkan investor & kirim undangan
         </Button>
       </div>
     </form>
