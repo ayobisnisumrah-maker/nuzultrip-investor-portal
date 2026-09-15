@@ -6,20 +6,26 @@ import { defineAction } from '@/server/auth/guards'
 import { getWhatsAppSettings } from '@/server/settings/whatsapp'
 import { getServerSupabase } from '@/server/supabase/server'
 
+const templateName = z
+  .string()
+  .trim()
+  .min(1, 'Nama template wajib diisi.')
+  .max(512)
+  .regex(/^[a-z0-9_]+$/, 'Nama template hanya boleh memakai huruf kecil, angka, dan underscore.')
+
 const whatsappSettingsSchema = z
   .object({
     enabled: z.boolean(),
     senderPhone: z.string().trim().max(24),
     phoneNumberId: z.string().trim().max(120),
     investorInvitationEnabled: z.boolean(),
-    templateName: z
-      .string()
-      .trim()
-      .min(1, 'Nama template wajib diisi.')
-      .max(512)
-      .regex(/^[a-z0-9_]+$/, 'Nama template hanya boleh memakai huruf kecil, angka, dan underscore.'),
+    templateName,
     languageCode: z.string().trim().min(2).max(20),
     preview: z.string().trim().min(10).max(2000),
+    inquiryCompletedEnabled: z.boolean(),
+    inquiryCompletedTemplateName: templateName,
+    inquiryCompletedLanguageCode: z.string().trim().min(2).max(20),
+    inquiryCompletedPreview: z.string().trim().min(10).max(2000),
   })
   .superRefine((input, context) => {
     if (!input.enabled) return
@@ -74,6 +80,17 @@ export const updateAdminWhatsAppSettings = defineAction({
         description: 'Template WhatsApp untuk konfirmasi undangan investor.',
         is_public: false,
       },
+      {
+        key: 'whatsapp.inquiry_completed',
+        value: {
+          enabled: input.inquiryCompletedEnabled,
+          template_name: input.inquiryCompletedTemplateName,
+          language_code: input.inquiryCompletedLanguageCode,
+          preview: input.inquiryCompletedPreview,
+        },
+        description: 'Template WhatsApp ketika permintaan informasi atau dokumen diselesaikan.',
+        is_public: false,
+      },
     ]
 
     const { error } = await supabase.from('site_settings').upsert(
@@ -95,9 +112,13 @@ export const updateAdminWhatsAppSettings = defineAction({
           before: before.phoneNumberId ? '[configured]' : '',
           after: input.phoneNumberId ? '[configured]' : '',
         },
-        templateName: {
+        investorTemplateName: {
           before: before.investorInvitation.templateName,
           after: input.templateName,
+        },
+        inquiryCompletedTemplateName: {
+          before: before.inquiryCompleted.templateName,
+          after: input.inquiryCompletedTemplateName,
         },
       },
     })
