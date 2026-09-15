@@ -1,18 +1,38 @@
 'use server'
 
+import { createHash } from 'node:crypto'
 import { z } from 'zod'
 
 import { ConflictError } from '@/core/errors'
 import { getClientEnv } from '@/lib/env'
+import { getServerEnv } from '@/lib/server-env'
 import { getServiceRoleClient } from '@/server/admin/service-client'
 import { defineAction } from '@/server/auth/guards'
+import {
+  isValidE164Phone,
+  normalizeIndonesianPhone,
+  sendInvestorInvitationWhatsApp,
+} from '@/server/notifications/whatsapp'
 
 const inviteInvestorSchema = z.object({
-  legalName: z.string().trim().min(2, 'Nama investor wajib diisi.').max(160),
+  legalName: z.string().trim().min(2, 'Nama lengkap wajib diisi.').max(160),
+  identityNumber: z
+    .string()
+    .trim()
+    .transform((value) => value.replace(/\D/g, ''))
+    .refine((value) => /^\d{16}$/.test(value), 'NIK/KTP harus terdiri dari 16 digit.'),
+  phone: z.string().trim().min(8, 'Nomor HP wajib diisi.').max(24),
   email: z.string().trim().email('Format surel tidak valid.').max(320),
+  address: z.string().trim().min(5, 'Alamat wajib diisi.').max(1000),
   investorType: z.enum(['individual', 'institution']).default('individual'),
   organizationName: z.string().trim().max(200).nullable().optional(),
 })
+
+function hashIdentityNumber(value: string): string {
+  return createHash('sha256')
+    .update(`${getServerEnv().IDENTITY_HASH_SALT}:${value}`)
+    .digest('hex')
+}
 
 export const inviteInvestor = defineAction({
   access: { permission: 'investors.create' },
@@ -33,8 +53,16 @@ export const inviteInvestor = defineAction({
     }
 
     const normalizedEmail = input.email.toLowerCase()
-    const redirectTo = `${siteUrl}/atur-sandi?undangan=1`
+    const normalizedPhone = normalizeIndonesianPhone(input.phone)
 
+    if (!isValidE164Phone(normalizedPhone)) {
+      throw new ConflictError(
+        'Investor phone number is not valid E.164.',
+        'Nomor HP tidak valid. Gunakan nomor aktif, misalnya 0812xxxx atau +62812xxxx.',
+      )
+    }
+
+    const redirectTo = `${siteUrl}/atur-sandi?undangan=1`
     const { data: invited, error: inviteError } = await service.auth.admin.inviteUserByEmail(
       normalizedEmail,
       {
@@ -54,59 +82,76 @@ export const inviteInvestor = defineAction({
     }
 
     const userId = invited.user.id
+    let investorId: string
+    let referenceCode: string
 
-    const { error: accountError } = await service.from('user_accounts').insert({
-      id: userId,
-      account_type: 'investor',
+    try {
+      const { data: provisioned, error: provisionError } = await service.rpc(
+        'provision_investor_account',
+        {
+          p_user_id: userId,
+          p_email: normalizedEmail,
+          p_full_name: input.legalName,
+          p_legal_name: input.legalName,
+          p_investor_type: input.investorType,
+          p_phone: normalizedPhone,
+          p_address: input.address,
+          p_country: 'ID',
+          p_identity_number_hash: hashIdentityNumber(input.identityNumber),
+          p_organization_name:
+            input.investorType === 'institution'
+              ? (input.organizationName?.trim() || undefined)
+              : undefined,
+        },
+      )
+
+      if (provisionError || !provisioned) {
+        throw new Error(provisionError?.message ?? 'Investor provisioning returned no data.')
+      }
+
+      const result = provisioned as { investorId: string; referenceCode: string }
+      investorId = result.investorId
+      referenceCode = result.referenceCode
+    } catch (error) {
+      await service.auth.admin.deleteUser(userId).catch(() => {})
+      throw new ConflictError(
+        error instanceof Error ? error.message : 'Investor provisioning failed.',
+        'Profil investor tidak dapat dibuat. Undangan telah dibatalkan agar dapat dicoba kembali.',
+      )
+    }
+
+    const { data: investor } = await service
+      .from('investors')
+      .select('status')
+      .eq('id', investorId)
+      .maybeSingle()
+
+    const whatsapp = await sendInvestorInvitationWhatsApp({
+      phone: normalizedPhone,
+      name: input.legalName,
       email: normalizedEmail,
-      full_name: input.legalName,
     })
 
-    if (accountError) {
-      await service.auth.admin.deleteUser(userId)
-      throw new ConflictError(
-        accountError.message,
-        'Akun investor tidak dapat dibuat. Undangan telah dibatalkan.',
-      )
-    }
-
-    const { data: investor, error: investorError } = await service
-      .from('investors')
-      .insert({
-        id: userId,
-        reference_code: '',
-        investor_type: input.investorType,
-        legal_name: input.legalName,
-        organization_name:
-          input.investorType === 'institution' ? (input.organizationName?.trim() ?? null) : null,
-      })
-      .select('id, reference_code, status')
-      .single()
-
-    if (investorError || !investor) {
-      await service.from('user_accounts').delete().eq('id', userId)
-      await service.auth.admin.deleteUser(userId)
-      throw new ConflictError(
-        investorError?.message ?? 'Investor record was not created.',
-        'Profil investor tidak dapat dibuat. Undangan telah dibatalkan.',
-      )
-    }
-
     audit({
-      entityId: investor.id,
-      summary: `Undangan investor ${investor.reference_code} dikirim ke ${normalizedEmail}.`,
+      entityId: investorId,
+      summary: `Investor ${referenceCode} didaftarkan oleh admin dan undangan aktivasi dikirim.`,
       changes: {
-        referenceCode: { before: null, after: investor.reference_code },
+        referenceCode: { before: null, after: referenceCode },
         email: { before: null, after: normalizedEmail },
-        investorType: { before: null, after: input.investorType },
+        phone: { before: null, after: normalizedPhone },
+        addressProvided: { before: false, after: true },
+        identityNumberHashProvided: { before: false, after: true },
+        whatsappDelivery: { before: null, after: whatsapp.status },
       },
     })
 
     return {
-      investorId: investor.id,
-      referenceCode: investor.reference_code,
-      status: investor.status,
+      investorId,
+      referenceCode,
+      status: investor?.status ?? 'pending',
       email: normalizedEmail,
+      phone: normalizedPhone,
+      whatsappStatus: whatsapp.status,
     }
   },
 })
