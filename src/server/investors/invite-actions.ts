@@ -136,6 +136,7 @@ export const inviteInvestor = defineAction({
         organization_name:
           input.investorType === 'institution' ? (input.organizationName?.trim() ?? null) : null,
         identity_number_hash: identityNumberHash,
+        whatsapp_number: normalizedPhone,
         address: input.address,
       })
       .select('id, reference_code, status')
