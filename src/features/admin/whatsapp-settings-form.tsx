@@ -46,6 +46,10 @@ export function WhatsAppSettingsForm({
           templateName: text(form, 'templateName'),
           languageCode: text(form, 'languageCode'),
           preview: text(form, 'preview'),
+          inquiryCompletedEnabled: form.get('inquiryCompletedEnabled') === 'on',
+          inquiryCompletedTemplateName: text(form, 'inquiryCompletedTemplateName'),
+          inquiryCompletedLanguageCode: text(form, 'inquiryCompletedLanguageCode'),
+          inquiryCompletedPreview: text(form, 'inquiryCompletedPreview'),
         })
       }}
     >
@@ -59,7 +63,7 @@ export function WhatsAppSettingsForm({
             <div>
               <h3 className="font-display text-heading-sm text-fg">WhatsApp Cloud API</h3>
               <p className="text-body-sm text-fg-muted mt-1">
-                Nomor dan Phone Number ID boleh dikelola di sini. Access token tetap disimpan sebagai server secret dan tidak pernah ditampilkan di Admin.
+                Nomor dan Phone Number ID dikelola di sini. Access token tetap disimpan sebagai server secret dan tidak pernah ditampilkan di Admin.
               </p>
             </div>
 
@@ -100,20 +104,36 @@ export function WhatsAppSettingsForm({
               <Input name="languageCode" defaultValue={settings.investorInvitation.languageCode} disabled={disabled} required />
             </Field>
 
-            <Field
-              label="Pratinjau pesan"
-              hint={'Dokumentasi isi template di Admin. Gunakan {{name}} dan {{email}} sebagai penanda variabel; pengiriman resmi tetap memakai template provider yang disetujui.'}
-              error={fieldError('preview')}
-              required
-            >
-              <textarea
-                name="preview"
-                rows={5}
-                defaultValue={settings.investorInvitation.preview}
-                disabled={disabled}
-                required
-                className="border-border bg-surface text-body-sm text-fg w-full rounded-xl border px-4 py-3 outline-none disabled:opacity-60"
-              />
+            <Field label="Pratinjau pesan" hint={'Gunakan {{name}} dan {{email}} sebagai penanda variabel. Pengiriman resmi tetap memakai template provider yang disetujui.'} error={fieldError('preview')} required>
+              <textarea name="preview" rows={5} defaultValue={settings.investorInvitation.preview} disabled={disabled} required className="border-border bg-surface text-body-sm text-fg w-full rounded-xl border px-4 py-3 outline-none disabled:opacity-60" />
+            </Field>
+          </Stack>
+        </section>
+
+        <section className="border-border bg-surface rounded-2xl border p-6">
+          <Stack gap={5}>
+            <div>
+              <h3 className="font-display text-heading-sm text-fg">Permintaan Informasi / Dokumen Selesai</h3>
+              <p className="text-body-sm text-fg-muted mt-1">
+                Ketika Admin mengubah status tindak lanjut menjadi Selesai, sistem mengirim konfirmasi otomatis ke nomor WhatsApp pengirim permintaan jika nomor tersedia.
+              </p>
+            </div>
+
+            <label className="text-body-sm text-fg flex items-center gap-3">
+              <input type="checkbox" name="inquiryCompletedEnabled" defaultChecked={settings.inquiryCompleted.enabled} disabled={disabled} />
+              Kirim WhatsApp otomatis saat permintaan selesai
+            </label>
+
+            <Field label="Nama template Meta" hint="Template WhatsApp yang telah disetujui untuk pemberitahuan penyelesaian permintaan." error={fieldError('inquiryCompletedTemplateName')} required>
+              <Input name="inquiryCompletedTemplateName" defaultValue={settings.inquiryCompleted.templateName} disabled={disabled} required />
+            </Field>
+
+            <Field label="Kode bahasa template" hint="Contoh: id atau id_ID, sesuai template yang disetujui provider." error={fieldError('inquiryCompletedLanguageCode')} required>
+              <Input name="inquiryCompletedLanguageCode" defaultValue={settings.inquiryCompleted.languageCode} disabled={disabled} required />
+            </Field>
+
+            <Field label="Pratinjau pesan" hint={'Gunakan {{name}} sebagai nama pengirim permintaan. Isi aktual WhatsApp mengikuti template provider yang disetujui.'} error={fieldError('inquiryCompletedPreview')} required>
+              <textarea name="inquiryCompletedPreview" rows={5} defaultValue={settings.inquiryCompleted.preview} disabled={disabled} required className="border-border bg-surface text-body-sm text-fg w-full rounded-xl border px-4 py-3 outline-none disabled:opacity-60" />
             </Field>
           </Stack>
         </section>

@@ -1,7 +1,7 @@
 import 'server-only'
 
 import { getServerEnv } from '@/lib/server-env'
-import { getWhatsAppSettings } from '@/server/settings/whatsapp'
+import { getWhatsAppSettings, type WhatsAppTemplateSettings } from '@/server/settings/whatsapp'
 
 export type WhatsAppDeliveryResult =
   | { status: 'sent'; providerMessageId: string | null }
@@ -27,21 +27,21 @@ export function isValidE164Phone(value: string): boolean {
   return /^\+[1-9]\d{7,14}$/.test(value)
 }
 
-export async function sendInvestorInvitationWhatsApp(input: {
+async function sendTemplate(input: {
   phone: string
-  name: string
-  email: string
+  template: WhatsAppTemplateSettings
+  parameters: string[]
 }): Promise<WhatsAppDeliveryResult> {
   try {
     const settings = await getWhatsAppSettings()
 
-    if (!settings.enabled || !settings.investorInvitation.enabled) {
+    if (!settings.enabled || !input.template.enabled) {
       return { status: 'skipped', reason: 'WhatsApp notification is disabled.' }
     }
 
     const phone = normalizeIndonesianPhone(input.phone)
     if (!isValidE164Phone(phone)) {
-      return { status: 'failed', reason: 'Investor phone number is invalid.' }
+      return { status: 'failed', reason: 'Recipient phone number is invalid.' }
     }
 
     const env = getServerEnv()
@@ -70,15 +70,12 @@ export async function sendInvestorInvitationWhatsApp(input: {
           to: phone.slice(1),
           type: 'template',
           template: {
-            name: settings.investorInvitation.templateName,
-            language: { code: settings.investorInvitation.languageCode },
+            name: input.template.templateName,
+            language: { code: input.template.languageCode },
             components: [
               {
                 type: 'body',
-                parameters: [
-                  { type: 'text', text: input.name },
-                  { type: 'text', text: input.email },
-                ],
+                parameters: input.parameters.map((text) => ({ type: 'text', text })),
               },
             ],
           },
@@ -106,4 +103,29 @@ export async function sendInvestorInvitationWhatsApp(input: {
       reason: error instanceof Error ? error.message : 'WhatsApp delivery failed.',
     }
   }
+}
+
+export async function sendInvestorInvitationWhatsApp(input: {
+  phone: string
+  name: string
+  email: string
+}): Promise<WhatsAppDeliveryResult> {
+  const settings = await getWhatsAppSettings()
+  return sendTemplate({
+    phone: input.phone,
+    template: settings.investorInvitation,
+    parameters: [input.name, input.email],
+  })
+}
+
+export async function sendInquiryCompletedWhatsApp(input: {
+  phone: string
+  name: string
+}): Promise<WhatsAppDeliveryResult> {
+  const settings = await getWhatsAppSettings()
+  return sendTemplate({
+    phone: input.phone,
+    template: settings.inquiryCompleted,
+    parameters: [input.name],
+  })
 }
