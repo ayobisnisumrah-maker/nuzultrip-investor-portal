@@ -8,6 +8,13 @@ import type { PublicPortalNavigationItem } from '@/server/portal/public-queries'
 
 type Message = { role: 'user' | 'assistant'; content: string }
 type PublicConnectLinksProps = { navigation: PublicPortalNavigationItem[] }
+type HaloResponse = {
+  reply?: string
+  error?: string
+  handoffUrl?: string | null
+  handoff?: boolean
+  questionsRemaining?: number
+}
 
 export function PublicConnectLinks({ navigation }: PublicConnectLinksProps) {
   const [messages, setMessages] = useState<Message[]>([
@@ -16,16 +23,17 @@ export function PublicConnectLinks({ navigation }: PublicConnectLinksProps) {
   const [input, setInput] = useState('')
   const [pending, setPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [handoff, setHandoff] = useState(false)
   const [handoffUrl, setHandoffUrl] = useState<string | null>(null)
+  const [questionsRemaining, setQuestionsRemaining] = useState<number | null>(null)
   const hasOfficialLinks = navigation.some((item) => item.location === 'social')
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const content = input.trim()
-    if (!content || pending || handoffUrl) return
+    if (!content || pending || handoff) return
 
-    const nextMessages = [...messages, { role: 'user' as const, content }]
-    setMessages(nextMessages)
+    setMessages((current) => [...current, { role: 'user', content }])
     setInput('')
     setError(null)
     setPending(true)
@@ -34,12 +42,16 @@ export function PublicConnectLinks({ navigation }: PublicConnectLinksProps) {
       const response = await fetch('/api/public/halo-nuzul', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ messages: nextMessages.slice(-24) }),
+        body: JSON.stringify({ message: content }),
       })
-      const payload = (await response.json()) as { reply?: string; error?: string; handoffUrl?: string | null; handoff?: boolean }
+      const payload = (await response.json()) as HaloResponse
       if (!response.ok || !payload.reply) throw new Error(payload.error || 'Jawaban belum tersedia.')
       setMessages((current) => [...current, { role: 'assistant', content: payload.reply! }])
-      if (payload.handoff && payload.handoffUrl) setHandoffUrl(payload.handoffUrl)
+      if (typeof payload.questionsRemaining === 'number') setQuestionsRemaining(payload.questionsRemaining)
+      if (payload.handoff) {
+        setHandoff(true)
+        setHandoffUrl(payload.handoffUrl ?? null)
+      }
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Halo Nuzul sedang tidak dapat menjawab.')
     } finally {
@@ -69,11 +81,12 @@ export function PublicConnectLinks({ navigation }: PublicConnectLinksProps) {
           ))}
           {pending ? <p className="text-fg-muted text-xs">Halo Nuzul sedang menyiapkan jawaban…</p> : null}
           {error ? <p className="text-danger text-xs">{error}</p> : null}
-          {handoffUrl ? (
+          {!handoff && questionsRemaining !== null ? <p className="text-fg-muted text-xs">Sisa pertanyaan sesi ini: {questionsRemaining}</p> : null}
+          {handoff ? (
             <div className="border-border bg-surface-muted rounded-xl border p-3">
               <p className="text-fg text-sm font-medium">Lanjutkan melalui kanal resmi</p>
-              <p className="text-fg-muted mt-1 text-xs leading-5">Untuk tindak lanjut berikutnya, buka kanal resmi Nuzultrip.</p>
-              <Link href={handoffUrl} target="_blank" rel="noopener noreferrer" className="bg-primary text-primary-foreground mt-3 inline-flex min-h-10 items-center rounded-lg px-3 py-2 text-sm font-semibold">Buka Linktree Nuzultrip</Link>
+              <p className="text-fg-muted mt-1 text-xs leading-5">Batas percakapan Halo Nuzul telah tercapai. Untuk tindak lanjut berikutnya, gunakan kanal resmi Nuzultrip.</p>
+              {handoffUrl ? <Link href={handoffUrl} target="_blank" rel="noopener noreferrer" className="bg-primary text-primary-foreground mt-3 inline-flex min-h-10 items-center rounded-lg px-3 py-2 text-sm font-semibold">Buka Linktree Nuzultrip</Link> : null}
             </div>
           ) : null}
         </div>
@@ -81,8 +94,8 @@ export function PublicConnectLinks({ navigation }: PublicConnectLinksProps) {
         <form onSubmit={submit} className="border-border border-t p-3">
           <label htmlFor="halo-nuzul-message" className="sr-only">Tulis pertanyaan</label>
           <div className="flex gap-2">
-            <input id="halo-nuzul-message" value={input} onChange={(event) => setInput(event.target.value)} disabled={pending || Boolean(handoffUrl)} maxLength={2000} placeholder={handoffUrl ? 'Percakapan diarahkan ke kanal resmi' : 'Tulis pertanyaan…'} className="border-border bg-canvas text-fg min-h-11 min-w-0 flex-1 rounded-xl border px-3 text-sm outline-none focus:ring-2 focus:ring-primary disabled:opacity-60" />
-            <button type="submit" disabled={pending || !input.trim() || Boolean(handoffUrl)} className="bg-primary text-primary-foreground min-h-11 rounded-xl px-4 text-sm font-semibold disabled:opacity-50">Kirim</button>
+            <input id="halo-nuzul-message" value={input} onChange={(event) => setInput(event.target.value)} disabled={pending || handoff} maxLength={2000} placeholder={handoff ? 'Percakapan diarahkan ke kanal resmi' : 'Tulis pertanyaan…'} className="border-border bg-canvas text-fg min-h-11 min-w-0 flex-1 rounded-xl border px-3 text-sm outline-none focus:ring-2 focus:ring-primary disabled:opacity-60" />
+            <button type="submit" disabled={pending || !input.trim() || handoff} className="bg-primary text-primary-foreground min-h-11 rounded-xl px-4 text-sm font-semibold disabled:opacity-50">Kirim</button>
           </div>
         </form>
       </div>
