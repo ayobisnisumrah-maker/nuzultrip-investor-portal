@@ -119,33 +119,31 @@ export default async function Home() {
     <PublicRealtimeSurface>
       <style>{`
         section:has(img[alt='Agen Nuzultrip'], img[alt='Mitra Travel'], img[alt='Mitra Layanan'], img[alt='Land Arrangement'], img[alt='Mitra Strategis']) > div > div {
-          grid-template-columns: 0.18fr 0.82fr !important;
-          gap: 44px !important;
+          grid-template-columns: 0.24fr 0.76fr !important;
+          gap: 48px !important;
         }
 
         section:has(img[alt='Agen Nuzultrip'], img[alt='Mitra Travel'], img[alt='Mitra Layanan'], img[alt='Land Arrangement'], img[alt='Mitra Strategis']) > div > div > div:last-child {
-          position: relative !important;
-          left: 24px !important;
-          width: calc(100% - 24px) !important;
+          position: static !important;
+          width: 100% !important;
           display: grid !important;
-          grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)) !important;
-          column-gap: 38px !important;
-          row-gap: 28px !important;
-          align-items: center !important;
-          justify-items: center !important;
+          grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+          gap: 24px !important;
+          align-items: stretch !important;
+          justify-items: stretch !important;
           overflow: visible !important;
-          padding: 4px 18px !important;
+          padding: 0 !important;
         }
 
         section:has(img[alt='Agen Nuzultrip'], img[alt='Mitra Travel'], img[alt='Mitra Layanan'], img[alt='Land Arrangement'], img[alt='Mitra Strategis']) > div > div > div:last-child > div {
           width: 100% !important;
           min-width: 0 !important;
-          min-height: 160px !important;
+          min-height: 112px !important;
           display: flex !important;
           align-items: center !important;
           justify-content: center !important;
-          overflow: visible !important;
-          padding-inline: 18px !important;
+          overflow: hidden !important;
+          padding: 20px 16px !important;
         }
 
         img[alt='Agen Nuzultrip'],
@@ -153,32 +151,21 @@ export default async function Home() {
         img[alt='Mitra Layanan'],
         img[alt='Land Arrangement'],
         img[alt='Mitra Strategis'] {
-          width: 256px !important;
-          max-width: none !important;
-          height: 122px !important;
-          max-height: none !important;
+          display: block !important;
+          width: 180px !important;
+          max-width: 100% !important;
+          height: 64px !important;
+          max-height: 64px !important;
           object-fit: contain !important;
-          transform: scale(1.28) !important;
+          object-position: center !important;
+          transform: none !important;
           transform-origin: center !important;
         }
 
         @media (max-width: 1200px) {
           section:has(img[alt='Agen Nuzultrip'], img[alt='Mitra Travel'], img[alt='Mitra Layanan'], img[alt='Land Arrangement'], img[alt='Mitra Strategis']) > div > div > div:last-child {
-            left: 12px !important;
-            width: calc(100% - 12px) !important;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) !important;
-            column-gap: 30px !important;
-            row-gap: 24px !important;
-          }
-
-          img[alt='Agen Nuzultrip'],
-          img[alt='Mitra Travel'],
-          img[alt='Mitra Layanan'],
-          img[alt='Land Arrangement'],
-          img[alt='Mitra Strategis'] {
-            width: 238px !important;
-            height: 116px !important;
-            transform: scale(1.21) !important;
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            gap: 20px !important;
           }
         }
 
@@ -189,18 +176,21 @@ export default async function Home() {
           }
 
           section:has(img[alt='Agen Nuzultrip'], img[alt='Mitra Travel'], img[alt='Mitra Layanan'], img[alt='Land Arrangement'], img[alt='Mitra Strategis']) > div > div > div:last-child {
-            left: 0 !important;
             width: 100% !important;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)) !important;
-            gap: 20px !important;
-            padding-inline: 0 !important;
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            gap: 16px !important;
           }
         }
 
         @media (max-width: 560px) {
           section:has(img[alt='Agen Nuzultrip'], img[alt='Mitra Travel'], img[alt='Mitra Layanan'], img[alt='Land Arrangement'], img[alt='Mitra Strategis']) > div > div > div:last-child {
             grid-template-columns: 1fr !important;
-            gap: 14px !important;
+            gap: 12px !important;
+          }
+
+          section:has(img[alt='Agen Nuzultrip'], img[alt='Mitra Travel'], img[alt='Mitra Layanan'], img[alt='Land Arrangement'], img[alt='Mitra Strategis']) > div > div > div:last-child > div {
+            min-height: 104px !important;
+            padding: 18px 14px !important;
           }
 
           img[alt='Agen Nuzultrip'],
@@ -208,9 +198,9 @@ export default async function Home() {
           img[alt='Mitra Layanan'],
           img[alt='Land Arrangement'],
           img[alt='Mitra Strategis'] {
-            width: 254px !important;
-            height: 120px !important;
-            transform: scale(1.16) !important;
+            width: 176px !important;
+            height: 62px !important;
+            max-height: 62px !important;
           }
         }
       `}</style>
