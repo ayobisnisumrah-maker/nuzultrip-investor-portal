@@ -17,7 +17,7 @@ export const RATE_LIMIT_SCOPES = [
   'auth.password_reset',
   'investor.application',
   'portal.inquiry',
-  'halo_nuzul.chat',
+  'halo_nuzul.abuse',
   'storage.signed_url',
   'storage.upload',
   'message.send',
@@ -33,7 +33,9 @@ export const RATE_LIMITS: Readonly<Record<RateLimitScope, RateLimitPolicy>> = {
   'auth.password_reset': { limit: 4, windowSeconds: 60 * 60 },
   'investor.application': { limit: 3, windowSeconds: 60 * 60 },
   'portal.inquiry': { limit: 5, windowSeconds: 60 * 60 },
-  'halo_nuzul.chat': { limit: 10, windowSeconds: 24 * 60 * 60 },
+  // Abuse protection is deliberately separate from Halo Nuzul's product-level
+  // conversation quota. The latter is enforced by the server-owned session.
+  'halo_nuzul.abuse': { limit: 30, windowSeconds: 60 * 60 },
   'storage.signed_url': { limit: 120, windowSeconds: 60 },
   'storage.upload': { limit: 30, windowSeconds: 60 * 60 },
   'message.send': { limit: 30, windowSeconds: 60 * 60 },
