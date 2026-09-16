@@ -1,5 +1,7 @@
 import { createHmac, timingSafeEqual } from 'node:crypto'
 
+import { getServerEnv } from '@/lib/server-env'
+
 const MAX_QUESTIONS = 10
 const SESSION_TTL_SECONDS = 24 * 60 * 60
 
@@ -10,9 +12,7 @@ type HaloSession = {
 }
 
 function secret(): string {
-  const value = process.env.AUDIT_IP_SALT
-  if (!value) throw new Error('AUDIT_IP_SALT is required for Halo Nuzul sessions')
-  return value
+  return getServerEnv().AUDIT_IP_SALT
 }
 
 function encode(value: string): string {
