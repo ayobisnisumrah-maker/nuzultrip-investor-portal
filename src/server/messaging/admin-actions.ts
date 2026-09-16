@@ -5,27 +5,18 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 
 import { ConflictError, NotFoundError } from '@/core/errors'
 import { defineAction, requireAdmin, requireAuthenticated } from '@/server/auth/guards'
+import { sendInquiryCompletionWhatsApp } from '@/server/notifications/whatsapp'
 import type { Database } from '@/types/database'
 
 type AppRpcClient = {
-  rpc: (
-    name: string,
-    args: Record<string, unknown>,
-  ) => Promise<{
-    data: unknown
-    error: { message: string } | null
-  }>
+  rpc: (name: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: { message: string } | null }>
 }
 
 function appRpc(supabase: SupabaseClient<Database>, name: string, args: Record<string, unknown>) {
   return (supabase.schema('app') as unknown as AppRpcClient).rpc(name, args)
 }
 
-const sendMessageSchema = z.object({
-  threadId: z.string().uuid(),
-  body: z.string().trim().min(1).max(20000),
-})
-
+const sendMessageSchema = z.object({ threadId: z.string().uuid(), body: z.string().trim().min(1).max(20000) })
 const createThreadSchema = z.object({
   investorId: z.string().uuid(),
   subject: z.string().trim().min(1).max(200),
@@ -43,61 +34,19 @@ export const sendAdminMessage = defineAction({
       .select('id, subject, is_closed, expires_at, reply_deadline_at')
       .eq('id', input.threadId)
       .maybeSingle()
-
-    if (threadError)
-      throw new ConflictError(
-        `Failed to read thread: ${threadError.message}`,
-        'Percakapan tidak dapat dibaca saat ini.',
-      )
+    if (threadError) throw new ConflictError(`Failed to read thread: ${threadError.message}`, 'Percakapan tidak dapat dibaca saat ini.')
     if (!rawThread) throw new NotFoundError('Percakapan')
-
-    const thread = rawThread as unknown as {
-      id: string
-      subject: string
-      is_closed: boolean
-      expires_at: string | null
-      reply_deadline_at: string | null
-    }
-
-    if (thread.is_closed) {
-      throw new ConflictError('Thread is closed.', 'Percakapan sudah ditutup dan hanya dapat dibaca.')
-    }
-
+    const thread = rawThread as unknown as { id: string; subject: string; is_closed: boolean; expires_at: string | null; reply_deadline_at: string | null }
+    if (thread.is_closed) throw new ConflictError('Thread is closed.', 'Percakapan sudah ditutup dan hanya dapat dibaca.')
     const now = Date.now()
-    if (thread.expires_at && new Date(thread.expires_at).getTime() <= now) {
-      throw new ConflictError(
-        'Thread session expired.',
-        'Masa berlaku percakapan telah berakhir. Percakapan sekarang hanya dapat dibaca.',
-      )
-    }
-    if (thread.reply_deadline_at && new Date(thread.reply_deadline_at).getTime() <= now) {
-      throw new ConflictError(
-        'Thread inactivity deadline expired.',
-        'Percakapan ditutup karena tidak ada respons selama 4 jam dan hanya dapat dibaca.',
-      )
-    }
-
+    if (thread.expires_at && new Date(thread.expires_at).getTime() <= now) throw new ConflictError('Thread session expired.', 'Masa berlaku percakapan telah berakhir. Percakapan sekarang hanya dapat dibaca.')
+    if (thread.reply_deadline_at && new Date(thread.reply_deadline_at).getTime() <= now) throw new ConflictError('Thread inactivity deadline expired.', 'Percakapan ditutup karena tidak ada respons selama 4 jam dan hanya dapat dibaca.')
     const { data: message, error } = await supabase
       .from('messages')
-      .insert({
-        thread_id: thread.id,
-        sender_id: admin.userId,
-        body_text: input.body,
-        body_rich: {
-          type: 'doc',
-          content: [{ type: 'paragraph', content: [{ type: 'text', text: input.body }] }],
-        },
-        is_system: false,
-      })
+      .insert({ thread_id: thread.id, sender_id: admin.userId, body_text: input.body, body_rich: { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: input.body }] }] }, is_system: false })
       .select('id, sent_at')
       .single()
-
-    if (error || !message)
-      throw new ConflictError(
-        `Failed to send message: ${error?.message ?? 'no row'}`,
-        'Pesan tidak dapat dikirim saat ini. Masa percakapan mungkin telah berakhir.',
-      )
-
+    if (error || !message) throw new ConflictError(`Failed to send message: ${error?.message ?? 'no row'}`, 'Pesan tidak dapat dikirim saat ini. Masa percakapan mungkin telah berakhir.')
     audit({ entityId: message.id, summary: `Pesan dikirim dalam percakapan ${thread.subject}.` })
     return message
   },
@@ -108,19 +57,8 @@ export const createInvestorMessageThread = defineAction({
   input: createThreadSchema,
   audit: { action: 'message.thread_created', entityType: 'message_thread' },
   handler: async ({ input, supabase, audit }) => {
-    const result = await appRpc(supabase, 'create_investor_message_thread', {
-      p_investor_id: input.investorId,
-      p_subject: input.subject,
-      p_body: input.body,
-    })
-
-    if (result.error || typeof result.data !== 'string') {
-      throw new ConflictError(
-        `Failed to create thread: ${result.error?.message ?? 'no thread returned'}`,
-        'Percakapan tidak dapat dibuat saat ini.',
-      )
-    }
-
+    const result = await appRpc(supabase, 'create_investor_message_thread', { p_investor_id: input.investorId, p_subject: input.subject, p_body: input.body })
+    if (result.error || typeof result.data !== 'string') throw new ConflictError(`Failed to create thread: ${result.error?.message ?? 'no thread returned'}`, 'Percakapan tidak dapat dibuat saat ini.')
     audit({ entityId: result.data, summary: `Percakapan investor ${input.investorId} dibuat.` })
     return { threadId: result.data }
   },
@@ -131,68 +69,49 @@ export const markMessageRead = defineAction({
   input: z.object({ messageId: z.string().uuid() }),
   handler: async ({ input, supabase, principal }) => {
     const user = requireAuthenticated(principal)
-    const { error } = await supabase
-      .from('message_reads')
-      .upsert(
-        { message_id: input.messageId, user_id: user.userId },
-        { onConflict: 'message_id,user_id' },
-      )
-    if (error)
-      throw new ConflictError(
-        `Failed to mark message read: ${error.message}`,
-        'Status pesan tidak dapat diperbarui.',
-      )
+    const { error } = await supabase.from('message_reads').upsert({ message_id: input.messageId, user_id: user.userId }, { onConflict: 'message_id,user_id' })
+    if (error) throw new ConflictError(`Failed to mark message read: ${error.message}`, 'Status pesan tidak dapat diperbarui.')
     return { read: true }
   },
 })
 
 export const updateInquiryStatus = defineAction({
   access: { permission: 'inquiries.handle' },
-  input: z.object({
-    inquiryId: z.string().uuid(),
-    status: z.enum(['new', 'in_progress', 'closed']),
-  }),
+  input: z.object({ inquiryId: z.string().uuid(), status: z.enum(['new', 'in_progress', 'closed']) }),
   audit: { action: 'inquiry.status_changed', entityType: 'portal_inquiry' },
   handler: async ({ input, supabase, audit }) => {
     const { data: current, error: readError } = await supabase
       .from('portal_inquiries')
-      .select('id, status')
+      .select('id, name, phone, status')
       .eq('id', input.inquiryId)
       .maybeSingle()
-    if (readError)
-      throw new ConflictError(
-        `Failed to read inquiry: ${readError.message}`,
-        'Permintaan tidak dapat dibaca saat ini.',
-      )
+    if (readError) throw new ConflictError(`Failed to read inquiry: ${readError.message}`, 'Permintaan tidak dapat dibaca saat ini.')
     if (!current) throw new NotFoundError('Permintaan')
 
     const { data: updated, error } = await supabase
       .from('portal_inquiries')
-      .update({
-        status: input.status,
-        handled_at: input.status === 'new' ? null : new Date().toISOString(),
-      })
+      .update({ status: input.status, handled_at: input.status === 'new' ? null : new Date().toISOString() })
       .eq('id', input.inquiryId)
       .select('id, status')
       .single()
+    if (error || !updated) throw new ConflictError(`Failed to update inquiry: ${error?.message ?? 'no row'}`, 'Status permintaan tidak dapat diperbarui.')
 
-    if (error || !updated)
-      throw new ConflictError(
-        `Failed to update inquiry: ${error?.message ?? 'no row'}`,
-        'Status permintaan tidak dapat diperbarui.',
-      )
+    const shouldNotify = input.status === 'closed' && current.status !== 'closed'
+    const whatsapp = shouldNotify
+      ? current.phone
+        ? await sendInquiryCompletionWhatsApp({ phone: current.phone, name: current.name })
+        : { status: 'skipped' as const, reason: 'Nomor WhatsApp tidak dicantumkan pada permintaan.' }
+      : null
 
     audit({
       entityId: updated.id,
       summary: `Status permintaan diubah dari ${current.status} menjadi ${updated.status}.`,
       changes: {
-        status: {
-          before: current.status,
-          after: updated.status,
-        },
+        status: { before: current.status, after: updated.status },
+        ...(whatsapp ? { whatsappCompletion: { before: null, after: whatsapp } } : {}),
       },
     })
 
-    return updated
+    return { ...updated, whatsapp }
   },
 })
