@@ -1,0 +1,1 @@
+Partner icon sizing is normalized in the public home surface using equal grid cells and a fixed 180x64 visual box with object-fit: contain. Responsive layout is 4 columns desktop, 2 columns tablet, and 1 column on narrow mobile.
