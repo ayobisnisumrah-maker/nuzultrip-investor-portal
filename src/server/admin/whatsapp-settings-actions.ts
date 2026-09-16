@@ -6,20 +6,26 @@ import { defineAction } from '@/server/auth/guards'
 import { getWhatsAppSettings } from '@/server/settings/whatsapp'
 import { getServerSupabase } from '@/server/supabase/server'
 
+const templateName = z
+  .string()
+  .trim()
+  .min(1, 'Nama template wajib diisi.')
+  .max(512)
+  .regex(/^[a-z0-9_]+$/, 'Nama template hanya boleh memakai huruf kecil, angka, dan underscore.')
+
 const whatsappSettingsSchema = z
   .object({
     enabled: z.boolean(),
     senderPhone: z.string().trim().max(24),
     phoneNumberId: z.string().trim().max(120),
     investorInvitationEnabled: z.boolean(),
-    templateName: z
-      .string()
-      .trim()
-      .min(1, 'Nama template wajib diisi.')
-      .max(512)
-      .regex(/^[a-z0-9_]+$/, 'Nama template hanya boleh memakai huruf kecil, angka, dan underscore.'),
+    templateName,
     languageCode: z.string().trim().min(2).max(20),
     preview: z.string().trim().min(10).max(2000),
+    inquiryCompletionEnabled: z.boolean(),
+    inquiryCompletionTemplateName: templateName,
+    inquiryCompletionLanguageCode: z.string().trim().min(2).max(20),
+    inquiryCompletionPreview: z.string().trim().min(10).max(2000),
   })
   .superRefine((input, context) => {
     if (!input.enabled) return
@@ -74,6 +80,17 @@ export const updateAdminWhatsAppSettings = defineAction({
         description: 'Template WhatsApp untuk konfirmasi undangan investor.',
         is_public: false,
       },
+      {
+        key: 'whatsapp.inquiry_completion',
+        value: {
+          enabled: input.inquiryCompletionEnabled,
+          template_name: input.inquiryCompletionTemplateName,
+          language_code: input.inquiryCompletionLanguageCode,
+          preview: input.inquiryCompletionPreview,
+        },
+        description: 'Template WhatsApp ketika permintaan informasi atau dokumen selesai ditindaklanjuti.',
+        is_public: false,
+      },
     ]
 
     const { error } = await supabase.from('site_settings').upsert(
@@ -98,6 +115,10 @@ export const updateAdminWhatsAppSettings = defineAction({
         templateName: {
           before: before.investorInvitation.templateName,
           after: input.templateName,
+        },
+        inquiryCompletionTemplateName: {
+          before: before.inquiryCompletion.templateName,
+          after: input.inquiryCompletionTemplateName,
         },
       },
     })
