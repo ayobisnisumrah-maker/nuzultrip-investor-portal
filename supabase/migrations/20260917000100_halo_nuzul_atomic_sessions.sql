@@ -35,6 +35,23 @@ alter table public.halo_nuzul_sessions force row level security;
 alter table public.halo_nuzul_reservations enable row level security;
 alter table public.halo_nuzul_reservations force row level security;
 
+-- Explicit service-role-only policies keep these server-owned tables policy-complete
+-- for schema hygiene while preserving the same client-deny boundary. The service
+-- role normally bypasses RLS, but explicit policies document the intended owner.
+create policy halo_nuzul_sessions_service_role_all
+on public.halo_nuzul_sessions
+for all
+to service_role
+using (true)
+with check (true);
+
+create policy halo_nuzul_reservations_service_role_all
+on public.halo_nuzul_reservations
+for all
+to service_role
+using (true)
+with check (true);
+
 revoke all on public.halo_nuzul_sessions from public, anon, authenticated;
 revoke all on public.halo_nuzul_reservations from public, anon, authenticated;
 
