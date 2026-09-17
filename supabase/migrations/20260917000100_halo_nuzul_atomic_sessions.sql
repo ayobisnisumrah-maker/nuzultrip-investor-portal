@@ -1,7 +1,7 @@
 -- Halo Nuzul server-owned session quota.
--- Browser cookies contain only an opaque random session id. Product quota is
--- reserved and committed atomically on the server so concurrent requests
--- cannot exceed the ten-successful-answer limit.
+-- Browser cookies contain only an opaque random session id. Only its SHA-256
+-- digest is persisted. Product quota is reserved and committed atomically so
+-- concurrent requests cannot exceed the ten-successful-answer limit.
 
 create table public.halo_nuzul_sessions (
   session_id text primary key,
@@ -10,6 +10,7 @@ create table public.halo_nuzul_sessions (
   window_started_at timestamptz not null default now(),
   expires_at timestamptz not null default (now() + interval '24 hours'),
   updated_at timestamptz not null default now(),
+  constraint halo_nuzul_session_hash_format check (session_id ~ '^[0-9a-f]{64}$'),
   constraint halo_nuzul_committed_range check (committed_questions between 0 and 10),
   constraint halo_nuzul_reserved_range check (reserved_questions between 0 and 10),
   constraint halo_nuzul_total_range check (committed_questions + reserved_questions <= 10)
@@ -52,7 +53,7 @@ declare
   s public.halo_nuzul_sessions%rowtype;
   stale_count integer;
 begin
-  if length(p_session_id) < 32 or p_window_seconds < 60 or p_reservation_seconds < 10 then
+  if p_session_id !~ '^[0-9a-f]{64}$' or p_window_seconds < 60 or p_reservation_seconds < 10 then
     raise exception 'Invalid Halo Nuzul session parameters.' using errcode = '22023';
   end if;
 
@@ -112,6 +113,9 @@ declare
   s public.halo_nuzul_sessions%rowtype;
   changed integer;
 begin
+  if p_session_id !~ '^[0-9a-f]{64}$' then
+    raise exception 'Invalid Halo Nuzul session parameters.' using errcode = '22023';
+  end if;
   select * into s from public.halo_nuzul_sessions where session_id = p_session_id for update;
   if not found then return query select false, 0, now(); return; end if;
 
@@ -143,6 +147,7 @@ set search_path = ''
 as $$
 declare changed integer;
 begin
+  if p_session_id !~ '^[0-9a-f]{64}$' then return false; end if;
   perform 1 from public.halo_nuzul_sessions where session_id = p_session_id for update;
   if not found then return false; end if;
 
