@@ -13,6 +13,7 @@ export type WhatsAppSettings = {
   enabled: boolean
   senderPhone: string
   phoneNumberId: string
+  aiAutoReplyEnabled: boolean
   investorInvitation: WhatsAppTemplateSettings
   inquiryCompletion: WhatsAppTemplateSettings
 }
@@ -21,6 +22,7 @@ export const DEFAULT_WHATSAPP_SETTINGS: WhatsAppSettings = {
   enabled: false,
   senderPhone: '',
   phoneNumberId: '',
+  aiAutoReplyEnabled: false,
   investorInvitation: {
     enabled: true,
     templateName: 'investor_invitation',
@@ -90,6 +92,10 @@ export async function getWhatsAppSettings(): Promise<WhatsAppSettings> {
       typeof providerRecord.phone_number_id === 'string'
         ? providerRecord.phone_number_id.trim()
         : DEFAULT_WHATSAPP_SETTINGS.phoneNumberId,
+    aiAutoReplyEnabled:
+      typeof providerRecord.ai_auto_reply_enabled === 'boolean'
+        ? providerRecord.ai_auto_reply_enabled
+        : DEFAULT_WHATSAPP_SETTINGS.aiAutoReplyEnabled,
     investorInvitation: templateSettings(
       values.get('whatsapp.investor_invitation'),
       DEFAULT_WHATSAPP_SETTINGS.investorInvitation,
