@@ -25,6 +25,29 @@ export function isValidE164Phone(value: string): boolean {
   return /^\+[1-9]\d{7,14}$/.test(value)
 }
 
+async function sendText(input: { phone: string; text: string }): Promise<WhatsAppDeliveryResult> {
+  const phone = normalizeIndonesianPhone(input.phone)
+  if (!isValidE164Phone(phone)) return { status: 'failed', reason: 'Nomor WhatsApp penerima tidak valid.' }
+  const settings = await getWhatsAppSettings()
+  const env = getServerEnv()
+  const accessToken = env.WHATSAPP_ACCESS_TOKEN?.trim()
+  const graphVersion = env.WHATSAPP_GRAPH_API_VERSION?.trim()
+  const phoneNumberId = settings.phoneNumberId.trim()
+  if (!accessToken || !graphVersion || !phoneNumberId) return { status: 'skipped', reason: 'Kredensial server WhatsApp Cloud API belum lengkap.' }
+  const response = await fetch(`https://graph.facebook.com/${encodeURIComponent(graphVersion)}/${encodeURIComponent(phoneNumberId)}/messages`, {
+    method: 'POST', headers: { authorization: `Bearer ${accessToken}`, 'content-type': 'application/json' },
+    body: JSON.stringify({ messaging_product: 'whatsapp', recipient_type: 'individual', to: phone.slice(1), type: 'text', text: { preview_url: false, body: input.text.slice(0, 4096) } }),
+    cache: 'no-store', signal: AbortSignal.timeout(10_000),
+  })
+  if (!response.ok) return { status: 'failed', reason: `WhatsApp provider returned HTTP ${response.status}.` }
+  const payload = (await response.json()) as { messages?: Array<{ id?: string }> }
+  return { status: 'sent', providerMessageId: payload.messages?.[0]?.id ?? null }
+}
+
+export async function sendHaloNuzulWhatsAppReply(input: { phone: string; text: string }) {
+  try { return await sendText(input) } catch (error) { return { status: 'failed' as const, reason: error instanceof Error ? error.message : 'WhatsApp delivery failed.' } }
+}
+
 async function sendTemplate(input: {
   phone: string
   templateName: string
