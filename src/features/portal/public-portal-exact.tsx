@@ -4,6 +4,7 @@ import Link from 'next/link'
 import type { PublicPortalModel } from '@/features/portal/public-portal-model'
 import type { PublicPortalDocument } from '@/server/portal/public-queries'
 
+import partnerStyles from './partner-cards.module.css'
 import styles from './public-portal-exact.module.css'
 
 type BaseProps = ComponentProps<typeof PublicPortalModel>
@@ -304,18 +305,27 @@ function Partners({ section }: { section?: Section }) {
   return (
     <section className={styles.partnerSection} id={section.anchor_id ?? 'mitra'}>
       <div className={styles.shell}>
-        <div className={styles.partnerLayout}>
+        <div className={partnerStyles.partnerLayout}>
           <div>
             <div className={styles.eyebrowDark}>{text(c.eyebrow) || 'MITRA'}</div>
             <h2>{text(c.title) || 'Mitra yang Tumbuh Bersama'}</h2>
           </div>
           {logos.length ? (
-            <div className={styles.partnerLogos}>
-              {logos.slice(0, 5).map((logo, index) => (
-                <div key={`${text(logo.name)}-${index}`}>
-                  {text(logo.image_url) ? <CmsImage src={text(logo.image_url)} alt={text(logo.name)} /> : <span>{text(logo.name)}</span>}
-                </div>
-              ))}
+            <div className={partnerStyles.partnerLogos}>
+              {logos.slice(0, 5).map((logo, index) => {
+                const name = text(logo.name)
+                const imageUrl = text(logo.image_url)
+                return (
+                  <div className={partnerStyles.partnerCard} key={`${name}-${index}`}>
+                    {imageUrl ? (
+                      <span className={partnerStyles.partnerIcon}>
+                        <CmsImage src={imageUrl} alt="" />
+                      </span>
+                    ) : null}
+                    <span className={partnerStyles.partnerName}>{name}</span>
+                  </div>
+                )
+              })}
             </div>
           ) : null}
         </div>
