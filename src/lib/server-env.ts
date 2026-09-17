@@ -36,6 +36,8 @@ const serverSchema = z.object({
 
   /** WhatsApp Cloud API secrets. Optional until WhatsApp delivery is enabled. */
   WHATSAPP_ACCESS_TOKEN: z.string().min(20).optional(),
+  WHATSAPP_VERIFY_TOKEN: z.string().min(16).optional(),
+  WHATSAPP_APP_SECRET: z.string().min(16).optional(),
   WHATSAPP_GRAPH_API_VERSION: z.string().regex(/^v\d+\.\d+$/).optional(),
 
   /** Halo Nuzul server-only OpenAI configuration. */
@@ -71,6 +73,8 @@ export function getServerEnv(): ServerEnv {
     EMAIL_FROM_ADDRESS: process.env.EMAIL_FROM_ADDRESS,
     EMAIL_FROM_NAME: process.env.EMAIL_FROM_NAME,
     WHATSAPP_ACCESS_TOKEN: process.env.WHATSAPP_ACCESS_TOKEN || undefined,
+    WHATSAPP_VERIFY_TOKEN: process.env.WHATSAPP_VERIFY_TOKEN || undefined,
+    WHATSAPP_APP_SECRET: process.env.WHATSAPP_APP_SECRET || undefined,
     WHATSAPP_GRAPH_API_VERSION: process.env.WHATSAPP_GRAPH_API_VERSION || undefined,
     OPENAI_API_KEY: process.env.OPENAI_API_KEY || undefined,
     HALO_NUZUL_MODEL: process.env.HALO_NUZUL_MODEL || undefined,
