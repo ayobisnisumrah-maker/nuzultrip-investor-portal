@@ -1,6 +1,6 @@
 import 'server-only'
 
-import { randomBytes, randomUUID } from 'node:crypto'
+import { createHash, randomBytes, randomUUID } from 'node:crypto'
 
 import { getServiceRoleClient } from './service-client'
 
@@ -23,14 +23,20 @@ export function newHaloSessionId(): string {
   return randomBytes(32).toString('base64url')
 }
 
+function hashHaloSessionId(sessionId: string): string {
+  return createHash('sha256').update(sessionId, 'utf8').digest('hex')
+}
+
 export async function reserveHaloQuestion(candidateSessionId?: string): Promise<HaloReservation> {
   const sessionId = validHaloSessionId(candidateSessionId) ? candidateSessionId : newHaloSessionId()
+  const sessionHash = hashHaloSessionId(sessionId)
   const reservationId = randomUUID()
   // Service role is required because anonymous clients must never be able to
-  // inspect or burn another Halo session's product quota.
+  // inspect or burn another Halo session's product quota. Only the SHA-256
+  // digest reaches persistence; the opaque browser token is never stored.
   const client = getServiceRoleClient()
   const { data, error } = await client.rpc('reserve_halo_nuzul_question', {
-    p_session_id: sessionId,
+    p_session_id: sessionHash,
     p_reservation_id: reservationId,
     p_window_seconds: HALO_SESSION_MAX_AGE,
     p_reservation_seconds: 120,
@@ -50,7 +56,7 @@ export async function reserveHaloQuestion(candidateSessionId?: string): Promise<
 export async function commitHaloQuestion(sessionId: string, reservationId: string) {
   const client = getServiceRoleClient()
   const { data, error } = await client.rpc('commit_halo_nuzul_question', {
-    p_session_id: sessionId,
+    p_session_id: hashHaloSessionId(sessionId),
     p_reservation_id: reservationId,
   })
   if (error) throw new Error(`Halo quota commit failed: ${error.message}`)
@@ -65,7 +71,7 @@ export async function commitHaloQuestion(sessionId: string, reservationId: strin
 export async function releaseHaloQuestion(sessionId: string, reservationId: string): Promise<void> {
   const client = getServiceRoleClient()
   const { error } = await client.rpc('release_halo_nuzul_question', {
-    p_session_id: sessionId,
+    p_session_id: hashHaloSessionId(sessionId),
     p_reservation_id: reservationId,
   })
   if (error) throw new Error(`Halo quota release failed: ${error.message}`)
