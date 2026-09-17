@@ -13,6 +13,9 @@ export default async function PortalNavigationPage() {
   }
 
   const items = await getPortalNavigationItems()
+  const navigationRevision = items
+    .map((item) => `${item.id}:${item.updated_at}`)
+    .join('|')
 
-  return <PortalNavigationManager initialItems={items} />
+  return <PortalNavigationManager key={navigationRevision} initialItems={items} />
 }
