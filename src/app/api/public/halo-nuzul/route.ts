@@ -5,7 +5,6 @@ import { getServerEnv } from '@/lib/server-env'
 import {
   commitHaloQuestion,
   HALO_SESSION_COOKIE,
-  HALO_SESSION_MAX_AGE,
   releaseHaloQuestion,
   reserveHaloQuestion,
 } from '@/server/admin/halo-nuzul-quota'
@@ -65,19 +64,30 @@ function requestCookie(request: Request, name: string): string | undefined {
   }
 }
 
-function setSessionCookie(response: NextResponse, sessionId: string) {
+function sessionMaxAge(sessionExpiresAt: string): number {
+  const expiresAt = Date.parse(sessionExpiresAt)
+  if (!Number.isFinite(expiresAt)) return 60
+  return Math.max(1, Math.ceil((expiresAt - Date.now()) / 1000))
+}
+
+function setSessionCookie(response: NextResponse, sessionId: string, sessionExpiresAt: string) {
   response.cookies.set(HALO_SESSION_COOKIE, sessionId, {
     httpOnly: true,
     sameSite: 'lax',
     secure: getServerEnv().NODE_ENV === 'production',
     path: '/',
-    maxAge: HALO_SESSION_MAX_AGE,
+    maxAge: sessionMaxAge(sessionExpiresAt),
   })
   return response
 }
 
-async function handoffResponse(sessionId: string) {
-  const handoffUrl = linktreeUrl(await getPublishedNavigation())
+async function handoffResponse(sessionId: string, sessionExpiresAt: string) {
+  let handoffUrl: string | null = null
+  try {
+    handoffUrl = linktreeUrl(await getPublishedNavigation())
+  } catch {
+    // Handoff still succeeds without a URL if the public navigation read is unavailable.
+  }
   const response = NextResponse.json({
     reply: handoffUrl
       ? 'Terima kasih sudah berdiskusi cukup mendalam. Agar kebutuhan Anda dapat ditindaklanjuti melalui kanal resmi Nuzultrip, silakan lanjutkan melalui tautan berikut.'
@@ -86,7 +96,7 @@ async function handoffResponse(sessionId: string) {
     handoff: true,
     questionsRemaining: 0,
   })
-  return setSessionCookie(response, sessionId)
+  return setSessionCookie(response, sessionId, sessionExpiresAt)
 }
 
 export async function POST(request: Request) {
@@ -108,9 +118,12 @@ export async function POST(request: Request) {
   } catch {
     return NextResponse.json({ error: 'Halo Nuzul sementara tidak dapat memverifikasi batas layanan. Silakan coba lagi.' }, { status: 503 })
   }
-  if (!reservation.allowed) return handoffResponse(reservation.sessionId)
+  if (!reservation.allowed) return handoffResponse(reservation.sessionId, reservation.sessionExpiresAt)
 
+  let reservationOpen = true
   const releaseReservation = async () => {
+    if (!reservationOpen) return
+    reservationOpen = false
     try {
       await releaseHaloQuestion(reservation.sessionId, reservation.reservationId)
     } catch {
@@ -118,7 +131,15 @@ export async function POST(request: Request) {
     }
   }
 
-  const [home, navigation] = await Promise.all([getPublishedHomePage(), getPublishedNavigation()])
+  let home: Awaited<ReturnType<typeof getPublishedHomePage>>
+  let navigation: Awaited<ReturnType<typeof getPublishedNavigation>>
+  try {
+    ;[home, navigation] = await Promise.all([getPublishedHomePage(), getPublishedNavigation()])
+  } catch {
+    await releaseReservation()
+    return NextResponse.json({ error: 'Halo Nuzul sementara tidak dapat membaca informasi publik. Silakan coba lagi.' }, { status: 503 })
+  }
+
   const handoffUrl = linktreeUrl(navigation)
   const env = getServerEnv()
   if (!env.OPENAI_API_KEY) {
@@ -155,7 +176,9 @@ export async function POST(request: Request) {
   let committed: Awaited<ReturnType<typeof commitHaloQuestion>>
   try {
     committed = await commitHaloQuestion(reservation.sessionId, reservation.reservationId)
+    reservationOpen = false
   } catch {
+    await releaseReservation()
     return NextResponse.json({ error: 'Jawaban belum dapat dicatat dengan aman. Silakan kirim ulang pertanyaan Anda.' }, { status: 503 })
   }
 
@@ -166,5 +189,5 @@ export async function POST(request: Request) {
     handoff,
     questionsRemaining: committed.questionsRemaining,
   })
-  return setSessionCookie(response, reservation.sessionId)
+  return setSessionCookie(response, reservation.sessionId, committed.sessionExpiresAt)
 }
