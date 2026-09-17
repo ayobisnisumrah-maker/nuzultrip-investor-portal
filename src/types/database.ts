@@ -2437,6 +2437,68 @@ export type Database = {
           },
         ]
       }
+      halo_nuzul_reservations: {
+        Row: {
+          committed_at: string | null
+          created_at: string
+          expires_at: string
+          released_at: string | null
+          reservation_id: string
+          session_id: string
+        }
+        Insert: {
+          committed_at?: string | null
+          created_at?: string
+          expires_at?: string
+          released_at?: string | null
+          reservation_id: string
+          session_id: string
+        }
+        Update: {
+          committed_at?: string | null
+          created_at?: string
+          expires_at?: string
+          released_at?: string | null
+          reservation_id?: string
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "halo_nuzul_reservations_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "halo_nuzul_sessions"
+            referencedColumns: ["session_id"]
+          },
+        ]
+      }
+      halo_nuzul_sessions: {
+        Row: {
+          committed_questions: number
+          expires_at: string
+          reserved_questions: number
+          session_id: string
+          updated_at: string
+          window_started_at: string
+        }
+        Insert: {
+          committed_questions?: number
+          expires_at?: string
+          reserved_questions?: number
+          session_id: string
+          updated_at?: string
+          window_started_at?: string
+        }
+        Update: {
+          committed_questions?: number
+          expires_at?: string
+          reserved_questions?: number
+          session_id?: string
+          updated_at?: string
+          window_started_at?: string
+        }
+        Relationships: []
+      }
       investor_profile_change_requests: {
         Row: {
           applied_at: string | null
@@ -4960,6 +5022,14 @@ export type Database = {
     }
     Functions: {
       activate_admin_account: { Args: { p_admin_id: string }; Returns: Json }
+      commit_halo_nuzul_question: {
+        Args: { p_reservation_id: string; p_session_id: string }
+        Returns: {
+          committed: boolean
+          questions_remaining: number
+          session_expires_at: string
+        }[]
+      }
       consume_rate_limit: {
         Args: { p_bucket: string; p_limit: number; p_window_seconds: number }
         Returns: {
@@ -5019,6 +5089,23 @@ export type Database = {
       prune_rate_limits: {
         Args: { p_older_than_seconds?: number }
         Returns: number
+      }
+      release_halo_nuzul_question: {
+        Args: { p_reservation_id: string; p_session_id: string }
+        Returns: boolean
+      }
+      reserve_halo_nuzul_question: {
+        Args: {
+          p_reservation_id: string
+          p_reservation_seconds?: number
+          p_session_id: string
+          p_window_seconds?: number
+        }
+        Returns: {
+          allowed: boolean
+          questions_remaining: number
+          session_expires_at: string
+        }[]
       }
       transition_investor: {
         Args: {
