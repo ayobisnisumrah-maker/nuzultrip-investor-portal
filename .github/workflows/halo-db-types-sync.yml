@@ -1,0 +1,68 @@
+name: Halo DB Types Sync
+
+on:
+  push:
+    branches:
+      - security/halo-nuzul-atomic-session
+
+permissions:
+  contents: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  sync:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout exact branch head
+        uses: actions/checkout@v4
+        with:
+          ref: security/halo-nuzul-atomic-session
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.28.1
+          run_install: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v2
+        with:
+          version: latest
+          github-token: ${{ github.token }}
+
+      - name: Start local Supabase
+        run: supabase start
+
+      - name: Reset schema from migrations
+        run: supabase db reset
+
+      - name: Generate database types
+        run: pnpm db:types
+
+      - name: Commit generated file only
+        shell: bash
+        run: |
+          if git diff --quiet -- src/types/database.ts; then
+            echo "Generated database types are already current."
+            exit 0
+          fi
+          test -z "$(git status --short --untracked-files=all | grep -v '^ M src/types/database.ts$' || true)"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- src/types/database.ts
+          git commit -m "chore: regenerate database types"
+          git push origin HEAD:security/halo-nuzul-atomic-session
