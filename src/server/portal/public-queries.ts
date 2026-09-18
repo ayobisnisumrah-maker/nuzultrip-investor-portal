@@ -306,3 +306,42 @@ export async function getActivePortalTheme() {
 
   return data
 }
+
+export type PublicPortalArticle = {
+  type: 'article' | 'news'
+  title: string
+  description: string
+  body: string
+  date: string
+  slug: string
+  image_url: string
+}
+
+export async function getPublishedPortalArticle(type: 'article' | 'news', slug: string): Promise<PublicPortalArticle | null> {
+  const portal = await getPublishedHomePage()
+  if (!portal) return null
+  const section = portal.sections.find((item) => item.section_kind === 'rich_content')
+  const items = section?.content.items
+  if (!Array.isArray(items)) return null
+  for (const raw of items) {
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) continue
+    const item = raw as Record<string, unknown>
+    const itemType = item.type === 'news' ? 'news' : 'article'
+    const href = typeof item.href === 'string' ? item.href : ''
+    const itemSlug = href.split('/').filter(Boolean).at(-1) ?? ''
+    if (itemType !== type || itemSlug !== slug) continue
+    const title = typeof item.title === 'string' ? item.title.trim() : ''
+    const body = typeof item.body === 'string' ? item.body.trim() : ''
+    if (!title || !body) return null
+    return {
+      type: itemType,
+      title,
+      description: typeof item.description === 'string' ? item.description.trim() : '',
+      body,
+      date: typeof item.date === 'string' ? item.date.trim() : '',
+      slug: itemSlug,
+      image_url: typeof item.image_url === 'string' ? item.image_url.trim() : '',
+    }
+  }
+  return null
+}
