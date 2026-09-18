@@ -161,3 +161,6 @@ Never commit `.env*.local`, service-role keys, private keys, or tokens.
 ## Licence
 
 Proprietary. © Nuzultrip. All rights reserved.
+
+
+<!-- Production deployment marker: 2026-09-19 -->
