@@ -61,6 +61,8 @@ export function PortalArticleManager({
     Array.isArray(initialContent.items) ? initialContent.items.map(normalizeItem) : [],
   )
   const [uploadingIndex, setUploadingIndex] = useState<number | null>(null)
+  const [aiPromptByIndex, setAiPromptByIndex] = useState<Record<number, string>>({})
+  const [generatingIndex, setGeneratingIndex] = useState<number | null>(null)
   const [message, setMessage] = useState<string | null>(null)
 
   const editable = canUpdate && pageStatus === 'draft'
@@ -91,6 +93,41 @@ export function PortalArticleManager({
       next[target] = value
       return next
     })
+  }
+
+  async function generateWithAi(index: number) {
+    const item = items[index]
+    if (!item?.title.trim()) {
+      setMessage('Isi judul terlebih dahulu sebelum membuat draf dengan AI.')
+      return
+    }
+    setGeneratingIndex(index)
+    setMessage(null)
+    try {
+      const response = await fetch('/api/admin/portal/articles/generate', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          type: item.type,
+          title: item.title.trim(),
+          prompt: (aiPromptByIndex[index] ?? '').trim(),
+        }),
+      })
+      const result = (await response.json()) as { error?: string; draft?: { description?: string; slug?: string } }
+      if (!response.ok || !result.draft) {
+        setMessage(result.error ?? 'AI gagal membuat draf.')
+        return
+      }
+      updateItem(index, {
+        description: result.draft.description ?? item.description,
+        href: result.draft.slug ? `/${item.type === 'news' ? 'berita' : 'artikel'}/${result.draft.slug}` : item.href,
+      })
+      setMessage('Draf AI berhasil dibuat. Periksa dan edit hasil sebelum menyimpan atau menerbitkan.')
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'AI gagal membuat draf.')
+    } finally {
+      setGeneratingIndex(null)
+    }
   }
 
   async function uploadImage(index: number, file: File) {
@@ -243,6 +280,18 @@ export function PortalArticleManager({
                 <span className="text-fg text-sm font-medium">Judul</span>
                 <input value={item.title} disabled={!editable} onChange={(e) => updateItem(index, { title: e.target.value })} className="border-border bg-background text-fg mt-1.5 h-10 w-full rounded-lg border px-3 text-sm disabled:opacity-55" />
               </label>
+              <div className="border-primary/15 bg-primary/5 rounded-lg border p-4 md:col-span-2">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+                  <label className="block flex-1">
+                    <span className="text-fg text-sm font-medium">Arahan singkat untuk AI</span>
+                    <textarea value={aiPromptByIndex[index] ?? ''} disabled={!editable || generatingIndex === index} onChange={(e) => setAiPromptByIndex((current) => ({ ...current, [index]: e.target.value }))} placeholder="Contoh: jelaskan persiapan umrah pertama kali untuk jamaah Indonesia, bahasa edukatif dan mudah dipahami." className="border-border bg-background text-fg mt-1.5 min-h-20 w-full rounded-lg border px-3 py-2 text-sm disabled:opacity-55" />
+                  </label>
+                  <button type="button" disabled={!editable || generatingIndex !== null || !item.title.trim()} onClick={() => void generateWithAi(index)} className="bg-primary text-primary-foreground inline-flex h-10 shrink-0 items-center justify-center rounded-lg px-4 text-sm font-semibold disabled:opacity-45">
+                    {generatingIndex === index ? 'AI sedang menulis…' : 'Buat dengan AI'}
+                  </button>
+                </div>
+                <p className="text-fg-muted mt-2 text-xs">AI membuat draf, bukan menerbitkan otomatis. Admin tetap wajib memeriksa hasilnya.</p>
+              </div>
               <label className="block md:col-span-2">
                 <span className="text-fg text-sm font-medium">Ringkasan</span>
                 <textarea value={item.description} disabled={!editable} onChange={(e) => updateItem(index, { description: e.target.value })} className="border-border bg-background text-fg mt-1.5 min-h-20 w-full rounded-lg border px-3 py-2 text-sm disabled:opacity-55" />

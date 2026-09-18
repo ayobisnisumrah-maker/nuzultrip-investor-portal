@@ -479,6 +479,23 @@ function Footer({ navigation, logoSrc, pageTitle }: { navigation: NavItem[]; log
   const footer = navigation
     .filter((item) => item.location === 'footer' && !item.parent_id && usableHref(item.href))
     .sort((a, b) => a.position - b.position)
+
+  const footerHref = (item: NavItem) => {
+    const href = usableHref(item.href)
+    if (href) return href
+    const normalized = item.label.trim().toLocaleLowerCase('id-ID')
+    const anchors: Record<string, string> = {
+      'tentang nuzultrip': '#tentang',
+      'model bisnis': '#model-bisnis',
+      'ekosistem bisnis': '#ekosistem',
+      'perkembangan': '#perkembangan',
+      'ringkasan penawaran': '#penawaran',
+      'penggunaan dana': '#penggunaan-dana',
+      'tata kelola': '#tata-kelola',
+      'faktor risiko': '#faktor-risiko',
+    }
+    return anchors[normalized] ?? null
+  }
   const social = navigation
     .filter((item) => item.location === 'social' && !item.parent_id && usableHref(item.href))
     .sort((a, b) => a.position - b.position)
@@ -496,7 +513,12 @@ function Footer({ navigation, logoSrc, pageTitle }: { navigation: NavItem[]; log
             ) : null}
           </div>
           {footer.length ? (
-            <nav className={styles.footerNav}>{footer.slice(0, 8).map((item) => <Link key={item.id} href={item.href}>{item.label}</Link>)}</nav>
+            <nav className={styles.footerNav}>
+              {footer.slice(0, 8).map((item) => {
+                const href = footerHref(item)
+                return href ? <Link key={item.id} href={href}>{item.label}</Link> : <span key={item.id}>{item.label}</span>
+              })}
+            </nav>
           ) : null}
           <div className={styles.newsletter}>
             <h4>Butuh informasi terbaru?</h4>
