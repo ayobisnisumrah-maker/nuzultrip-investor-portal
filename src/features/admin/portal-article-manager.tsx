@@ -15,6 +15,7 @@ type ArticleItem = {
   date: string
   href: string
   image_url: string
+  body: string
 }
 
 function isRecord(value: unknown): value is ContentRecord {
@@ -34,6 +35,7 @@ function normalizeItem(value: unknown): ArticleItem {
     date: stringValue(item.date),
     href: stringValue(item.href),
     image_url: stringValue(item.image_url),
+    body: stringValue(item.body),
   }
 }
 
@@ -74,7 +76,7 @@ export function PortalArticleManager({
   function addItem(type: 'article' | 'news') {
     setItems((current) => [
       ...current,
-      { type, title: '', description: '', date: '', href: '', image_url: '' },
+      { type, title: '', description: '', date: '', href: '', image_url: '', body: '' },
     ])
   }
 
@@ -113,13 +115,14 @@ export function PortalArticleManager({
           prompt: (aiPromptByIndex[index] ?? '').trim(),
         }),
       })
-      const result = (await response.json()) as { error?: string; draft?: { description?: string; slug?: string } }
+      const result = (await response.json()) as { error?: string; draft?: { description?: string; body?: string; slug?: string } }
       if (!response.ok || !result.draft) {
         setMessage(result.error ?? 'AI gagal membuat draf.')
         return
       }
       updateItem(index, {
         description: result.draft.description ?? item.description,
+        body: result.draft.body ?? item.body,
         href: result.draft.slug ? `/${item.type === 'news' ? 'berita' : 'artikel'}/${result.draft.slug}` : item.href,
       })
       setMessage('Draf AI berhasil dibuat. Periksa dan edit hasil sebelum menyimpan atau menerbitkan.')
@@ -179,6 +182,7 @@ export function PortalArticleManager({
         date: item.date.trim(),
         href: item.href.trim(),
         image_url: item.image_url.trim(),
+        body: item.body.trim(),
       })),
     }
 
@@ -292,6 +296,10 @@ export function PortalArticleManager({
                 </div>
                 <p className="text-fg-muted mt-2 text-xs">AI membuat draf, bukan menerbitkan otomatis. Admin tetap wajib memeriksa hasilnya.</p>
               </div>
+              <label className="block md:col-span-2">
+                <span className="text-fg text-sm font-medium">Isi artikel / berita</span>
+                <textarea value={item.body} disabled={!editable} onChange={(e) => updateItem(index, { body: e.target.value })} placeholder="Isi lengkap artikel. Dapat dibuat otomatis oleh AI lalu diperiksa dan diedit Admin." className="border-border bg-background text-fg mt-1.5 min-h-64 w-full rounded-lg border px-3 py-2 text-sm leading-6 disabled:opacity-55" />
+              </label>
               <label className="block md:col-span-2">
                 <span className="text-fg text-sm font-medium">Ringkasan</span>
                 <textarea value={item.description} disabled={!editable} onChange={(e) => updateItem(index, { description: e.target.value })} className="border-border bg-background text-fg mt-1.5 min-h-20 w-full rounded-lg border px-3 py-2 text-sm disabled:opacity-55" />
