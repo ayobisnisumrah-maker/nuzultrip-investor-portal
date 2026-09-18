@@ -54,7 +54,7 @@ $$;
 create or replace function public.fail_whatsapp_inbound_event(p_wamid text, p_error text)
 returns boolean language sql security definer set search_path='' as $$
   update public.whatsapp_inbound_events set status='failed', last_error=left(coalesce(p_error,'unknown'),500), updated_at=now()
-  where wamid=p_wamid and status in ('processing','sending') returning true;
+  where wamid=p_wamid and status='processing' returning true;
 $$;
 revoke all on function public.claim_whatsapp_inbound_event(text,text,integer) from public,anon,authenticated;
 revoke all on function public.begin_whatsapp_inbound_delivery(text) from public,anon,authenticated;
