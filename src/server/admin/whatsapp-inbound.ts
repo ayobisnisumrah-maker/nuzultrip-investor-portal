@@ -13,7 +13,7 @@ export async function claimWhatsAppInbound(wamid: string, sender: string): Promi
 }
 export async function completeWhatsAppInbound(wamid: string, providerMessageId: string | null) {
   const client = getServiceRoleClient()
-  const { data, error } = await client.rpc('complete_whatsapp_inbound_event', { p_wamid: wamid, p_provider_message_id: providerMessageId })
+  const { data, error } = await client.rpc('complete_whatsapp_inbound_event', { p_wamid: wamid, p_provider_message_id: providerMessageId ?? '' })
   if (error || data !== true) throw new Error(`WhatsApp inbound completion failed: ${error?.message ?? 'not completed'}`)
 }
 export async function failWhatsAppInbound(wamid: string, errorMessage: string) {
