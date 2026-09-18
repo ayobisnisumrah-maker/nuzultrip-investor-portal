@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 import { updateAdminWhatsAppSettings } from '@/server/admin/whatsapp-settings-actions'
@@ -21,6 +21,7 @@ export function WhatsAppSettingsForm({ settings, canUpdate }: { settings: WhatsA
   const router = useRouter()
   const { pending, data, errorMessage, fieldError, run } = useAction(updateAdminWhatsAppSettings)
   const disabled = pending || !canUpdate
+  const [whatsAppEnabled, setWhatsAppEnabled] = useState(settings.enabled)
 
   useEffect(() => {
     if (data?.updated) router.refresh()
@@ -60,7 +61,7 @@ export function WhatsAppSettingsForm({ settings, canUpdate }: { settings: WhatsA
               <p className="text-body-sm text-fg-muted mt-1">Nomor dan Phone Number ID dikelola di sini. Access token tetap menjadi server secret dan tidak pernah ditampilkan di Admin.</p>
             </div>
             <label className="text-body-sm text-fg flex items-center gap-3">
-              <input type="checkbox" name="enabled" defaultChecked={settings.enabled} disabled={disabled} />
+              <input type="checkbox" name="enabled" checked={whatsAppEnabled} onChange={(event) => setWhatsAppEnabled(event.currentTarget.checked)} disabled={disabled} />
               Aktifkan pengiriman WhatsApp otomatis
             </label>
             <Field label="Nomor WhatsApp pengirim" hint="Nomor bisnis yang terhubung ke WhatsApp Cloud API, misalnya +6281234567890." error={fieldError('senderPhone')}>
@@ -70,8 +71,8 @@ export function WhatsAppSettingsForm({ settings, canUpdate }: { settings: WhatsA
               <Input name="phoneNumberId" defaultValue={settings.phoneNumberId} disabled={disabled} autoComplete="off" />
             </Field>
             <label className="text-body-sm text-fg flex items-start gap-3">
-              <input type="checkbox" name="aiAutoReplyEnabled" defaultChecked={settings.aiAutoReplyEnabled} disabled={disabled} />
-              <span><span className="block font-medium">Jawab otomatis dengan Halo Nuzul</span><span className="text-fg-muted block mt-1">Pesan teks WhatsApp yang masuk akan dijawab otomatis menggunakan informasi portal Nuzultrip yang sudah dipublikasikan. Webhook dan secret tetap dikelola di server.</span></span>
+              <input type="checkbox" name="aiAutoReplyEnabled" defaultChecked={settings.aiAutoReplyEnabled && settings.enabled} disabled={disabled || !whatsAppEnabled} />
+              <span><span className="block font-medium">Jawab otomatis dengan Halo Nuzul</span><span className="text-fg-muted block mt-1">Pesan teks WhatsApp yang masuk akan dijawab otomatis menggunakan informasi portal Nuzultrip yang sudah dipublikasikan. Webhook dan secret tetap dikelola di server. Aktifkan WhatsApp Cloud API terlebih dahulu untuk menggunakan fitur ini.</span></span>
             </label>
           </Stack>
         </section>
