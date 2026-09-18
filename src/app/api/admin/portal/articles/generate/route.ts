@@ -46,7 +46,7 @@ export async function POST(request: Request) {
 
   const home = await getPublishedHomePage().catch(() => null)
   const context = JSON.stringify((home?.sections ?? []).map((section) => ({ kind: section.section_kind, content: section.content }))).slice(0, 18000)
-  const instructions = `Anda membantu Admin Nuzultrip menyiapkan DRAF ${parsed.data.type === 'news' ? 'berita' : 'artikel'} dalam Bahasa Indonesia. Tulis ringkasan 2-4 kalimat, faktual, profesional, natural, dan tidak promosi berlebihan. Gunakan konteks Nuzultrip hanya bila relevan dan hanya fakta yang tersedia. Jangan mengarang harga, izin, jadwal, statistik, kinerja, investasi, atau peristiwa terkini. Untuk BERITA, bila prompt tidak memberikan fakta/sumber kejadian yang cukup, nyatakan secara singkat bahwa fakta berita perlu dilengkapi Admin; jangan menciptakan kejadian. Keluarkan hanya ringkasan tanpa judul, markdown, label, atau komentar.\n\nKONTEKS PORTAL TERBIT:\n${context}`
+  const instructions = `Anda membantu Admin Nuzultrip menyiapkan DRAF ${parsed.data.type === 'news' ? 'berita' : 'artikel'} dalam Bahasa Indonesia. Buat isi lengkap yang faktual, profesional, natural, mudah dibaca, sekitar 600-1000 kata bila bahan mencukupi. Awali output dengan satu ringkasan 2-4 kalimat pada baris pertama, lalu baris ---BODY---, lalu isi lengkap artikel dalam paragraf teks biasa. Jangan gunakan markdown heading.  Gunakan konteks Nuzultrip hanya bila relevan dan hanya fakta yang tersedia. Jangan mengarang harga, izin, jadwal, statistik, kinerja, investasi, atau peristiwa terkini. Untuk BERITA, bila prompt tidak memberikan fakta/sumber kejadian yang cukup, nyatakan secara singkat bahwa fakta berita perlu dilengkapi Admin; jangan menciptakan kejadian. Keluarkan hanya ringkasan tanpa judul, markdown, label, atau komentar.\n\nKONTEKS PORTAL TERBIT:\n${context}`
   const response = await fetch('https://api.openai.com/v1/responses', {
     method: 'POST',
     headers: { authorization: `Bearer ${env.OPENAI_API_KEY}`, 'content-type': 'application/json' },
@@ -54,14 +54,18 @@ export async function POST(request: Request) {
       model: env.HALO_NUZUL_MODEL,
       instructions,
       input: [{ role: 'user', content: `Judul: ${parsed.data.title}\nArahan Admin: ${parsed.data.prompt || 'Buat ringkasan yang relevan dengan judul.'}` }],
-      max_output_tokens: 350,
+      max_output_tokens: 1800,
       store: false,
     }),
     cache: 'no-store',
     signal: AbortSignal.timeout(20_000),
   })
   if (!response.ok) return NextResponse.json({ error: 'AI sedang tidak dapat membuat draf.' }, { status: 502 })
-  const description = outputText(await response.json().catch(() => null))
-  if (!description) return NextResponse.json({ error: 'AI belum menghasilkan draf.' }, { status: 502 })
-  return NextResponse.json({ draft: { description, slug: slugify(parsed.data.title) } })
+  const generated = outputText(await response.json().catch(() => null))
+  if (!generated) return NextResponse.json({ error: 'AI belum menghasilkan draf.' }, { status: 502 })
+  const marker = '\n---BODY---\n'
+  const markerIndex = generated.indexOf(marker)
+  const description = (markerIndex >= 0 ? generated.slice(0, markerIndex) : generated).trim().slice(0, 1200)
+  const body = (markerIndex >= 0 ? generated.slice(markerIndex + marker.length) : generated).trim()
+  return NextResponse.json({ draft: { description, body, slug: slugify(parsed.data.title) } })
 }
