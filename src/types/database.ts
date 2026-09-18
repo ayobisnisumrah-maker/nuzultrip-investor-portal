@@ -19,6 +19,45 @@ export type Database = {
   app: {
     Tables: {
       [_ in never]: never
+      whatsapp_inbound_events: {
+        Row: {
+          attempts: number
+          created_at: string
+          last_error: string | null
+          lease_expires_at: string
+          provider_message_id: string | null
+          sender_hash: string
+          sent_at: string | null
+          status: string
+          updated_at: string
+          wamid: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          last_error?: string | null
+          lease_expires_at?: string
+          provider_message_id?: string | null
+          sender_hash: string
+          sent_at?: string | null
+          status?: string
+          updated_at?: string
+          wamid: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          last_error?: string | null
+          lease_expires_at?: string
+          provider_message_id?: string | null
+          sender_hash?: string
+          sent_at?: string | null
+          status?: string
+          updated_at?: string
+          wamid?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -5022,6 +5061,14 @@ export type Database = {
     }
     Functions: {
       activate_admin_account: { Args: { p_admin_id: string }; Returns: Json }
+      claim_whatsapp_inbound_event: {
+        Args: {
+          p_lease_seconds?: number
+          p_sender_hash: string
+          p_wamid: string
+        }
+        Returns: boolean
+      }
       commit_halo_nuzul_question: {
         Args: { p_reservation_id: string; p_session_id: string }
         Returns: {
@@ -5029,6 +5076,10 @@ export type Database = {
           questions_remaining: number
           session_expires_at: string
         }[]
+      }
+      complete_whatsapp_inbound_event: {
+        Args: { p_provider_message_id: string; p_wamid: string }
+        Returns: boolean
       }
       consume_rate_limit: {
         Args: { p_bucket: string; p_limit: number; p_window_seconds: number }
@@ -5056,6 +5107,10 @@ export type Database = {
       deactivate_admin_account: {
         Args: { p_admin_id: string; p_reason?: string }
         Returns: Json
+      }
+      fail_whatsapp_inbound_event: {
+        Args: { p_error: string; p_wamid: string }
+        Returns: boolean
       }
       provision_admin_account: {
         Args: {
