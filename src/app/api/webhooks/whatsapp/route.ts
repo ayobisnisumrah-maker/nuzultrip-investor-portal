@@ -2,7 +2,7 @@ import { createHmac, timingSafeEqual } from 'node:crypto'
 import { NextResponse } from 'next/server'
 
 import { getServerEnv } from '@/lib/server-env'
-import { claimWhatsAppInbound, completeWhatsAppInbound, failWhatsAppInbound } from '@/server/admin/whatsapp-inbound'
+import { beginWhatsAppInboundDelivery, claimWhatsAppInbound, completeWhatsAppInbound, failWhatsAppInbound } from '@/server/admin/whatsapp-inbound'
 import { answerHaloNuzul } from '@/server/halo-nuzul/answer'
 import { sendHaloNuzulWhatsAppReply } from '@/server/notifications/whatsapp'
 import { getWhatsAppSettings } from '@/server/settings/whatsapp'
@@ -27,7 +27,7 @@ function validSignature(body: string, signature: string | null, secret: string |
 }
 
 type MetaMessage = { id?: string; from?: string; type?: string; text?: { body?: string } }
-type MetaPayload = { entry?: Array<{ changes?: Array<{ value?: { metadata?: { phone_number_id?: string }; messages?: MetaMessage[] } }> }> }
+type MetaPayload = { object?: string; entry?: Array<{ changes?: Array<{ field?: string; value?: { metadata?: { phone_number_id?: string }; messages?: MetaMessage[] } }> }> }
 
 export async function POST(request: Request) {
   const raw = await request.text()
@@ -38,31 +38,36 @@ export async function POST(request: Request) {
 
   let payload: MetaPayload
   try { payload = JSON.parse(raw) as MetaPayload } catch { return new NextResponse('Bad Request', { status: 400 }) }
+  if (payload.object !== 'whatsapp_business_account') return NextResponse.json({ received: true })
   const work: Promise<unknown>[] = []
   for (const entry of payload.entry ?? []) for (const change of entry.changes ?? []) {
+    if (change.field !== 'messages') continue
     const value = change.value
     if (!value || value.metadata?.phone_number_id !== settings.phoneNumberId) continue
     for (const message of value.messages ?? []) {
       const body = message.type === 'text' ? message.text?.body?.trim() : ''
       const from = message.from?.trim()
-      if (!message.id || !from || !body) continue
+      if (!message.id || !from || !body || body.length > 2000) continue
       work.push((async () => {
         let claimed = false
         try {
           claimed = await claimWhatsAppInbound(message.id!, from)
           if (!claimed) return
           const answer = await answerHaloNuzul(body)
+          await beginWhatsAppInboundDelivery(message.id!)
           const delivery = await sendHaloNuzulWhatsAppReply({ phone: from, text: answer.reply })
           if (delivery.status !== 'sent') throw new Error(delivery.reason)
           await completeWhatsAppInbound(message.id!, delivery.providerMessageId)
         } catch (error) {
           if (claimed) {
-            try { await failWhatsAppInbound(message.id!, error instanceof Error ? error.message : 'WhatsApp AI processing failed.') } catch { /* lease expiry remains the recovery path */ }
+            try { await failWhatsAppInbound(message.id!, error instanceof Error ? error.message : 'WhatsApp AI processing failed.') } catch { /* sending state intentionally blocks automatic duplicate delivery */ }
           }
+          throw error
         }
       })())
     }
   }
-  await Promise.allSettled(work)
+  const results = await Promise.allSettled(work)
+  if (results.some((result) => result.status === 'rejected')) return NextResponse.json({ received: false, retry: true }, { status: 503 })
   return NextResponse.json({ received: true })
 }
