@@ -15,8 +15,15 @@ export async function GET(request: Request) {
   const mode = url.searchParams.get('hub.mode')
   const token = url.searchParams.get('hub.verify_token')
   const challenge = url.searchParams.get('hub.challenge')
-  if (!env.WHATSAPP_VERIFY_TOKEN || mode !== 'subscribe' || token !== env.WHATSAPP_VERIFY_TOKEN || !challenge) return new NextResponse('Forbidden', { status: 403 })
+  if (!env.WHATSAPP_VERIFY_TOKEN || mode !== 'subscribe' || !safeEqualText(token, env.WHATSAPP_VERIFY_TOKEN) || !challenge) return new NextResponse('Forbidden', { status: 403 })
   return new NextResponse(challenge, { status: 200, headers: { 'content-type': 'text/plain' } })
+}
+
+function safeEqualText(actual: string | null, expected: string): boolean {
+  if (actual === null) return false
+  const actualBuffer = Buffer.from(actual, 'utf8')
+  const expectedBuffer = Buffer.from(expected, 'utf8')
+  return actualBuffer.length === expectedBuffer.length && timingSafeEqual(actualBuffer, expectedBuffer)
 }
 
 function validSignature(body: string, signature: string | null, secret: string | undefined): boolean {
@@ -56,11 +63,17 @@ export async function POST(request: Request) {
           const answer = await answerHaloNuzul(body)
           await beginWhatsAppInboundDelivery(message.id!)
           const delivery = await sendHaloNuzulWhatsAppReply({ phone: from, text: answer.reply })
-          if (delivery.status !== 'sent') throw new Error(delivery.reason)
-          await completeWhatsAppInbound(message.id!, delivery.providerMessageId)
+
+          // Once delivery has started, never automatically requeue this wamid. A network
+          // timeout can be ambiguous: Meta may already have accepted the outbound message.
+          if (delivery.status !== 'sent') return
+
+          // Provider acceptance is authoritative. If our final DB write fails, leave the
+          // event in "sending" and acknowledge Meta so a webhook retry cannot duplicate it.
+          try { await completeWhatsAppInbound(message.id!, delivery.providerMessageId) } catch { return }
         } catch (error) {
           if (claimed) {
-            try { await failWhatsAppInbound(message.id!, error instanceof Error ? error.message : 'WhatsApp AI processing failed.') } catch { /* sending state intentionally blocks automatic duplicate delivery */ }
+            try { await failWhatsAppInbound(message.id!, error instanceof Error ? error.message : 'WhatsApp AI processing failed.') } catch { /* a sending event is intentionally immutable here */ }
           }
           throw error
         }
