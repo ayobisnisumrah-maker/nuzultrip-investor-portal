@@ -60,7 +60,7 @@ export function PublicConnectLinks({ navigation }: PublicConnectLinksProps) {
   }
 
   return (
-    <details className="group fixed right-4 bottom-4 z-50 sm:right-6 sm:bottom-6" data-has-official-links={hasOfficialLinks ? 'true' : 'false'}>
+    <details className="group fixed right-4 bottom-4 z-50 hidden lg:block sm:right-6 sm:bottom-6" data-has-official-links={hasOfficialLinks ? 'true' : 'false'}>
       <summary className="bg-primary text-primary-foreground shadow-lg shadow-black/10 inline-flex min-h-12 cursor-pointer list-none items-center gap-2 rounded-full px-5 py-3 text-sm font-semibold transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 [&::-webkit-details-marker]:hidden">
         <span className="relative flex size-2.5" aria-hidden="true"><span className="bg-primary-foreground/40 absolute inline-flex size-full animate-ping rounded-full" /><span className="bg-primary-foreground relative inline-flex size-2.5 rounded-full" /></span>
         Chat Halo Nuzul

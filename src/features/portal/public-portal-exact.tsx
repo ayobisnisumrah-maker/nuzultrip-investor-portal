@@ -460,16 +460,16 @@ function ContactCta({ section }: { section?: Section }) {
   const label = text(c.primary_cta_label) || 'Hubungi Investor Relations'
 
   return (
-    <section className="bg-[#0b7374] px-6 py-16 text-white sm:py-20" id={section.anchor_id ?? 'kontak-investor'}>
-      <div className="mx-auto flex max-w-7xl flex-col gap-8 sm:flex-row sm:items-end sm:justify-between">
-        <div className="max-w-3xl">
-          <p className="text-sm font-semibold tracking-[0.16em] uppercase text-white/70">{text(c.eyebrow) || 'INVESTOR RELATIONS'}</p>
-          <h2 className="font-display mt-3 text-3xl font-semibold sm:text-5xl">{text(c.title) || 'Siap mempelajari Nuzultrip Equity lebih lanjut?'}</h2>
-          {text(c.description) ? <p className="mt-4 max-w-2xl text-base leading-7 text-white/80 sm:text-lg">{text(c.description)}</p> : null}
+    <section className={styles.contactSection} id={section.anchor_id ?? 'kontak-investor'}>
+      <div className={styles.shell}>
+        <div className={styles.contactGrid}>
+          <div>
+            <div className={styles.eyebrowLight}>{text(c.eyebrow) || 'INVESTOR RELATIONS'}</div>
+            <h2>{text(c.title) || 'Siap mempelajari Nuzultrip Equity lebih lanjut?'}</h2>
+            {text(c.description) ? <p>{text(c.description)}</p> : null}
+          </div>
+          <Link href={href} className={styles.contactButton}>{label} <Arrow /></Link>
         </div>
-        <Link href={href} className="inline-flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-full bg-white px-6 py-3 font-semibold text-[#0b7374]">
-          {label} <Arrow />
-        </Link>
       </div>
     </section>
   )
