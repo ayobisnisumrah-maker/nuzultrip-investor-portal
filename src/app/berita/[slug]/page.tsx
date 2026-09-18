@@ -8,7 +8,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
   const article = await getPublishedPortalArticle('news', slug)
   if (!article) return { title: 'Berita tidak ditemukan', robots: { index: false, follow: false } }
-  return { title: article.title, description: article.description || undefined, openGraph: { title: article.title, description: article.description || undefined, type: 'news' } }
+  return { title: article.title, description: article.description || undefined, openGraph: { title: article.title, description: article.description || undefined, type: 'article' } }
 }
 export default async function NewsPage({ params }: Props) {
   const { slug } = await params
