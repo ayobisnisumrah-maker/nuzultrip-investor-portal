@@ -2,6 +2,7 @@ import { createHmac, timingSafeEqual } from 'node:crypto'
 import { NextResponse } from 'next/server'
 
 import { getServerEnv } from '@/lib/server-env'
+import { claimWhatsAppInbound, completeWhatsAppInbound, failWhatsAppInbound } from '@/server/admin/whatsapp-inbound'
 import { answerHaloNuzul } from '@/server/halo-nuzul/answer'
 import { sendHaloNuzulWhatsAppReply } from '@/server/notifications/whatsapp'
 import { getWhatsAppSettings } from '@/server/settings/whatsapp'
@@ -46,10 +47,19 @@ export async function POST(request: Request) {
       const from = message.from?.trim()
       if (!message.id || !from || !body) continue
       work.push((async () => {
+        let claimed = false
         try {
+          claimed = await claimWhatsAppInbound(message.id!, from)
+          if (!claimed) return
           const answer = await answerHaloNuzul(body)
-          await sendHaloNuzulWhatsAppReply({ phone: from, text: answer.reply })
-        } catch { /* Meta will receive 200; durable idempotent processing is added before release. */ }
+          const delivery = await sendHaloNuzulWhatsAppReply({ phone: from, text: answer.reply })
+          if (delivery.status !== 'sent') throw new Error(delivery.reason)
+          await completeWhatsAppInbound(message.id!, delivery.providerMessageId)
+        } catch (error) {
+          if (claimed) {
+            try { await failWhatsAppInbound(message.id!, error instanceof Error ? error.message : 'WhatsApp AI processing failed.') } catch { /* lease expiry remains the recovery path */ }
+          }
+        }
       })())
     }
   }
