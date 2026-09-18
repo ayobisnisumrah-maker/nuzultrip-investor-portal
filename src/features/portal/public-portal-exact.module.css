@@ -10,3 +10,24 @@
 .contactButton:hover{background:transparent;color:#fff!important}
 @media(max-width:820px){.contactSection{padding:68px 0}.contactGrid{grid-template-columns:1fr;gap:32px;align-items:start}.contactButton{justify-self:start}}
 @media(max-width:560px){.contactSection{padding:58px 0}.contactGrid h2{font-size:clamp(2.15rem,10vw,3rem)}.contactGrid p{font-size:.88rem}.contactButton{width:100%;justify-content:space-between}}
+
+
+/* Section polish — improve hierarchy and reading rhythm while preserving the
+   CMS-driven structure and the established monochrome investor-relations system. */
+.section{scroll-margin-top:72px}
+.aboutGrid,.offerLayout,.companyGrid,.serviceLayout,.processLayout,.partnerLayout{position:relative}
+.aboutText,.offerIntro p,.companyGrid>div:first-child>p,.serviceCards p,.processSteps p{max-width:68ch}
+.statsGrid article,.serviceCards article,.offerTable{transition:border-color .18s ease,background .18s ease}
+.statsGrid article:hover,.serviceCards article:hover{background:#fafafa;border-color:#cfcfcd}
+.offerTable{background:#fff}
+.offerRow strong{letter-spacing:-.01em}
+.companyMedia,.articleCards article{box-shadow:0 1px 0 rgba(0,0,0,.04)}
+.serviceCards h3,.processSteps h3{font-weight:600}
+.articleCards article{overflow:hidden}
+.articleCards article>a{display:block;height:100%}
+.articleCards article>a img{transition:transform .35s ease}
+.articleCards article>a:hover img{transform:scale(1.018)}
+.footerNav a,.footerBrand a{transition:opacity .18s ease}
+.footerNav a:hover,.footerBrand a:hover{opacity:.62}
+@media(max-width:820px){.section{scroll-margin-top:64px}.aboutGrid h2,.offerIntro h2,.companyGrid h2,.serviceLayout h2,.processLayout h2,.partnerLayout h2{max-width:620px}.statsGrid article{min-height:138px}.companyMedia,.companyMedia img{min-height:280px;height:280px}}
+@media(max-width:560px){.page{font-size:15px}.section{padding:58px 0}.eyebrow,.eyebrowDark,.eyebrowLight{letter-spacing:.1em}.statsGrid{margin-top:38px}.statsGrid article{min-height:128px;padding:22px 18px}.statsGrid strong{font-size:2rem}.offerIntro{padding-right:0}.offerCard{min-height:260px;padding:26px 22px}.companyMedia,.companyMedia img{min-height:250px;height:250px}.companyMedia h3{left:22px;bottom:22px;font-size:1.45rem}.serviceCards article{min-height:190px;padding:22px 18px}.articleSection{padding:62px 0 68px}.footer{padding-top:54px}}
