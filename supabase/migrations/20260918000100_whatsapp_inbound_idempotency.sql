@@ -41,21 +41,21 @@ begin
 end; $$;
 
 create or replace function public.begin_whatsapp_inbound_delivery(p_wamid text)
-returns boolean language sql security definer set search_path='' as $
+returns boolean language sql security definer set search_path='' as $$
   update public.whatsapp_inbound_events set status='sending', updated_at=now(), last_error=null
   where wamid=p_wamid and status='processing' returning true;
-$;
+$$;
 
 create or replace function public.complete_whatsapp_inbound_event(p_wamid text, p_provider_message_id text)
 returns boolean language sql security definer set search_path='' as $$
   update public.whatsapp_inbound_events set status='sent', provider_message_id=p_provider_message_id, sent_at=now(), updated_at=now(), last_error=null
   where wamid=p_wamid and status='sending' returning true;
-$;
+$$;
 create or replace function public.fail_whatsapp_inbound_event(p_wamid text, p_error text)
 returns boolean language sql security definer set search_path='' as $$
   update public.whatsapp_inbound_events set status='failed', last_error=left(coalesce(p_error,'unknown'),500), updated_at=now()
   where wamid=p_wamid and status in ('processing','sending') returning true;
-$;
+$$;
 revoke all on function public.claim_whatsapp_inbound_event(text,text,integer) from public,anon,authenticated;
 revoke all on function public.begin_whatsapp_inbound_delivery(text) from public,anon,authenticated;
 revoke all on function public.complete_whatsapp_inbound_event(text,text) from public,anon,authenticated;
