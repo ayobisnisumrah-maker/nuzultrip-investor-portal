@@ -18,6 +18,7 @@ const whatsappSettingsSchema = z
     enabled: z.boolean(),
     senderPhone: z.string().trim().max(24),
     phoneNumberId: z.string().trim().max(120),
+    aiAutoReplyEnabled: z.boolean(),
     investorInvitationEnabled: z.boolean(),
     templateName,
     languageCode: z.string().trim().min(2).max(20),
@@ -65,6 +66,7 @@ export const updateAdminWhatsAppSettings = defineAction({
           enabled: input.enabled,
           sender_phone: input.senderPhone,
           phone_number_id: input.phoneNumberId,
+          ai_auto_reply_enabled: input.aiAutoReplyEnabled,
         },
         description: 'Konfigurasi non-secret untuk WhatsApp Cloud API.',
         is_public: false,
@@ -112,6 +114,7 @@ export const updateAdminWhatsAppSettings = defineAction({
           before: before.phoneNumberId ? '[configured]' : '',
           after: input.phoneNumberId ? '[configured]' : '',
         },
+        aiAutoReplyEnabled: { before: before.aiAutoReplyEnabled, after: input.aiAutoReplyEnabled },
         templateName: {
           before: before.investorInvitation.templateName,
           after: input.templateName,

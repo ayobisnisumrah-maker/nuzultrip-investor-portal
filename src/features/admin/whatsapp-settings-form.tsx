@@ -36,6 +36,7 @@ export function WhatsAppSettingsForm({ settings, canUpdate }: { settings: WhatsA
           enabled: form.get('enabled') === 'on',
           senderPhone: text(form, 'senderPhone'),
           phoneNumberId: text(form, 'phoneNumberId'),
+          aiAutoReplyEnabled: form.get('aiAutoReplyEnabled') === 'on',
           investorInvitationEnabled: form.get('investorInvitationEnabled') === 'on',
           templateName: text(form, 'templateName'),
           languageCode: text(form, 'languageCode'),
@@ -68,6 +69,10 @@ export function WhatsAppSettingsForm({ settings, canUpdate }: { settings: WhatsA
             <Field label="Phone Number ID" hint="ID nomor pada Meta WhatsApp Cloud API. Ini bukan access token." error={fieldError('phoneNumberId')}>
               <Input name="phoneNumberId" defaultValue={settings.phoneNumberId} disabled={disabled} autoComplete="off" />
             </Field>
+            <label className="text-body-sm text-fg flex items-start gap-3">
+              <input type="checkbox" name="aiAutoReplyEnabled" defaultChecked={settings.aiAutoReplyEnabled} disabled={disabled} />
+              <span><span className="block font-medium">Jawab otomatis dengan Halo Nuzul</span><span className="text-fg-muted block mt-1">Pesan teks WhatsApp yang masuk akan dijawab otomatis menggunakan informasi portal Nuzultrip yang sudah dipublikasikan. Webhook dan secret tetap dikelola di server.</span></span>
+            </label>
           </Stack>
         </section>
 
