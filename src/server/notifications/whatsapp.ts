@@ -4,7 +4,7 @@ import { getServerEnv } from '@/lib/server-env'
 import { getWhatsAppSettings } from '@/server/settings/whatsapp'
 
 export type WhatsAppDeliveryResult =
-  | { status: 'sent'; providerMessageId: string | null }
+  | { status: 'sent'; providerMessageId: string }
   | { status: 'skipped'; reason: string }
   | { status: 'failed'; reason: string }
 
@@ -26,9 +26,10 @@ export function isValidE164Phone(value: string): boolean {
 }
 
 async function sendText(input: { phone: string; text: string }): Promise<WhatsAppDeliveryResult> {
+  const settings = await getWhatsAppSettings()
+  if (!settings.enabled || !settings.aiAutoReplyEnabled) return { status: 'skipped', reason: 'WhatsApp AI auto reply is disabled.' }
   const phone = normalizeIndonesianPhone(input.phone)
   if (!isValidE164Phone(phone)) return { status: 'failed', reason: 'Nomor WhatsApp penerima tidak valid.' }
-  const settings = await getWhatsAppSettings()
   const env = getServerEnv()
   const accessToken = env.WHATSAPP_ACCESS_TOKEN?.trim()
   const graphVersion = env.WHATSAPP_GRAPH_API_VERSION?.trim()
@@ -41,7 +42,9 @@ async function sendText(input: { phone: string; text: string }): Promise<WhatsAp
   })
   if (!response.ok) return { status: 'failed', reason: `WhatsApp provider returned HTTP ${response.status}.` }
   const payload = (await response.json()) as { messages?: Array<{ id?: string }> }
-  return { status: 'sent', providerMessageId: payload.messages?.[0]?.id ?? null }
+  const providerMessageId = payload.messages?.[0]?.id?.trim()
+  if (!providerMessageId) return { status: 'failed', reason: 'WhatsApp provider response did not include a message id.' }
+  return { status: 'sent', providerMessageId }
 }
 
 export async function sendHaloNuzulWhatsAppReply(input: { phone: string; text: string }) {
