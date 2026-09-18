@@ -11,6 +11,12 @@ export async function claimWhatsAppInbound(wamid: string, sender: string): Promi
   if (error) throw new Error(`WhatsApp inbound claim failed: ${error.message}`)
   return data === true
 }
+export async function beginWhatsAppInboundDelivery(wamid: string) {
+  const client = getServiceRoleClient()
+  const { data, error } = await client.rpc('begin_whatsapp_inbound_delivery', { p_wamid: wamid })
+  if (error || data !== true) throw new Error(`WhatsApp inbound delivery start failed: ${error?.message ?? 'not started'}`)
+}
+
 export async function completeWhatsAppInbound(wamid: string, providerMessageId: string | null) {
   const client = getServiceRoleClient()
   const { data, error } = await client.rpc('complete_whatsapp_inbound_event', { p_wamid: wamid, p_provider_message_id: providerMessageId ?? '' })
