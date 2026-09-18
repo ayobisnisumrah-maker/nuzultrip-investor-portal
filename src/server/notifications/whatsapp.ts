@@ -99,7 +99,9 @@ async function sendTemplate(input: {
   if (!response.ok) return { status: 'failed', reason: `WhatsApp provider returned HTTP ${response.status}.` }
 
   const payload = (await response.json()) as { messages?: Array<{ id?: string }> }
-  return { status: 'sent', providerMessageId: payload.messages?.[0]?.id ?? null }
+  const providerMessageId = payload.messages?.[0]?.id?.trim()
+  if (!providerMessageId) return { status: 'failed', reason: 'WhatsApp provider response did not include a message id.' }
+  return { status: 'sent', providerMessageId }
 }
 
 export async function sendInvestorInvitationWhatsApp(input: {
