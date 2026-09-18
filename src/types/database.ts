@@ -5061,6 +5061,10 @@ export type Database = {
     }
     Functions: {
       activate_admin_account: { Args: { p_admin_id: string }; Returns: Json }
+      begin_whatsapp_inbound_delivery: {
+        Args: { p_wamid: string }
+        Returns: boolean
+      }
       claim_whatsapp_inbound_event: {
         Args: {
           p_lease_seconds?: number
