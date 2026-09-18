@@ -19,45 +19,6 @@ export type Database = {
   app: {
     Tables: {
       [_ in never]: never
-      whatsapp_inbound_events: {
-        Row: {
-          attempts: number
-          created_at: string
-          last_error: string | null
-          lease_expires_at: string
-          provider_message_id: string | null
-          sender_hash: string
-          sent_at: string | null
-          status: string
-          updated_at: string
-          wamid: string
-        }
-        Insert: {
-          attempts?: number
-          created_at?: string
-          last_error?: string | null
-          lease_expires_at?: string
-          provider_message_id?: string | null
-          sender_hash: string
-          sent_at?: string | null
-          status?: string
-          updated_at?: string
-          wamid: string
-        }
-        Update: {
-          attempts?: number
-          created_at?: string
-          last_error?: string | null
-          lease_expires_at?: string
-          provider_message_id?: string | null
-          sender_hash?: string
-          sent_at?: string | null
-          status?: string
-          updated_at?: string
-          wamid?: string
-        }
-        Relationships: []
-      }
     }
     Views: {
       [_ in never]: never
@@ -5052,6 +5013,45 @@ export type Database = {
           role?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      whatsapp_inbound_events: {
+        Row: {
+          attempts: number
+          created_at: string
+          last_error: string | null
+          lease_expires_at: string
+          provider_message_id: string | null
+          sender_hash: string
+          sent_at: string | null
+          status: string
+          updated_at: string
+          wamid: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          last_error?: string | null
+          lease_expires_at?: string
+          provider_message_id?: string | null
+          sender_hash: string
+          sent_at?: string | null
+          status?: string
+          updated_at?: string
+          wamid: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          last_error?: string | null
+          lease_expires_at?: string
+          provider_message_id?: string | null
+          sender_hash?: string
+          sent_at?: string | null
+          status?: string
+          updated_at?: string
+          wamid?: string
         }
         Relationships: []
       }
