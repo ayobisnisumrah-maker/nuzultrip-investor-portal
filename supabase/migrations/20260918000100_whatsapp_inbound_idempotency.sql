@@ -2,7 +2,7 @@
 create table public.whatsapp_inbound_events (
   wamid text primary key,
   sender_hash text not null check (sender_hash ~ '^[0-9a-f]{64}$'),
-  status text not null default 'processing' check (status in ('processing','sent','failed')),
+  status text not null default 'processing' check (status in ('processing','sending','sent','failed')),
   attempts integer not null default 1 check (attempts between 1 and 20),
   lease_expires_at timestamptz not null default (now() + interval '2 minutes'),
   provider_message_id text,
@@ -40,19 +40,27 @@ begin
   return coalesce(claimed,false);
 end; $$;
 
+create or replace function public.begin_whatsapp_inbound_delivery(p_wamid text)
+returns boolean language sql security definer set search_path='' as $
+  update public.whatsapp_inbound_events set status='sending', updated_at=now(), last_error=null
+  where wamid=p_wamid and status='processing' returning true;
+$;
+
 create or replace function public.complete_whatsapp_inbound_event(p_wamid text, p_provider_message_id text)
 returns boolean language sql security definer set search_path='' as $$
   update public.whatsapp_inbound_events set status='sent', provider_message_id=p_provider_message_id, sent_at=now(), updated_at=now(), last_error=null
-  where wamid=p_wamid and status='processing' returning true;
-$$;
+  where wamid=p_wamid and status='sending' returning true;
+$;
 create or replace function public.fail_whatsapp_inbound_event(p_wamid text, p_error text)
 returns boolean language sql security definer set search_path='' as $$
   update public.whatsapp_inbound_events set status='failed', last_error=left(coalesce(p_error,'unknown'),500), updated_at=now()
-  where wamid=p_wamid and status='processing' returning true;
-$$;
+  where wamid=p_wamid and status in ('processing','sending') returning true;
+$;
 revoke all on function public.claim_whatsapp_inbound_event(text,text,integer) from public,anon,authenticated;
+revoke all on function public.begin_whatsapp_inbound_delivery(text) from public,anon,authenticated;
 revoke all on function public.complete_whatsapp_inbound_event(text,text) from public,anon,authenticated;
 revoke all on function public.fail_whatsapp_inbound_event(text,text) from public,anon,authenticated;
 grant execute on function public.claim_whatsapp_inbound_event(text,text,integer) to service_role;
+grant execute on function public.begin_whatsapp_inbound_delivery(text) to service_role;
 grant execute on function public.complete_whatsapp_inbound_event(text,text) to service_role;
 grant execute on function public.fail_whatsapp_inbound_event(text,text) to service_role;
