@@ -5,6 +5,7 @@ import type { PublicPortalModel } from '@/features/portal/public-portal-model'
 import type { PublicPortalDocument } from '@/server/portal/public-queries'
 
 import styles from './public-portal-exact.module.css'
+import { V2CompanyGallery } from './v2-company-gallery'
 
 type BaseProps = ComponentProps<typeof PublicPortalModel>
 type Section = BaseProps['sections'][number]
@@ -210,12 +211,23 @@ function CompanyStory({ section }: { section?: Section }) {
   const images = records(c.images)
   const metrics = records(c.metrics)
   const primaryImage = text(c.image_url)
+  const galleryImages = [
+    ...(primaryImage ? [{ src: primaryImage, alt: text(c.image_alt) || 'Nuzultrip' }] : []),
+    ...images.map((image, index) => ({
+      src: text(image.image_url) || text(image.url),
+      alt: text(image.alt) || text(image.title) || `Galeri perjalanan Nuzultrip #${index + 1}`,
+    })),
+  ].filter((image, index, all) => image.src && all.findIndex((candidate) => candidate.src === image.src) === index)
+  const galleryMetrics = metrics.map((metric) => ({
+    value: text(metric.value),
+    label: text(metric.label),
+  })).filter((metric) => metric.value || metric.label)
+
   return (
     <section className={styles.section} id={section.anchor_id ?? 'bisnis'}>
       <div className={styles.shell}><div className={styles.companyGrid}>
         <div className={styles.companyIntro}><div><div className={styles.eyebrowDark}>{text(c.eyebrow) || 'PERUSAHAAN'}</div><h2>{text(c.title) || 'Nuzultrip'}</h2>{text(c.description) ? <p>{text(c.description)}</p> : null}</div><Link href="#informasi-investor" className={styles.inlineLink}>Lebih Detail Penawaran <Arrow /></Link></div>
-        <div className={styles.companyMedia}>{primaryImage ? <CmsImage src={primaryImage} alt={text(c.image_alt) || 'Nuzultrip'} /> : images[0] ? <CmsImage src={text(images[0].image_url)} alt={text(images[0].alt) || 'Nuzultrip'} /> : null}<div className={styles.mediaIndicators}>{[0,1,2,3,4].map((i)=><span key={i} />)}</div></div>
-        <div className={styles.companyMetrics}>{metrics.slice(0,5).map((m,i)=><article key={i}><strong>{text(m.value)}</strong><span>{text(m.label)}</span></article>)}</div>
+        <V2CompanyGallery images={galleryImages} metrics={galleryMetrics} />
       </div></div>
     </section>
   )
@@ -320,32 +332,6 @@ function InvestorInfo({ growth, funds, governance, risks, documents }: { growth?
   </div></section>
 }
 
-function Faq({ section }: { section?: Section }) {
-  if (!section) return null
-  const c = section.content
-  const items = records(c.items)
-  if (!items.length) return null
-  return (
-    <section className={styles.section} id={section.anchor_id ?? 'faq'}>
-      <div className={styles.shell}>
-        <div className={styles.faqLayout}>
-          <div>
-            <div className={styles.eyebrowDark}>{text(c.eyebrow) || 'FAQ'}</div>
-            <h2>{text(c.title) || 'Pertanyaan yang Sering Diajukan'}</h2>
-          </div>
-          <div>
-            {items.map((item, index) => (
-              <details key={`${text(item.question)}-${index}`}>
-                <summary>{text(item.question) || text(item.title)}</summary>
-                <p>{text(item.answer) || text(item.description)}</p>
-              </details>
-            ))}
-          </div>
-        </div>
-      </div>
-    </section>
-  )
-}
 
 function Articles({ section }: { section?: Section }) {
   if (!section) return null
@@ -446,7 +432,6 @@ export function PublicPortalExact({ page, sections, navigation, publicDocuments,
   const documents = sectionByKind(resolved, 'documents')
   const logos = sectionByKind(resolved, 'logo_wall')
   const articles = sectionByKind(resolved, 'rich_content')
-  const faq = sectionByKind(resolved, 'faq')
   const contactCta = sectionByKind(resolved, 'contact_cta')
   const logoSrc = brandLogoUrl || '/brand/nuzultrip-logo-portal.svg'
 
@@ -463,7 +448,6 @@ export function PublicPortalExact({ page, sections, navigation, publicDocuments,
         <Roadmap section={roadmap} />
         <Partners section={logos} />
         <InvestorInfo growth={growth} funds={funds} governance={governance} risks={risks} documents={documents} />
-        <Faq section={faq} />
         <ContactCta section={contactCta} documents={publicDocuments} />
         <Articles section={articles} />
       </main>
