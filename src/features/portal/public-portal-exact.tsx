@@ -15,6 +15,34 @@ export type PublicPortalExactProps = BaseProps & {
   publicDocuments: PublicPortalDocument[]
 }
 
+const V2_COMPANY_IMAGES = [
+  'https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=1200&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1565552645632-d725f8bfc19a?q=80&w=1200&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1519817650390-64a93db51149?q=80&w=1200&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=1200&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=1200&auto=format&fit=crop',
+]
+const V2_COMPANY_METRICS: Record<string, unknown>[] = [
+  { value: '10+ Tahun', label: 'Pengalaman tim di bidang umroh' },
+  { value: '4 Negara', label: 'Jaringan vendor layanan terpercaya' },
+  { value: '1000+', label: 'Total jamaah telah diberangkatkan' },
+  { value: 'Rp.11 M+', label: 'Omzet kumulatif periode 2024–2026' },
+  { value: 'Amanah', label: 'Terverifikasi PPIU Kemenag' },
+]
+const V2_NETWORK_CARDS: Record<string, unknown>[] = [
+  { name: 'Agen Nuzultrip', description: 'Mendukung setiap agen terstruktur dan efisien dengan teknologi penjualan cerdas.', icon: '◎' },
+  { name: 'Mitra Travel', description: 'Jalinan kemitraan untuk layanan umrah lebih optimal dengan standarisasi bersama.', icon: '◇' },
+  { name: 'Vendor Layanan', description: 'Partner layanan terpercaya untuk kebutuhan ibadah mulai maskapai, hotel, hingga handling.', icon: '□' },
+]
+const V2_INVESTOR_CARDS: Record<string, unknown>[] = [
+  { title: 'Strategi Pertumbuhan', description: 'Pertumbuhan melalui penguatan layanan, sistem dan jaringan.', image_url: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=1200&auto=format&fit=crop' },
+  { title: 'Manajemen Risiko', description: 'Risiko utama dan pendekatan mitigasi dalam kepemilikan equity.', image_url: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?q=80&w=1200&auto=format&fit=crop' },
+  { title: 'Penggunaan Modal', description: 'Alokasi modal pada empat prioritas strategis pengembangan Nuzultrip.', image_url: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?q=80&w=1200&auto=format&fit=crop' },
+  { title: 'Dokumen dan Informasi', description: 'Akses dokumen dan informasi penting secara terstruktur.', image_url: 'https://images.unsplash.com/photo-1450133064473-71024230f91b?q=80&w=1200&auto=format&fit=crop' },
+  { title: 'Keunggulan Kompetitif', description: 'Nilai strategis yang mendukung pertumbuhan dan kepemilikan equity.', image_url: 'https://images.unsplash.com/photo-1591604129939-f1efa4d9f7fa?q=80&w=1200&auto=format&fit=crop' },
+  { title: 'Mekanisme Hasil & Pelaporan', description: 'Distribusi hasil dengan pelaporan berkala dan transparan.', image_url: 'https://images.unsplash.com/photo-1551836022-d5d88e9218df?q=80&w=1200&auto=format&fit=crop' },
+]
+
 function text(value: unknown): string {
   return typeof value === 'string' ? value.trim() : ''
 }
@@ -99,7 +127,7 @@ function Hero({ section }: { section?: Section }) {
   const c = section.content
   const titleLines = text(c.title).split('|').map((item) => item.trim()).filter(Boolean).slice(0, 3)
   const tags = strings(c.tags)
-  const image = text(c.image_url)
+  const image = text(c.image_url) || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=1200&auto=format&fit=crop'
   const imageAlt = text(c.image_alt) || 'Nuzultrip Equity'
   const primaryLabel = text(c.primary_cta_label) || 'Ajukan Minat Equity'
   const primaryHref = usableHref(c.primary_cta_href) || '/hubungi'
@@ -182,7 +210,7 @@ function Offering({ section }: { section?: Section }) {
             <div className={styles.eyebrowDark}>{text(c.eyebrow) || 'PELUANG EQUITY'}</div>
             <h2>{text(c.title) || 'Kesempatan Bertumbuh Bersama'}</h2>
             {text(c.description) ? <p>{text(c.description)}</p> : null}
-            <Link href="/hubungi" className={styles.inlineLink}>Lihat Detail Penawaran <Arrow /></Link>
+            <Link href={usableHref(c.detail_cta_href)||'/hubungi'} className={styles.inlineLink}>{text(c.detail_cta_label)||'Lebih Detail Penawaran'} <Arrow /></Link>
           </div>
           {rows.length ? (
             <div className={styles.offerTable}>
@@ -193,10 +221,10 @@ function Offering({ section }: { section?: Section }) {
               ))}
             </div>
           ) : null}
-          <aside className={styles.offerCard}>
-            <h3>Investasi Hari Ini,<br />Untuk Masa Depan<br />yang Lebih Baik.</h3>
+          <aside className={styles.offerCard} style={text(c.card_image_url)?{backgroundImage:`linear-gradient(rgba(0,0,0,.5),rgba(0,0,0,.72)),url(${text(c.card_image_url)})`,backgroundSize:'cover',backgroundPosition:'center'}:undefined}>
+            <h3>{text(c.card_title)||<>Investasi Hari Ini,<br />Untuk Masa Depan<br />yang Lebih Baik.</>}</h3>
             <div className={styles.offerRule} />
-            <Link href="/hubungi">Ajukan Minat Equity <Arrow /></Link>
+            <Link href={usableHref(c.card_cta_href)||'/hubungi'}>{text(c.card_cta_label)||'Ajukan Minat Equity'} <Arrow /></Link>
             <div className={styles.offerPattern} aria-hidden="true">◢◢◢◢</div>
           </aside>
         </div>
@@ -209,7 +237,7 @@ function CompanyStory({ section }: { section?: Section }) {
   if (!section) return null
   const c = section.content
   const images = records(c.images)
-  const metrics = records(c.metrics)
+  const metrics = records(c.metrics).length ? records(c.metrics) : V2_COMPANY_METRICS
   const primaryImage = text(c.image_url)
   const galleryImages = [
     ...(primaryImage ? [{ src: primaryImage, alt: text(c.image_alt) || 'Nuzultrip' }] : []),
@@ -217,6 +245,7 @@ function CompanyStory({ section }: { section?: Section }) {
       src: text(image.image_url) || text(image.url),
       alt: text(image.alt) || text(image.title) || `Galeri perjalanan Nuzultrip #${index + 1}`,
     })),
+    ...(primaryImage || images.length ? [] : V2_COMPANY_IMAGES).map((src, index) => ({ src, alt: `Galeri Nuzultrip #${index + 1}` })),
   ].filter((image, index, all) => image.src && all.findIndex((candidate) => candidate.src === image.src) === index)
   const galleryMetrics = metrics.map((metric) => ({
     value: text(metric.value),
@@ -226,7 +255,7 @@ function CompanyStory({ section }: { section?: Section }) {
   return (
     <section className={styles.section} id={section.anchor_id ?? 'bisnis'}>
       <div className={styles.shell}><div className={styles.companyGrid}>
-        <div className={styles.companyIntro}><div><div className={styles.eyebrowDark}>{text(c.eyebrow) || 'PERUSAHAAN'}</div><h2>{text(c.title) || 'Nuzultrip'}</h2>{text(c.description) ? <p>{text(c.description)}</p> : null}</div><Link href="#informasi-investor" className={styles.inlineLink}>Lebih Detail Penawaran <Arrow /></Link></div>
+        <div className={styles.companyIntro}><div><div className={styles.eyebrowDark}>{text(c.eyebrow) || 'PERUSAHAAN'}</div><h2>{text(c.title) || 'Nuzultrip'}</h2>{text(c.description) ? <p>{text(c.description)}</p> : null}</div><Link href={usableHref(c.cta_href)||'#informasi-investor'} className={styles.inlineLink}>{text(c.cta_label)||'Lebih Detail Penawaran'} <Arrow /></Link></div>
         <V2CompanyGallery images={galleryImages} metrics={galleryMetrics} />
       </div></div>
     </section>
@@ -316,18 +345,20 @@ function Partners({ section }: { section?: Section }) {
   return <section className={styles.partnerSection} id={section.anchor_id ?? 'jaringan'}><div className={styles.shell}><div className={styles.networkLayout}>
     <div className={styles.networkIntro}><div><div className={styles.eyebrowDark}>{text(c.eyebrow)||'JARINGAN & MITRA'}</div><h2>{text(c.title)||'Terhubung untuk Bertumbuh Bersama'}</h2>{text(c.description)?<p>{text(c.description)}</p>:null}</div>{usableHref(c.cta_href)?<Link className={styles.inlineLink} href={text(c.cta_href)}>{text(c.cta_label)||'Pelajari Selengkapnya'} <Arrow /></Link>:null}</div>
     <div className={styles.networkCards}>{items.slice(0,3).map((item,index)=><article key={index}><span className={styles.networkIcon}><CmsIcon item={item} fallback={['◎','◇','▣'][index]||'•'} /></span><div><h3>{text(item.title)||text(item.name)}</h3>{text(item.description)?<p>{text(item.description)}</p>:null}</div></article>)}</div>
-    <div className={styles.networkMedia}>{image?<CmsImage src={image} alt={text(c.image_alt)||'Jaringan Nuzultrip'}/>:null}<div><h3>{text(c.image_caption)||text(c.highlight_title)||'Satu Ekosistem, Banyak Peluang'}</h3></div></div>
+    <div className={styles.networkMedia}>{image?<CmsImage src={image} alt={text(c.image_alt)||'Jaringan Nuzultrip'}/>:null}<div><h3>{text(c.image_caption)||text(c.highlight)||text(c.highlight_title)||'Satu Ekosistem, Banyak Peluang'}</h3></div></div>
   </div></div></section>
 }
 
 function InvestorInfo({ growth, funds, governance, risks, documents }: { growth?: Section; funds?: Section; governance?: Section; risks?: Section; documents?: Section }) {
+  const cmsInvestorItems = growth?.section_kind === 'investor_updates' ? records(growth.content.items) : []
+  const investorItems = cmsInvestorItems.length >= 6 ? cmsInvestorItems : V2_INVESTOR_CARDS
   const blocks = [growth, funds, governance, risks, documents].filter(Boolean) as Section[]
-  if (!blocks.length) return null
-  const heroImage = blocks.map((s)=>text(s.content.image_url)).find(Boolean)
+  if (!blocks.length && !investorItems.length) return null
+  const heroImage = investorItems.map((item)=>text(item.image_url)).find(Boolean) || text(V2_INVESTOR_CARDS[0].image_url)
   return <section className={styles.infoSection} id="informasi-investor"><div className={styles.shell}>
     <div className={styles.infoHeader}><div className={styles.eyebrowDark}>INFORMASI INVESTOR</div><h2>Informasi penting dalam satu tempat</h2></div>
     <div className={styles.infoLayout}><div className={styles.infoMedia}>{heroImage ? <CmsImage src={heroImage} alt="Informasi Investor Nuzultrip" /> : null}</div><div className={styles.infoGrid}>
-      {blocks.slice(0,6).map((section)=><article key={section.id}><div><h3>{text(section.content.title)}</h3>{text(section.content.description)?<p>{text(section.content.description)}</p>:null}</div><span className={styles.infoMore}>Selengkapnya <Arrow /></span></article>)}
+      {investorItems.slice(0,6).map((item,index)=><article key={`${text(item.title)}-${index}`}><div><h3>{text(item.title)}</h3>{text(item.description)?<p>{text(item.description)}</p>:null}</div><span className={styles.infoMore}>Selengkapnya <Arrow /></span></article>)}
     </div></div>
   </div></section>
 }
@@ -353,7 +384,7 @@ function ContactCta({ section, documents }: { section?: Section; documents: Publ
   return <section className={styles.contactSection} id={section.anchor_id ?? 'kontak'}><div className={styles.shell}><div className={styles.quickLayout}>
     <div className={styles.quickIntro}><div className={styles.eyebrowLight}>{text(c.eyebrow)||'QUICK ACTION'}</div><h2>{text(c.title)||'Kenali. Pelajari. Tentukan Langkah Anda.'}</h2>{text(c.description)?<p>{text(c.description)}</p>:null}</div>
     <div className={styles.quickCards}><Link href={primaryHref}><span>Investor Relations</span><h3>{text(c.primary_cta_label)||'Hubungi Tim'}</h3><p>{text(c.primary_cta_description)||text(c.contact_value)}</p><Arrow /></Link>{secondaryHref?<Link href={secondaryHref}><span>Dokumen Resmi</span><h3>{text(c.secondary_cta_label)||'Unduh Pitchdeck'}</h3><p>{text(c.secondary_cta_description)||'Pelajari ringkasan informasi Nuzultrip Equity'}</p><Arrow /></Link>:null}</div>
-    <div className={styles.quickMedia}>{text(c.image_url)?<CmsImage src={text(c.image_url)} alt={text(c.image_alt)||'Nuzultrip Equity'}/>:null}<div><small>{text(c.image_eyebrow)||'LANGKAH AWAL KEMITRAAN'}</small><h3>{text(c.image_title)||'Siap Mengenal Nuzultrip Lebih Jauh?'}</h3>{text(c.image_description)?<p>{text(c.image_description)}</p>:null}<Link href={primaryHref}>{text(c.primary_cta_label)||'Ajukan Minat Equity'} <Arrow /></Link></div></div>
+    <div className={styles.quickMedia}>{(text(c.image_url)||'https://images.unsplash.com/photo-1580418827493-f2b22c0a76cb?q=80&w=1200&auto=format&fit=crop')?<CmsImage src={text(c.image_url)||'https://images.unsplash.com/photo-1580418827493-f2b22c0a76cb?q=80&w=1200&auto=format&fit=crop'} alt={text(c.image_alt)||'Nuzultrip Equity'}/>:null}<div><small>{text(c.image_eyebrow)||'LANGKAH AWAL KEMITRAAN'}</small><h3>{text(c.image_title)||'Siap Mengenal Nuzultrip Lebih Jauh?'}</h3>{text(c.image_description)?<p>{text(c.image_description)}</p>:null}<Link href={primaryHref}>{text(c.primary_cta_label)||'Ajukan Minat Equity'} <Arrow /></Link></div></div>
   </div></div></section>
 }
 
@@ -424,7 +455,7 @@ export function PublicPortalExact({ page, sections, navigation, publicDocuments,
   const offering = sectionByKind(resolved, 'investment_info')
   const business = sectionByKind(resolved, 'business_overview')
   const ecosystem = sectionByKind(resolved, 'ecosystem')
-  const growth = sectionByKind(resolved, 'growth_story')
+  const growth = sectionByKind(resolved, 'investor_updates') ?? sectionByKind(resolved, 'growth_story')
   const funds = sectionByKind(resolved, 'strategic_direction')
   const roadmap = sectionByKind(resolved, 'milestones') ?? growth
   const governance = sectionByKind(resolved, 'investor_updates')

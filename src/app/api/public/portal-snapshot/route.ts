@@ -25,6 +25,7 @@ const HOME_SECTION_KINDS = new Set([
   'stat_grid',
   'logo_wall',
   'faq',
+  'contact_cta',
 ])
 
 export async function GET() {
