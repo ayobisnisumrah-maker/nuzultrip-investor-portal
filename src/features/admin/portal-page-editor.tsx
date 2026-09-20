@@ -694,6 +694,7 @@ function VisualEditor({
           value={asString(content.image_caption)}
           onChange={(image_caption) => update({ image_caption })}
         />
+        <div className="md:col-span-2"><Field label="Sorotan Ekosistem / Chip Hero" value={(Array.isArray(content.tags) ? content.tags.filter((item): item is string => typeof item === 'string') : []).join('\n')} onChange={(value) => update({ tags: value.split('\n').map((item) => item.trim()).filter(Boolean) })} multiline placeholder="Satu sorotan per baris" /></div>
       </div>
     )
   }
@@ -836,6 +837,14 @@ function VisualEditor({
           onChange={(description) => update({ description })}
           multiline
         />
+        <div className="grid gap-4 md:grid-cols-2">
+          <Field label="CTA Detail Penawaran" value={asString(content.detail_cta_label)} onChange={(detail_cta_label) => update({ detail_cta_label })} />
+          <Field label="Tautan CTA Detail" value={asString(content.detail_cta_href)} onChange={(detail_cta_href) => update({ detail_cta_href })} />
+          <Field label="Headline Kartu Equity" value={asString(content.card_title)} onChange={(card_title) => update({ card_title })} multiline />
+          <ImageField label="Gambar Kartu Equity" value={asString(content.card_image_url)} onChange={(card_image_url) => update({ card_image_url })} />
+          <Field label="CTA Kartu Equity" value={asString(content.card_cta_label)} onChange={(card_cta_label) => update({ card_cta_label })} />
+          <Field label="Tautan CTA Kartu" value={asString(content.card_cta_href)} onChange={(card_cta_href) => update({ card_cta_href })} />
+        </div>
 
         <div className="border-border space-y-4 rounded-xl border p-4">
           {renderArrayHeader(
@@ -946,6 +955,10 @@ function VisualEditor({
         />
 
         {kind === 'business_overview' ? <>
+          <div className="grid gap-4 md:grid-cols-2">
+            <Field label="CTA Perusahaan" value={asString(content.cta_label)} onChange={(cta_label) => update({ cta_label })} />
+            <Field label="Tautan CTA Perusahaan" value={asString(content.cta_href)} onChange={(cta_href) => update({ cta_href })} />
+          </div>
           <div className="border-border space-y-4 rounded-xl border p-4">
             {renderArrayHeader('Galeri Perusahaan', 'Maksimal lima gambar interaktif seperti layout V2.', 'images')}
             {renderObjectArrayEditor('images', Array.isArray(content.images) ? content.images.filter(isRecord) : [], [
@@ -1228,6 +1241,7 @@ function VisualEditor({
         <Field label="Deskripsi" value={asString(content.description)} onChange={(description) => update({ description })} multiline />
         <ImageField label="Gambar Utama Jaringan" value={asString(content.image_url)} onChange={(image_url) => update({ image_url })} />
         <Field label="Headline pada Gambar" value={asString(content.highlight)} onChange={(highlight) => update({ highlight })} />
+        <div className="grid gap-4 md:grid-cols-2"><Field label="CTA Jaringan" value={asString(content.cta_label)} onChange={(cta_label) => update({ cta_label })} /><Field label="Tautan CTA Jaringan" value={asString(content.cta_href)} onChange={(cta_href) => update({ cta_href })} /></div>
 
         <div className="border-border space-y-4 rounded-xl border p-4">
           {renderArrayHeader(
