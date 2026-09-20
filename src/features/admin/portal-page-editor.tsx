@@ -989,7 +989,7 @@ function VisualEditor({
     )
   }
 
-  if (kind === 'business_overview' || kind === 'ecosystem' || kind === 'investor_updates') {
+  if (kind === 'ecosystem' || kind === 'investor_updates') {
     const items = Array.isArray(content.items) ? content.items.filter(isRecord) : []
 
     return (
@@ -1068,6 +1068,42 @@ function VisualEditor({
               label: 'Tautan',
               placeholder: '/halaman atau https://...',
             },
+          ])}
+        </div>
+      </div>
+    )
+  }
+
+  if (kind === 'business_overview') {
+    const images = Array.isArray(content.images) ? content.images.filter(isRecord) : []
+    const metrics = Array.isArray(content.metrics) ? content.metrics.filter(isRecord) : []
+
+    return (
+      <div className="space-y-5">
+        <Field label="Eyebrow" value={asString(content.eyebrow)} onChange={(eyebrow) => update({ eyebrow })} placeholder="PERUSAHAAN" />
+        <Field label="Judul" value={asString(content.title)} onChange={(title) => update({ title })} />
+        <Field label="Deskripsi" value={asString(content.description)} onChange={(description) => update({ description })} multiline />
+        <div className="grid gap-4 md:grid-cols-2">
+          <Field label="Label CTA" value={asString(content.cta_label)} onChange={(cta_label) => update({ cta_label })} />
+          <Field label="Tautan CTA" value={asString(content.cta_href)} onChange={(cta_href) => update({ cta_href })} />
+        </div>
+        <ImageField label="Gambar Utama Perusahaan" value={asString(content.image_url)} onChange={(image_url) => update({ image_url })} />
+        <Field label="Teks Alternatif Gambar Utama" value={asString(content.image_alt)} onChange={(image_alt) => update({ image_alt })} />
+
+        <div className="border-border space-y-4 rounded-xl border p-4">
+          {renderArrayHeader('Galeri Perusahaan', 'Tambahkan hingga 5 gambar. Portal akan mengganti gambar saat interaksi hover.', 'images')}
+          {renderObjectArrayEditor('images', images, [
+            { key: 'image_url', label: 'Gambar' },
+            { key: 'alt', label: 'Teks Alternatif' },
+            { key: 'title', label: 'Judul Gambar' },
+          ])}
+        </div>
+
+        <div className="border-border space-y-4 rounded-xl border p-4">
+          {renderArrayHeader('Metrik Perusahaan', 'Angka penting yang tampil pada galeri perusahaan.', 'metrics')}
+          {renderObjectArrayEditor('metrics', metrics, [
+            { key: 'value', label: 'Nilai', placeholder: 'Contoh: 4.500+' },
+            { key: 'label', label: 'Label', placeholder: 'Contoh: Jamaah' },
           ])}
         </div>
       </div>
