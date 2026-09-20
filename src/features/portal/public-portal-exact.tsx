@@ -1,11 +1,11 @@
-import type { ComponentProps, ReactNode } from 'react'
+import type { ComponentProps } from 'react'
 import Link from 'next/link'
 
 import type { PublicPortalModel } from '@/features/portal/public-portal-model'
 import type { PublicPortalDocument } from '@/server/portal/public-queries'
 
-import partnerStyles from './partner-cards.module.css'
 import styles from './public-portal-exact.module.css'
+import { V2CompanyGallery } from './v2-company-gallery'
 
 type BaseProps = ComponentProps<typeof PublicPortalModel>
 type Section = BaseProps['sections'][number]
@@ -208,25 +208,27 @@ function Offering({ section }: { section?: Section }) {
 function CompanyStory({ section }: { section?: Section }) {
   if (!section) return null
   const c = section.content
-  const image = text(c.image_url)
+  const images = records(c.images)
+  const metrics = records(c.metrics)
+  const primaryImage = text(c.image_url)
+  const galleryImages = [
+    ...(primaryImage ? [{ src: primaryImage, alt: text(c.image_alt) || 'Nuzultrip' }] : []),
+    ...images.map((image, index) => ({
+      src: text(image.image_url) || text(image.url),
+      alt: text(image.alt) || text(image.title) || `Galeri perjalanan Nuzultrip #${index + 1}`,
+    })),
+  ].filter((image, index, all) => image.src && all.findIndex((candidate) => candidate.src === image.src) === index)
+  const galleryMetrics = metrics.map((metric) => ({
+    value: text(metric.value),
+    label: text(metric.label),
+  })).filter((metric) => metric.value || metric.label)
+
   return (
     <section className={styles.section} id={section.anchor_id ?? 'bisnis'}>
-      <div className={styles.shell}>
-        <div className={styles.companyGrid}>
-          <div>
-            <div className={styles.eyebrowDark}>{text(c.eyebrow) || 'PERUSAHAAN'}</div>
-            <h2>{text(c.title) || 'Nuzultrip'}</h2>
-            {text(c.description) ? <p>{text(c.description)}</p> : null}
-            <Link href="#informasi-investor" className={styles.inlineLink}>Kenali Nuzultrip <Arrow /></Link>
-          </div>
-          {image ? (
-            <div className={styles.companyMedia}>
-              <CmsImage src={image} alt={text(c.image_alt) || 'Nuzultrip'} />
-              {text(c.image_caption) ? <h3>{text(c.image_caption)}</h3> : null}
-            </div>
-          ) : null}
-        </div>
-      </div>
+      <div className={styles.shell}><div className={styles.companyGrid}>
+        <div className={styles.companyIntro}><div><div className={styles.eyebrowDark}>{text(c.eyebrow) || 'PERUSAHAAN'}</div><h2>{text(c.title) || 'Nuzultrip'}</h2>{text(c.description) ? <p>{text(c.description)}</p> : null}</div><Link href="#informasi-investor" className={styles.inlineLink}>Lebih Detail Penawaran <Arrow /></Link></div>
+        <V2CompanyGallery images={galleryImages} metrics={galleryMetrics} />
+      </div></div>
     </section>
   )
 }
@@ -271,26 +273,35 @@ function Services({ section }: { section?: Section }) {
 
 function Process({ offering }: { offering?: Section }) {
   if (!offering) return null
-  const steps = records(offering.content.process_steps)
+  const c = offering.content
+  const steps = records(c.process_steps)
   if (!steps.length) return null
+  return <section className={styles.processSection} id="proses"><div className={styles.shell}>
+    <div className={styles.processHeader}><div className={styles.eyebrowLight}>{text(c.process_eyebrow)||'ALUR & TAHAPAN INVESTASI'}</div><h2>{text(c.process_title)||'Langkah Mudah Menjadi Bagian dari Kami'}</h2>{text(c.process_description)?<p>{text(c.process_description)}</p>:null}</div>
+    <div className={styles.processSteps}>{steps.slice(0,4).map((step,index)=><article key={index}><div className={styles.processTop}><span className={styles.stepNumber}>0{index+1}</span><i /></div><h3>{text(step.title)}</h3>{text(step.description)?<p>{text(step.description)}</p>:null}<div className={styles.processMeta}>{text(step.duration)?<span>{text(step.duration)}</span>:null}{text(step.output)?<b>{text(step.output)}</b>:null}</div></article>)}</div>
+    {usableHref(c.process_cta_href)?<div className={styles.processCta}><Link href={text(c.process_cta_href)}>{text(c.process_cta_label)||'Pelajari Selengkapnya'} <Arrow /></Link></div>:null}
+  </div></section>
+}
+
+function Roadmap({ section }: { section?: Section }) {
+  if (!section) return null
+  const c = section.content
+  const items = records(c.milestones).length ? records(c.milestones) : records(c.items)
+  if (!items.length && !text(c.title)) return null
   return (
-    <section className={styles.section} id="proses">
+    <section className={styles.roadmapSection} id={section.anchor_id ?? 'roadmap'}>
       <div className={styles.shell}>
-        <div className={styles.processLayout}>
-          <div>
-            <div className={styles.eyebrowDark}>PROSES</div>
-            <h2>Langkah Mudah<br />Menjadi Investor</h2>
-          </div>
-          <div className={styles.processSteps}>
-            {steps.slice(0, 4).map((step, index) => (
-              <article key={`${text(step.title)}-${index}`}>
-                <span className={styles.stepNumber}>0{index + 1}</span>
-                <h3>{text(step.title)}</h3>
-                {text(step.description) ? <p>{text(step.description)}</p> : null}
-              </article>
-            ))}
-          </div>
+        <div className={styles.roadmapHeader}>
+          <div><div className={styles.eyebrowDark}>{text(c.eyebrow) || 'ROADMAP PERUSAHAAN'}</div><h2>{text(c.title) || 'Peta Jalan Pertumbuhan Nuzultrip'}</h2>{text(c.description) ? <p>{text(c.description)}</p> : null}</div>
+          <span>{items.length ? '01 / 0' + items.length : 'ROADMAP'}</span>
         </div>
+        {items.length ? <div className={styles.roadmapTrack}>{items.slice(0, 6).map((item, index) => {
+          const period = text(item.period) || text(item.date) || text(item.year)
+          const title = text(item.title) || text(item.label)
+          const description = text(item.description) || text(item.summary)
+          const status = text(item.status_label) || text(item.status)
+          return <article key={'roadmap-' + index}><div className={styles.roadmapMeta}><b>FASE 0{index + 1}</b>{status ? <span>{status}</span> : null}</div>{period ? <small>{period}</small> : null}<h3>{title}</h3>{description ? <p>{description}</p> : null}</article>
+        })}</div> : null}
       </div>
     </section>
   )
@@ -299,110 +310,28 @@ function Process({ offering }: { offering?: Section }) {
 function Partners({ section }: { section?: Section }) {
   if (!section) return null
   const c = section.content
-  const logos = records(c.logos)
-  if (!logos.length && !text(c.title)) return null
-
-  return (
-    <section className={styles.partnerSection} id={section.anchor_id ?? 'mitra'}>
-      <div className={styles.shell}>
-        <div className={partnerStyles.partnerLayout}>
-          <div>
-            <div className={styles.eyebrowDark}>{text(c.eyebrow) || 'MITRA'}</div>
-            <h2>{text(c.title) || 'Mitra yang Tumbuh Bersama'}</h2>
-          </div>
-          {logos.length ? (
-            <div className={partnerStyles.partnerLogos}>
-              {logos.slice(0, 5).map((logo, index) => {
-                const name = text(logo.name)
-                const imageUrl = text(logo.image_url)
-                return (
-                  <div className={partnerStyles.partnerCard} key={`${name}-${index}`}>
-                    {imageUrl ? (
-                      <span className={partnerStyles.partnerIcon}>
-                        <CmsImage src={imageUrl} alt="" />
-                      </span>
-                    ) : null}
-                    <span className={partnerStyles.partnerName}>{name}</span>
-                  </div>
-                )
-              })}
-            </div>
-          ) : null}
-        </div>
-      </div>
-    </section>
-  )
+  const items = records(c.items).length ? records(c.items) : records(c.logos)
+  const image = text(c.image_url)
+  if (!items.length && !text(c.title)) return null
+  return <section className={styles.partnerSection} id={section.anchor_id ?? 'jaringan'}><div className={styles.shell}><div className={styles.networkLayout}>
+    <div className={styles.networkIntro}><div><div className={styles.eyebrowDark}>{text(c.eyebrow)||'JARINGAN & MITRA'}</div><h2>{text(c.title)||'Terhubung untuk Bertumbuh Bersama'}</h2>{text(c.description)?<p>{text(c.description)}</p>:null}</div>{usableHref(c.cta_href)?<Link className={styles.inlineLink} href={text(c.cta_href)}>{text(c.cta_label)||'Pelajari Selengkapnya'} <Arrow /></Link>:null}</div>
+    <div className={styles.networkCards}>{items.slice(0,3).map((item,index)=><article key={index}><span className={styles.networkIcon}><CmsIcon item={item} fallback={['◎','◇','▣'][index]||'•'} /></span><div><h3>{text(item.title)||text(item.name)}</h3>{text(item.description)?<p>{text(item.description)}</p>:null}</div></article>)}</div>
+    <div className={styles.networkMedia}>{image?<CmsImage src={image} alt={text(c.image_alt)||'Jaringan Nuzultrip'}/>:null}<div><h3>{text(c.image_caption)||text(c.highlight_title)||'Satu Ekosistem, Banyak Peluang'}</h3></div></div>
+  </div></div></section>
 }
 
 function InvestorInfo({ growth, funds, governance, risks, documents }: { growth?: Section; funds?: Section; governance?: Section; risks?: Section; documents?: Section }) {
   const blocks = [growth, funds, governance, risks, documents].filter(Boolean) as Section[]
   if (!blocks.length) return null
-
-  return (
-    <section className={styles.infoSection} id="informasi-investor">
-      <div className={styles.shell}>
-        <div className={styles.infoHeader}>
-          <div className={styles.eyebrowDark}>INFORMASI INVESTOR</div>
-          <h2>Informasi penting dalam satu tempat.</h2>
-        </div>
-        <div className={styles.infoGrid}>
-          {blocks.map((section) => {
-            const c = section.content
-            const items = records(c.items).length
-              ? records(c.items)
-              : records(c.pillars).length
-                ? records(c.pillars)
-                : records(c.milestones)
-
-            return (
-              <article key={section.id}>
-                {text(c.eyebrow) ? <small>{text(c.eyebrow)}</small> : null}
-                <h3>{text(c.title)}</h3>
-                {text(c.description) ? <p>{text(c.description)}</p> : null}
-                {items.length ? (
-                  <ul>
-                    {items.slice(0, 6).map((item, index) => {
-                      const label = text(item.title) || text(item.label)
-                      const href = usableHref(item.href)
-                      return <li key={`${section.id}-${index}`}>{href ? <Link href={href}>{label}</Link> : label}</li>
-                    })}
-                  </ul>
-                ) : null}
-              </article>
-            )
-          })}
-        </div>
-      </div>
-    </section>
-  )
+  const heroImage = blocks.map((s)=>text(s.content.image_url)).find(Boolean)
+  return <section className={styles.infoSection} id="informasi-investor"><div className={styles.shell}>
+    <div className={styles.infoHeader}><div className={styles.eyebrowDark}>INFORMASI INVESTOR</div><h2>Informasi penting dalam satu tempat</h2></div>
+    <div className={styles.infoLayout}><div className={styles.infoMedia}>{heroImage ? <CmsImage src={heroImage} alt="Informasi Investor Nuzultrip" /> : null}</div><div className={styles.infoGrid}>
+      {blocks.slice(0,6).map((section)=><article key={section.id}><div><h3>{text(section.content.title)}</h3>{text(section.content.description)?<p>{text(section.content.description)}</p>:null}</div><span className={styles.infoMore}>Selengkapnya <Arrow /></span></article>)}
+    </div></div>
+  </div></section>
 }
 
-function Faq({ section }: { section?: Section }) {
-  if (!section) return null
-  const c = section.content
-  const items = records(c.items)
-  if (!items.length) return null
-  return (
-    <section className={styles.section} id={section.anchor_id ?? 'faq'}>
-      <div className={styles.shell}>
-        <div className={styles.faqLayout}>
-          <div>
-            <div className={styles.eyebrowDark}>{text(c.eyebrow) || 'FAQ'}</div>
-            <h2>{text(c.title) || 'Pertanyaan yang Sering Diajukan'}</h2>
-          </div>
-          <div>
-            {items.map((item, index) => (
-              <details key={`${text(item.question)}-${index}`}>
-                <summary>{text(item.question) || text(item.title)}</summary>
-                <p>{text(item.answer) || text(item.description)}</p>
-              </details>
-            ))}
-          </div>
-        </div>
-      </div>
-    </section>
-  )
-}
 
 function Articles({ section }: { section?: Section }) {
   if (!section) return null
@@ -410,74 +339,30 @@ function Articles({ section }: { section?: Section }) {
   const items = records(c.items)
   if (!items.length) return null
   const ctaHref = usableHref(c.cta_href)
-
-  return (
-    <section className={styles.articleSection} id={section.anchor_id ?? 'wawasan'}>
-      <style>{`.${styles.articleLayout}::before,.${styles.articleLayout}::after{display:none!important;content:none!important}`}</style>
-      <div className={styles.shell}>
-        <div className={styles.articleLayout}>
-          <div className={styles.articleIntro}>
-            <div className={styles.eyebrowLight}>{text(c.eyebrow) || 'ARTIKEL & BERITA'}</div>
-            <h2>{text(c.title) || 'Artikel & Berita Nuzultrip'}</h2>
-            {text(c.description) ? <p>{text(c.description)}</p> : null}
-            {ctaHref ? <Link href={ctaHref}>{text(c.cta_label) || 'Lihat Selengkapnya'} <Arrow /></Link> : null}
-          </div>
-          <div className={styles.articleCards}>
-            {items.slice(0, 2).map((item, index) => {
-              const href = usableHref(item.href)
-              const typeLabel = text(item.type).toLocaleLowerCase('id-ID') === 'news' ? 'Berita' : 'Artikel'
-              const date = text(item.date)
-              const meta = date ? `${typeLabel} · ${date}` : typeLabel
-              const card: ReactNode = (
-                <>
-                  <CmsImage src={text(item.image_url)} alt={text(item.title)} />
-                  <h3>{text(item.title)}</h3>
-                  <small>{meta}</small>
-                  {text(item.description) ? <p style={{ padding: '10px 18px 0', color: '#b5b5b5', fontSize: '.78rem', lineHeight: 1.5 }}>{text(item.description)}</p> : null}
-                  {href ? <span aria-hidden="true">→</span> : null}
-                </>
-              )
-
-              return href ? (
-                <article key={`${text(item.title)}-${index}`}>
-                  <Link href={href} aria-label={`Buka ${text(item.title)}`}>{card}</Link>
-                </article>
-              ) : (
-                <article key={`${text(item.title)}-${index}`}>{card}</article>
-              )
-            })}
-          </div>
-        </div>
-      </div>
-    </section>
-  )
+  return <section className={styles.articleSection} id={section.anchor_id ?? 'artikel'}><div className={styles.shell}><div className={styles.articleLayout}>
+    <div className={styles.articleIntro}><div><div className={styles.eyebrowDark}>{text(c.eyebrow)||'ARTIKEL & BERITA'}</div><h2>{text(c.title)||'Wawasan untuk Keputusan yang Lebih Baik'}</h2>{text(c.description)?<p>{text(c.description)}</p>:null}</div>{ctaHref?<Link href={ctaHref}>{text(c.cta_label)||'Lebih Artikel Lainnya'} <Arrow /></Link>:null}</div>
+    <div className={styles.articleCards}>{items.slice(0,2).map((item,index)=>{const href=usableHref(item.href);const body=<><div className={styles.articleImage}><CmsImage src={text(item.image_url)} alt={text(item.title)}/><span>{text(item.type)||'Artikel'}</span></div><div className={styles.articleBody}><small>{text(item.date)}</small><h3>{text(item.title)}</h3>{text(item.description)?<p>{text(item.description)}</p>:null}<b>Baca Selengkapnya <Arrow /></b></div></>;return <article key={index}>{href?<Link href={href}>{body}</Link>:body}</article>})}</div>
+  </div></div></section>
 }
 
-function ContactCta({ section }: { section?: Section }) {
+function ContactCta({ section, documents }: { section?: Section; documents: PublicPortalDocument[] }) {
   if (!section) return null
-  const c = section.content
-  const href = usableHref(c.primary_cta_href) || '/hubungi'
-  const label = text(c.primary_cta_label) || 'Hubungi Investor Relations'
-
-  return (
-    <section className={styles.contactSection} id={section.anchor_id ?? 'kontak-investor'}>
-      <div className={styles.shell}>
-        <div className={styles.contactGrid}>
-          <div>
-            <div className={styles.eyebrowLight}>{text(c.eyebrow) || 'INVESTOR RELATIONS'}</div>
-            <h2>{text(c.title) || 'Siap mempelajari Nuzultrip Equity lebih lanjut?'}</h2>
-            {text(c.description) ? <p>{text(c.description)}</p> : null}
-          </div>
-          <Link href={href} className={styles.contactButton}>{label} <Arrow /></Link>
-        </div>
-      </div>
-    </section>
-  )
+  const c=section.content
+  const primaryHref=usableHref(c.primary_cta_href)||'/hubungi'
+  const secondaryHref=usableHref(c.secondary_cta_href)||documents[0]?.href||null
+  return <section className={styles.contactSection} id={section.anchor_id ?? 'kontak'}><div className={styles.shell}><div className={styles.quickLayout}>
+    <div className={styles.quickIntro}><div className={styles.eyebrowLight}>{text(c.eyebrow)||'QUICK ACTION'}</div><h2>{text(c.title)||'Kenali. Pelajari. Tentukan Langkah Anda.'}</h2>{text(c.description)?<p>{text(c.description)}</p>:null}</div>
+    <div className={styles.quickCards}><Link href={primaryHref}><span>Investor Relations</span><h3>{text(c.primary_cta_label)||'Hubungi Tim'}</h3><p>{text(c.primary_cta_description)||text(c.contact_value)}</p><Arrow /></Link>{secondaryHref?<Link href={secondaryHref}><span>Dokumen Resmi</span><h3>{text(c.secondary_cta_label)||'Unduh Pitchdeck'}</h3><p>{text(c.secondary_cta_description)||'Pelajari ringkasan informasi Nuzultrip Equity'}</p><Arrow /></Link>:null}</div>
+    <div className={styles.quickMedia}>{text(c.image_url)?<CmsImage src={text(c.image_url)} alt={text(c.image_alt)||'Nuzultrip Equity'}/>:null}<div><small>{text(c.image_eyebrow)||'LANGKAH AWAL KEMITRAAN'}</small><h3>{text(c.image_title)||'Siap Mengenal Nuzultrip Lebih Jauh?'}</h3>{text(c.image_description)?<p>{text(c.image_description)}</p>:null}<Link href={primaryHref}>{text(c.primary_cta_label)||'Ajukan Minat Equity'} <Arrow /></Link></div></div>
+  </div></div></section>
 }
 
 function Footer({ navigation, logoSrc, pageTitle }: { navigation: NavItem[]; logoSrc: string; pageTitle: string }) {
   const footer = navigation
-    .filter((item) => item.location === 'footer' && !item.parent_id && usableHref(item.href))
+    .filter((item) => item.location === 'footer' && !item.parent_id)
+    .sort((a, b) => a.position - b.position)
+  const footerChildren = navigation
+    .filter((item) => item.location === 'footer' && Boolean(item.parent_id))
     .sort((a, b) => a.position - b.position)
 
   const footerHref = (item: NavItem) => {
@@ -512,14 +397,7 @@ function Footer({ navigation, logoSrc, pageTitle }: { navigation: NavItem[]; log
               <div>{social.slice(0, 5).map((item) => <Link key={item.id} href={item.href} target={item.target}>{item.label}</Link>)}</div>
             ) : null}
           </div>
-          {footer.length ? (
-            <nav className={styles.footerNav}>
-              {footer.slice(0, 8).map((item) => {
-                const href = footerHref(item)
-                return href ? <Link key={item.id} href={href}>{item.label}</Link> : <span key={item.id}>{item.label}</span>
-              })}
-            </nav>
-          ) : null}
+          {footer.length ? <div className={styles.footerColumns}>{footer.slice(0,2).map((group)=><nav key={group.id}><h4>{group.label}</h4>{(footerChildren.filter((item)=>item.parent_id===group.id).length ? footerChildren.filter((item)=>item.parent_id===group.id) : [group]).slice(0,8).map((item)=>{const href=footerHref(item);return href?<Link key={item.id} href={href}>{item.label}</Link>:<span key={item.id}>{item.label}</span>})}</nav>)}</div> : null}
           <div className={styles.newsletter}>
             <h4>Butuh informasi terbaru?</h4>
             <p>Hubungi tim Investor Relations untuk informasi, dokumen, atau pembaruan resmi Nuzultrip Equity.</p>
@@ -548,12 +426,12 @@ export function PublicPortalExact({ page, sections, navigation, publicDocuments,
   const ecosystem = sectionByKind(resolved, 'ecosystem')
   const growth = sectionByKind(resolved, 'growth_story')
   const funds = sectionByKind(resolved, 'strategic_direction')
+  const roadmap = sectionByKind(resolved, 'milestones') ?? growth
   const governance = sectionByKind(resolved, 'investor_updates')
   const risks = sectionByKind(resolved, 'legal_notice')
   const documents = sectionByKind(resolved, 'documents')
   const logos = sectionByKind(resolved, 'logo_wall')
   const articles = sectionByKind(resolved, 'rich_content')
-  const faq = sectionByKind(resolved, 'faq')
   const contactCta = sectionByKind(resolved, 'contact_cta')
   const logoSrc = brandLogoUrl || '/brand/nuzultrip-logo-portal.svg'
 
@@ -567,11 +445,11 @@ export function PublicPortalExact({ page, sections, navigation, publicDocuments,
         <CompanyStory section={business} />
         <Services section={ecosystem} />
         <Process offering={offering} />
+        <Roadmap section={roadmap} />
         <Partners section={logos} />
         <InvestorInfo growth={growth} funds={funds} governance={governance} risks={risks} documents={documents} />
-        <Faq section={faq} />
+        <ContactCta section={contactCta} documents={publicDocuments} />
         <Articles section={articles} />
-        <ContactCta section={contactCta} />
       </main>
       <Footer navigation={navigation} logoSrc={logoSrc} pageTitle={page.title} />
     </div>
