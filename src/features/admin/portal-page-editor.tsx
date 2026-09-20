@@ -945,6 +945,24 @@ function VisualEditor({
           onChange={(image_alt) => update({ image_alt })}
         />
 
+        {kind === 'business_overview' ? <>
+          <div className="border-border space-y-4 rounded-xl border p-4">
+            {renderArrayHeader('Galeri Perusahaan', 'Maksimal lima gambar interaktif seperti layout V2.', 'images')}
+            {renderObjectArrayEditor('images', Array.isArray(content.images) ? content.images.filter(isRecord) : [], [
+              { key: 'title', label: 'Judul / Alt' },
+              { key: 'image_url', label: 'Gambar' },
+            ])}
+          </div>
+          <div className="border-border space-y-4 rounded-xl border p-4">
+            {renderArrayHeader('Metrik Perusahaan', 'Lima poin kredensial di kolom kanan layout V2.', 'metrics')}
+            {renderObjectArrayEditor('metrics', Array.isArray(content.metrics) ? content.metrics.filter(isRecord) : [], [
+              { key: 'value', label: 'Nilai' },
+              { key: 'label', label: 'Label' },
+              { key: 'description', label: 'Keterangan', multiline: true },
+            ])}
+          </div>
+        </> : null}
+
         <div className="border-border space-y-4 rounded-xl border p-4">
           {renderArrayHeader(
             'Daftar Item',
@@ -962,6 +980,7 @@ function VisualEditor({
               label: 'Deskripsi',
               multiline: true,
             },
+            ...(kind === 'investor_updates' ? [{ key: 'details', label: 'Detail Lengkap', multiline: true }] : []),
             {
               key: 'icon',
               label: 'Ikon (emoji atau simbol)',
@@ -1206,10 +1225,13 @@ function VisualEditor({
           value={asString(content.title)}
           onChange={(title) => update({ title })}
         />
+        <Field label="Deskripsi" value={asString(content.description)} onChange={(description) => update({ description })} multiline />
+        <ImageField label="Gambar Utama Jaringan" value={asString(content.image_url)} onChange={(image_url) => update({ image_url })} />
+        <Field label="Headline pada Gambar" value={asString(content.highlight)} onChange={(highlight) => update({ highlight })} />
 
         <div className="border-border space-y-4 rounded-xl border p-4">
           {renderArrayHeader(
-            'Logo & Jaringan',
+            'Kartu Jaringan & Mitra',
             'Kelola logo mitra, klien, atau pihak terkait.',
             'logos',
           )}
@@ -1220,8 +1242,17 @@ function VisualEditor({
               label: 'Nama',
             },
             {
+              key: 'description',
+              label: 'Deskripsi',
+              multiline: true,
+            },
+            {
+              key: 'icon',
+              label: 'Ikon / simbol',
+            },
+            {
               key: 'image_url',
-              label: 'URL Gambar Logo',
+              label: 'Gambar / Logo',
               placeholder: 'https://...',
             },
             {
@@ -1279,6 +1310,7 @@ function VisualEditor({
   if (kind === 'contact_cta') {
     return (
       <div className="space-y-4">
+        <Field label="Eyebrow" value={asString(content.eyebrow)} onChange={(eyebrow) => update({ eyebrow })} />
         <Field
           label="Judul"
           value={asString(content.title)}
@@ -1304,7 +1336,12 @@ function VisualEditor({
             value={asString(content.primary_cta_href)}
             onChange={(primary_cta_href) => update({ primary_cta_href })}
           />
+          <Field label="CTA Sekunder" value={asString(content.secondary_cta_label)} onChange={(secondary_cta_label) => update({ secondary_cta_label })} />
+          <Field label="Tautan CTA Sekunder" value={asString(content.secondary_cta_href)} onChange={(secondary_cta_href) => update({ secondary_cta_href })} />
         </div>
+        <ImageField label="Gambar Quick Action" value={asString(content.image_url)} onChange={(image_url) => update({ image_url })} />
+        <Field label="Headline Kartu Visual" value={asString(content.image_title)} onChange={(image_title) => update({ image_title })} />
+        <Field label="Deskripsi Kartu Visual" value={asString(content.image_description)} onChange={(image_description) => update({ image_description })} multiline />
       </div>
     )
   }
