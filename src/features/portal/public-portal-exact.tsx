@@ -237,7 +237,7 @@ function CompanyStory({ section, fallbackMetrics = [], fallbackImages = [] }: { 
   if (!section) return null
   const c = section.content
   const images = records(c.images)
-  const metrics = records(c.metrics).length ? records(c.metrics) : (fallbackMetrics.length ? fallbackMetrics : V2_COMPANY_METRICS)
+  const metrics = records(c.metrics).length ? records(c.metrics) : V2_COMPANY_METRICS
   const primaryImage = text(c.image_url)
   const galleryImages = [
     ...(primaryImage ? [{ src: primaryImage, alt: text(c.image_alt) || 'Nuzultrip' }] : []),
@@ -245,7 +245,7 @@ function CompanyStory({ section, fallbackMetrics = [], fallbackImages = [] }: { 
       src: text(image.image_url) || text(image.url),
       alt: text(image.alt) || text(image.title) || `Galeri perjalanan Nuzultrip #${index + 1}`,
     })),
-    ...(fallbackImages.length ? fallbackImages : V2_COMPANY_IMAGES).map((src, index) => ({ src, alt: `Galeri Nuzultrip #${index + 1}` })),
+    ...(primaryImage || images.length ? [] : V2_COMPANY_IMAGES).map((src, index) => ({ src, alt: `Galeri Nuzultrip #${index + 1}` })),
   ].filter((image, index, all) => image.src && all.findIndex((candidate) => candidate.src === image.src) === index)
   const galleryMetrics = metrics.map((metric) => ({
     value: text(metric.value),
@@ -350,10 +350,11 @@ function Partners({ section, fallbackImage }: { section?: Section; fallbackImage
 }
 
 function InvestorInfo({ growth, funds, governance, risks, documents, fallbackImage }: { growth?: Section; funds?: Section; governance?: Section; risks?: Section; documents?: Section; fallbackImage?: string }) {
-  const investorItems = growth?.section_kind === 'investor_updates' ? records(growth.content.items) : []
+  const cmsInvestorItems = growth?.section_kind === 'investor_updates' ? records(growth.content.items) : []
+  const investorItems = cmsInvestorItems.length >= 6 ? cmsInvestorItems : V2_INVESTOR_CARDS
   const blocks = [growth, funds, governance, risks, documents].filter(Boolean) as Section[]
   if (!blocks.length && !investorItems.length) return null
-  const heroImage = investorItems.map((item)=>text(item.image_url)).find(Boolean) || blocks.map((s)=>text(s.content.image_url)).find(Boolean) || fallbackImage || text(V2_INVESTOR_CARDS[0].image_url)
+  const heroImage = investorItems.map((item)=>text(item.image_url)).find(Boolean) || text(V2_INVESTOR_CARDS[0].image_url)
   return <section className={styles.infoSection} id="informasi-investor"><div className={styles.shell}>
     <div className={styles.infoHeader}><div className={styles.eyebrowDark}>INFORMASI INVESTOR</div><h2>Informasi penting dalam satu tempat</h2></div>
     <div className={styles.infoLayout}><div className={styles.infoMedia}>{heroImage ? <CmsImage src={heroImage} alt="Informasi Investor Nuzultrip" /> : null}</div><div className={styles.infoGrid}>
