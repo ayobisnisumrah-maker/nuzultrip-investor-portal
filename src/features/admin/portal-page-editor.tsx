@@ -611,9 +611,23 @@ function VisualEditor({
                     ) : (
                       <Field
                         label={field.label}
-                        value={asString(item[field.key])}
+                        value={
+                          field.key === 'bullets' && Array.isArray(item[field.key])
+                            ? item[field.key]
+                                .filter((value): value is string => typeof value === 'string')
+                                .join('\n')
+                            : asString(item[field.key])
+                        }
                         onChange={(fieldValue) =>
-                          updateArray(arrayKey, index, { [field.key]: fieldValue })
+                          updateArray(arrayKey, index, {
+                            [field.key]:
+                              field.key === 'bullets'
+                                ? fieldValue
+                                    .split('\n')
+                                    .map((value) => value.trim())
+                                    .filter(Boolean)
+                                : fieldValue,
+                          })
                         }
                         multiline={field.multiline}
                         placeholder={field.placeholder}
