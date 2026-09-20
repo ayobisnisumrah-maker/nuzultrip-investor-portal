@@ -1,10 +1,9 @@
-import type { ComponentProps, ReactNode } from 'react'
+import type { ComponentProps } from 'react'
 import Link from 'next/link'
 
 import type { PublicPortalModel } from '@/features/portal/public-portal-model'
 import type { PublicPortalDocument } from '@/server/portal/public-queries'
 
-import partnerStyles from './partner-cards.module.css'
 import styles from './public-portal-exact.module.css'
 
 type BaseProps = ComponentProps<typeof PublicPortalModel>
