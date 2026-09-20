@@ -39,6 +39,32 @@ const SECTION_KINDS = [
 
 type SectionKind = (typeof SECTION_KINDS)[number]
 
+const PORTAL_SECTION_ORDER: readonly SectionKind[] = [
+  'hero_3d',
+  'intro',
+  'stat_grid',
+  'investment_info',
+  'business_overview',
+  'ecosystem',
+  'growth_story',
+  'logo_wall',
+  'strategic_direction',
+  'investor_updates',
+  'legal_notice',
+  'documents',
+  'contact_cta',
+  'rich_content',
+  'vision_mission',
+  'financial_highlights',
+  'faq',
+  'milestones',
+]
+
+function portalSectionRank(kind: string) {
+  const index = PORTAL_SECTION_ORDER.indexOf(kind as SectionKind)
+  return index === -1 ? PORTAL_SECTION_ORDER.length : index
+}
+
 type Section = {
   id: string
   section_kind: string
@@ -66,14 +92,14 @@ const SECTION_LABELS: Record<SectionKind, string> = {
   intro: 'Tentang Kami',
   vision_mission: 'Visi & Misi',
   business_overview: 'Perjalanan Muslim',
-  growth_story: 'Pertumbuhan',
+  growth_story: 'Peta Jalan Pertumbuhan',
   ecosystem: 'Layanan Utama',
   investment_info: 'Peluang Equity',
-  milestones: 'Peta Jalan Pertumbuhan',
+  milestones: 'Roadmap Lama (Kompatibilitas)',
   strategic_direction: 'Strategi Pertumbuhan',
   financial_highlights: 'Sorotan Keuangan',
   investor_updates: 'Informasi Investor',
-  documents: 'Dokumen Investor',
+  documents: 'Informasi & Dokumen',
   contact_cta: 'Quick Action & Kontak',
   legal_notice: 'Pemberitahuan Hukum',
   rich_content: 'Artikel & Berita',
@@ -89,18 +115,18 @@ const SECTION_DESCRIPTIONS: Record<SectionKind, string> = {
   business_overview:
     'Penjelasan mengenai bisnis Nuzultrip, sistem yang telah dibangun, dan fondasi operasional yang sudah berjalan.',
   growth_story:
-    'Perjalanan pembangunan, pengembangan sistem, dan perkembangan Nuzultrip dari waktu ke waktu.',
+    'Roadmap perusahaan dalam format slider fase. Kelola periode, status, judul, poin fase, dan KPI dari sini.',
   ecosystem: 'Komponen bisnis dan ekosistem Nuzultrip.',
   investment_info:
     'Penjelasan kebutuhan modal dan fokus penggunaan modal untuk pengembangan digital serta penguatan operasional.',
-  milestones: 'Perkembangan penting, pencapaian, dan tahapan yang telah dicapai Nuzultrip.',
+  milestones: 'Format roadmap lama. Dipertahankan hanya untuk kompatibilitas konten yang pernah diterbitkan.',
   strategic_direction:
     'Prioritas pengembangan kapabilitas digital dan penguatan kapasitas operasional Nuzultrip.',
   financial_highlights:
     'Indikator dan informasi keuangan utama yang telah disetujui untuk dipublikasikan.',
   investor_updates:
     'Pembaruan perusahaan dan perkembangan penting yang relevan bagi pemangku kepentingan.',
-  documents: 'Materi dan dokumen yang tersedia secara publik.',
+  documents: 'Atur teks area informasi. File publik tetap bersumber dari Dokumen Portal.',
   contact_cta: 'Kanal komunikasi untuk pertanyaan dan kebutuhan informasi lebih lanjut.',
   legal_notice: 'Catatan hukum dan penafian.',
   rich_content: 'Konten fleksibel untuk kebutuhan khusus.',
@@ -1422,6 +1448,10 @@ export function PortalPageEditor({
   const [error, setError] = useState<string | null>(null)
 
   const status = pageStatus as PageStatus
+  const orderedSections = [...sections].sort((a, b) => {
+    const rank = portalSectionRank(a.section_kind) - portalSectionRank(b.section_kind)
+    return rank || a.position - b.position
+  })
 
   function runTransition(action: () => Promise<{ ok: boolean; error?: { message: string } }>) {
     setError(null)
@@ -1802,7 +1832,7 @@ export function PortalPageEditor({
           Belum ada bagian. Tambahkan bagian pertama dari Pembangun Bagian.
         </div>
       ) : (
-        sections.map((section) => {
+        orderedSections.map((section, visualIndex) => {
           const open = openId === section.id
           const kind = section.section_kind as SectionKind
           const hasVisualEditor = SECTION_KINDS.includes(kind)
@@ -1820,7 +1850,7 @@ export function PortalPageEditor({
               >
                 <span className="min-w-0">
                   <strong className="text-fg block text-sm">
-                    {section.position + 1}. {SECTION_LABELS[kind] ?? section.section_kind}
+                    {visualIndex + 1}. {SECTION_LABELS[kind] ?? section.section_kind}
                   </strong>
 
                   <span className="text-fg-subtle mt-1 block text-xs">
