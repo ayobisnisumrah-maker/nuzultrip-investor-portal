@@ -435,7 +435,9 @@ export function PublicPortalExact({ page, sections, navigation, publicDocuments,
   const ecosystem = sectionByKind(resolved, 'ecosystem')
   const growth = sectionByKind(resolved, 'growth_story')
   const funds = sectionByKind(resolved, 'strategic_direction')
-  const roadmap = sectionByKind(resolved, 'milestones') ?? growth
+  // growth_story is the canonical roadmap source. Keep milestones only as a
+  // compatibility fallback for previously published revisions.
+  const roadmap = growth ?? sectionByKind(resolved, 'milestones')
   const governance = sectionByKind(resolved, 'investor_updates')
   const risks = sectionByKind(resolved, 'legal_notice')
   const documents = sectionByKind(resolved, 'documents')
