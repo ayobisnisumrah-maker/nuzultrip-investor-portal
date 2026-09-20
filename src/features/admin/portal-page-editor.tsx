@@ -1039,6 +1039,12 @@ function VisualEditor({
               multiline: true,
             },
             {
+              key: 'bullets',
+              label: 'Poin Fase',
+              placeholder: 'Satu poin per baris',
+              multiline: true,
+            },
+            {
               key: 'metric_label',
               label: 'Label KPI',
               placeholder: 'Contoh: Target Equity',
