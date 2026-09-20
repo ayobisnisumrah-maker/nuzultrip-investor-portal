@@ -183,7 +183,7 @@ function Offering({ section }: { section?: Section }) {
             <div className={styles.eyebrowDark}>{text(c.eyebrow) || 'PELUANG EQUITY'}</div>
             <h2>{text(c.title) || 'Kesempatan Bertumbuh Bersama'}</h2>
             {text(c.description) ? <p>{text(c.description)}</p> : null}
-            <Link href="/hubungi" className={styles.inlineLink}>Lihat Detail Penawaran <Arrow /></Link>
+            <Link href={usableHref(c.cta_href) || '/hubungi'} className={styles.inlineLink}>{text(c.cta_label) || 'Lihat Detail Penawaran'} <Arrow /></Link>
           </div>
           {rows.length ? (
             <div className={styles.offerTable}>
@@ -195,9 +195,9 @@ function Offering({ section }: { section?: Section }) {
             </div>
           ) : null}
           <aside className={styles.offerCard}>
-            <h3>Investasi Hari Ini,<br />Untuk Masa Depan<br />yang Lebih Baik.</h3>
+            <h3>{text(c.card_title) || <>Investasi Hari Ini,<br />Untuk Masa Depan<br />yang Lebih Baik.</>}</h3>
             <div className={styles.offerRule} />
-            <Link href="/hubungi">Ajukan Minat Equity <Arrow /></Link>
+            <Link href={usableHref(c.card_cta_href) || '/hubungi'}>{text(c.card_cta_label) || 'Ajukan Minat Equity'} <Arrow /></Link>
             <div className={styles.offerPattern} aria-hidden="true">◢◢◢◢</div>
           </aside>
         </div>
@@ -227,7 +227,7 @@ function CompanyStory({ section }: { section?: Section }) {
   return (
     <section className={styles.section} id={section.anchor_id ?? 'bisnis'}>
       <div className={styles.shell}><div className={styles.companyGrid}>
-        <div className={styles.companyIntro}><div><div className={styles.eyebrowDark}>{text(c.eyebrow) || 'PERUSAHAAN'}</div><h2>{text(c.title) || 'Nuzultrip'}</h2>{text(c.description) ? <p>{text(c.description)}</p> : null}</div><Link href="#informasi-investor" className={styles.inlineLink}>Lebih Detail Penawaran <Arrow /></Link></div>
+        <div className={styles.companyIntro}><div><div className={styles.eyebrowDark}>{text(c.eyebrow) || 'PERUSAHAAN'}</div><h2>{text(c.title) || 'Nuzultrip'}</h2>{text(c.description) ? <p>{text(c.description)}</p> : null}</div><Link href={usableHref(c.cta_href) || '#informasi-investor'} className={styles.inlineLink}>{text(c.cta_label) || 'Lebih Detail Penawaran'} <Arrow /></Link></div>
         <V2CompanyGallery images={galleryImages} metrics={galleryMetrics} />
       </div></div>
     </section>
