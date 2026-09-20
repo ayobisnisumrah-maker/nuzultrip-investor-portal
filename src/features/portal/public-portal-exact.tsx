@@ -127,7 +127,7 @@ function Hero({ section }: { section?: Section }) {
   const c = section.content
   const titleLines = text(c.title).split('|').map((item) => item.trim()).filter(Boolean).slice(0, 3)
   const tags = strings(c.tags)
-  const image = text(c.image_url)
+  const image = text(c.image_url) || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=1200&auto=format&fit=crop'
   const imageAlt = text(c.image_alt) || 'Nuzultrip Equity'
   const primaryLabel = text(c.primary_cta_label) || 'Ajukan Minat Equity'
   const primaryHref = usableHref(c.primary_cta_href) || '/hubungi'
@@ -345,7 +345,7 @@ function Partners({ section }: { section?: Section }) {
   return <section className={styles.partnerSection} id={section.anchor_id ?? 'jaringan'}><div className={styles.shell}><div className={styles.networkLayout}>
     <div className={styles.networkIntro}><div><div className={styles.eyebrowDark}>{text(c.eyebrow)||'JARINGAN & MITRA'}</div><h2>{text(c.title)||'Terhubung untuk Bertumbuh Bersama'}</h2>{text(c.description)?<p>{text(c.description)}</p>:null}</div>{usableHref(c.cta_href)?<Link className={styles.inlineLink} href={text(c.cta_href)}>{text(c.cta_label)||'Pelajari Selengkapnya'} <Arrow /></Link>:null}</div>
     <div className={styles.networkCards}>{items.slice(0,3).map((item,index)=><article key={index}><span className={styles.networkIcon}><CmsIcon item={item} fallback={['◎','◇','▣'][index]||'•'} /></span><div><h3>{text(item.title)||text(item.name)}</h3>{text(item.description)?<p>{text(item.description)}</p>:null}</div></article>)}</div>
-    <div className={styles.networkMedia}>{image?<CmsImage src={image} alt={text(c.image_alt)||'Jaringan Nuzultrip'}/>:null}<div><h3>{text(c.image_caption)||text(c.highlight_title)||'Satu Ekosistem, Banyak Peluang'}</h3></div></div>
+    <div className={styles.networkMedia}>{image?<CmsImage src={image} alt={text(c.image_alt)||'Jaringan Nuzultrip'}/>:null}<div><h3>{text(c.image_caption)||text(c.highlight)||text(c.highlight_title)||'Satu Ekosistem, Banyak Peluang'}</h3></div></div>
   </div></div></section>
 }
 
@@ -358,7 +358,7 @@ function InvestorInfo({ growth, funds, governance, risks, documents }: { growth?
   return <section className={styles.infoSection} id="informasi-investor"><div className={styles.shell}>
     <div className={styles.infoHeader}><div className={styles.eyebrowDark}>INFORMASI INVESTOR</div><h2>Informasi penting dalam satu tempat</h2></div>
     <div className={styles.infoLayout}><div className={styles.infoMedia}>{heroImage ? <CmsImage src={heroImage} alt="Informasi Investor Nuzultrip" /> : null}</div><div className={styles.infoGrid}>
-      {blocks.slice(0,6).map((section)=><article key={section.id}><div><h3>{text(section.content.title)}</h3>{text(section.content.description)?<p>{text(section.content.description)}</p>:null}</div><span className={styles.infoMore}>Selengkapnya <Arrow /></span></article>)}
+      {investorItems.slice(0,6).map((item,index)=><article key={`${text(item.title)}-${index}`}><div><h3>{text(item.title)}</h3>{text(item.description)?<p>{text(item.description)}</p>:null}</div><span className={styles.infoMore}>Selengkapnya <Arrow /></span></article>)}
     </div></div>
   </div></section>
 }
