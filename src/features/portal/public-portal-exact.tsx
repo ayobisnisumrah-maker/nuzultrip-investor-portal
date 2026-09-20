@@ -99,7 +99,7 @@ function Hero({ section }: { section?: Section }) {
   const c = section.content
   const titleLines = text(c.title).split('|').map((item) => item.trim()).filter(Boolean).slice(0, 3)
   const tags = strings(c.tags)
-  const image = text(c.image_url) || fallbackImage || ''
+  const image = text(c.image_url)
   const imageAlt = text(c.image_alt) || 'Nuzultrip Equity'
   const primaryLabel = text(c.primary_cta_label) || 'Ajukan Minat Equity'
   const primaryHref = usableHref(c.primary_cta_href) || '/hubungi'
