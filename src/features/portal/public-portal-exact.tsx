@@ -374,7 +374,10 @@ function ContactCta({ section, documents }: { section?: Section; documents: Publ
 
 function Footer({ navigation, logoSrc, pageTitle }: { navigation: NavItem[]; logoSrc: string; pageTitle: string }) {
   const footer = navigation
-    .filter((item) => item.location === 'footer' && !item.parent_id && usableHref(item.href))
+    .filter((item) => item.location === 'footer' && !item.parent_id)
+    .sort((a, b) => a.position - b.position)
+  const footerChildren = navigation
+    .filter((item) => item.location === 'footer' && Boolean(item.parent_id))
     .sort((a, b) => a.position - b.position)
 
   const footerHref = (item: NavItem) => {
@@ -409,14 +412,7 @@ function Footer({ navigation, logoSrc, pageTitle }: { navigation: NavItem[]; log
               <div>{social.slice(0, 5).map((item) => <Link key={item.id} href={item.href} target={item.target}>{item.label}</Link>)}</div>
             ) : null}
           </div>
-          {footer.length ? (
-            <nav className={styles.footerNav}>
-              {footer.slice(0, 8).map((item) => {
-                const href = footerHref(item)
-                return href ? <Link key={item.id} href={href}>{item.label}</Link> : <span key={item.id}>{item.label}</span>
-              })}
-            </nav>
-          ) : null}
+          {footer.length ? <div className={styles.footerColumns}>{footer.slice(0,2).map((group)=><nav key={group.id}><h4>{group.label}</h4>{(footerChildren.filter((item)=>item.parent_id===group.id).length ? footerChildren.filter((item)=>item.parent_id===group.id) : [group]).slice(0,8).map((item)=>{const href=footerHref(item);return href?<Link key={item.id} href={href}>{item.label}</Link>:<span key={item.id}>{item.label}</span>})}</nav>)}</div> : null}
           <div className={styles.newsletter}>
             <h4>Butuh informasi terbaru?</h4>
             <p>Hubungi tim Investor Relations untuk informasi, dokumen, atau pembaruan resmi Nuzultrip Equity.</p>
