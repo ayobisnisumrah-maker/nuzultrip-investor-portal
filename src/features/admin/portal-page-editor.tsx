@@ -985,6 +985,13 @@ function VisualEditor({
           onChange={(image_alt) => update({ image_alt })}
         />
 
+        {kind === 'logo_wall' ? null : (
+          <div className="grid gap-4 md:grid-cols-2">
+            <Field label="Label CTA" value={asString(content.cta_label)} onChange={(cta_label) => update({ cta_label })} />
+            <Field label="Tautan CTA" value={asString(content.cta_href)} onChange={(cta_href) => update({ cta_href })} placeholder="/halaman atau https://..." />
+          </div>
+        )}
+
         <div className="border-border space-y-4 rounded-xl border p-4">
           {renderArrayHeader(
             'Daftar Item',
@@ -1267,6 +1274,13 @@ function VisualEditor({
           value={asString(content.title)}
           onChange={(title) => update({ title })}
         />
+        <Field label="Deskripsi" value={asString(content.description)} onChange={(description) => update({ description })} multiline />
+        <div className="grid gap-4 md:grid-cols-2">
+          <Field label="Label CTA" value={asString(content.cta_label)} onChange={(cta_label) => update({ cta_label })} />
+          <Field label="Tautan CTA" value={asString(content.cta_href)} onChange={(cta_href) => update({ cta_href })} />
+        </div>
+        <ImageField label="Gambar Jaringan" value={asString(content.image_url)} onChange={(image_url) => update({ image_url })} />
+        <Field label="Judul pada Gambar" value={asString(content.image_caption)} onChange={(image_caption) => update({ image_caption })} />
 
         <div className="border-border space-y-4 rounded-xl border p-4">
           {renderArrayHeader(
