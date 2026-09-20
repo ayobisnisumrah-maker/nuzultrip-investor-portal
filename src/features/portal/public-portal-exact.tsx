@@ -208,25 +208,16 @@ function Offering({ section }: { section?: Section }) {
 function CompanyStory({ section }: { section?: Section }) {
   if (!section) return null
   const c = section.content
-  const image = text(c.image_url)
+  const images = records(c.images)
+  const metrics = records(c.metrics)
+  const primaryImage = text(c.image_url)
   return (
     <section className={styles.section} id={section.anchor_id ?? 'bisnis'}>
-      <div className={styles.shell}>
-        <div className={styles.companyGrid}>
-          <div>
-            <div className={styles.eyebrowDark}>{text(c.eyebrow) || 'PERUSAHAAN'}</div>
-            <h2>{text(c.title) || 'Nuzultrip'}</h2>
-            {text(c.description) ? <p>{text(c.description)}</p> : null}
-            <Link href="#informasi-investor" className={styles.inlineLink}>Kenali Nuzultrip <Arrow /></Link>
-          </div>
-          {image ? (
-            <div className={styles.companyMedia}>
-              <CmsImage src={image} alt={text(c.image_alt) || 'Nuzultrip'} />
-              {text(c.image_caption) ? <h3>{text(c.image_caption)}</h3> : null}
-            </div>
-          ) : null}
-        </div>
-      </div>
+      <div className={styles.shell}><div className={styles.companyGrid}>
+        <div className={styles.companyIntro}><div><div className={styles.eyebrowDark}>{text(c.eyebrow) || 'PERUSAHAAN'}</div><h2>{text(c.title) || 'Nuzultrip'}</h2>{text(c.description) ? <p>{text(c.description)}</p> : null}</div><Link href="#informasi-investor" className={styles.inlineLink}>Lebih Detail Penawaran <Arrow /></Link></div>
+        <div className={styles.companyMedia}>{primaryImage ? <CmsImage src={primaryImage} alt={text(c.image_alt) || 'Nuzultrip'} /> : images[0] ? <CmsImage src={text(images[0].image_url)} alt={text(images[0].alt) || 'Nuzultrip'} /> : null}<div className={styles.mediaIndicators}>{[0,1,2,3,4].map((i)=><span key={i} />)}</div></div>
+        <div className={styles.companyMetrics}>{metrics.slice(0,5).map((m,i)=><article key={i}><strong>{text(m.value)}</strong><span>{text(m.label)}</span></article>)}</div>
+      </div></div>
     </section>
   )
 }
@@ -361,44 +352,13 @@ function Partners({ section }: { section?: Section }) {
 function InvestorInfo({ growth, funds, governance, risks, documents }: { growth?: Section; funds?: Section; governance?: Section; risks?: Section; documents?: Section }) {
   const blocks = [growth, funds, governance, risks, documents].filter(Boolean) as Section[]
   if (!blocks.length) return null
-
-  return (
-    <section className={styles.infoSection} id="informasi-investor">
-      <div className={styles.shell}>
-        <div className={styles.infoHeader}>
-          <div className={styles.eyebrowDark}>INFORMASI INVESTOR</div>
-          <h2>Informasi penting dalam satu tempat.</h2>
-        </div>
-        <div className={styles.infoGrid}>
-          {blocks.map((section) => {
-            const c = section.content
-            const items = records(c.items).length
-              ? records(c.items)
-              : records(c.pillars).length
-                ? records(c.pillars)
-                : records(c.milestones)
-
-            return (
-              <article key={section.id}>
-                {text(c.eyebrow) ? <small>{text(c.eyebrow)}</small> : null}
-                <h3>{text(c.title)}</h3>
-                {text(c.description) ? <p>{text(c.description)}</p> : null}
-                {items.length ? (
-                  <ul>
-                    {items.slice(0, 6).map((item, index) => {
-                      const label = text(item.title) || text(item.label)
-                      const href = usableHref(item.href)
-                      return <li key={`${section.id}-${index}`}>{href ? <Link href={href}>{label}</Link> : label}</li>
-                    })}
-                  </ul>
-                ) : null}
-              </article>
-            )
-          })}
-        </div>
-      </div>
-    </section>
-  )
+  const heroImage = blocks.map((s)=>text(s.content.image_url)).find(Boolean)
+  return <section className={styles.infoSection} id="informasi-investor"><div className={styles.shell}>
+    <div className={styles.infoHeader}><div className={styles.eyebrowDark}>INFORMASI INVESTOR</div><h2>Informasi penting dalam satu tempat</h2></div>
+    <div className={styles.infoLayout}><div className={styles.infoMedia}>{heroImage ? <CmsImage src={heroImage} alt="Informasi Investor Nuzultrip" /> : null}</div><div className={styles.infoGrid}>
+      {blocks.slice(0,6).map((section)=><article key={section.id}><div><h3>{text(section.content.title)}</h3>{text(section.content.description)?<p>{text(section.content.description)}</p>:null}</div><span className={styles.infoMore}>Selengkapnya <Arrow /></span></article>)}
+    </div></div>
+  </div></section>
 }
 
 function Faq({ section }: { section?: Section }) {
@@ -434,47 +394,10 @@ function Articles({ section }: { section?: Section }) {
   const items = records(c.items)
   if (!items.length) return null
   const ctaHref = usableHref(c.cta_href)
-
-  return (
-    <section className={styles.articleSection} id={section.anchor_id ?? 'wawasan'}>
-      <style>{`.${styles.articleLayout}::before,.${styles.articleLayout}::after{display:none!important;content:none!important}`}</style>
-      <div className={styles.shell}>
-        <div className={styles.articleLayout}>
-          <div className={styles.articleIntro}>
-            <div className={styles.eyebrowLight}>{text(c.eyebrow) || 'ARTIKEL & BERITA'}</div>
-            <h2>{text(c.title) || 'Artikel & Berita Nuzultrip'}</h2>
-            {text(c.description) ? <p>{text(c.description)}</p> : null}
-            {ctaHref ? <Link href={ctaHref}>{text(c.cta_label) || 'Lihat Selengkapnya'} <Arrow /></Link> : null}
-          </div>
-          <div className={styles.articleCards}>
-            {items.slice(0, 2).map((item, index) => {
-              const href = usableHref(item.href)
-              const typeLabel = text(item.type).toLocaleLowerCase('id-ID') === 'news' ? 'Berita' : 'Artikel'
-              const date = text(item.date)
-              const meta = date ? `${typeLabel} · ${date}` : typeLabel
-              const card: ReactNode = (
-                <>
-                  <CmsImage src={text(item.image_url)} alt={text(item.title)} />
-                  <h3>{text(item.title)}</h3>
-                  <small>{meta}</small>
-                  {text(item.description) ? <p style={{ padding: '10px 18px 0', color: '#b5b5b5', fontSize: '.78rem', lineHeight: 1.5 }}>{text(item.description)}</p> : null}
-                  {href ? <span aria-hidden="true">→</span> : null}
-                </>
-              )
-
-              return href ? (
-                <article key={`${text(item.title)}-${index}`}>
-                  <Link href={href} aria-label={`Buka ${text(item.title)}`}>{card}</Link>
-                </article>
-              ) : (
-                <article key={`${text(item.title)}-${index}`}>{card}</article>
-              )
-            })}
-          </div>
-        </div>
-      </div>
-    </section>
-  )
+  return <section className={styles.articleSection} id={section.anchor_id ?? 'artikel'}><div className={styles.shell}><div className={styles.articleLayout}>
+    <div className={styles.articleIntro}><div><div className={styles.eyebrowDark}>{text(c.eyebrow)||'ARTIKEL & BERITA'}</div><h2>{text(c.title)||'Wawasan untuk Keputusan yang Lebih Baik'}</h2>{text(c.description)?<p>{text(c.description)}</p>:null}</div>{ctaHref?<Link href={ctaHref}>{text(c.cta_label)||'Lebih Artikel Lainnya'} <Arrow /></Link>:null}</div>
+    <div className={styles.articleCards}>{items.slice(0,2).map((item,index)=>{const href=usableHref(item.href);const body=<><div className={styles.articleImage}><CmsImage src={text(item.image_url)} alt={text(item.title)}/><span>{text(item.type)||'Artikel'}</span></div><div className={styles.articleBody}><small>{text(item.date)}</small><h3>{text(item.title)}</h3>{text(item.description)?<p>{text(item.description)}</p>:null}<b>Baca Selengkapnya <Arrow /></b></div></>;return <article key={index}>{href?<Link href={href}>{body}</Link>:body}</article>})}</div>
+  </div></div></section>
 }
 
 function ContactCta({ section }: { section?: Section }) {
