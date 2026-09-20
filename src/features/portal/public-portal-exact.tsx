@@ -296,6 +296,30 @@ function Process({ offering }: { offering?: Section }) {
   )
 }
 
+function Roadmap({ section }: { section?: Section }) {
+  if (!section) return null
+  const c = section.content
+  const items = records(c.milestones).length ? records(c.milestones) : records(c.items)
+  if (!items.length && !text(c.title)) return null
+  return (
+    <section className={styles.roadmapSection} id={section.anchor_id ?? 'roadmap'}>
+      <div className={styles.shell}>
+        <div className={styles.roadmapHeader}>
+          <div><div className={styles.eyebrowDark}>{text(c.eyebrow) || 'ROADMAP PERUSAHAAN'}</div><h2>{text(c.title) || 'Peta Jalan Pertumbuhan Nuzultrip'}</h2>{text(c.description) ? <p>{text(c.description)}</p> : null}</div>
+          <span>{items.length ? '01 / 0' + items.length : 'ROADMAP'}</span>
+        </div>
+        {items.length ? <div className={styles.roadmapTrack}>{items.slice(0, 6).map((item, index) => {
+          const period = text(item.period) || text(item.date) || text(item.year)
+          const title = text(item.title) || text(item.label)
+          const description = text(item.description) || text(item.summary)
+          const status = text(item.status_label) || text(item.status)
+          return <article key={'roadmap-' + index}><div className={styles.roadmapMeta}><b>FASE 0{index + 1}</b>{status ? <span>{status}</span> : null}</div>{period ? <small>{period}</small> : null}<h3>{title}</h3>{description ? <p>{description}</p> : null}</article>
+        })}</div> : null}
+      </div>
+    </section>
+  )
+}
+
 function Partners({ section }: { section?: Section }) {
   if (!section) return null
   const c = section.content
@@ -548,6 +572,7 @@ export function PublicPortalExact({ page, sections, navigation, publicDocuments,
   const ecosystem = sectionByKind(resolved, 'ecosystem')
   const growth = sectionByKind(resolved, 'growth_story')
   const funds = sectionByKind(resolved, 'strategic_direction')
+  const roadmap = sectionByKind(resolved, 'milestones') ?? growth
   const governance = sectionByKind(resolved, 'investor_updates')
   const risks = sectionByKind(resolved, 'legal_notice')
   const documents = sectionByKind(resolved, 'documents')
@@ -567,11 +592,12 @@ export function PublicPortalExact({ page, sections, navigation, publicDocuments,
         <CompanyStory section={business} />
         <Services section={ecosystem} />
         <Process offering={offering} />
+        <Roadmap section={roadmap} />
         <Partners section={logos} />
         <InvestorInfo growth={growth} funds={funds} governance={governance} risks={risks} documents={documents} />
         <Faq section={faq} />
-        <Articles section={articles} />
         <ContactCta section={contactCta} />
+        <Articles section={articles} />
       </main>
       <Footer navigation={navigation} logoSrc={logoSrc} pageTitle={page.title} />
     </div>
