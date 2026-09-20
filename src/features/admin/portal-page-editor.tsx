@@ -1467,21 +1467,40 @@ function VisualEditor({
     )
   }
 
-  if (kind === 'legal_notice' || kind === 'rich_content') {
+  if (kind === 'rich_content') {
+    const items = Array.isArray(content.items) ? content.items.filter(isRecord) : []
+    return (
+      <div className="space-y-5">
+        <Field label="Eyebrow" value={asString(content.eyebrow)} onChange={(eyebrow) => update({ eyebrow })} placeholder="ARTIKEL & BERITA" />
+        <Field label="Judul" value={asString(content.title)} onChange={(title) => update({ title })} />
+        <Field label="Deskripsi" value={asString(content.description)} onChange={(description) => update({ description })} multiline />
+        <div className="grid gap-4 md:grid-cols-2">
+          <Field label="Label CTA" value={asString(content.cta_label)} onChange={(cta_label) => update({ cta_label })} placeholder="Lebih Artikel Lainnya" />
+          <Field label="Tautan CTA" value={asString(content.cta_href)} onChange={(cta_href) => update({ cta_href })} />
+        </div>
+        <div className="border-border space-y-4 rounded-xl border p-4">
+          {renderArrayHeader('Artikel & Berita', 'Kelola kartu artikel yang tampil pada portal.', 'items')}
+          {renderObjectArrayEditor('items', items, [
+            { key: 'type', label: 'Jenis', placeholder: 'Artikel / Berita' },
+            { key: 'date', label: 'Tanggal', placeholder: 'Contoh: 21 Sep 2026' },
+            { key: 'title', label: 'Judul' },
+            { key: 'description', label: 'Ringkasan', multiline: true },
+            { key: 'image_url', label: 'Gambar' },
+            { key: 'href', label: 'Tautan Artikel' },
+          ])}
+        </div>
+      </div>
+    )
+  }
+
+  if (kind === 'legal_notice') {
     return (
       <div className="space-y-4">
-        <Field
-          label="Judul"
-          value={asString(content.title)}
-          onChange={(title) => update({ title })}
-        />
-
-        <Field
-          label="Konten"
-          value={asString(content.content)}
-          onChange={(body) => update({ content: body })}
-          multiline
-        />
+        <Field label="Eyebrow" value={asString(content.eyebrow)} onChange={(eyebrow) => update({ eyebrow })} />
+        <Field label="Judul" value={asString(content.title)} onChange={(title) => update({ title })} />
+        <Field label="Deskripsi" value={asString(content.description)} onChange={(description) => update({ description })} multiline />
+        <Field label="Konten" value={asString(content.content)} onChange={(body) => update({ content: body })} multiline />
+        <ImageField label="Gambar Informasi" value={asString(content.image_url)} onChange={(image_url) => update({ image_url })} />
       </div>
     )
   }
