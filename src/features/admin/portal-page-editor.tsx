@@ -877,6 +877,47 @@ function VisualEditor({
           multiline
         />
 
+        <div className="grid gap-4 md:grid-cols-2">
+          <Field label="Label CTA Peluang Equity" value={asString(content.cta_label)} onChange={(cta_label) => update({ cta_label })} placeholder="Lihat Detail Penawaran" />
+          <Field label="Tautan CTA Peluang Equity" value={asString(content.cta_href)} onChange={(cta_href) => update({ cta_href })} placeholder="/hubungi" />
+          <Field label="Headline Card Equity" value={asString(content.card_title)} onChange={(card_title) => update({ card_title })} placeholder="Investasi Hari Ini, Untuk Masa Depan..." />
+          <Field label="Label CTA Card Equity" value={asString(content.card_cta_label)} onChange={(card_cta_label) => update({ card_cta_label })} placeholder="Ajukan Minat Equity" />
+          <Field label="Tautan CTA Card Equity" value={asString(content.card_cta_href)} onChange={(card_cta_href) => update({ card_cta_href })} placeholder="/hubungi" />
+        </div>
+
+        <div className="border-border space-y-4 rounded-xl border p-4">
+          {renderArrayHeader('Ringkasan Penawaran', 'Kelola angka dan ketentuan utama yang tampil pada tabel Peluang Equity.', 'terms')}
+          {renderObjectArrayEditor(
+            'terms',
+            Array.isArray(content.terms) ? content.terms.filter(isRecord) : [],
+            [
+              { key: 'label', label: 'Label' },
+              { key: 'value', label: 'Nilai' },
+            ],
+          )}
+        </div>
+
+        <div className="border-border space-y-4 rounded-xl border p-4">
+          <Field label="Eyebrow Proses" value={asString(content.process_eyebrow)} onChange={(process_eyebrow) => update({ process_eyebrow })} />
+          <Field label="Judul Proses" value={asString(content.process_title)} onChange={(process_title) => update({ process_title })} />
+          <Field label="Deskripsi Proses" value={asString(content.process_description)} onChange={(process_description) => update({ process_description })} multiline />
+          {renderArrayHeader('Tahapan Investasi', 'Kelola empat langkah pada section proses.', 'process_steps')}
+          {renderObjectArrayEditor(
+            'process_steps',
+            Array.isArray(content.process_steps) ? content.process_steps.filter(isRecord) : [],
+            [
+              { key: 'title', label: 'Judul Langkah' },
+              { key: 'description', label: 'Deskripsi', multiline: true },
+              { key: 'duration', label: 'Durasi' },
+              { key: 'output', label: 'Output' },
+            ],
+          )}
+          <div className="grid gap-4 md:grid-cols-2">
+            <Field label="Label CTA Proses" value={asString(content.process_cta_label)} onChange={(process_cta_label) => update({ process_cta_label })} />
+            <Field label="Tautan CTA Proses" value={asString(content.process_cta_href)} onChange={(process_cta_href) => update({ process_cta_href })} />
+          </div>
+        </div>
+
         <div className="border-border space-y-4 rounded-xl border p-4">
           {renderArrayHeader(
             'Fokus Penggunaan Modal',
