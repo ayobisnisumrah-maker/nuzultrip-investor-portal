@@ -233,7 +233,7 @@ function Offering({ section }: { section?: Section }) {
   )
 }
 
-function CompanyStory({ section, fallbackMetrics = [], fallbackImages = [] }: { section?: Section; fallbackMetrics?: Record<string, unknown>[]; fallbackImages?: string[] }) {
+function CompanyStory({ section }: { section?: Section }) {
   if (!section) return null
   const c = section.content
   const images = records(c.images)
@@ -336,7 +336,7 @@ function Roadmap({ section }: { section?: Section }) {
   )
 }
 
-function Partners({ section, fallbackImage }: { section?: Section; fallbackImage?: string }) {
+function Partners({ section }: { section?: Section }) {
   if (!section) return null
   const c = section.content
   const items = records(c.items).length ? records(c.items) : records(c.logos)
@@ -349,7 +349,7 @@ function Partners({ section, fallbackImage }: { section?: Section; fallbackImage
   </div></div></section>
 }
 
-function InvestorInfo({ growth, funds, governance, risks, documents, fallbackImage }: { growth?: Section; funds?: Section; governance?: Section; risks?: Section; documents?: Section; fallbackImage?: string }) {
+function InvestorInfo({ growth, funds, governance, risks, documents }: { growth?: Section; funds?: Section; governance?: Section; risks?: Section; documents?: Section }) {
   const cmsInvestorItems = growth?.section_kind === 'investor_updates' ? records(growth.content.items) : []
   const investorItems = cmsInvestorItems.length >= 6 ? cmsInvestorItems : V2_INVESTOR_CARDS
   const blocks = [growth, funds, governance, risks, documents].filter(Boolean) as Section[]
@@ -376,7 +376,7 @@ function Articles({ section }: { section?: Section }) {
   </div></div></section>
 }
 
-function ContactCta({ section, documents, fallbackImage }: { section?: Section; documents: PublicPortalDocument[]; fallbackImage?: string }) {
+function ContactCta({ section, documents }: { section?: Section; documents: PublicPortalDocument[] }) {
   if (!section) return null
   const c=section.content
   const primaryHref=usableHref(c.primary_cta_href)||'/hubungi'
@@ -384,7 +384,7 @@ function ContactCta({ section, documents, fallbackImage }: { section?: Section; 
   return <section className={styles.contactSection} id={section.anchor_id ?? 'kontak'}><div className={styles.shell}><div className={styles.quickLayout}>
     <div className={styles.quickIntro}><div className={styles.eyebrowLight}>{text(c.eyebrow)||'QUICK ACTION'}</div><h2>{text(c.title)||'Kenali. Pelajari. Tentukan Langkah Anda.'}</h2>{text(c.description)?<p>{text(c.description)}</p>:null}</div>
     <div className={styles.quickCards}><Link href={primaryHref}><span>Investor Relations</span><h3>{text(c.primary_cta_label)||'Hubungi Tim'}</h3><p>{text(c.primary_cta_description)||text(c.contact_value)}</p><Arrow /></Link>{secondaryHref?<Link href={secondaryHref}><span>Dokumen Resmi</span><h3>{text(c.secondary_cta_label)||'Unduh Pitchdeck'}</h3><p>{text(c.secondary_cta_description)||'Pelajari ringkasan informasi Nuzultrip Equity'}</p><Arrow /></Link>:null}</div>
-    <div className={styles.quickMedia}>{(text(c.image_url)||fallbackImage)?<CmsImage src={text(c.image_url)||fallbackImage||''} alt={text(c.image_alt)||'Nuzultrip Equity'}/>:null}<div><small>{text(c.image_eyebrow)||'LANGKAH AWAL KEMITRAAN'}</small><h3>{text(c.image_title)||'Siap Mengenal Nuzultrip Lebih Jauh?'}</h3>{text(c.image_description)?<p>{text(c.image_description)}</p>:null}<Link href={primaryHref}>{text(c.primary_cta_label)||'Ajukan Minat Equity'} <Arrow /></Link></div></div>
+    <div className={styles.quickMedia}>{(text(c.image_url)||'https://images.unsplash.com/photo-1580418827493-f2b22c0a76cb?q=80&w=1200&auto=format&fit=crop')?<CmsImage src={text(c.image_url)||'https://images.unsplash.com/photo-1580418827493-f2b22c0a76cb?q=80&w=1200&auto=format&fit=crop' alt={text(c.image_alt)||'Nuzultrip Equity'}/>:null}<div><small>{text(c.image_eyebrow)||'LANGKAH AWAL KEMITRAAN'}</small><h3>{text(c.image_title)||'Siap Mengenal Nuzultrip Lebih Jauh?'}</h3>{text(c.image_description)?<p>{text(c.image_description)}</p>:null}<Link href={primaryHref}>{text(c.primary_cta_label)||'Ajukan Minat Equity'} <Arrow /></Link></div></div>
   </div></div></section>
 }
 
@@ -465,13 +465,6 @@ export function PublicPortalExact({ page, sections, navigation, publicDocuments,
   const articles = sectionByKind(resolved, 'rich_content')
   const contactCta = sectionByKind(resolved, 'contact_cta')
   const logoSrc = brandLogoUrl || '/brand/nuzultrip-logo-portal.svg'
-  const sharedImages = resolved.flatMap((section) => {
-    const direct = text(section.content.image_url)
-    const itemImages = records(section.content.items).map((item) => text(item.image_url)).filter(Boolean)
-    return [...(direct ? [direct] : []), ...itemImages]
-  }).filter((src, index, all) => all.indexOf(src) === index)
-  const statMetrics = stats ? records(stats.content.metrics) : []
-  const fallbackVisual = sharedImages[0]
 
   return (
     <div className={styles.page}>
@@ -480,13 +473,13 @@ export function PublicPortalExact({ page, sections, navigation, publicDocuments,
         <Hero section={hero} />
         <AboutAndStats intro={intro} stats={stats} business={business} />
         <Offering section={offering} />
-        <CompanyStory section={business} fallbackMetrics={statMetrics} fallbackImages={sharedImages} />
+        <CompanyStory section={business} />
         <Services section={ecosystem} />
         <Process offering={offering} />
         <Roadmap section={roadmap} />
-        <Partners section={logos} fallbackImage={fallbackVisual} />
-        <InvestorInfo growth={growth} funds={funds} governance={governance} risks={risks} documents={documents} fallbackImage={fallbackVisual} />
-        <ContactCta section={contactCta} documents={publicDocuments} fallbackImage={fallbackVisual} />
+        <Partners section={logos} />
+        <InvestorInfo growth={growth} funds={funds} governance={governance} risks={risks} documents={documents} />
+        <ContactCta section={contactCta} documents={publicDocuments} />
         <Articles section={articles} />
       </main>
       <Footer navigation={navigation} logoSrc={logoSrc} pageTitle={page.title} />
