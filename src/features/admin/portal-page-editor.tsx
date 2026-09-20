@@ -63,23 +63,23 @@ type ContentRecord = Record<string, unknown>
 
 const SECTION_LABELS: Record<SectionKind, string> = {
   hero_3d: 'Hero 3D',
-  intro: 'Pengenalan',
+  intro: 'Tentang Kami',
   vision_mission: 'Visi & Misi',
-  business_overview: 'Tentang Nuzultrip',
-  growth_story: 'Perjalanan Pengembangan',
-  ecosystem: 'Ekosistem Bisnis',
-  investment_info: 'Kebutuhan Modal',
-  milestones: 'Perkembangan & Pencapaian',
-  strategic_direction: 'Fokus Pengembangan',
+  business_overview: 'Perjalanan Muslim',
+  growth_story: 'Pertumbuhan',
+  ecosystem: 'Layanan Utama',
+  investment_info: 'Peluang Equity',
+  milestones: 'Peta Jalan Pertumbuhan',
+  strategic_direction: 'Strategi Pertumbuhan',
   financial_highlights: 'Sorotan Keuangan',
-  investor_updates: 'Pembaruan Perusahaan',
-  documents: 'Dokumen Publik',
-  contact_cta: 'Kontak & Ajakan',
+  investor_updates: 'Informasi Investor',
+  documents: 'Dokumen Investor',
+  contact_cta: 'Quick Action & Kontak',
   legal_notice: 'Pemberitahuan Hukum',
-  rich_content: 'Konten Fleksibel',
-  stat_grid: 'Statistik Utama',
-  logo_wall: 'Logo & Jaringan',
-  faq: 'Pertanyaan Umum',
+  rich_content: 'Artikel & Berita',
+  stat_grid: 'Statistik',
+  logo_wall: 'Mitra & Jaringan',
+  faq: 'FAQ',
 }
 
 const SECTION_DESCRIPTIONS: Record<SectionKind, string> = {
@@ -1020,18 +1020,33 @@ function VisualEditor({
 
           {renderObjectArrayEditor('milestones', milestones, [
             {
-              key: 'year',
-              label: 'Tahun / Periode',
-              placeholder: 'Contoh: 2026',
+              key: 'period',
+              label: 'Periode',
+              placeholder: 'Contoh: Jan – Des 2026',
+            },
+            {
+              key: 'status',
+              label: 'Status',
+              placeholder: 'Terlaksana / Fase Aktif / Rencana Mendatang',
             },
             {
               key: 'title',
-              label: 'Judul',
+              label: 'Judul Fase',
             },
             {
               key: 'description',
               label: 'Deskripsi',
               multiline: true,
+            },
+            {
+              key: 'metric_label',
+              label: 'Label KPI',
+              placeholder: 'Contoh: Target Equity',
+            },
+            {
+              key: 'metric_value',
+              label: 'Nilai KPI',
+              placeholder: 'Contoh: Rp5 Miliar',
             },
           ])}
         </div>
@@ -1720,7 +1735,7 @@ export function PortalPageEditor({
         </div>
       ) : null}
 
-      {canUpdate && status !== 'published' && status !== 'archived' ? (
+      {canUpdate && status !== 'published' && status !== 'archived' && sections.length === 0 ? (
         <div className="border-border bg-surface rounded-xl border p-4">
           <div className="mb-4">
             <p className="text-fg text-sm font-semibold">Pembangun Bagian</p>
@@ -1797,7 +1812,9 @@ export function PortalPageEditor({
                   </span>
                 </span>
 
-                <span className="text-fg-muted text-lg">{open ? '−' : '+'}</span>
+                <span className="border-border text-fg-muted inline-flex h-8 min-w-20 items-center justify-center rounded-lg border px-2 text-xs font-semibold">
+                  {open ? 'Tutup' : 'Edit'}
+                </span>
               </button>
 
               {open ? (
@@ -1837,12 +1854,9 @@ export function PortalPageEditor({
                       className="hover:bg-muted flex w-full items-center justify-between px-4 py-3 text-left"
                     >
                       <span>
-                        <span className="text-fg block text-sm font-semibold">
-                          Editor JSON Lanjutan
-                        </span>
-
+                        <span className="text-fg block text-sm font-semibold">Pengaturan Lanjutan</span>
                         <span className="text-fg-subtle mt-0.5 block text-xs">
-                          Gunakan untuk field dan struktur konten lanjutan.
+                          Opsional. Gunakan hanya jika perlu mengubah struktur data lanjutan.
                         </span>
                       </span>
 

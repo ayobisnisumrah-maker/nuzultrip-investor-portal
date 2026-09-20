@@ -1,4 +1,3 @@
-import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { z } from 'zod'
 
@@ -65,16 +64,17 @@ export default async function PortalPageDetail({ params }: { params: Promise<{ i
   return (
     <div className="space-y-6">
       <div>
-        <Link href="/admin/portal/pages" className="text-caption text-fg-muted hover:text-fg">
-          ← Kembali ke Halaman
-        </Link>
-        <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-caption text-fg-subtle font-medium tracking-[0.14em] uppercase">
-              Portal & Konten
+              Konten Website
             </p>
-            <h1 className="font-display text-heading-lg text-fg mt-1">{page.title}</h1>
-            <p className="text-body-sm text-fg-muted mt-1">/{page.slug}</p>
+            <h1 className="font-display text-heading-lg text-fg mt-1">
+              {page.page_kind === 'home' ? 'Edit Halaman Utama' : page.title}
+            </h1>
+            <p className="text-body-sm text-fg-muted mt-2 max-w-2xl">
+              Edit seluruh isi portal dari satu halaman. Buka bagian yang ingin diubah, simpan draf, lalu terbitkan setelah ditinjau.
+            </p>
           </div>
           <span className="border-border text-caption text-fg-muted inline-flex w-fit rounded-full border px-3 py-1">
             {statusLabel(page.status)}
@@ -82,16 +82,7 @@ export default async function PortalPageDetail({ params }: { params: Promise<{ i
         </div>
       </div>
 
-      <section className="border-border bg-surface rounded-xl border p-6">
-        <div className="mb-5 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <h2 className="text-body text-fg font-semibold">Penyusun Bagian</h2>
-            <p className="text-caption text-fg-muted mt-1">
-              Susun konten terstruktur tanpa HTML mentah. Setiap penyimpanan membuat versi draf baru.
-            </p>
-          </div>
-          <span className="text-caption text-fg-subtle">{sections.length} bagian</span>
-        </div>
+      <section className="border-border bg-surface rounded-xl border p-4 sm:p-5">
         <PortalPageEditorLive
           pageId={page.id}
           sections={sections}

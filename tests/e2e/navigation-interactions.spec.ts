@@ -128,9 +128,17 @@ async function crawlDashboard(page: Page, scope: DashboardScope): Promise<string
       continue
     }
 
-    if (finalPath !== pathname) {
+    const portalEditorRedirect =
+      pathname === '/admin/portal/pages' &&
+      /^\/admin\/portal\/pages\/[^/]+$/.test(finalPath)
+
+    if (finalPath !== pathname && !portalEditorRedirect) {
       failures.push(`${pathname}: redirected to ${finalPath}`)
       continue
+    }
+
+    if (portalEditorRedirect) {
+      visited.add(finalPath)
     }
 
     try {

@@ -6,6 +6,7 @@ import type { PublicPortalDocument } from '@/server/portal/public-queries'
 
 import styles from './public-portal-exact.module.css'
 import { V2CompanyGallery } from './v2-company-gallery'
+import { V2RoadmapSlider } from './v2-roadmap-slider'
 
 type BaseProps = ComponentProps<typeof PublicPortalModel>
 type Section = BaseProps['sections'][number]
@@ -286,22 +287,30 @@ function Process({ offering }: { offering?: Section }) {
 function Roadmap({ section }: { section?: Section }) {
   if (!section) return null
   const c = section.content
-  const items = records(c.milestones).length ? records(c.milestones) : records(c.items)
-  if (!items.length && !text(c.title)) return null
+  const source = records(c.milestones).length ? records(c.milestones) : records(c.items)
+  if (!source.length && !text(c.title)) return null
+
+  const items = source.map((item) => ({
+    period: text(item.period) || text(item.date) || text(item.year),
+    title: text(item.title) || text(item.label),
+    description: text(item.description) || text(item.summary),
+    status: text(item.status_label) || text(item.status),
+    bullets: strings(item.bullets).length ? strings(item.bullets) : strings(item.highlights),
+    metricLabel: text(item.metric_label) || text(item.kpi_label),
+    metricValue: text(item.metric_value) || text(item.kpi_value),
+  }))
+
   return (
     <section className={styles.roadmapSection} id={section.anchor_id ?? 'roadmap'}>
       <div className={styles.shell}>
-        <div className={styles.roadmapHeader}>
-          <div><div className={styles.eyebrowDark}>{text(c.eyebrow) || 'ROADMAP PERUSAHAAN'}</div><h2>{text(c.title) || 'Peta Jalan Pertumbuhan Nuzultrip'}</h2>{text(c.description) ? <p>{text(c.description)}</p> : null}</div>
-          <span>{items.length ? '01 / 0' + items.length : 'ROADMAP'}</span>
+        <div className={styles.roadmapHeaderExact}>
+          <div>
+            <div className={styles.eyebrowDark}>{text(c.eyebrow) || 'ROADMAP PERUSAHAAN'}</div>
+            <h2>{text(c.title) || 'Peta Jalan Pertumbuhan Nuzultrip'}</h2>
+            {text(c.description) ? <p>{text(c.description)}</p> : null}
+          </div>
         </div>
-        {items.length ? <div className={styles.roadmapTrack}>{items.slice(0, 6).map((item, index) => {
-          const period = text(item.period) || text(item.date) || text(item.year)
-          const title = text(item.title) || text(item.label)
-          const description = text(item.description) || text(item.summary)
-          const status = text(item.status_label) || text(item.status)
-          return <article key={'roadmap-' + index}><div className={styles.roadmapMeta}><b>FASE 0{index + 1}</b>{status ? <span>{status}</span> : null}</div>{period ? <small>{period}</small> : null}<h3>{title}</h3>{description ? <p>{description}</p> : null}</article>
-        })}</div> : null}
+        {items.length ? <V2RoadmapSlider items={items} /> : null}
       </div>
     </section>
   )
