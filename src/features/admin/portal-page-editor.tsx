@@ -1020,18 +1020,33 @@ function VisualEditor({
 
           {renderObjectArrayEditor('milestones', milestones, [
             {
-              key: 'year',
-              label: 'Tahun / Periode',
-              placeholder: 'Contoh: 2026',
+              key: 'period',
+              label: 'Periode',
+              placeholder: 'Contoh: Jan – Des 2026',
+            },
+            {
+              key: 'status',
+              label: 'Status',
+              placeholder: 'Terlaksana / Fase Aktif / Rencana Mendatang',
             },
             {
               key: 'title',
-              label: 'Judul',
+              label: 'Judul Fase',
             },
             {
               key: 'description',
               label: 'Deskripsi',
               multiline: true,
+            },
+            {
+              key: 'metric_label',
+              label: 'Label KPI',
+              placeholder: 'Contoh: Target Equity',
+            },
+            {
+              key: 'metric_value',
+              label: 'Nilai KPI',
+              placeholder: 'Contoh: Rp5 Miliar',
             },
           ])}
         </div>
