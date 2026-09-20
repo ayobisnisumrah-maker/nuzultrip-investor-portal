@@ -1339,32 +1339,38 @@ function VisualEditor({
 
   if (kind === 'contact_cta') {
     return (
-      <div className="space-y-4">
-        <Field
-          label="Judul"
-          value={asString(content.title)}
-          onChange={(title) => update({ title })}
-        />
+      <div className="space-y-5">
+        <Field label="Eyebrow" value={asString(content.eyebrow)} onChange={(eyebrow) => update({ eyebrow })} placeholder="Contoh: QUICK ACTION" />
+        <Field label="Judul" value={asString(content.title)} onChange={(title) => update({ title })} />
+        <Field label="Deskripsi" value={asString(content.description)} onChange={(description) => update({ description })} multiline />
 
-        <Field
-          label="Deskripsi"
-          value={asString(content.description)}
-          onChange={(description) => update({ description })}
-          multiline
-        />
+        <div className="border-border space-y-4 rounded-xl border p-4">
+          <p className="text-fg text-sm font-semibold">CTA Investor Relations</p>
+          <div className="grid gap-4 md:grid-cols-2">
+            <Field label="Label CTA Utama" value={asString(content.primary_cta_label)} onChange={(primary_cta_label) => update({ primary_cta_label })} />
+            <Field label="Tautan CTA Utama" value={asString(content.primary_cta_href)} onChange={(primary_cta_href) => update({ primary_cta_href })} />
+          </div>
+          <Field label="Deskripsi CTA Utama" value={asString(content.primary_cta_description)} onChange={(primary_cta_description) => update({ primary_cta_description })} multiline />
+        </div>
 
-        <div className="grid gap-4 md:grid-cols-2">
-          <Field
-            label="Label CTA"
-            value={asString(content.primary_cta_label)}
-            onChange={(primary_cta_label) => update({ primary_cta_label })}
-          />
+        <div className="border-border space-y-4 rounded-xl border p-4">
+          <p className="text-fg text-sm font-semibold">CTA Dokumen Resmi</p>
+          <div className="grid gap-4 md:grid-cols-2">
+            <Field label="Label CTA Sekunder" value={asString(content.secondary_cta_label)} onChange={(secondary_cta_label) => update({ secondary_cta_label })} />
+            <Field label="Tautan CTA Sekunder (opsional)" value={asString(content.secondary_cta_href)} onChange={(secondary_cta_href) => update({ secondary_cta_href })} placeholder="Kosongkan untuk memakai dokumen publik pertama" />
+          </div>
+          <Field label="Deskripsi CTA Sekunder" value={asString(content.secondary_cta_description)} onChange={(secondary_cta_description) => update({ secondary_cta_description })} multiline />
+        </div>
 
-          <Field
-            label="Tautan CTA"
-            value={asString(content.primary_cta_href)}
-            onChange={(primary_cta_href) => update({ primary_cta_href })}
-          />
+        <div className="border-border space-y-4 rounded-xl border p-4">
+          <p className="text-fg text-sm font-semibold">Gambar Quick Action</p>
+          <ImageField label="Gambar" value={asString(content.image_url)} onChange={(image_url) => update({ image_url })} />
+          <div className="grid gap-4 md:grid-cols-2">
+            <Field label="Eyebrow Gambar" value={asString(content.image_eyebrow)} onChange={(image_eyebrow) => update({ image_eyebrow })} />
+            <Field label="Judul Gambar" value={asString(content.image_title)} onChange={(image_title) => update({ image_title })} />
+          </div>
+          <Field label="Deskripsi Gambar" value={asString(content.image_description)} onChange={(image_description) => update({ image_description })} multiline />
+          <Field label="Teks Alternatif Gambar" value={asString(content.image_alt)} onChange={(image_alt) => update({ image_alt })} />
         </div>
       </div>
     )
