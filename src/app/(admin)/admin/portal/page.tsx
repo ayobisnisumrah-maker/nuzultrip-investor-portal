@@ -1,8 +1,7 @@
 import Link from 'next/link'
 
 import { adminWithPermission } from '@/server/auth/page-guards'
-import { getPortalNavigationItems } from '@/server/portal/navigation-queries'
-import { listPortalMediaAssets } from '@/server/portal/media-queries'
+import { getPublicDocuments } from '@/server/portal/public-queries'
 import { listPortalPages, listPortalPageSections } from '@/server/portal/queries'
 
 function statusLabel(status: string) {
@@ -36,10 +35,9 @@ export default async function PortalPage() {
     )
   }
 
-  const [pages, navigation, media] = await Promise.all([
+  const [pages, publicDocuments] = await Promise.all([
     listPortalPages(),
-    getPortalNavigationItems(),
-    listPortalMediaAssets(),
+    getPublicDocuments(),
   ])
 
   const activePage =
@@ -57,7 +55,6 @@ export default async function PortalPage() {
   const publishedPages = pages.filter((page) => page.status === 'published').length
   const draftPages = pages.filter((page) => page.status === 'draft').length
   const reviewPages = pages.filter((page) => page.status === 'review').length
-  const activeNavigation = navigation.filter((item) => item.is_visible).length
 
   return (
     <div className="space-y-6">
@@ -68,7 +65,7 @@ export default async function PortalPage() {
           </p>
           <h1 className="font-display text-heading-lg text-fg mt-1">Ringkasan Portal</h1>
           <p className="text-body-sm text-fg-muted mt-2 max-w-2xl">
-            Pantau status publikasi, valuasi, Artikel & Berita, revisi konten, navigasi, ikon, dan aset media dari satu tempat.
+            Pantau status halaman utama, section portal, revisi yang belum terbit, dan dokumen publik dari satu tempat.
           </p>
         </div>
 
@@ -77,7 +74,7 @@ export default async function PortalPage() {
             href={`/admin/portal/pages/${activePage.id}`}
             className="bg-primary text-primary-foreground inline-flex h-10 items-center justify-center rounded-lg px-4 text-sm font-semibold"
           >
-            Kelola Halaman Aktif
+            Buka Portal
           </Link>
         ) : (
           <Link
@@ -99,12 +96,12 @@ export default async function PortalPage() {
           <p className="text-fg mt-2 text-2xl font-semibold">{draftPages + reviewPages}</p>
         </div>
         <div className="border-border bg-surface rounded-xl border p-5">
-          <p className="text-fg-muted text-xs">Navigasi Aktif</p>
-          <p className="text-fg mt-2 text-2xl font-semibold">{activeNavigation}</p>
+          <p className="text-fg-muted text-xs">Bagian Tampil</p>
+          <p className="text-fg mt-2 text-2xl font-semibold">{visibleSections.length}</p>
         </div>
         <div className="border-border bg-surface rounded-xl border p-5">
-          <p className="text-fg-muted text-xs">Aset Media</p>
-          <p className="text-fg mt-2 text-2xl font-semibold">{media.length}</p>
+          <p className="text-fg-muted text-xs">Dokumen Publik</p>
+          <p className="text-fg mt-2 text-2xl font-semibold">{publicDocuments.length}</p>
         </div>
       </section>
 
@@ -161,24 +158,15 @@ export default async function PortalPage() {
 
         <div className="border-border bg-surface rounded-xl border p-5">
           <h2 className="text-fg text-sm font-semibold">Akses Cepat</h2>
+          <p className="text-fg-muted mt-1 text-xs">
+            Pengelolaan Portal Investor disederhanakan menjadi tiga area utama.
+          </p>
           <div className="mt-4 grid gap-2">
+            <Link href="/admin/portal" className="border-primary bg-primary/5 rounded-lg border px-4 py-3 text-sm font-semibold">
+              Ringkasan Portal
+            </Link>
             <Link href="/admin/portal/pages" className="border-border hover:bg-muted rounded-lg border px-4 py-3 text-sm">
-              Halaman
-            </Link>
-            <Link href="/admin/portal/valuation" className="border-border hover:bg-muted rounded-lg border px-4 py-3 text-sm">
-              Valuasi Perusahaan
-            </Link>
-            <Link href="/admin/portal/articles" className="border-border hover:bg-muted rounded-lg border px-4 py-3 text-sm">
-              Artikel & Berita
-            </Link>
-            <Link href="/admin/portal/icons" className="border-border hover:bg-muted rounded-lg border px-4 py-3 text-sm">
-              Ikon Portal
-            </Link>
-            <Link href="/admin/portal/navigation" className="border-border hover:bg-muted rounded-lg border px-4 py-3 text-sm">
-              Navigasi
-            </Link>
-            <Link href="/admin/portal/media" className="border-border hover:bg-muted rounded-lg border px-4 py-3 text-sm">
-              Media
+              Portal
             </Link>
             <Link href="/admin/portal/documents" className="border-border hover:bg-muted rounded-lg border px-4 py-3 text-sm">
               Dokumen Portal
