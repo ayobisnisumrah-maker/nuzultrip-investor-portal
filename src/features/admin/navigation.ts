@@ -197,39 +197,9 @@ export const ADMIN_NAVIGATION: readonly AdminNavSection[] = [
       },
       {
         href: '/admin/portal/pages',
-        label: 'Halaman',
+        label: 'Portal',
         icon: 'PanelsTopLeft',
         permission: 'portal.view',
-      },
-      {
-        href: '/admin/portal/hero',
-        label: 'Hero',
-        icon: 'GalleryHorizontalEnd',
-        permission: 'portal.manage_hero',
-      },
-      {
-        href: '/admin/portal/navigation',
-        label: 'Navigasi',
-        icon: 'Menu',
-        permission: 'portal.manage_navigation',
-      },
-      {
-        href: '/admin/portal/cta',
-        label: 'CTA',
-        icon: 'MousePointerClick',
-        permission: 'portal.manage_cta',
-      },
-      {
-        href: '/admin/portal/faq',
-        label: 'FAQ',
-        icon: 'CircleHelp',
-        permission: 'portal.update',
-      },
-      {
-        href: '/admin/portal/media',
-        label: 'Media',
-        icon: 'Image',
-        permission: 'media.view',
       },
       {
         href: '/admin/portal/documents',
