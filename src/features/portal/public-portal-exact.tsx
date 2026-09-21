@@ -10,6 +10,7 @@ import { V2RoadmapSlider } from './v2-roadmap-slider'
 import { V2InvestorInfo } from './v2-investor-info'
 import { V2MobileHeader } from './v2-mobile-header'
 import { V2HeaderShell } from './v2-header-shell'
+import { V2Hero } from './v2-hero'
 
 type BaseProps = ComponentProps<typeof PublicPortalModel>
 type Section = BaseProps['sections'][number]
@@ -114,44 +115,15 @@ function Hero({ section }: { section?: Section }) {
   if (!section) return null
   const c = section.content
   const titleLines = text(c.title).split('|').map((item) => item.trim()).filter(Boolean).slice(0, 3)
-  const tags = strings(c.tags)
-  const image = text(c.image_url)
-  const imageAlt = text(c.image_alt) || 'Nuzultrip Equity'
-  const primaryLabel = text(c.primary_cta_label) || 'Ajukan Minat Equity'
-  const primaryHref = usableHref(c.primary_cta_href) || '/hubungi'
-  const secondaryLabel = text(c.secondary_cta_label) || 'Pelajari Lebih Lanjut'
-  const secondaryHref = usableHref(c.secondary_cta_href) || '#tentang-nuzultrip'
-
-  return (
-    <section className={styles.hero} id={section.anchor_id ?? 'beranda'}>
-      <div className={styles.heroInner}>
-        <div className={styles.heroCopy}>
-          <div className={styles.eyebrow}>{text(c.eyebrow) || 'NUZULTRIP EQUITY'}</div>
-          <h1>
-            {titleLines.length
-              ? titleLines.map((line) => <span key={line}>{line}</span>)
-              : <><span>Membangun Nilai</span><span>dan Kepemilikan Bersama</span><span>Nuzultrip</span></>}
-          </h1>
-          {text(c.description) ? <p>{text(c.description)}</p> : null}
-          <div className={styles.heroButtons}>
-            <Link href={primaryHref} className={styles.lightButton}>{primaryLabel} <Arrow /></Link>
-            <Link href={secondaryHref} className={styles.textButton}>{secondaryLabel} <Arrow /></Link>
-          </div>
-          {tags.length ? (
-            <div className={styles.heroTags}>
-              {tags.slice(0, 8).map((tag) => <span key={tag}>{tag}</span>)}
-            </div>
-          ) : null}
-        </div>
-        {image ? (
-          <div className={styles.heroMedia}>
-            <CmsImage src={image} alt={imageAlt} className={styles.heroImage} />
-            {text(c.image_caption) ? <div className={styles.heroMediaCaption}>{text(c.image_caption)}</div> : null}
-          </div>
-        ) : null}
-      </div>
-    </section>
-  )
+  return <V2Hero
+    id={section.anchor_id ?? 'beranda'}
+    eyebrow={text(c.eyebrow) || 'NUZULTRIP EQUITY • EKOSISTEM PERJALANAN MUSLIM'}
+    titleLines={titleLines.length ? titleLines : ['Berkembang Dalam Ekosistem Muslim', 'Yang Terintegrasi']}
+    description={text(c.description) || 'Nuzultrip membangun ekosistem perjalanan Muslim melalui integrasi layanan, jaringan, dan teknologi untuk pertumbuhan investasi jangka panjang.'}
+    primary={{ label: text(c.primary_cta_label) || 'Ajukan Minat Equity', href: usableHref(c.primary_cta_href) || '/hubungi' }}
+    secondary={{ label: text(c.secondary_cta_label) || 'Unduh Pitchdeck 2025', href: usableHref(c.secondary_cta_href) || '#tentang-nuzultrip' }}
+    tags={strings(c.tags)}
+  />
 }
 
 function AboutAndStats({ intro, stats, business }: { intro?: Section; stats?: Section; business?: Section }) {
