@@ -359,7 +359,7 @@ function ContactCta({ section, documents }: { section?: Section; documents: Publ
   </div></div></section>
 }
 
-function Footer({ navigation, logoSrc, pageTitle, content }: { navigation: NavItem[]; logoSrc: string; pageTitle: string; content?: Record<string, unknown> }) {
+function Footer({ navigation, pageTitle, content }: { navigation: NavItem[]; pageTitle: string; content?: Record<string, unknown> }) {
   const footer = navigation
     .filter((item) => item.location === 'footer' && !item.parent_id)
     .sort((a, b) => a.position - b.position)
@@ -392,8 +392,7 @@ function Footer({ navigation, logoSrc, pageTitle, content }: { navigation: NavIt
       <div className={styles.shell}>
         <div className={styles.footerGrid}>
           <div className={styles.footerBrand}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={logoSrc} alt="Nuzultrip" />
+            <div className={styles.footerWordmark}><strong>{text(content?.footer_brand_name) || 'Nuzultrip'}</strong><span>{text(content?.footer_brand_badge) || 'Equity'}</span></div>
             <p>{text(content?.footer_tagline) || 'Melayani perjalanan Muslim Indonesia dengan hati, profesionalisme, dan teknologi.'}</p>
             {social.length ? (
               <div>{social.slice(0, 5).map((item) => <Link key={item.id} href={item.href} target={item.target}>{item.label}</Link>)}</div>
@@ -453,7 +452,7 @@ export function PublicPortalExact({ page, sections, navigation, publicDocuments,
         <ContactCta section={contactCta} documents={publicDocuments} />
         <Articles section={articles} />
       </main>
-      <Footer navigation={navigation} logoSrc={logoSrc} pageTitle={page.title} content={contactCta?.content} />
+      <Footer navigation={navigation} pageTitle={page.title} content={contactCta?.content} />
     </div>
   )
 }
