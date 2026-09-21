@@ -124,7 +124,7 @@ function Hero({ section }: { section?: Section }) {
           </div>
           {tags.length ? (
             <div className={styles.heroTags}>
-              {tags.slice(0, 6).map((tag) => <span key={tag}>{tag}</span>)}
+              {tags.slice(0, 8).map((tag) => <span key={tag}>{tag}</span>)}
             </div>
           ) : null}
         </div>
