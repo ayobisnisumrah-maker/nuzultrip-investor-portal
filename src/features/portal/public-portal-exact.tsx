@@ -247,6 +247,8 @@ function Services({ section }: { section?: Section }) {
           <div>
             <div className={styles.eyebrowDark}>{text(c.eyebrow) || 'LAYANAN UTAMA'}</div>
             <h2>{text(c.title) || 'Ekosistem Layanan'}</h2>
+            {text(c.description) ? <p>{text(c.description)}</p> : null}
+            {usableHref(c.cta_href) ? <Link href={usableHref(c.cta_href)!} className={styles.inlineLink}>{text(c.cta_label) || 'Lihat Layanan Lainnya'} <Arrow /></Link> : null}
           </div>
           {items.length ? (
             <div className={styles.serviceCards}>
