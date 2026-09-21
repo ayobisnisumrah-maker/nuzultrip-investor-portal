@@ -209,43 +209,12 @@ function CompanyStory({ section }: { section?: Section }) {
 function Services({ section }: { section?: Section }) {
   if (!section) return null
   const c = section.content
-  const items = records(c.items)
+  const items = records(c.items).slice(0, 4)
   if (!items.length && !text(c.title)) return null
-
-  return (
-    <section className={styles.section} id={section.anchor_id ?? 'ekosistem'}>
-      <div className={styles.shell}>
-        <div className={styles.serviceLayout}>
-          <div>
-            <div className={styles.eyebrowDark}>{text(c.eyebrow) || 'LAYANAN UTAMA'}</div>
-            <h2>{text(c.title) || 'Ekosistem Layanan'}</h2>
-            {text(c.description) ? <p>{text(c.description)}</p> : null}
-            {usableHref(c.cta_href) ? <Link href={usableHref(c.cta_href)!} className={styles.inlineLink}>{text(c.cta_label) || 'Lihat Layanan Lainnya'} <Arrow /></Link> : null}
-          </div>
-          {items.length ? (
-            <div className={styles.serviceCards}>
-              {items.slice(0, 4).map((item, index) => {
-                const href = usableHref(item.href)
-                const fallbackIcon = ['✈', '◇', '▢', '⌘'][index] || '•'
-                return (
-                  <article key={`${text(item.title)}-${index}`}>
-                    <span className={styles.serviceIcon}>
-                      <CmsIcon item={item} fallback={fallbackIcon} />
-                    </span>
-                    {text(item.code) ? <small>{text(item.code)}</small> : null}
-                    <h3>{text(item.title)}</h3>
-                    {text(item.tagline) ? <strong>{text(item.tagline)}</strong> : null}
-                    {text(item.description) ? <p>{text(item.description)}</p> : null}
-                    {href ? <Link href={href} className={styles.cardArrow} aria-label={`Buka ${text(item.title)}`}>→</Link> : null}
-                  </article>
-                )
-              })}
-            </div>
-          ) : null}
-        </div>
-      </div>
-    </section>
-  )
+  return <section className={styles.servicesV2} id={section.anchor_id ?? 'layanan'}><div className={styles.shell}><div className={styles.servicesV2Grid}>
+    <div className={styles.servicesV2Intro}><div><div className={styles.eyebrowDark}>{text(c.eyebrow)||'LAYANAN UTAMA'}</div><h2>{text(c.title)||<>Ekosistem<br/>Perjalanan Muslim<br/>Nuzultrip</>}</h2><p>{text(c.description)||'Menghubungkan mitra, vendor layanan, dan jaringan distribusi dalam satu kesatuan sistem yang transparan dan terstandar.'}</p></div><div className={styles.servicesV2IntroCta}><Link href={usableHref(c.cta_href)||'/layanan'} className={styles.inlineLink}>{text(c.cta_label)||'Layanan Lainnya'} <Arrow/></Link></div></div>
+    <div className={styles.servicesV2Cards}>{items.map((item,index)=>{const href=usableHref(item.href)||'/layanan';const fallback=['▣','▱','◇','◎'][index]||'▣';return <Link href={href} className={styles.servicesV2Card} key={`${text(item.title)}-${index}`}><div className={styles.servicesV2CardTop}><span className={styles.servicesV2Icon}><CmsIcon item={item} fallback={fallback}/></span><small>{text(item.code)}</small></div><div><h3>{text(item.title)}</h3><p>“{text(item.tagline)||text(item.description)}”</p></div><div className={styles.servicesV2Learn}><span>Pelajari selengkapnya</span><Arrow/></div></Link>})}</div>
+  </div></div></section>
 }
 
 function Process({ offering }: { offering?: Section }) {
