@@ -1390,6 +1390,18 @@ function VisualEditor({
           </div>
           <Field label="Teks Alternatif Gambar" value={asString(content.image_alt)} onChange={(image_alt) => update({ image_alt })} />
         </div>
+
+        <div className="border-border space-y-4 rounded-xl border p-4">
+          <p className="text-fg text-sm font-semibold">Footer Portal</p>
+          <Field label="Tagline Footer" value={asString(content.footer_tagline)} onChange={(footer_tagline) => update({ footer_tagline })} />
+          <Field label="Judul Kontak Footer" value={asString(content.footer_contact_title)} onChange={(footer_contact_title) => update({ footer_contact_title })} />
+          <Field label="Deskripsi Kontak Footer" value={asString(content.footer_contact_description)} onChange={(footer_contact_description) => update({ footer_contact_description })} multiline />
+          <div className="grid gap-4 md:grid-cols-2">
+            <Field label="Label CTA Footer" value={asString(content.footer_contact_label)} onChange={(footer_contact_label) => update({ footer_contact_label })} />
+            <Field label="Tautan CTA Footer" value={asString(content.footer_contact_href)} onChange={(footer_contact_href) => update({ footer_contact_href })} />
+          </div>
+          <Field label="Teks Bawah Footer" value={asString(content.footer_bottom_text)} onChange={(footer_bottom_text) => update({ footer_bottom_text })} />
+        </div>
       </div>
     )
   }
