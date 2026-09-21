@@ -136,3 +136,23 @@
 .articleSection{padding:82px 0}.articleLayout{gap:32px}.articleIntro h2{font-size:clamp(2.2rem,3.45vw,3rem);line-height:.98}.articleCards{gap:16px}.articleCards article{border-radius:10px}.articleImage{height:175px}.articleBody{padding:19px}.articleBody h3{font-size:1.02rem}.articleBody p{font-size:.72rem}
 .footer{padding:52px 0 22px}.footerGrid{padding-bottom:42px}.footerBrand img{width:118px}
 @media(min-width:1200px){.shell{width:min(calc(100% - 96px),var(--shell))}}
+
+
+/* V4 exact source-of-truth tuning from Nuzultrip-Equity-V2 */
+.page{--paper:#F5F5F3;--dark:#08090f;--emerald:#10b981;--shell:1180px;background:#F5F5F3}
+.header{position:fixed;left:0;right:0;top:0;background:rgba(8,9,15,.88);border-bottom:1px solid rgba(255,255,255,.08)}
+.header .shell{min-height:72px}.logo{width:124px}.nav{gap:28px;font-size:.78rem}.headerCta{min-height:40px;padding:9px 19px}
+.hero{min-height:max(780px,min(114dvh,1220px));padding-top:76px}.heroInner{min-height:calc(max(780px,min(114dvh,1220px)) - 76px);max-width:1100px}.heroCopy{padding:clamp(36px,7vh,80px) 24px 36px;gap:28px}.heroCopy h1{font-size:clamp(2.35rem,5.2vw,4.25rem);line-height:1.08;letter-spacing:-.028em;max-width:100%}.heroCopy>p{max-width:580px;font-size:clamp(.95rem,1.25vw,1.125rem);line-height:1.6;margin-top:0}.heroButtons{gap:16px;margin-top:6px;margin-bottom:6px}.lightButton,.textButton{min-height:52px;padding:13px 28px;font-size:.92rem}.heroTags{margin-top:clamp(48px,8vh,88px);max-width:820px}
+.section,.partnerSection,.infoSection,.roadmapSection{padding:clamp(64px,7vw,112px) 0}
+.aboutGrid{max-width:860px}.aboutGrid h2{font-size:clamp(1.85rem,3.8vw,3.25rem);line-height:1.18}.statsGrid{margin-top:48px;border-radius:16px;background:rgba(255,255,255,.5)}.statsGrid article{min-height:210px;padding:28px 24px}.statsGrid strong{font-size:clamp(2.25rem,4vw,3.75rem)}.statsGrid span{font-size:.86rem}.statsGrid small{font-size:.74rem}
+.offerLayout,.companyGrid,.serviceLayout,.networkLayout,.quickLayout{gap:32px}.offerIntro h2,.companyIntro h2,.serviceLayout h2,.networkIntro h2,.quickIntro h2{font-size:clamp(1.85rem,3.8vw,3.25rem);line-height:1.05}.offerTable{min-height:480px}.offerCard{min-height:480px;border-radius:16px}.offerRow strong{font-size:clamp(1.4rem,2.4vw,2rem)}
+.companyMedia{min-height:440px;border-radius:16px}.companyMedia img{min-height:440px}.companyMetrics strong{font-size:clamp(1.55rem,2.3vw,1.95rem)}
+.serviceCards{gap:16px}.serviceCards article{min-height:220px;border-radius:16px;padding:26px}.serviceIcon{width:44px;height:44px;border-radius:12px}.serviceCards h3{font-size:1.15rem}
+.processSection{padding:clamp(64px,8vw,112px) 0}.processHeader{margin-bottom:52px}.processHeader h2{font-size:clamp(1.85rem,3.8vw,3.25rem)}.processSteps{gap:18px}.processSteps article{min-height:300px;border-radius:16px;padding:24px}.processSteps .stepNumber{font-size:1.65rem}.processSteps h3{font-size:1.08rem}
+.roadmapSection{padding:clamp(64px,8vw,112px) 0}.roadmapHeaderExact h2{font-size:clamp(2rem,3.8vw,3.25rem);line-height:1.06}.roadmapTabs{border-radius:14px;padding:8px}.roadmapTabs button{min-height:62px}.roadmapTrackExact article{flex-basis:340px;min-height:405px;border-radius:16px;padding:26px}
+.networkCards{gap:16px}.networkCards article{padding:24px;border-radius:16px}.networkIcon{width:44px;height:44px;flex-basis:44px;border-radius:12px}.networkMedia{min-height:460px;border-radius:16px}
+.infoHeader{max-width:720px;margin-bottom:48px}.infoHeader h2{font-size:clamp(1.85rem,3.8vw,3.25rem)}.infoLayout{gap:40px}.infoMedia{min-height:500px;border-radius:16px}.infoGrid{gap:16px}.infoGrid article{padding:24px;border-radius:16px}
+.contactSection{padding:clamp(64px,8vw,112px) 0}.quickLayout{gap:32px}.quickCards{gap:16px}.quickCards>a{min-height:160px;padding:24px;border-radius:16px}.quickMedia{min-height:320px;padding:28px;border-radius:16px}
+.articleSection{padding:clamp(64px,8vw,112px) 0}.articleLayout{gap:48px}.articleIntro h2{font-size:clamp(1.85rem,3.8vw,3.25rem)}.articleCards{gap:24px}.articleCards article{border-radius:16px}.articleImage{height:210px}.articleBody{padding:24px}
+.footer{padding:64px 0 48px}.footerGrid{grid-template-columns:4fr 3fr 2fr 3fr;gap:32px;padding-bottom:64px}.footerColumns{display:contents}.newsletter{border-radius:16px}
+@media(max-width:980px){.header .shell{min-height:64px}.hero{padding-top:64px}.heroInner{min-height:calc(820px - 64px)}.footerGrid{grid-template-columns:1fr 1fr}.footerColumns{display:grid;grid-template-columns:1fr 1fr}.newsletter{grid-column:1/-1}}
