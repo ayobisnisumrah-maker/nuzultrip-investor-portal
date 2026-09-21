@@ -1,5 +1,6 @@
 import type { ComponentProps } from 'react'
 import Link from 'next/link'
+import { Building2, Compass, Globe2, Luggage } from 'lucide-react'
 
 import type { PublicPortalModel } from '@/features/portal/public-portal-model'
 import type { PublicPortalDocument } from '@/server/portal/public-queries'
@@ -212,7 +213,7 @@ function Services({ section }: { section?: Section }) {
   if (!items.length && !text(c.title)) return null
   return <section className={styles.servicesV2} id={section.anchor_id ?? 'layanan'}><div className={styles.shell}><div className={styles.servicesV2Grid}>
     <div className={styles.servicesV2Intro}><div><div className={styles.eyebrowDark}>{text(c.eyebrow)||'LAYANAN UTAMA'}</div><h2>{text(c.title)||<>Ekosistem<br/>Perjalanan Muslim<br/>Nuzultrip</>}</h2><p>{text(c.description)||'Menghubungkan mitra, vendor layanan, dan jaringan distribusi dalam satu kesatuan sistem yang transparan dan terstandar.'}</p></div><div className={styles.servicesV2IntroCta}><Link href={usableHref(c.cta_href)||'/layanan'} className={styles.inlineLink}>{text(c.cta_label)||'Layanan Lainnya'} <Arrow/></Link></div></div>
-    <div className={styles.servicesV2Cards}>{items.map((item,index)=>{const href=usableHref(item.href)||'/layanan';const fallback=['▣','▱','◇','◎'][index]||'▣';return <Link href={href} className={styles.servicesV2Card} key={`${text(item.title)}-${index}`}><div className={styles.servicesV2CardTop}><span className={styles.servicesV2Icon}><CmsIcon item={item} fallback={fallback}/></span><small>{text(item.code)}</small></div><div><h3>{text(item.title)}</h3><p>“{text(item.tagline)||text(item.description)}”</p></div><div className={styles.servicesV2Learn}><span>Pelajari selengkapnya</span><Arrow/></div></Link>})}</div>
+    <div className={styles.servicesV2Cards}>{items.map((item,index)=>{const href=usableHref(item.href)||'/layanan';const ServiceIcon=[Building2,Luggage,Compass,Globe2][index]??Building2;return <Link href={href} className={styles.servicesV2Card} key={`${text(item.title)}-${index}`}><div className={styles.servicesV2CardTop}><span className={styles.servicesV2Icon}>{text(item.icon_url)?<CmsIcon item={item} fallback=""/>:<ServiceIcon size={22}/>}</span><small>{text(item.code)}</small></div><div><h3>{text(item.title)}</h3><p>“{text(item.tagline)||text(item.description)}”</p></div><div className={styles.servicesV2Learn}><span>Pelajari selengkapnya</span><Arrow/></div></Link>})}</div>
   </div></div></section>
 }
 
