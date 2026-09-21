@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 'use client'
 
 import { useEffect, useState } from 'react'
@@ -21,7 +22,7 @@ export function V2MobileHeader({ items, logoSrc }: { items: MobileNavItem[]; log
     </button>
     {open ? <div className={styles.mobileMenuOverlay}>
       <div className={styles.mobileMenuTop}>
-        <Link href="/" onClick={() => setOpen(false)}>{/* eslint-disable-next-line @next/next/no-img-element */}<img src={logoSrc} alt="Nuzultrip" /></Link>
+        <Link href="/" onClick={() => setOpen(false)}><img src={logoSrc} alt="Nuzultrip" /></Link>
         <button type="button" aria-label="Tutup menu" onClick={() => setOpen(false)}>×</button>
       </div>
       <nav aria-label="Navigasi mobile">
