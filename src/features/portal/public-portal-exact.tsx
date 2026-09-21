@@ -83,7 +83,7 @@ function Header({ navigation, logoSrc }: { navigation: NavItem[]; logoSrc: strin
           <img src={logoSrc} alt="Nuzultrip" className={styles.logo} />
         </Link>
         <nav className={styles.nav} aria-label="Navigasi utama">
-          {header.slice(0, 6).map((item) => (
+          {header.slice(0, 7).map((item) => (
             <Link key={item.id} href={item.href}>{item.label}</Link>
           ))}
         </nav>
@@ -406,7 +406,7 @@ function ContactCta({ section, documents }: { section?: Section; documents: Publ
   </div></div></section>
 }
 
-function Footer({ navigation, logoSrc, pageTitle }: { navigation: NavItem[]; logoSrc: string; pageTitle: string }) {
+function Footer({ navigation, logoSrc, pageTitle, content }: { navigation: NavItem[]; logoSrc: string; pageTitle: string; content?: Record<string, unknown> }) {
   const footer = navigation
     .filter((item) => item.location === 'footer' && !item.parent_id)
     .sort((a, b) => a.position - b.position)
@@ -441,20 +441,21 @@ function Footer({ navigation, logoSrc, pageTitle }: { navigation: NavItem[]; log
           <div className={styles.footerBrand}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={logoSrc} alt="Nuzultrip" />
-            <p>Melayani perjalanan Muslim Indonesia dengan hati, profesionalisme, dan teknologi.</p>
+            <p>{text(content?.footer_tagline) || 'Melayani perjalanan Muslim Indonesia dengan hati, profesionalisme, dan teknologi.'}</p>
             {social.length ? (
               <div>{social.slice(0, 5).map((item) => <Link key={item.id} href={item.href} target={item.target}>{item.label}</Link>)}</div>
             ) : null}
           </div>
           {footer.length ? <div className={styles.footerColumns}>{footer.slice(0,2).map((group)=><nav key={group.id}><h4>{group.label}</h4>{(footerChildren.filter((item)=>item.parent_id===group.id).length ? footerChildren.filter((item)=>item.parent_id===group.id) : [group]).slice(0,8).map((item)=>{const href=footerHref(item);return href?<Link key={item.id} href={href}>{item.label}</Link>:<span key={item.id}>{item.label}</span>})}</nav>)}</div> : null}
           <div className={styles.newsletter}>
-            <h4>Butuh informasi terbaru?</h4>
-            <p>Hubungi tim Investor Relations untuk informasi, dokumen, atau pembaruan resmi Nuzultrip Equity.</p>
-            <Link href="/hubungi">Hubungi Investor Relations <Arrow /></Link>
+            <h4>{text(content?.footer_contact_title) || 'Butuh informasi terbaru?'}</h4>
+            <p>{text(content?.footer_contact_description) || 'Hubungi tim Investor Relations untuk informasi, dokumen, atau pembaruan resmi Nuzultrip Equity.'}</p>
+            <Link href={usableHref(content?.footer_contact_href) || '/hubungi'}>{text(content?.footer_contact_label) || 'Hubungi Kami'} <Arrow /></Link>
           </div>
         </div>
         <div className={styles.footerBottom}>
-          <span>© {new Date().getFullYear()} {pageTitle}. All rights reserved.</span>
+          <span>© {new Date().getFullYear()} {pageTitle}. All Rights Reserved.</span>
+          <span>{text(content?.footer_bottom_text) || 'Platform Penawaran Equity Ekosistem Perjalanan Muslim Indonesia.'}</span>
         </div>
       </div>
     </footer>
@@ -499,7 +500,7 @@ export function PublicPortalExact({ page, sections, navigation, publicDocuments,
         <ContactCta section={contactCta} documents={publicDocuments} />
         <Articles section={articles} />
       </main>
-      <Footer navigation={navigation} logoSrc={logoSrc} pageTitle={page.title} />
+      <Footer navigation={navigation} logoSrc={logoSrc} pageTitle={page.title} content={contactCta?.content} />
     </div>
   )
 }
