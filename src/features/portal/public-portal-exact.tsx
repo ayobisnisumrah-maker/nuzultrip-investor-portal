@@ -330,6 +330,7 @@ function InvestorInfo({ growth, funds, governance, risks, documents, publicDocum
           href: document.href,
         })),
       ]}
+      interestHref="/hubungi"
     />
   </div></section>
 }
