@@ -253,3 +253,13 @@
 .articleBody h3{font-size:1.2rem}
 @media(max-width:980px){.processSteps{grid-template-columns:repeat(2,1fr)}.partnerIntro,.partnerCards,.partnerMedia{grid-column:1/-1}.partnerLayout{gap:28px}}
 @media(max-width:640px){.processSteps{grid-template-columns:1fr}.partnerMedia{min-height:380px}}
+
+/* V2 interaction states */
+.infoMedia img{transition:opacity .35s ease,transform .5s ease}
+.infoGrid>div,.infoGrid>a{display:block;height:100%}
+.infoGrid article{height:100%;cursor:pointer;transition:border-color .25s,box-shadow .25s,transform .25s}
+.infoCardActive{border-color:rgba(0,0,0,.5)!important;box-shadow:0 6px 22px rgba(0,0,0,.08);outline:1px solid rgba(0,0,0,.08)}
+.companyGalleryImage{position:absolute;inset:0;width:100%!important;height:100%!important;object-fit:cover;opacity:0;pointer-events:none;transition:opacity .3s ease}
+.companyGalleryImageActive{position:absolute;inset:0;width:100%!important;height:100%!important;object-fit:cover;opacity:1;transition:opacity .3s ease}
+.mediaIndicatorActive{width:32px!important;background:#fff!important}
+.companyMetricActive{border-color:rgba(0,0,0,.5)!important;padding-left:8px!important}
