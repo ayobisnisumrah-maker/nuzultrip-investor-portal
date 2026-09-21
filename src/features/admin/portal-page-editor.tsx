@@ -28,12 +28,9 @@ const SECTION_KINDS = [
   'strategic_direction',
   'financial_highlights',
   'investor_updates',
-  'strategic_direction',
-  'investor_updates',
   'legal_notice',
   'documents',
   'contact_cta',
-  'legal_notice',
   'rich_content',
   'stat_grid',
   'logo_wall',
@@ -294,29 +291,51 @@ function createDefaultContent(kind: SectionKind): ContentRecord {
     case 'investor_updates':
       return {
         kind,
-        eyebrow: 'Pembaruan Investor',
-        title: '',
+        eyebrow: 'INFORMASI INVESTOR',
+        title: 'Informasi penting dalam satu tempat',
         description: '',
+        image_url: '',
         items: [],
       }
 
     case 'documents':
       return {
         kind,
-        eyebrow: 'Dokumen Investor',
-        title: '',
+        eyebrow: 'INFORMASI INVESTOR',
+        title: 'Informasi penting dalam satu tempat',
         description: '',
-        items: [],
+        image_url: '',
+        image_alt: '',
       }
 
     case 'contact_cta':
       return {
         kind,
-        eyebrow: 'Hubungan Investor',
-        title: '',
+        eyebrow: 'QUICK ACTION',
+        title: 'Kenali. Pelajari. Tentukan Langkah Anda.',
         description: '',
-        primary_cta_label: '',
-        primary_cta_href: '',
+        contact_value: '',
+        primary_cta_eyebrow: 'Investor Relations',
+        primary_cta_label: 'Hubungi Tim',
+        primary_cta_href: '/hubungi',
+        primary_cta_description: '',
+        secondary_cta_eyebrow: 'Dokumen Resmi',
+        secondary_cta_label: 'Unduh Pitchdeck',
+        secondary_cta_href: '',
+        secondary_cta_description: '',
+        image_url: '',
+        image_alt: '',
+        image_eyebrow: 'LANGKAH AWAL KEMITRAAN',
+        image_title: 'Siap Mengenal Nuzultrip Lebih Jauh?',
+        image_description: '',
+        image_cta_label: 'Ajukan Minat Equity',
+        image_cta_href: '/hubungi',
+        footer_tagline: 'Melayani perjalanan Muslim Indonesia dengan hati, profesionalisme, dan teknologi.',
+        footer_contact_title: 'BUTUH INFORMASI TERBARU?',
+        footer_contact_description: '',
+        footer_contact_label: 'Hubungi Kami',
+        footer_contact_href: '/hubungi',
+        footer_bottom_text: 'Platform Penawaran Equity Ekosistem Perjalanan Muslim Indonesia.',
       }
 
     case 'legal_notice':
