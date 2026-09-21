@@ -22,7 +22,7 @@ export function V2CompanyGallery({
   metrics: GalleryMetric[]
 }) {
   const safeImages = useMemo(() => images.filter((image) => Boolean(image.src)).slice(0, 5), [images])
-  const safeMetrics = [...metrics.slice(0, 4), { value: 'Amanah', label: 'Terverifikasi PPIU Kemenag' }].slice(0, 5)
+  const safeMetrics = metrics.slice(0, 5)
   const [activeIndex, setActiveIndex] = useState(0)
   const mediaRef = useRef<HTMLDivElement>(null)
 
