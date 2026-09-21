@@ -1358,6 +1358,7 @@ function VisualEditor({
 
         <div className="border-border space-y-4 rounded-xl border p-4">
           <p className="text-fg text-sm font-semibold">CTA Investor Relations</p>
+          <Field label="Eyebrow Card Utama" value={asString(content.primary_cta_eyebrow)} onChange={(primary_cta_eyebrow) => update({ primary_cta_eyebrow })} placeholder="Investor Relations" />
           <div className="grid gap-4 md:grid-cols-2">
             <Field label="Label CTA Utama" value={asString(content.primary_cta_label)} onChange={(primary_cta_label) => update({ primary_cta_label })} />
             <Field label="Tautan CTA Utama" value={asString(content.primary_cta_href)} onChange={(primary_cta_href) => update({ primary_cta_href })} />
@@ -1367,6 +1368,7 @@ function VisualEditor({
 
         <div className="border-border space-y-4 rounded-xl border p-4">
           <p className="text-fg text-sm font-semibold">CTA Dokumen Resmi</p>
+          <Field label="Eyebrow Card Sekunder" value={asString(content.secondary_cta_eyebrow)} onChange={(secondary_cta_eyebrow) => update({ secondary_cta_eyebrow })} placeholder="Dokumen Resmi" />
           <div className="grid gap-4 md:grid-cols-2">
             <Field label="Label CTA Sekunder" value={asString(content.secondary_cta_label)} onChange={(secondary_cta_label) => update({ secondary_cta_label })} />
             <Field label="Tautan CTA Sekunder (opsional)" value={asString(content.secondary_cta_href)} onChange={(secondary_cta_href) => update({ secondary_cta_href })} placeholder="Kosongkan untuk memakai dokumen publik pertama" />
@@ -1382,6 +1384,10 @@ function VisualEditor({
             <Field label="Judul Gambar" value={asString(content.image_title)} onChange={(image_title) => update({ image_title })} />
           </div>
           <Field label="Deskripsi Gambar" value={asString(content.image_description)} onChange={(image_description) => update({ image_description })} multiline />
+          <div className="grid gap-4 md:grid-cols-2">
+            <Field label="Label CTA Gambar" value={asString(content.image_cta_label)} onChange={(image_cta_label) => update({ image_cta_label })} placeholder="Ajukan Minat Equity" />
+            <Field label="Tautan CTA Gambar" value={asString(content.image_cta_href)} onChange={(image_cta_href) => update({ image_cta_href })} />
+          </div>
           <Field label="Teks Alternatif Gambar" value={asString(content.image_alt)} onChange={(image_alt) => update({ image_alt })} />
         </div>
       </div>
