@@ -1369,7 +1369,11 @@ export function PortalPageEditor({
   const [pending, startTransition] = useTransition()
 
   const [selectedKind, setSelectedKind] = useState<SectionKind>('intro')
-  const [openId, setOpenId] = useState<string | null>(sections[0]?.id ?? null)
+  const firstPortalSection = [...sections].sort((a, b) => {
+    const rank = portalSectionRank(a.section_kind) - portalSectionRank(b.section_kind)
+    return rank || a.position - b.position
+  })[0]
+  const [openId, setOpenId] = useState<string | null>(firstPortalSection?.id ?? null)
   const [advanced, setAdvanced] = useState<Record<string, boolean>>({})
 
   const [drafts, setDrafts] = useState<Record<string, string>>(() =>
