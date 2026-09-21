@@ -332,21 +332,43 @@ function Partners({ section }: { section?: Section }) {
 }
 
 function InvestorInfo({ growth, funds, governance, risks, documents, publicDocuments }: { growth?: Section; funds?: Section; governance?: Section; risks?: Section; documents?: Section; publicDocuments: PublicPortalDocument[] }) {
-  const blocks = [growth, funds, governance, risks].filter(Boolean) as Section[]
   const documentPresentation = documents?.content ?? {}
-  if (!blocks.length && !publicDocuments.length && !documents) return null
-  const heroImage = text(documentPresentation.image_url) || blocks.map((s)=>text(s.content.image_url)).find(Boolean)
+  const sourceSections = [funds, governance, risks].filter(Boolean) as Section[]
+  const sectionCards = sourceSections.flatMap((section) => {
+    const c = section.content
+    const nested = records(c.pillars).length ? records(c.pillars) : records(c.items)
+    if (nested.length) {
+      return nested.map((item) => ({
+        key: `${section.id}-${text(item.title)}`,
+        title: text(item.title),
+        description: text(item.description),
+        image: text(item.image_url) || text(c.image_url),
+        href: usableHref(item.href),
+      }))
+    }
+    return [{
+      key: section.id,
+      title: text(c.title),
+      description: text(c.description) || text(c.content),
+      image: text(c.image_url),
+      href: usableHref(c.cta_href),
+    }]
+  }).filter((item) => item.title || item.description)
+
+  const heroImage = text(documentPresentation.image_url) || sectionCards.map((item) => item.image).find(Boolean) || text(growth?.content.image_url)
   const eyebrow = text(documentPresentation.eyebrow) || 'INFORMASI INVESTOR'
   const title = text(documentPresentation.title) || 'Informasi penting dalam satu tempat'
+  const availableDocumentSlots = Math.max(0, 6 - sectionCards.length)
+  if (!sectionCards.length && !publicDocuments.length && !documents) return null
+
   return <section className={styles.infoSection} id="informasi-investor"><div className={styles.shell}>
     <div className={styles.infoHeader}><div className={styles.eyebrowDark}>{eyebrow}</div><h2>{title}</h2>{text(documentPresentation.description)?<p>{text(documentPresentation.description)}</p>:null}</div>
     <div className={styles.infoLayout}><div className={styles.infoMedia}>{heroImage ? <CmsImage src={heroImage} alt={text(documentPresentation.image_alt)||'Informasi Investor Nuzultrip'} /> : null}</div><div className={styles.infoGrid}>
-      {blocks.slice(0,4).map((section)=><article key={section.id}><div><h3>{text(section.content.title)}</h3>{text(section.content.description)?<p>{text(section.content.description)}</p>:null}</div><span className={styles.infoMore}>Selengkapnya <Arrow /></span></article>)}
-      {publicDocuments.slice(0, Math.max(0, 6-blocks.length)).map((document)=><Link href={document.href} key={document.id}><article><div><h3>{document.title}</h3>{document.summary?<p>{document.summary}</p>:null}</div><span className={styles.infoMore}>Buka Dokumen <Arrow /></span></article></Link>)}
+      {sectionCards.slice(0,6).map((item)=>{const body=<article><div><h3>{item.title}</h3>{item.description?<p>{item.description}</p>:null}</div><span className={styles.infoMore}>Selengkapnya <Arrow /></span></article>;return item.href?<Link href={item.href} key={item.key}>{body}</Link>:<div key={item.key}>{body}</div>})}
+      {publicDocuments.slice(0, availableDocumentSlots).map((document)=><Link href={document.href} key={document.id}><article><div><h3>{document.title}</h3>{document.summary?<p>{document.summary}</p>:null}</div><span className={styles.infoMore}>Buka Dokumen <Arrow /></span></article></Link>)}
     </div></div>
   </div></section>
 }
-
 
 function Articles({ section }: { section?: Section }) {
   if (!section) return null
