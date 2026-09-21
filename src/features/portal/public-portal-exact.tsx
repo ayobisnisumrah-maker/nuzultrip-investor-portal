@@ -195,6 +195,7 @@ function Offering({ section }: { section?: Section }) {
             </div>
           ) : null}
           <aside className={styles.offerCard}>
+            {text(c.card_image_url) ? <CmsImage src={text(c.card_image_url)} alt={text(c.card_image_alt) || 'Peluang Equity Nuzultrip'} className={styles.offerCardImage} /> : null}
             <h3>{text(c.card_title) || <>Investasi Hari Ini,<br />Untuk Masa Depan<br />yang Lebih Baik.</>}</h3>
             <div className={styles.offerRule} />
             <Link href={usableHref(c.card_cta_href) || '/hubungi'}>{text(c.card_cta_label) || 'Ajukan Minat Equity'} <Arrow /></Link>
@@ -260,7 +261,9 @@ function Services({ section }: { section?: Section }) {
                     <span className={styles.serviceIcon}>
                       <CmsIcon item={item} fallback={fallbackIcon} />
                     </span>
+                    {text(item.code) ? <small>{text(item.code)}</small> : null}
                     <h3>{text(item.title)}</h3>
+                    {text(item.tagline) ? <strong>{text(item.tagline)}</strong> : null}
                     {text(item.description) ? <p>{text(item.description)}</p> : null}
                     {href ? <Link href={href} className={styles.cardArrow} aria-label={`Buka ${text(item.title)}`}>→</Link> : null}
                   </article>
@@ -378,7 +381,7 @@ function Articles({ section }: { section?: Section }) {
   const ctaHref = usableHref(c.cta_href)
   return <section className={styles.articleSection} id={section.anchor_id ?? 'artikel'}><div className={styles.shell}><div className={styles.articleLayout}>
     <div className={styles.articleIntro}><div><div className={styles.eyebrowDark}>{text(c.eyebrow)||'ARTIKEL & BERITA'}</div><h2>{text(c.title)||'Wawasan untuk Keputusan yang Lebih Baik'}</h2>{text(c.description)?<p>{text(c.description)}</p>:null}</div>{ctaHref?<Link href={ctaHref}>{text(c.cta_label)||'Lebih Artikel Lainnya'} <Arrow /></Link>:null}</div>
-    <div className={styles.articleCards}>{items.slice(0,2).map((item,index)=>{const href=usableHref(item.href);const body=<><div className={styles.articleImage}><CmsImage src={text(item.image_url)} alt={text(item.title)}/><span>{text(item.type)||'Artikel'}</span></div><div className={styles.articleBody}><small>{text(item.date)}</small><h3>{text(item.title)}</h3>{text(item.description)?<p>{text(item.description)}</p>:null}<b>Baca Selengkapnya <Arrow /></b></div></>;return <article key={index}>{href?<Link href={href}>{body}</Link>:body}</article>})}</div>
+    <div className={styles.articleCards}>{items.slice(0,2).map((item,index)=>{const href=usableHref(item.href);const body=<><div className={styles.articleImage}><CmsImage src={text(item.image_url)} alt={text(item.title)}/><span>{text(item.type)||'Artikel'}</span></div><div className={styles.articleBody}><small>{[text(item.date), text(item.read_time)].filter(Boolean).join(' · ')}</small><h3>{text(item.title)}</h3>{text(item.description)?<p>{text(item.description)}</p>:null}<b>Baca Selengkapnya <Arrow /></b></div></>;return <article key={index}>{href?<Link href={href}>{body}</Link>:body}</article>})}</div>
   </div></div></section>
 }
 
