@@ -970,6 +970,8 @@ function VisualEditor({
             ],
           )}
           <div className="grid gap-4 md:grid-cols-2">
+            <Field label="Label CTA Utama Proses" value={asString(content.process_primary_cta_label)} onChange={(process_primary_cta_label) => update({ process_primary_cta_label })} />
+            <Field label="Tautan CTA Utama Proses" value={asString(content.process_primary_cta_href)} onChange={(process_primary_cta_href) => update({ process_primary_cta_href })} />
             <Field label="Label CTA Proses" value={asString(content.process_cta_label)} onChange={(process_cta_label) => update({ process_cta_label })} />
             <Field label="Tautan CTA Proses" value={asString(content.process_cta_href)} onChange={(process_cta_href) => update({ process_cta_href })} />
           </div>
