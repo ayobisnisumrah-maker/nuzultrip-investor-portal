@@ -347,6 +347,8 @@ function InvestorInfo({ growth, funds, governance, risks, documents, publicDocum
         title: text(item.title),
         description: text(item.description),
         image: text(item.image_url) || text(governance?.content.image_url),
+        imageAlt: text(item.image_alt),
+        details: text(item.details),
         href: usableHref(item.href),
       }))
     : legacySections.flatMap((section) => {
@@ -358,6 +360,8 @@ function InvestorInfo({ growth, funds, governance, risks, documents, publicDocum
             title: text(item.title),
             description: text(item.description),
             image: text(item.image_url) || text(c.image_url),
+            imageAlt: text(item.image_alt),
+            details: text(item.details),
             href: usableHref(item.href),
           }))
         }
@@ -366,6 +370,8 @@ function InvestorInfo({ growth, funds, governance, risks, documents, publicDocum
           title: text(c.title),
           description: text(c.description) || text(c.content),
           image: text(c.image_url),
+          imageAlt: text(c.image_alt),
+          details: text(c.details),
           href: usableHref(c.cta_href),
         }]
       })).filter((item) => item.title || item.description)
@@ -387,6 +393,8 @@ function InvestorInfo({ growth, funds, governance, risks, documents, publicDocum
           title: document.title,
           description: document.summary ?? '',
           image: heroImage,
+          imageAlt: '',
+          details: '',
           href: document.href,
         })),
       ]}
