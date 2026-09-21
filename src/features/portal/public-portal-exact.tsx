@@ -9,6 +9,7 @@ import { V2CompanyGallery } from './v2-company-gallery'
 import { V2RoadmapSlider } from './v2-roadmap-slider'
 import { V2InvestorInfo } from './v2-investor-info'
 import { V2MobileHeader } from './v2-mobile-header'
+import { V2HeaderShell } from './v2-header-shell'
 
 type BaseProps = ComponentProps<typeof PublicPortalModel>
 type Section = BaseProps['sections'][number]
@@ -84,7 +85,7 @@ function Header({ navigation, logoSrc, heroSection }: { navigation: NavItem[]; l
   }
 
   return (
-    <header className={styles.header}>
+    <V2HeaderShell>
       <div className={styles.shell}>
         <Link href="/" className={styles.logoLink} aria-label="Nuzultrip">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -96,7 +97,7 @@ function Header({ navigation, logoSrc, heroSection }: { navigation: NavItem[]; l
           ))}
         </nav>
         <div className={styles.headerActions}>
-          <Link href="/masuk" className={styles.headerCta}>Masuk</Link>
+          <Link href="/masuk" className={styles.headerCta}>Masuk <Arrow /></Link>
           <V2MobileHeader
             items={header.slice(0, 7).map(({ id, label, href }) => ({ id, label, href }))}
             logoSrc={logoSrc}
@@ -105,7 +106,7 @@ function Header({ navigation, logoSrc, heroSection }: { navigation: NavItem[]; l
           />
         </div>
       </div>
-    </header>
+    </V2HeaderShell>
   )
 }
 
