@@ -23,7 +23,8 @@ export function V2InvestorInfo({ cards, fallbackImage }: { cards: InvestorCard[]
   return (
     <div className={styles.infoLayout}>
       <div className={styles.infoMedia}>
-        {activeImage ? <img src={activeImage} alt={safeCards[active]?.imageAlt || safeCards[active]?.title || 'Informasi Investor Nuzultrip'} /> : null}
+        {activeImage ? {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={activeImage} alt={safeCards[active]?.imageAlt || safeCards[active]?.title || 'Informasi Investor Nuzultrip'} /> : null}
       </div>
       <div className={styles.infoGrid}>
         {safeCards.map((item, index) => {
