@@ -1126,6 +1126,7 @@ function VisualEditor({
         <ImageField label="Gambar Jaringan & Mitra" value={asString(content.image_url)} onChange={(image_url) => update({ image_url })} />
         <Field label="Teks Alternatif Gambar" value={asString(content.image_alt)} onChange={(image_alt) => update({ image_alt })} />
         <Field label="Headline pada Gambar" value={asString(content.image_caption)} onChange={(image_caption) => update({ image_caption })} placeholder="Satu Ekosistem, Banyak Peluang" />
+        <Field label="Judul Highlight" value={asString(content.highlight_title)} onChange={(highlight_title) => update({ highlight_title })} placeholder="Satu Ekosistem, Banyak Peluang" />
 
         <div className="border-border space-y-4 rounded-xl border p-4">
           {renderArrayHeader('Kartu Jaringan & Mitra', 'Tiga kartu pertama ditampilkan pada portal.', 'items')}
@@ -1320,6 +1321,7 @@ function VisualEditor({
         <Field label="Eyebrow" value={asString(content.eyebrow)} onChange={(eyebrow) => update({ eyebrow })} placeholder="Contoh: QUICK ACTION" />
         <Field label="Judul" value={asString(content.title)} onChange={(title) => update({ title })} />
         <Field label="Deskripsi" value={asString(content.description)} onChange={(description) => update({ description })} multiline />
+        <Field label="Kontak / Nilai Tambahan" value={asString(content.contact_value)} onChange={(contact_value) => update({ contact_value })} placeholder="Contoh: investor@nuzultrip.com" />
 
         <div className="border-border space-y-4 rounded-xl border p-4">
           <p className="text-fg text-sm font-semibold">CTA Investor Relations</p>
