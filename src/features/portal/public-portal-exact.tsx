@@ -112,7 +112,8 @@ function Header({ navigation, heroSection }: { navigation: NavItem[]; heroSectio
 function Hero({ section }: { section?: Section }) {
   if (!section) return null
   const c = section.content
-  const titleLines = text(c.title).split('|').map((item) => item.trim()).filter(Boolean).slice(0, 3)
+  const rawTitleLines = text(c.title).split('|').map((item) => item.trim()).filter(Boolean)
+  const titleLines = rawTitleLines.length > 2 ? [rawTitleLines.slice(0, -1).join(' '), rawTitleLines.at(-1) ?? ''] : rawTitleLines
   return <V2Hero
     id={section.anchor_id ?? 'beranda'}
     eyebrow={text(c.eyebrow) || 'NUZULTRIP EQUITY • EKOSISTEM PERJALANAN MUSLIM'}
