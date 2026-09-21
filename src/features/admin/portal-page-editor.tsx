@@ -920,6 +920,8 @@ function VisualEditor({
           <Field label="Label CTA Card Equity" value={asString(content.card_cta_label)} onChange={(card_cta_label) => update({ card_cta_label })} placeholder="Ajukan Minat Equity" />
           <Field label="Tautan CTA Card Equity" value={asString(content.card_cta_href)} onChange={(card_cta_href) => update({ card_cta_href })} placeholder="/hubungi" />
         </div>
+        <ImageField label="Gambar Card Equity" value={asString(content.card_image_url)} onChange={(card_image_url) => update({ card_image_url })} />
+        <Field label="Teks Alternatif Gambar Card Equity" value={asString(content.card_image_alt)} onChange={(card_image_alt) => update({ card_image_alt })} />
 
         <div className="border-border space-y-4 rounded-xl border p-4">
           {renderArrayHeader('Ringkasan Penawaran', 'Kelola angka dan ketentuan utama yang tampil pada tabel Peluang Equity.', 'terms')}
@@ -963,8 +965,17 @@ function VisualEditor({
 
           {renderObjectArrayEditor('use_of_funds', useOfFunds, [
             {
+              key: 'code',
+              label: 'Kode Layanan',
+              placeholder: 'Contoh: UMROH',
+            },
+            {
               key: 'title',
               label: 'Judul',
+            },
+            {
+              key: 'tagline',
+              label: 'Tagline',
             },
             {
               key: 'description',
@@ -1121,6 +1132,8 @@ function VisualEditor({
           {renderObjectArrayEditor('items', items, [
             { key: 'title', label: 'Judul' },
             { key: 'description', label: 'Deskripsi', multiline: true },
+            { key: 'image_url', label: 'Gambar Kartu' },
+            { key: 'href', label: 'Tautan Detail' },
           ])}
         </div>
       </div>
@@ -1345,6 +1358,7 @@ function VisualEditor({
 
         <div className="border-border space-y-4 rounded-xl border p-4">
           <p className="text-fg text-sm font-semibold">CTA Investor Relations</p>
+          <Field label="Eyebrow Card Utama" value={asString(content.primary_cta_eyebrow)} onChange={(primary_cta_eyebrow) => update({ primary_cta_eyebrow })} placeholder="Investor Relations" />
           <div className="grid gap-4 md:grid-cols-2">
             <Field label="Label CTA Utama" value={asString(content.primary_cta_label)} onChange={(primary_cta_label) => update({ primary_cta_label })} />
             <Field label="Tautan CTA Utama" value={asString(content.primary_cta_href)} onChange={(primary_cta_href) => update({ primary_cta_href })} />
@@ -1354,6 +1368,7 @@ function VisualEditor({
 
         <div className="border-border space-y-4 rounded-xl border p-4">
           <p className="text-fg text-sm font-semibold">CTA Dokumen Resmi</p>
+          <Field label="Eyebrow Card Sekunder" value={asString(content.secondary_cta_eyebrow)} onChange={(secondary_cta_eyebrow) => update({ secondary_cta_eyebrow })} placeholder="Dokumen Resmi" />
           <div className="grid gap-4 md:grid-cols-2">
             <Field label="Label CTA Sekunder" value={asString(content.secondary_cta_label)} onChange={(secondary_cta_label) => update({ secondary_cta_label })} />
             <Field label="Tautan CTA Sekunder (opsional)" value={asString(content.secondary_cta_href)} onChange={(secondary_cta_href) => update({ secondary_cta_href })} placeholder="Kosongkan untuk memakai dokumen publik pertama" />
@@ -1369,7 +1384,23 @@ function VisualEditor({
             <Field label="Judul Gambar" value={asString(content.image_title)} onChange={(image_title) => update({ image_title })} />
           </div>
           <Field label="Deskripsi Gambar" value={asString(content.image_description)} onChange={(image_description) => update({ image_description })} multiline />
+          <div className="grid gap-4 md:grid-cols-2">
+            <Field label="Label CTA Gambar" value={asString(content.image_cta_label)} onChange={(image_cta_label) => update({ image_cta_label })} placeholder="Ajukan Minat Equity" />
+            <Field label="Tautan CTA Gambar" value={asString(content.image_cta_href)} onChange={(image_cta_href) => update({ image_cta_href })} />
+          </div>
           <Field label="Teks Alternatif Gambar" value={asString(content.image_alt)} onChange={(image_alt) => update({ image_alt })} />
+        </div>
+
+        <div className="border-border space-y-4 rounded-xl border p-4">
+          <p className="text-fg text-sm font-semibold">Footer Portal</p>
+          <Field label="Tagline Footer" value={asString(content.footer_tagline)} onChange={(footer_tagline) => update({ footer_tagline })} />
+          <Field label="Judul Kontak Footer" value={asString(content.footer_contact_title)} onChange={(footer_contact_title) => update({ footer_contact_title })} />
+          <Field label="Deskripsi Kontak Footer" value={asString(content.footer_contact_description)} onChange={(footer_contact_description) => update({ footer_contact_description })} multiline />
+          <div className="grid gap-4 md:grid-cols-2">
+            <Field label="Label CTA Footer" value={asString(content.footer_contact_label)} onChange={(footer_contact_label) => update({ footer_contact_label })} />
+            <Field label="Tautan CTA Footer" value={asString(content.footer_contact_href)} onChange={(footer_contact_href) => update({ footer_contact_href })} />
+          </div>
+          <Field label="Teks Bawah Footer" value={asString(content.footer_bottom_text)} onChange={(footer_bottom_text) => update({ footer_bottom_text })} />
         </div>
       </div>
     )
@@ -1391,6 +1422,7 @@ function VisualEditor({
           {renderObjectArrayEditor('items', items, [
             { key: 'type', label: 'Jenis', placeholder: 'Artikel / Berita' },
             { key: 'date', label: 'Tanggal', placeholder: 'Contoh: 21 Sep 2026' },
+            { key: 'read_time', label: 'Waktu Baca', placeholder: 'Contoh: 4 min baca' },
             { key: 'title', label: 'Judul' },
             { key: 'description', label: 'Ringkasan', multiline: true },
             { key: 'image_url', label: 'Gambar' },

@@ -83,7 +83,7 @@ function Header({ navigation, logoSrc }: { navigation: NavItem[]; logoSrc: strin
           <img src={logoSrc} alt="Nuzultrip" className={styles.logo} />
         </Link>
         <nav className={styles.nav} aria-label="Navigasi utama">
-          {header.slice(0, 6).map((item) => (
+          {header.slice(0, 7).map((item) => (
             <Link key={item.id} href={item.href}>{item.label}</Link>
           ))}
         </nav>
@@ -195,6 +195,7 @@ function Offering({ section }: { section?: Section }) {
             </div>
           ) : null}
           <aside className={styles.offerCard}>
+            {text(c.card_image_url) ? <CmsImage src={text(c.card_image_url)} alt={text(c.card_image_alt) || 'Peluang Equity Nuzultrip'} className={styles.offerCardImage} /> : null}
             <h3>{text(c.card_title) || <>Investasi Hari Ini,<br />Untuk Masa Depan<br />yang Lebih Baik.</>}</h3>
             <div className={styles.offerRule} />
             <Link href={usableHref(c.card_cta_href) || '/hubungi'}>{text(c.card_cta_label) || 'Ajukan Minat Equity'} <Arrow /></Link>
@@ -260,7 +261,9 @@ function Services({ section }: { section?: Section }) {
                     <span className={styles.serviceIcon}>
                       <CmsIcon item={item} fallback={fallbackIcon} />
                     </span>
+                    {text(item.code) ? <small>{text(item.code)}</small> : null}
                     <h3>{text(item.title)}</h3>
+                    {text(item.tagline) ? <strong>{text(item.tagline)}</strong> : null}
                     {text(item.description) ? <p>{text(item.description)}</p> : null}
                     {href ? <Link href={href} className={styles.cardArrow} aria-label={`Buka ${text(item.title)}`}>→</Link> : null}
                   </article>
@@ -333,27 +336,36 @@ function Partners({ section }: { section?: Section }) {
 
 function InvestorInfo({ growth, funds, governance, risks, documents, publicDocuments }: { growth?: Section; funds?: Section; governance?: Section; risks?: Section; documents?: Section; publicDocuments: PublicPortalDocument[] }) {
   const documentPresentation = documents?.content ?? {}
-  const sourceSections = [funds, governance, risks].filter(Boolean) as Section[]
-  const sectionCards = sourceSections.flatMap((section) => {
-    const c = section.content
-    const nested = records(c.pillars).length ? records(c.pillars) : records(c.items)
-    if (nested.length) {
-      return nested.map((item) => ({
-        key: `${section.id}-${text(item.title)}`,
+  const governanceItems = records(governance?.content.items)
+  const legacySections = [funds, risks].filter(Boolean) as Section[]
+  const sectionCards = (governanceItems.length
+    ? governanceItems.map((item, index) => ({
+        key: `${governance?.id ?? 'investor'}-${text(item.title) || index}`,
         title: text(item.title),
         description: text(item.description),
-        image: text(item.image_url) || text(c.image_url),
+        image: text(item.image_url) || text(governance?.content.image_url),
         href: usableHref(item.href),
       }))
-    }
-    return [{
-      key: section.id,
-      title: text(c.title),
-      description: text(c.description) || text(c.content),
-      image: text(c.image_url),
-      href: usableHref(c.cta_href),
-    }]
-  }).filter((item) => item.title || item.description)
+    : legacySections.flatMap((section) => {
+        const c = section.content
+        const nested = records(c.pillars).length ? records(c.pillars) : records(c.items)
+        if (nested.length) {
+          return nested.map((item) => ({
+            key: `${section.id}-${text(item.title)}`,
+            title: text(item.title),
+            description: text(item.description),
+            image: text(item.image_url) || text(c.image_url),
+            href: usableHref(item.href),
+          }))
+        }
+        return [{
+          key: section.id,
+          title: text(c.title),
+          description: text(c.description) || text(c.content),
+          image: text(c.image_url),
+          href: usableHref(c.cta_href),
+        }]
+      })).filter((item) => item.title || item.description)
 
   const heroImage = text(documentPresentation.image_url) || sectionCards.map((item) => item.image).find(Boolean) || text(growth?.content.image_url)
   const eyebrow = text(documentPresentation.eyebrow) || 'INFORMASI INVESTOR'
@@ -378,7 +390,7 @@ function Articles({ section }: { section?: Section }) {
   const ctaHref = usableHref(c.cta_href)
   return <section className={styles.articleSection} id={section.anchor_id ?? 'artikel'}><div className={styles.shell}><div className={styles.articleLayout}>
     <div className={styles.articleIntro}><div><div className={styles.eyebrowDark}>{text(c.eyebrow)||'ARTIKEL & BERITA'}</div><h2>{text(c.title)||'Wawasan untuk Keputusan yang Lebih Baik'}</h2>{text(c.description)?<p>{text(c.description)}</p>:null}</div>{ctaHref?<Link href={ctaHref}>{text(c.cta_label)||'Lebih Artikel Lainnya'} <Arrow /></Link>:null}</div>
-    <div className={styles.articleCards}>{items.slice(0,2).map((item,index)=>{const href=usableHref(item.href);const body=<><div className={styles.articleImage}><CmsImage src={text(item.image_url)} alt={text(item.title)}/><span>{text(item.type)||'Artikel'}</span></div><div className={styles.articleBody}><small>{text(item.date)}</small><h3>{text(item.title)}</h3>{text(item.description)?<p>{text(item.description)}</p>:null}<b>Baca Selengkapnya <Arrow /></b></div></>;return <article key={index}>{href?<Link href={href}>{body}</Link>:body}</article>})}</div>
+    <div className={styles.articleCards}>{items.slice(0,2).map((item,index)=>{const href=usableHref(item.href);const body=<><div className={styles.articleImage}><CmsImage src={text(item.image_url)} alt={text(item.title)}/><span>{text(item.type)||'Artikel'}</span></div><div className={styles.articleBody}><small>{[text(item.date), text(item.read_time)].filter(Boolean).join(' · ')}</small><h3>{text(item.title)}</h3>{text(item.description)?<p>{text(item.description)}</p>:null}<b>Baca Selengkapnya <Arrow /></b></div></>;return <article key={index}>{href?<Link href={href}>{body}</Link>:body}</article>})}</div>
   </div></div></section>
 }
 
@@ -389,12 +401,12 @@ function ContactCta({ section, documents }: { section?: Section; documents: Publ
   const secondaryHref=usableHref(c.secondary_cta_href)||documents[0]?.href||null
   return <section className={styles.contactSection} id={section.anchor_id ?? 'kontak'}><div className={styles.shell}><div className={styles.quickLayout}>
     <div className={styles.quickIntro}><div className={styles.eyebrowLight}>{text(c.eyebrow)||'QUICK ACTION'}</div><h2>{text(c.title)||'Kenali. Pelajari. Tentukan Langkah Anda.'}</h2>{text(c.description)?<p>{text(c.description)}</p>:null}</div>
-    <div className={styles.quickCards}><Link href={primaryHref}><span>Investor Relations</span><h3>{text(c.primary_cta_label)||'Hubungi Tim'}</h3><p>{text(c.primary_cta_description)||text(c.contact_value)}</p><Arrow /></Link>{secondaryHref?<Link href={secondaryHref}><span>Dokumen Resmi</span><h3>{text(c.secondary_cta_label)||'Unduh Pitchdeck'}</h3><p>{text(c.secondary_cta_description)||'Pelajari ringkasan informasi Nuzultrip Equity'}</p><Arrow /></Link>:null}</div>
-    <div className={styles.quickMedia}>{text(c.image_url)?<CmsImage src={text(c.image_url)} alt={text(c.image_alt)||'Nuzultrip Equity'}/>:null}<div><small>{text(c.image_eyebrow)||'LANGKAH AWAL KEMITRAAN'}</small><h3>{text(c.image_title)||'Siap Mengenal Nuzultrip Lebih Jauh?'}</h3>{text(c.image_description)?<p>{text(c.image_description)}</p>:null}<Link href={primaryHref}>{text(c.primary_cta_label)||'Ajukan Minat Equity'} <Arrow /></Link></div></div>
+    <div className={styles.quickCards}><Link href={primaryHref}><span>{text(c.primary_cta_eyebrow)||'Investor Relations'}</span><h3>{text(c.primary_cta_label)||'Hubungi Tim'}</h3><p>{text(c.primary_cta_description)||text(c.contact_value)}</p><Arrow /></Link>{secondaryHref?<Link href={secondaryHref}><span>{text(c.secondary_cta_eyebrow)||'Dokumen Resmi'}</span><h3>{text(c.secondary_cta_label)||'Unduh Pitchdeck'}</h3><p>{text(c.secondary_cta_description)||'Pelajari ringkasan informasi Nuzultrip Equity'}</p><Arrow /></Link>:null}</div>
+    <div className={styles.quickMedia}>{text(c.image_url)?<CmsImage src={text(c.image_url)} alt={text(c.image_alt)||'Nuzultrip Equity'}/>:null}<div><small>{text(c.image_eyebrow)||'LANGKAH AWAL KEMITRAAN'}</small><h3>{text(c.image_title)||'Siap Mengenal Nuzultrip Lebih Jauh?'}</h3>{text(c.image_description)?<p>{text(c.image_description)}</p>:null}<Link href={usableHref(c.image_cta_href)||primaryHref}>{text(c.image_cta_label)||'Ajukan Minat Equity'} <Arrow /></Link></div></div>
   </div></div></section>
 }
 
-function Footer({ navigation, logoSrc, pageTitle }: { navigation: NavItem[]; logoSrc: string; pageTitle: string }) {
+function Footer({ navigation, logoSrc, pageTitle, content }: { navigation: NavItem[]; logoSrc: string; pageTitle: string; content?: Record<string, unknown> }) {
   const footer = navigation
     .filter((item) => item.location === 'footer' && !item.parent_id)
     .sort((a, b) => a.position - b.position)
@@ -429,20 +441,21 @@ function Footer({ navigation, logoSrc, pageTitle }: { navigation: NavItem[]; log
           <div className={styles.footerBrand}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={logoSrc} alt="Nuzultrip" />
-            <p>Melayani perjalanan Muslim Indonesia dengan hati, profesionalisme, dan teknologi.</p>
+            <p>{text(content?.footer_tagline) || 'Melayani perjalanan Muslim Indonesia dengan hati, profesionalisme, dan teknologi.'}</p>
             {social.length ? (
               <div>{social.slice(0, 5).map((item) => <Link key={item.id} href={item.href} target={item.target}>{item.label}</Link>)}</div>
             ) : null}
           </div>
           {footer.length ? <div className={styles.footerColumns}>{footer.slice(0,2).map((group)=><nav key={group.id}><h4>{group.label}</h4>{(footerChildren.filter((item)=>item.parent_id===group.id).length ? footerChildren.filter((item)=>item.parent_id===group.id) : [group]).slice(0,8).map((item)=>{const href=footerHref(item);return href?<Link key={item.id} href={href}>{item.label}</Link>:<span key={item.id}>{item.label}</span>})}</nav>)}</div> : null}
           <div className={styles.newsletter}>
-            <h4>Butuh informasi terbaru?</h4>
-            <p>Hubungi tim Investor Relations untuk informasi, dokumen, atau pembaruan resmi Nuzultrip Equity.</p>
-            <Link href="/hubungi">Hubungi Investor Relations <Arrow /></Link>
+            <h4>{text(content?.footer_contact_title) || 'Butuh informasi terbaru?'}</h4>
+            <p>{text(content?.footer_contact_description) || 'Hubungi tim Investor Relations untuk informasi, dokumen, atau pembaruan resmi Nuzultrip Equity.'}</p>
+            <Link href={usableHref(content?.footer_contact_href) || '/hubungi'}>{text(content?.footer_contact_label) || 'Hubungi Kami'} <Arrow /></Link>
           </div>
         </div>
         <div className={styles.footerBottom}>
-          <span>© {new Date().getFullYear()} {pageTitle}. All rights reserved.</span>
+          <span>© {new Date().getFullYear()} {pageTitle}. All Rights Reserved.</span>
+          <span>{text(content?.footer_bottom_text) || 'Platform Penawaran Equity Ekosistem Perjalanan Muslim Indonesia.'}</span>
         </div>
       </div>
     </footer>
@@ -487,7 +500,7 @@ export function PublicPortalExact({ page, sections, navigation, publicDocuments,
         <ContactCta section={contactCta} documents={publicDocuments} />
         <Articles section={articles} />
       </main>
-      <Footer navigation={navigation} logoSrc={logoSrc} pageTitle={page.title} />
+      <Footer navigation={navigation} logoSrc={logoSrc} pageTitle={page.title} content={contactCta?.content} />
     </div>
   )
 }
