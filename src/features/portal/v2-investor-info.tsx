@@ -16,7 +16,7 @@ type InvestorCard = {
   href: string | null
 }
 
-export function V2InvestorInfo({ cards, fallbackImage }: { cards: InvestorCard[]; fallbackImage: string }) {
+export function V2InvestorInfo({ cards, fallbackImage, interestHref = '/hubungi' }: { cards: InvestorCard[]; fallbackImage: string; interestHref?: string }) {
   const [active, setActive] = useState(0)
   const [detailIndex, setDetailIndex] = useState<number | null>(null)
   const safeCards = cards.slice(0, 6)
@@ -46,9 +46,10 @@ export function V2InvestorInfo({ cards, fallbackImage }: { cards: InvestorCard[]
     <>
       <div className={styles.infoLayout}>
         <div className={styles.infoMedia}>
-          {activeImage ? (
-            <img src={activeImage} alt={safeCards[active]?.imageAlt || safeCards[active]?.title || 'Informasi Investor Nuzultrip'} />
-          ) : null}
+          {safeCards.map((item,index) => {
+            const src=item.image || fallbackImage
+            return src ? <img key={item.key} src={src} alt={item.imageAlt || item.title || 'Informasi Investor Nuzultrip'} className={index === active ? styles.infoMediaImageActive : styles.infoMediaImage} loading="lazy" /> : null
+          })}
         </div>
         <div className={styles.infoGrid}>
           {safeCards.map((item, index) => {
@@ -87,6 +88,7 @@ export function V2InvestorInfo({ cards, fallbackImage }: { cards: InvestorCard[]
             ) : null}
             <div className={styles.infoModalActions}>
               <button type="button" onClick={() => setDetailIndex(null)}>Tutup</button>
+              <Link href={interestHref}>Ajukan Minat Equity →</Link>
             </div>
           </section>
         </div>
