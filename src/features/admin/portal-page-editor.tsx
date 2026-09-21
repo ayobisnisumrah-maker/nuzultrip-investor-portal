@@ -164,6 +164,7 @@ function createDefaultContent(kind: SectionKind): ContentRecord {
         image_url: '',
         image_alt: '',
         image_caption: '',
+        tags: [],
       }
 
     case 'intro':
@@ -188,10 +189,15 @@ function createDefaultContent(kind: SectionKind): ContentRecord {
     case 'business_overview':
       return {
         kind,
-        eyebrow: 'Model Bisnis',
+        eyebrow: 'PERUSAHAAN',
         title: '',
         description: '',
-        items: [],
+        cta_label: 'Lebih Detail Penawaran',
+        cta_href: '#informasi-investor',
+        image_url: '',
+        image_alt: '',
+        images: [],
+        metrics: [],
       }
 
     case 'growth_story':
@@ -206,9 +212,11 @@ function createDefaultContent(kind: SectionKind): ContentRecord {
     case 'ecosystem':
       return {
         kind,
-        eyebrow: 'Ekosistem Bisnis',
+        eyebrow: 'LAYANAN UTAMA',
         title: '',
         description: '',
+        cta_label: 'Lihat Layanan Lainnya',
+        cta_href: '',
         items: [],
       }
 
@@ -328,9 +336,15 @@ function createDefaultContent(kind: SectionKind): ContentRecord {
     case 'logo_wall':
       return {
         kind,
-        eyebrow: 'Mitra & Jaringan',
+        eyebrow: 'JARINGAN & MITRA',
         title: '',
-        logos: [],
+        description: '',
+        cta_label: 'Pelajari Selengkapnya',
+        cta_href: '',
+        image_url: '',
+        image_alt: '',
+        image_caption: 'Satu Ekosistem, Banyak Peluang',
+        items: [],
       }
 
     case 'faq':
@@ -344,9 +358,12 @@ function createDefaultContent(kind: SectionKind): ContentRecord {
     case 'rich_content':
       return {
         kind,
-        eyebrow: '',
+        eyebrow: 'ARTIKEL & BERITA',
         title: '',
-        content: '',
+        description: '',
+        cta_label: 'Lebih Artikel Lainnya',
+        cta_href: '',
+        items: [],
       }
 
     default:
