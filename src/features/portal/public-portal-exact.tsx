@@ -72,10 +72,16 @@ function Arrow() {
   return <span aria-hidden="true">→</span>
 }
 
-function Header({ navigation, logoSrc }: { navigation: NavItem[]; logoSrc: string }) {
+function Header({ navigation, logoSrc, heroSection }: { navigation: NavItem[]; logoSrc: string; heroSection?: Section }) {
   const header = navigation
     .filter((item) => item.location === 'header' && !item.parent_id && usableHref(item.href))
     .sort((a, b) => a.position - b.position)
+
+  const heroContent = heroSection?.content ?? {}
+  const primaryAction = {
+    label: text(heroContent.primary_cta_label) || 'Ajukan Minat Equity',
+    href: usableHref(heroContent.primary_cta_href) || '/hubungi',
+  }
 
   return (
     <header className={styles.header}>
@@ -91,7 +97,12 @@ function Header({ navigation, logoSrc }: { navigation: NavItem[]; logoSrc: strin
         </nav>
         <div className={styles.headerActions}>
           <Link href="/masuk" className={styles.headerCta}>Masuk</Link>
-          <V2MobileHeader items={header.slice(0, 7).map(({ id, label, href }) => ({ id, label, href }))} logoSrc={logoSrc} />
+          <V2MobileHeader
+            items={header.slice(0, 7).map(({ id, label, href }) => ({ id, label, href }))}
+            logoSrc={logoSrc}
+            primaryAction={primaryAction}
+            loginAction={{ label: 'Masuk Portal Investor', href: '/masuk' }}
+          />
         </div>
       </div>
     </header>
@@ -410,7 +421,7 @@ function Articles({ section }: { section?: Section }) {
   const ctaHref = usableHref(c.cta_href)
   return <section className={styles.articleSection} id={section.anchor_id ?? 'artikel'}><div className={styles.shell}><div className={styles.articleLayout}>
     <div className={styles.articleIntro}><div><div className={styles.eyebrowDark}>{text(c.eyebrow)||'ARTIKEL & BERITA'}</div><h2>{text(c.title)||'Wawasan untuk Keputusan yang Lebih Baik'}</h2>{text(c.description)?<p>{text(c.description)}</p>:null}</div>{ctaHref?<Link href={ctaHref}>{text(c.cta_label)||'Lebih Artikel Lainnya'} <Arrow /></Link>:null}</div>
-    <div className={styles.articleCards}>{items.slice(0,2).map((item,index)=>{const href=usableHref(item.href);const body=<><div className={styles.articleImage}><CmsImage src={text(item.image_url)} alt={text(item.title)}/><span>{text(item.type)||'Artikel'}</span></div><div className={styles.articleBody}><small>{[text(item.date), text(item.read_time)].filter(Boolean).join(' · ')}</small><h3>{text(item.title)}</h3>{text(item.description)?<p>{text(item.description)}</p>:null}<b>Baca Selengkapnya <Arrow /></b></div></>;return <article key={index}>{href?<Link href={href}>{body}</Link>:body}</article>})}</div>
+    <div className={styles.articleCards}>{items.slice(0,2).map((item,index)=>{const href=usableHref(item.href);const body=<><div className={styles.articleImage}><CmsImage src={text(item.image_url)} alt={text(item.title)}/><span>{text(item.type)||'Artikel'}</span></div><div className={styles.articleBody}><small>{[text(item.date), text(item.read_time)].filter(Boolean).join(' • ')}</small><h3>{text(item.title)}</h3>{text(item.description)?<p>{text(item.description)}</p>:null}<b>Baca Selengkapnya <Arrow /></b></div></>;return <article key={index}>{href?<Link href={href}>{body}</Link>:body}</article>})}</div>
   </div></div></section>
 }
 
@@ -506,7 +517,7 @@ export function PublicPortalExact({ page, sections, navigation, publicDocuments,
 
   return (
     <div className={styles.page}>
-      <Header navigation={navigation} logoSrc={logoSrc} />
+      <Header navigation={navigation} logoSrc={logoSrc} heroSection={hero} />
       <main id="main">
         <Hero section={hero} />
         <AboutAndStats intro={intro} stats={stats} business={business} />
