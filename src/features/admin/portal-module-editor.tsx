@@ -298,18 +298,15 @@ export function PortalModuleEditor({
           </div>
         ) : null}
 
-        {kind === 'faq' || kind === 'documents' ? (
+        {kind === 'faq' ? (
           <div className="space-y-5">
             <Field label="Eyebrow" value={asString(content.eyebrow)} onChange={(eyebrow) => update({ eyebrow })} disabled={!editable} />
             <Field label="Judul" value={asString(content.title)} onChange={(title) => update({ title })} disabled={!editable} />
-            {kind === 'documents' ? (
-              <Field label="Deskripsi" value={asString(content.description)} onChange={(description) => update({ description })} multiline disabled={!editable} />
-            ) : null}
 
             <div className="border-border rounded-xl border p-4">
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <p className="text-fg text-sm font-semibold">{kind === 'faq' ? 'Pertanyaan Umum' : 'Dokumen Publik'}</p>
+                  <p className="text-fg text-sm font-semibold">Pertanyaan Umum</p>
                   <p className="text-fg-muted mt-1 text-xs">{items('items').length} item</p>
                 </div>
                 <button type="button" onClick={addItem} disabled={!editable || pending} className="bg-primary text-primary-foreground rounded-lg px-3 py-2 text-xs font-semibold disabled:opacity-50">+ Tambah</button>
@@ -328,23 +325,28 @@ export function PortalModuleEditor({
                         <button type="button" onClick={() => removeItem(index)} disabled={!editable} className="border-danger text-danger rounded-lg border px-2 py-1 text-xs disabled:opacity-40">Hapus</button>
                       </div>
                     </div>
-
-                    {kind === 'faq' ? (
-                      <div className="space-y-4">
-                        <Field label="Pertanyaan" value={asString(item.question)} onChange={(question) => updateItem(index, { question })} disabled={!editable} />
-                        <Field label="Jawaban" value={asString(item.answer)} onChange={(answer) => updateItem(index, { answer })} multiline disabled={!editable} />
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        <Field label="Nama Dokumen" value={asString(item.title)} onChange={(title) => updateItem(index, { title })} disabled={!editable} />
-                        <Field label="Deskripsi" value={asString(item.description)} onChange={(description) => updateItem(index, { description })} multiline disabled={!editable} />
-                        <Field label="Tautan Dokumen" value={asString(item.href)} onChange={(href) => updateItem(index, { href })} placeholder="https://..." disabled={!editable} />
-                      </div>
-                    )}
+                    <div className="space-y-4">
+                      <Field label="Pertanyaan" value={asString(item.question)} onChange={(question) => updateItem(index, { question })} disabled={!editable} />
+                      <Field label="Jawaban" value={asString(item.answer)} onChange={(answer) => updateItem(index, { answer })} multiline disabled={!editable} />
+                    </div>
                   </div>
                 ))}
               </div>
             </div>
+          </div>
+        ) : null}
+
+        {kind === 'documents' ? (
+          <div className="space-y-5">
+            <div className="border-primary/20 bg-primary/5 rounded-lg border p-4">
+              <p className="text-fg text-sm font-semibold">Daftar dokumen dikelola dari Pustaka Dokumen</p>
+              <p className="text-fg-muted mt-1 text-xs leading-5">
+                Modul ini hanya mengatur teks section. File, judul dokumen, status publikasi, dan akses publik memakai Pustaka Dokumen sebagai sumber data tunggal.
+              </p>
+            </div>
+            <Field label="Eyebrow" value={asString(content.eyebrow)} onChange={(eyebrow) => update({ eyebrow })} disabled={!editable} />
+            <Field label="Judul" value={asString(content.title)} onChange={(title) => update({ title })} disabled={!editable} />
+            <Field label="Deskripsi" value={asString(content.description)} onChange={(description) => update({ description })} multiline disabled={!editable} />
           </div>
         ) : null}
 
