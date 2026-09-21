@@ -8,6 +8,7 @@ import styles from './public-portal-exact.module.css'
 import { V2CompanyGallery } from './v2-company-gallery'
 import { V2RoadmapSlider } from './v2-roadmap-slider'
 import { V2InvestorInfo } from './v2-investor-info'
+import { V2MobileHeader } from './v2-mobile-header'
 
 type BaseProps = ComponentProps<typeof PublicPortalModel>
 type Section = BaseProps['sections'][number]
@@ -90,6 +91,7 @@ function Header({ navigation, logoSrc }: { navigation: NavItem[]; logoSrc: strin
         </nav>
         <div className={styles.headerActions}>
           <Link href="/masuk" className={styles.headerCta}>Masuk</Link>
+          <V2MobileHeader items={header.slice(0, 7).map(({ id, label, href }) => ({ id, label, href }))} logoSrc={logoSrc} />
         </div>
       </div>
     </header>
