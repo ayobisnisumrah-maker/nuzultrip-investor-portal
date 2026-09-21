@@ -731,6 +731,18 @@ function VisualEditor({
           value={asString(content.image_caption)}
           onChange={(image_caption) => update({ image_caption })}
         />
+
+        <div className="md:col-span-2 border-border space-y-4 rounded-xl border p-4">
+          <p className="text-fg text-sm font-semibold">Tag Hero</p>
+          <p className="text-fg-muted text-xs leading-5">Satu tag per baris. Maksimal 6 tag ditampilkan pada portal.</p>
+          <Field
+            label="Daftar Tag"
+            value={Array.isArray(content.tags) ? content.tags.filter((value): value is string => typeof value === 'string').join('\n') : ''}
+            onChange={(value) => update({ tags: value.split('\n').map((item) => item.trim()).filter(Boolean) })}
+            multiline
+            placeholder={"Umrah\nHalal Tour\nLand Arrangement"}
+          />
+        </div>
       </div>
     )
   }
