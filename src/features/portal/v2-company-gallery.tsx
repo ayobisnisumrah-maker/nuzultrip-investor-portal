@@ -27,6 +27,13 @@ export function V2CompanyGallery({
   const mediaRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
+    for (const image of safeImages.slice(1)) {
+      const preload = new Image()
+      preload.src = image.src
+    }
+  }, [safeImages])
+
+  useEffect(() => {
     if (safeImages.length < 2 || !window.matchMedia('(hover: none)').matches) return
     const interval = window.setInterval(() => {
       setActiveIndex((current) => (current + 1) % safeImages.length)
