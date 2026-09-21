@@ -150,32 +150,27 @@ function AboutAndStats({ intro, stats }: { intro?: Section; stats?: Section; bus
 function Offering({ section }: { section?: Section }) {
   if (!section) return null
   const c = section.content
-  const rows = records(c.terms)
+  const rows = records(c.terms).slice(0, 6)
   return (
-    <section className={styles.section} id={section.anchor_id ?? 'ringkasan'}>
+    <section className={styles.equityV2} id={section.anchor_id ?? 'peluang'}>
       <div className={styles.shell}>
-        <div className={styles.offerLayout}>
-          <div className={styles.offerIntro}>
-            <div className={styles.eyebrowDark}>{text(c.eyebrow) || 'PELUANG EQUITY'}</div>
-            <h2>{text(c.title) || 'Kesempatan Bertumbuh Bersama'}</h2>
-            {text(c.description) ? <p>{text(c.description)}</p> : null}
-            <Link href={usableHref(c.cta_href) || '/hubungi'} className={styles.inlineLink}>{text(c.cta_label) || 'Lihat Detail Penawaran'} <Arrow /></Link>
-          </div>
-          {rows.length ? (
-            <div className={styles.offerTable}>
-              {rows.slice(0, 7).map((row, index) => (
-                <div className={styles.offerRow} key={`${text(row.label)}-${index}`}>
-                  <span>{text(row.label)}</span><strong>{text(row.value)}</strong>
-                </div>
-              ))}
+        <div className={styles.equityV2Grid}>
+          <div className={styles.equityV2Intro}>
+            <div>
+              <div className={styles.eyebrowDark}>{text(c.eyebrow) || 'PELUANG EQUITY'}</div>
+              <h2>{text(c.title) || <>Kesempatan<br />Bertumbuh<br />Bersama</>}</h2>
+              <p>{text(c.description) || 'Jadilah bagian dari perjalanan besar Nuzultrip dengan kepemilikan yang jelas, transparan, dan terstruktur.'}</p>
             </div>
-          ) : null}
-          <aside className={styles.offerCard}>
-            {text(c.card_image_url) ? <CmsImage src={text(c.card_image_url)} alt={text(c.card_image_alt) || 'Peluang Equity Nuzultrip'} className={styles.offerCardImage} /> : null}
+            <div className={styles.equityV2IntroCta}><Link href={usableHref(c.cta_href) || '/hubungi'} className={styles.inlineLink}>{text(c.cta_label) || 'Lebih Detail Penawaran'} <Arrow /></Link></div>
+          </div>
+          <div className={styles.equityV2Metrics}>
+            {rows.map((row,index)=><div className={styles.equityV2Metric} key={`${text(row.label)}-${index}`}><strong>{text(row.value)}</strong><p>{text(row.label)}</p></div>)}
+          </div>
+          <aside className={styles.equityV2Card}>
+            {text(c.card_image_url) ? <CmsImage src={text(c.card_image_url)} alt={text(c.card_image_alt) || 'Masjid Nabawi di waktu senja'} className={styles.equityV2CardImage} /> : null}
+            <div className={styles.equityV2CardShade}/>
             <h3>{text(c.card_title) || <>Investasi Hari Ini,<br />Untuk Masa Depan<br />yang Lebih Baik.</>}</h3>
-            <div className={styles.offerRule} />
-            <Link href={usableHref(c.card_cta_href) || '/hubungi'}>{text(c.card_cta_label) || 'Ajukan Minat Equity'} <Arrow /></Link>
-            <div className={styles.offerPattern} aria-hidden="true">◢◢◢◢</div>
+            <Link href={usableHref(c.card_cta_href) || '/hubungi'} className={styles.equityV2CardCta}>{text(c.card_cta_label) || 'Ajukan Minat Equity'} <Arrow /></Link>
           </aside>
         </div>
       </div>
