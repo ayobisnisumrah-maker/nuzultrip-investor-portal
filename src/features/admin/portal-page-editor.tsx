@@ -741,25 +741,13 @@ function VisualEditor({
   if (kind === 'intro') {
     return (
       <div className="space-y-4">
-        <Field
-          label="Eyebrow"
-          value={asString(content.eyebrow)}
-          onChange={(eyebrow) => update({ eyebrow })}
-          placeholder="Contoh: Tentang Nuzultrip"
-        />
-
-        <Field
-          label="Judul"
-          value={asString(content.title)}
-          onChange={(title) => update({ title })}
-        />
-
-        <Field
-          label="Deskripsi"
-          value={asString(content.description)}
-          onChange={(description) => update({ description })}
-          multiline
-        />
+        <Field label="Eyebrow" value={asString(content.eyebrow)} onChange={(eyebrow) => update({ eyebrow })} placeholder="TENTANG KAMI" />
+        <Field label="Judul" value={asString(content.title)} onChange={(title) => update({ title })} />
+        <Field label="Deskripsi" value={asString(content.description)} onChange={(description) => update({ description })} multiline />
+        <div className="grid gap-4 md:grid-cols-2">
+          <Field label="Label CTA" value={asString(content.cta_label)} onChange={(cta_label) => update({ cta_label })} placeholder="Lebih tentang kami" />
+          <Field label="Tautan CTA" value={asString(content.cta_href)} onChange={(cta_href) => update({ cta_href })} placeholder="Kosongkan untuk menuju section Perusahaan" />
+        </div>
       </div>
     )
   }
@@ -817,6 +805,25 @@ function VisualEditor({
           multiline
           placeholder="Satu misi per baris"
         />
+      </div>
+    )
+  }
+
+  if (kind === 'stat_grid' || kind === 'financial_highlights') {
+    const metrics = Array.isArray(content.metrics) ? content.metrics.filter(isRecord) : []
+    return (
+      <div className="space-y-5">
+        <Field label="Eyebrow" value={asString(content.eyebrow)} onChange={(eyebrow) => update({ eyebrow })} />
+        <Field label="Judul" value={asString(content.title)} onChange={(title) => update({ title })} />
+        <Field label="Deskripsi" value={asString(content.description)} onChange={(description) => update({ description })} multiline />
+        <div className="border-border space-y-4 rounded-xl border p-4">
+          {renderArrayHeader('Angka Penting', 'Maksimal 5 angka utama pada area Tentang Kami. Nilai akan tetap disimpan sebagai teks agar format seperti 70JT+, +17,1%, dan 40% terjaga.', 'metrics')}
+          {renderObjectArrayEditor('metrics', metrics, [
+            { key: 'value', label: 'Nilai', placeholder: 'Contoh: 70JT+' },
+            { key: 'label', label: 'Label' },
+            { key: 'description', label: 'Keterangan', multiline: true },
+          ])}
+        </div>
       </div>
     )
   }
