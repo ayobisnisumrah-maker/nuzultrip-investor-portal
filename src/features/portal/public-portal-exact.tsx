@@ -7,6 +7,7 @@ import type { PublicPortalDocument } from '@/server/portal/public-queries'
 import styles from './public-portal-exact.module.css'
 import { V2CompanyGallery } from './v2-company-gallery'
 import { V2RoadmapSlider } from './v2-roadmap-slider'
+import { V2InvestorInfo } from './v2-investor-info'
 
 type BaseProps = ComponentProps<typeof PublicPortalModel>
 type Section = BaseProps['sections'][number]
@@ -375,10 +376,19 @@ function InvestorInfo({ growth, funds, governance, risks, documents, publicDocum
 
   return <section className={styles.infoSection} id="informasi-investor"><div className={styles.shell}>
     <div className={styles.infoHeader}><div className={styles.eyebrowDark}>{eyebrow}</div><h2>{title}</h2>{text(documentPresentation.description)?<p>{text(documentPresentation.description)}</p>:null}</div>
-    <div className={styles.infoLayout}><div className={styles.infoMedia}>{heroImage ? <CmsImage src={heroImage} alt={text(documentPresentation.image_alt)||'Informasi Investor Nuzultrip'} /> : null}</div><div className={styles.infoGrid}>
-      {sectionCards.slice(0,6).map((item)=>{const body=<article><div><h3>{item.title}</h3>{item.description?<p>{item.description}</p>:null}</div><span className={styles.infoMore}>Selengkapnya <Arrow /></span></article>;return item.href?<Link href={item.href} key={item.key}>{body}</Link>:<div key={item.key}>{body}</div>})}
-      {publicDocuments.slice(0, availableDocumentSlots).map((document)=><Link href={document.href} key={document.id}><article><div><h3>{document.title}</h3>{document.summary?<p>{document.summary}</p>:null}</div><span className={styles.infoMore}>Buka Dokumen <Arrow /></span></article></Link>)}
-    </div></div>
+    <V2InvestorInfo
+      fallbackImage={heroImage}
+      cards={[
+        ...sectionCards.slice(0, 6),
+        ...publicDocuments.slice(0, availableDocumentSlots).map((document) => ({
+          key: document.id,
+          title: document.title,
+          description: document.summary ?? '',
+          image: heroImage,
+          href: document.href,
+        })),
+      ]}
+    />
   </div></section>
 }
 
