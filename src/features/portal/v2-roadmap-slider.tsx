@@ -31,7 +31,10 @@ export function V2RoadmapSlider({ items }: { items: RoadmapItem[] }) {
     const track = trackRef.current
     if (!track || !safeItems.length) return
     const activeCard = track.querySelector<HTMLElement>(`[data-roadmap-index="${initial}"]`)
-    activeCard?.scrollIntoView({ block: 'nearest', inline: 'center' })
+    const timer = window.setTimeout(() => {
+      activeCard?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
+    }, 250)
+    return () => window.clearTimeout(timer)
   }, [initial, safeItems.length])
 
   useEffect(() => {
