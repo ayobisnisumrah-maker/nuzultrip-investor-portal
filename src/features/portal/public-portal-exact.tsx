@@ -75,7 +75,7 @@ function Arrow() {
   return <span aria-hidden="true">→</span>
 }
 
-function Header({ navigation, logoSrc, heroSection }: { navigation: NavItem[]; logoSrc: string; heroSection?: Section }) {
+function Header({ navigation, heroSection }: { navigation: NavItem[]; heroSection?: Section }) {
   const header = navigation
     .filter((item) => item.location === 'header' && !item.parent_id && usableHref(item.href))
     .sort((a, b) => a.position - b.position)
@@ -89,10 +89,7 @@ function Header({ navigation, logoSrc, heroSection }: { navigation: NavItem[]; l
   return (
     <V2HeaderShell>
       <div className={styles.shell}>
-        <Link href="/" className={styles.logoLink} aria-label="Nuzultrip">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={logoSrc} alt="Nuzultrip" className={styles.logo} />
-        </Link>
+        <Link href="/" className={styles.logoLink} aria-label="Nuzultrip"><span className={styles.headerWordmark}>Nuzultrip</span><span className={styles.headerBadge}>Equity</span></Link>
         <nav className={styles.nav} aria-label="Navigasi utama">
           {header.slice(0, 7).map((item) => (
             <Link key={item.id} href={item.href}>{item.label}</Link>
@@ -438,7 +435,7 @@ export function PublicPortalExact({ page, sections, navigation, publicDocuments,
 
   return (
     <div className={styles.page}>
-      <Header navigation={navigation} logoSrc={logoSrc} heroSection={hero} />
+      <Header navigation={navigation} heroSection={hero} />
       <main id="main">
         <Hero section={hero} />
         <AboutAndStats intro={intro} stats={stats} business={business} />
