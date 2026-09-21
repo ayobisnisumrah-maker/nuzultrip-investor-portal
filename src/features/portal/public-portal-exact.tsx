@@ -336,27 +336,36 @@ function Partners({ section }: { section?: Section }) {
 
 function InvestorInfo({ growth, funds, governance, risks, documents, publicDocuments }: { growth?: Section; funds?: Section; governance?: Section; risks?: Section; documents?: Section; publicDocuments: PublicPortalDocument[] }) {
   const documentPresentation = documents?.content ?? {}
-  const sourceSections = [funds, governance, risks].filter(Boolean) as Section[]
-  const sectionCards = sourceSections.flatMap((section) => {
-    const c = section.content
-    const nested = records(c.pillars).length ? records(c.pillars) : records(c.items)
-    if (nested.length) {
-      return nested.map((item) => ({
-        key: `${section.id}-${text(item.title)}`,
+  const governanceItems = records(governance?.content.items)
+  const legacySections = [funds, risks].filter(Boolean) as Section[]
+  const sectionCards = (governanceItems.length
+    ? governanceItems.map((item, index) => ({
+        key: `${governance?.id ?? 'investor'}-${text(item.title) || index}`,
         title: text(item.title),
         description: text(item.description),
-        image: text(item.image_url) || text(c.image_url),
+        image: text(item.image_url) || text(governance?.content.image_url),
         href: usableHref(item.href),
       }))
-    }
-    return [{
-      key: section.id,
-      title: text(c.title),
-      description: text(c.description) || text(c.content),
-      image: text(c.image_url),
-      href: usableHref(c.cta_href),
-    }]
-  }).filter((item) => item.title || item.description)
+    : legacySections.flatMap((section) => {
+        const c = section.content
+        const nested = records(c.pillars).length ? records(c.pillars) : records(c.items)
+        if (nested.length) {
+          return nested.map((item) => ({
+            key: `${section.id}-${text(item.title)}`,
+            title: text(item.title),
+            description: text(item.description),
+            image: text(item.image_url) || text(c.image_url),
+            href: usableHref(item.href),
+          }))
+        }
+        return [{
+          key: section.id,
+          title: text(c.title),
+          description: text(c.description) || text(c.content),
+          image: text(c.image_url),
+          href: usableHref(c.cta_href),
+        }]
+      })).filter((item) => item.title || item.description)
 
   const heroImage = text(documentPresentation.image_url) || sectionCards.map((item) => item.image).find(Boolean) || text(growth?.content.image_url)
   const eyebrow = text(documentPresentation.eyebrow) || 'INFORMASI INVESTOR'
@@ -392,8 +401,8 @@ function ContactCta({ section, documents }: { section?: Section; documents: Publ
   const secondaryHref=usableHref(c.secondary_cta_href)||documents[0]?.href||null
   return <section className={styles.contactSection} id={section.anchor_id ?? 'kontak'}><div className={styles.shell}><div className={styles.quickLayout}>
     <div className={styles.quickIntro}><div className={styles.eyebrowLight}>{text(c.eyebrow)||'QUICK ACTION'}</div><h2>{text(c.title)||'Kenali. Pelajari. Tentukan Langkah Anda.'}</h2>{text(c.description)?<p>{text(c.description)}</p>:null}</div>
-    <div className={styles.quickCards}><Link href={primaryHref}><span>Investor Relations</span><h3>{text(c.primary_cta_label)||'Hubungi Tim'}</h3><p>{text(c.primary_cta_description)||text(c.contact_value)}</p><Arrow /></Link>{secondaryHref?<Link href={secondaryHref}><span>Dokumen Resmi</span><h3>{text(c.secondary_cta_label)||'Unduh Pitchdeck'}</h3><p>{text(c.secondary_cta_description)||'Pelajari ringkasan informasi Nuzultrip Equity'}</p><Arrow /></Link>:null}</div>
-    <div className={styles.quickMedia}>{text(c.image_url)?<CmsImage src={text(c.image_url)} alt={text(c.image_alt)||'Nuzultrip Equity'}/>:null}<div><small>{text(c.image_eyebrow)||'LANGKAH AWAL KEMITRAAN'}</small><h3>{text(c.image_title)||'Siap Mengenal Nuzultrip Lebih Jauh?'}</h3>{text(c.image_description)?<p>{text(c.image_description)}</p>:null}<Link href={primaryHref}>{text(c.primary_cta_label)||'Ajukan Minat Equity'} <Arrow /></Link></div></div>
+    <div className={styles.quickCards}><Link href={primaryHref}><span>{text(c.primary_cta_eyebrow)||'Investor Relations'}</span><h3>{text(c.primary_cta_label)||'Hubungi Tim'}</h3><p>{text(c.primary_cta_description)||text(c.contact_value)}</p><Arrow /></Link>{secondaryHref?<Link href={secondaryHref}><span>{text(c.secondary_cta_eyebrow)||'Dokumen Resmi'}</span><h3>{text(c.secondary_cta_label)||'Unduh Pitchdeck'}</h3><p>{text(c.secondary_cta_description)||'Pelajari ringkasan informasi Nuzultrip Equity'}</p><Arrow /></Link>:null}</div>
+    <div className={styles.quickMedia}>{text(c.image_url)?<CmsImage src={text(c.image_url)} alt={text(c.image_alt)||'Nuzultrip Equity'}/>:null}<div><small>{text(c.image_eyebrow)||'LANGKAH AWAL KEMITRAAN'}</small><h3>{text(c.image_title)||'Siap Mengenal Nuzultrip Lebih Jauh?'}</h3>{text(c.image_description)?<p>{text(c.image_description)}</p>:null}<Link href={usableHref(c.image_cta_href)||primaryHref}>{text(c.image_cta_label)||'Ajukan Minat Equity'} <Arrow /></Link></div></div>
   </div></div></section>
 }
 
