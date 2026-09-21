@@ -1088,6 +1088,39 @@ function VisualEditor({
     )
   }
 
+  if (kind === 'logo_wall') {
+    const items = Array.isArray(content.items)
+      ? content.items.filter(isRecord)
+      : Array.isArray(content.logos)
+        ? content.logos.filter(isRecord)
+        : []
+
+    return (
+      <div className="space-y-5">
+        <Field label="Eyebrow" value={asString(content.eyebrow)} onChange={(eyebrow) => update({ eyebrow })} placeholder="JARINGAN & MITRA" />
+        <Field label="Judul" value={asString(content.title)} onChange={(title) => update({ title })} />
+        <Field label="Deskripsi" value={asString(content.description)} onChange={(description) => update({ description })} multiline />
+        <div className="grid gap-4 md:grid-cols-2">
+          <Field label="Label CTA" value={asString(content.cta_label)} onChange={(cta_label) => update({ cta_label })} placeholder="Pelajari Selengkapnya" />
+          <Field label="Tautan CTA" value={asString(content.cta_href)} onChange={(cta_href) => update({ cta_href })} />
+        </div>
+        <ImageField label="Gambar Jaringan & Mitra" value={asString(content.image_url)} onChange={(image_url) => update({ image_url })} />
+        <Field label="Teks Alternatif Gambar" value={asString(content.image_alt)} onChange={(image_alt) => update({ image_alt })} />
+        <Field label="Headline pada Gambar" value={asString(content.image_caption)} onChange={(image_caption) => update({ image_caption })} placeholder="Satu Ekosistem, Banyak Peluang" />
+
+        <div className="border-border space-y-4 rounded-xl border p-4">
+          {renderArrayHeader('Kartu Jaringan & Mitra', 'Tiga kartu pertama ditampilkan pada portal.', 'items')}
+          {renderObjectArrayEditor('items', items, [
+            { key: 'title', label: 'Nama / Judul' },
+            { key: 'description', label: 'Deskripsi', multiline: true },
+            { key: 'icon', label: 'Ikon (emoji atau simbol)' },
+            { key: 'icon_url', label: 'File Ikon' },
+          ])}
+        </div>
+      </div>
+    )
+  }
+
   if (kind === 'business_overview') {
     const images = Array.isArray(content.images) ? content.images.filter(isRecord) : []
     const metrics = Array.isArray(content.metrics) ? content.metrics.filter(isRecord) : []
