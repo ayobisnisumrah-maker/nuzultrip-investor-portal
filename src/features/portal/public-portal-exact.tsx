@@ -11,6 +11,7 @@ import { V2InvestorInfo } from './v2-investor-info'
 import { V2MobileHeader } from './v2-mobile-header'
 import { V2HeaderShell } from './v2-header-shell'
 import { V2Hero } from './v2-hero'
+import { V2Process } from './v2-process'
 
 type BaseProps = ComponentProps<typeof PublicPortalModel>
 type Section = BaseProps['sections'][number]
@@ -220,13 +221,9 @@ function Services({ section }: { section?: Section }) {
 function Process({ offering }: { offering?: Section }) {
   if (!offering) return null
   const c = offering.content
-  const steps = records(c.process_steps)
+  const steps = records(c.process_steps).slice(0,4).map((step,index)=>({number:`0${index+1}`,title:text(step.title),description:text(step.description),duration:text(step.duration),output:text(step.output)}))
   if (!steps.length) return null
-  return <section className={styles.processSection} id="proses"><div className={styles.shell}>
-    <div className={styles.processHeader}><div className={styles.eyebrowLight}>{text(c.process_eyebrow)||'ALUR & TAHAPAN INVESTASI'}</div><h2>{text(c.process_title)||'Langkah Mudah Menjadi Bagian dari Kami'}</h2>{text(c.process_description)?<p>{text(c.process_description)}</p>:null}</div>
-    <div className={styles.processSteps}>{steps.slice(0,4).map((step,index)=><article key={index}><div className={styles.processTop}><span className={styles.stepNumber}>0{index+1}</span><i /></div><h3>{text(step.title)}</h3>{text(step.description)?<p>{text(step.description)}</p>:null}<div className={styles.processMeta}>{text(step.duration)?<span>{text(step.duration)}</span>:null}{text(step.output)?<b>{text(step.output)}</b>:null}</div></article>)}</div>
-    {usableHref(c.process_cta_href)?<div className={styles.processCta}><Link href={text(c.process_cta_href)}>{text(c.process_cta_label)||'Pelajari Selengkapnya'} <Arrow /></Link></div>:null}
-  </div></section>
+  return <V2Process eyebrow={text(c.process_eyebrow)||'ALUR & TAHAPAN INVESTASI'} title={text(c.process_title)||'Langkah Mudah|Menjadi Bagian dari Kami'} description={text(c.process_description)||'Empat tahapan transparan dan berkepastian hukum untuk menjadi pemegang unit equity resmi ekosistem Nuzultrip.'} steps={steps} primary={{label:text(c.process_primary_cta_label)||'Ajukan Minat Unit Equity',href:usableHref(c.process_primary_cta_href)||'/hubungi'}} secondary={{label:text(c.process_cta_label)||'Pelajari Prosedur Lengkap',href:usableHref(c.process_cta_href)||'/informasi'}} />
 }
 
 function Roadmap({ section }: { section?: Section }) {
