@@ -920,6 +920,8 @@ function VisualEditor({
           <Field label="Label CTA Card Equity" value={asString(content.card_cta_label)} onChange={(card_cta_label) => update({ card_cta_label })} placeholder="Ajukan Minat Equity" />
           <Field label="Tautan CTA Card Equity" value={asString(content.card_cta_href)} onChange={(card_cta_href) => update({ card_cta_href })} placeholder="/hubungi" />
         </div>
+        <ImageField label="Gambar Card Equity" value={asString(content.card_image_url)} onChange={(card_image_url) => update({ card_image_url })} />
+        <Field label="Teks Alternatif Gambar Card Equity" value={asString(content.card_image_alt)} onChange={(card_image_alt) => update({ card_image_alt })} />
 
         <div className="border-border space-y-4 rounded-xl border p-4">
           {renderArrayHeader('Ringkasan Penawaran', 'Kelola angka dan ketentuan utama yang tampil pada tabel Peluang Equity.', 'terms')}
@@ -963,8 +965,17 @@ function VisualEditor({
 
           {renderObjectArrayEditor('use_of_funds', useOfFunds, [
             {
+              key: 'code',
+              label: 'Kode Layanan',
+              placeholder: 'Contoh: UMROH',
+            },
+            {
               key: 'title',
               label: 'Judul',
+            },
+            {
+              key: 'tagline',
+              label: 'Tagline',
             },
             {
               key: 'description',
@@ -1121,6 +1132,8 @@ function VisualEditor({
           {renderObjectArrayEditor('items', items, [
             { key: 'title', label: 'Judul' },
             { key: 'description', label: 'Deskripsi', multiline: true },
+            { key: 'image_url', label: 'Gambar Kartu' },
+            { key: 'href', label: 'Tautan Detail' },
           ])}
         </div>
       </div>
@@ -1391,6 +1404,7 @@ function VisualEditor({
           {renderObjectArrayEditor('items', items, [
             { key: 'type', label: 'Jenis', placeholder: 'Artikel / Berita' },
             { key: 'date', label: 'Tanggal', placeholder: 'Contoh: 21 Sep 2026' },
+            { key: 'read_time', label: 'Waktu Baca', placeholder: 'Contoh: 4 min baca' },
             { key: 'title', label: 'Judul' },
             { key: 'description', label: 'Ringkasan', multiline: true },
             { key: 'image_url', label: 'Gambar' },
