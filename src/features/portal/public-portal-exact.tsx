@@ -143,7 +143,7 @@ function AboutAndStats({ intro, stats, business }: { intro?: Section; stats?: Se
   if (!intro && !stats) return null
   const c = intro?.content ?? {}
   const metrics = records(stats?.content.metrics)
-  const businessHref = business ? `#${business.anchor_id ?? 'bisnis'}` : null
+  const businessHref = usableHref(c.cta_href) || (business ? `#${business.anchor_id ?? 'bisnis'}` : null)
   return (
     <section className={styles.section} id={intro?.anchor_id ?? 'tentang-nuzultrip'}>
       <div className={styles.shell}>
@@ -152,7 +152,7 @@ function AboutAndStats({ intro, stats, business }: { intro?: Section; stats?: Se
           <h2>{text(c.title) || 'Nuzultrip'}</h2>
           <div className={styles.aboutText}>
             {text(c.description) ? <p>{text(c.description)}</p> : null}
-            {businessHref ? <Link href={businessHref} className={styles.inlineLink}>Lebih tentang kami <Arrow /></Link> : null}
+            {businessHref ? <Link href={businessHref} className={styles.inlineLink}>{text(c.cta_label) || 'Lebih tentang kami'} <Arrow /></Link> : null}
           </div>
         </div>
         {metrics.length ? (
@@ -329,14 +329,18 @@ function Partners({ section }: { section?: Section }) {
   </div></div></section>
 }
 
-function InvestorInfo({ growth, funds, governance, risks, documents }: { growth?: Section; funds?: Section; governance?: Section; risks?: Section; documents?: Section }) {
-  const blocks = [growth, funds, governance, risks, documents].filter(Boolean) as Section[]
-  if (!blocks.length) return null
-  const heroImage = blocks.map((s)=>text(s.content.image_url)).find(Boolean)
+function InvestorInfo({ growth, funds, governance, risks, documents, publicDocuments }: { growth?: Section; funds?: Section; governance?: Section; risks?: Section; documents?: Section; publicDocuments: PublicPortalDocument[] }) {
+  const blocks = [growth, funds, governance, risks].filter(Boolean) as Section[]
+  const documentPresentation = documents?.content ?? {}
+  if (!blocks.length && !publicDocuments.length && !documents) return null
+  const heroImage = text(documentPresentation.image_url) || blocks.map((s)=>text(s.content.image_url)).find(Boolean)
+  const eyebrow = text(documentPresentation.eyebrow) || 'INFORMASI INVESTOR'
+  const title = text(documentPresentation.title) || 'Informasi penting dalam satu tempat'
   return <section className={styles.infoSection} id="informasi-investor"><div className={styles.shell}>
-    <div className={styles.infoHeader}><div className={styles.eyebrowDark}>INFORMASI INVESTOR</div><h2>Informasi penting dalam satu tempat</h2></div>
-    <div className={styles.infoLayout}><div className={styles.infoMedia}>{heroImage ? <CmsImage src={heroImage} alt="Informasi Investor Nuzultrip" /> : null}</div><div className={styles.infoGrid}>
-      {blocks.slice(0,6).map((section)=><article key={section.id}><div><h3>{text(section.content.title)}</h3>{text(section.content.description)?<p>{text(section.content.description)}</p>:null}</div><span className={styles.infoMore}>Selengkapnya <Arrow /></span></article>)}
+    <div className={styles.infoHeader}><div className={styles.eyebrowDark}>{eyebrow}</div><h2>{title}</h2>{text(documentPresentation.description)?<p>{text(documentPresentation.description)}</p>:null}</div>
+    <div className={styles.infoLayout}><div className={styles.infoMedia}>{heroImage ? <CmsImage src={heroImage} alt={text(documentPresentation.image_alt)||'Informasi Investor Nuzultrip'} /> : null}</div><div className={styles.infoGrid}>
+      {blocks.slice(0,4).map((section)=><article key={section.id}><div><h3>{text(section.content.title)}</h3>{text(section.content.description)?<p>{text(section.content.description)}</p>:null}</div><span className={styles.infoMore}>Selengkapnya <Arrow /></span></article>)}
+      {publicDocuments.slice(0, Math.max(0, 6-blocks.length)).map((document)=><Link href={document.href} key={document.id}><article><div><h3>{document.title}</h3>{document.summary?<p>{document.summary}</p>:null}</div><span className={styles.infoMore}>Buka Dokumen <Arrow /></span></article></Link>)}
     </div></div>
   </div></section>
 }
@@ -422,10 +426,7 @@ function Footer({ navigation, logoSrc, pageTitle }: { navigation: NavItem[]; log
 }
 
 export function PublicPortalExact({ page, sections, navigation, publicDocuments, brandLogoUrl }: PublicPortalExactProps) {
-  const resolved = sections.map((section) => section.section_kind === 'documents' && publicDocuments.length ? {
-    ...section,
-    content: { ...section.content, items: publicDocuments.map((document) => ({ title: document.title, href: document.href })) },
-  } : section)
+  const resolved = sections
 
   const hero = sectionByKind(resolved, 'hero_3d')
   const intro = sectionByKind(resolved, 'intro')
@@ -458,7 +459,7 @@ export function PublicPortalExact({ page, sections, navigation, publicDocuments,
         <Process offering={offering} />
         <Roadmap section={roadmap} />
         <Partners section={logos} />
-        <InvestorInfo growth={growth} funds={funds} governance={governance} risks={risks} documents={documents} />
+        <InvestorInfo growth={growth} funds={funds} governance={governance} risks={risks} documents={documents} publicDocuments={publicDocuments} />
         <ContactCta section={contactCta} documents={publicDocuments} />
         <Articles section={articles} />
       </main>
