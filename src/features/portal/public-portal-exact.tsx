@@ -75,7 +75,7 @@ function Arrow() {
   return <span aria-hidden="true">→</span>
 }
 
-function Header({ navigation, heroSection }: { navigation: NavItem[]; heroSection?: Section }) {
+function Header({ navigation, logoSrc, heroSection }: { navigation: NavItem[]; logoSrc: string; heroSection?: Section }) {
   const header = navigation
     .filter((item) => item.location === 'header' && !item.parent_id && usableHref(item.href))
     .sort((a, b) => a.position - b.position)
@@ -436,7 +436,7 @@ export function PublicPortalExact({ page, sections, navigation, publicDocuments,
 
   return (
     <div className={styles.page}>
-      <Header navigation={navigation} heroSection={hero} />
+      <Header navigation={navigation} logoSrc={logoSrc} heroSection={hero} />
       <main id="main">
         <Hero section={hero} />
         <AboutAndStats intro={intro} stats={stats} business={business} />
