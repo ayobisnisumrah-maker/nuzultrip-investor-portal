@@ -23,8 +23,10 @@ function Atmosphere({ scrollY }: { scrollY: number }) {
   useEffect(() => { velocity.current = Math.max(-25, Math.min(25, scrollY - previous.current)); previous.current = scrollY }, [scrollY])
   useEffect(() => {
     const canvas = canvasRef.current
-    const ctx = canvas?.getContext('2d')
-    if (!canvas || !ctx) return
+    if (!canvas) return
+    const context = canvas.getContext('2d')
+    if (!context) return
+    const ctx = context
     let frame = 0
     let width = 0
     let height = 0
