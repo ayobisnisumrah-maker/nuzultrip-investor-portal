@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import Link from 'next/link'
 
 import styles from './public-portal-exact.module.css'
@@ -54,13 +54,13 @@ export function V2Hero({ id, eyebrow, titleLines, description, primary, secondar
   const heading={transform:`translate3d(0,${scrollY*.16}px,0)`,opacity:Math.max(0,1-scrollY/680)}
   const subtitle={transform:`translate3d(0,${scrollY*.22}px,0)`,opacity:Math.max(0,1-scrollY/560)}
   const buttons={transform:`translate3d(0,${scrollY*.26}px,0)`,opacity:Math.max(0,1-scrollY/490)}
-  const doubled=[...tags.slice(0,8),...tags.slice(0,8)]
+  const visibleTags=tags.slice(0,8)
   return <section className={styles.hero} id={id}><Atmosphere scrollY={scrollY}/><div className={styles.heroInner}><div className={styles.heroCopy}>
     <div className={`${styles.heroEntrance} ${visible?styles.heroEntranceVisible:''} ${styles.eyebrow}`} style={heading}>{eyebrow}</div>
     <h1 className={`${styles.heroEntrance} ${visible?styles.heroEntranceVisible:''}`} style={heading}>{titleLines.map((line,index)=><span key={line} className={index===titleLines.length-1?styles.heroAccent:undefined}>{line}</span>)}</h1>
     {description?<p className={`${styles.heroEntrance} ${visible?styles.heroEntranceVisible:''}`} style={subtitle}>{description}</p>:null}
     <div className={`${styles.heroButtons} ${styles.heroEntrance} ${visible?styles.heroEntranceVisible:''}`} style={buttons}><Link href={primary.href} className={styles.lightButton}>{primary.label} <span>→</span></Link><Link href={secondary.href} className={styles.textButton}><span aria-hidden="true">↓</span>{secondary.label}</Link></div>
-    {doubled.length?<div className={styles.heroPartners} style={{transform:`translate3d(0,${scrollY*.12}px,0)`}}><div className={styles.heroPartnersLabel}><i/><span>SOROTAN EKOSISTEM NUZULTRIP</span><i/></div><div className={styles.heroTags}><div className={styles.heroMarquee}>{doubled.map((tag,index)=><span key={`${tag}-${index}`}>{tag}</span>)}</div></div></div>:null}
+    {visibleTags.length?<div className={styles.heroPartners} style={{transform:`translate3d(0,${scrollY*.12}px,0)`}}><div className={styles.heroPartnersLabel}><i/><span>SOROTAN EKOSISTEM NUZULTRIP</span><i/></div><div className={styles.heroTags}><div className={styles.heroChipRow}>{visibleTags.map((tag,index)=><span key={tag} className={styles.heroFeatureChip} style={{'--chip-index':index} as CSSProperties}>{tag}</span>)}</div></div></div>:null}
     <div className={styles.heroScrollCue} style={{opacity:Math.max(0,1-scrollY/90)}}><span>Scroll Eksplorasi</span><b>⌄</b></div>
   </div></div></section>
 }
