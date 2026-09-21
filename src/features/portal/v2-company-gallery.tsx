@@ -58,8 +58,7 @@ export function V2CompanyGallery({
       >
         {safeImages.map((image, index) => (
           <div key={image.src + index} className={index === activeIndex ? styles.companyGalleryFrameActive : styles.companyGalleryFrame}>
-          {/* Published CMS media can be hosted by an approved HTTPS origin. */}
-          // eslint-disable-next-line @next/next/no-img-element
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={image.src}
             alt={image.alt}
