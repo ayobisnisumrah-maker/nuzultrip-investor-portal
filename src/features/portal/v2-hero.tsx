@@ -36,7 +36,7 @@ function Atmosphere({ scrollY }: { scrollY: number }) {
     const draw = () => {
       velocity.current *= .92; const drift = velocity.current * .8; ctx.clearRect(0, 0, width, height)
       const max = Math.min(130, width * .16)
-      for (let i=0;i<particles.length;i++) for(let j=i+1;j<particles.length;j++){const dx=particles[i].x-particles[j].x,dy=particles[i].y-particles[j].y,d=Math.hypot(dx,dy);if(d<max){ctx.beginPath();ctx.moveTo(particles[i].x,particles[i].y);ctx.lineTo(particles[j].x,particles[j].y);ctx.strokeStyle=`rgba(52,211,153,${(1-d/max)*.08})`;ctx.lineWidth=.85;ctx.stroke()}}
+      for (let i=0;i<particles.length;i++) for(let j=i+1;j<particles.length;j++){const first=particles[i],second=particles[j];if(!first||!second)continue;const dx=first.x-second.x,dy=first.y-second.y,d=Math.hypot(dx,dy);if(d<max){ctx.beginPath();ctx.moveTo(first.x,first.y);ctx.lineTo(second.x,second.y);ctx.strokeStyle=`rgba(52,211,153,${(1-d/max)*.08})`;ctx.lineWidth=.85;ctx.stroke()}}
       for(const p of particles){p.p+=p.s;p.x+=p.vx;p.y+=p.vy-drift;if(p.x< -20)p.x=width+20;if(p.x>width+20)p.x=-20;if(p.y< -20)p.y=height+20;if(p.y>height+20)p.y=-20;const a=Math.max(0,p.a+Math.sin(p.p)*.15);ctx.beginPath();ctx.arc(p.x,p.y,p.r*2.8,0,Math.PI*2);ctx.fillStyle=`rgba(52,211,153,${a*.18})`;ctx.fill();ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle=`rgba(167,243,208,${a})`;ctx.fill()}
       frame=requestAnimationFrame(draw)
     }
