@@ -25,7 +25,7 @@ export function V2RoadmapSlider({ items }: { items: RoadmapItem[] }) {
   const initial = Math.min(3, Math.max(items.length - 1, 0))
   const [active, setActive] = useState(initial)
   const trackRef = useRef<HTMLDivElement>(null)
-  const safeItems = useMemo(() => items.slice(0, 6), [items])
+  const safeItems = useMemo(() => items.slice(0, 5), [items])
 
   useEffect(() => {
     const track = trackRef.current
