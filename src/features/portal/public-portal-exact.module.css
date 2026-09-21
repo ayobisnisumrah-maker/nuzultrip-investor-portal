@@ -253,3 +253,30 @@
 .articleBody h3{font-size:1.2rem}
 @media(max-width:980px){.processSteps{grid-template-columns:repeat(2,1fr)}.partnerIntro,.partnerCards,.partnerMedia{grid-column:1/-1}.partnerLayout{gap:28px}}
 @media(max-width:640px){.processSteps{grid-template-columns:1fr}.partnerMedia{min-height:380px}}
+
+/* V2 interaction states */
+.infoMedia img{transition:opacity .35s ease,transform .5s ease}
+.infoGrid>div,.infoGrid>a{display:block;height:100%}
+.infoGrid article{height:100%;cursor:pointer;transition:border-color .25s,box-shadow .25s,transform .25s}
+.infoCardActive{border-color:rgba(0,0,0,.5)!important;box-shadow:0 6px 22px rgba(0,0,0,.08);outline:1px solid rgba(0,0,0,.08)}
+.companyGalleryImage{position:absolute;inset:0;width:100%!important;height:100%!important;object-fit:cover;opacity:0;pointer-events:none;transition:opacity .3s ease}
+.companyGalleryImageActive{position:absolute;inset:0;width:100%!important;height:100%!important;object-fit:cover;opacity:1;transition:opacity .3s ease}
+.mediaIndicatorActive{width:32px!important;background:#fff!important}
+.companyMetricActive{border-color:rgba(0,0,0,.5)!important;padding-left:8px!important}
+
+/* V2 mobile full-screen navigation */
+.mobileMenuButton{display:none;width:42px;height:42px;border:1px solid rgba(255,255,255,.14);border-radius:999px;background:rgba(255,255,255,.05);align-items:center;justify-content:center;flex-direction:column;gap:6px;color:#fff}
+.mobileMenuButton span{display:block;width:17px;height:1px;background:currentColor}
+.mobileMenuOverlay{position:fixed;z-index:120;inset:0;background:#08090f;color:#fff;padding:18px 24px 28px;display:flex;flex-direction:column;overflow-y:auto}
+.mobileMenuTop{display:flex;align-items:center;justify-content:space-between;min-height:52px}
+.mobileMenuTop img{width:132px;max-height:40px;object-fit:contain;filter:brightness(0) invert(1)}
+.mobileMenuTop button{width:42px;height:42px;border:1px solid rgba(255,255,255,.15);border-radius:999px;background:rgba(255,255,255,.05);color:#fff;font-size:1.8rem;line-height:1}
+.mobileMenuOverlay nav{margin-top:clamp(40px,8vh,76px);display:flex;flex-direction:column}
+.mobileMenuOverlay nav a{padding:16px 0;border-bottom:1px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:space-between;font-size:clamp(1.35rem,6vw,2rem);font-weight:700;letter-spacing:-.035em}
+.mobileMenuOverlay nav a span{color:#34d399;font-size:.9rem}
+.mobileMenuActions{margin-top:auto;padding-top:36px;display:grid;gap:10px}
+.mobileMenuActions a{min-height:50px;border-radius:12px;padding:13px 16px;display:flex;align-items:center;justify-content:space-between;font-size:.82rem;font-weight:800}
+.mobileMenuActions a:first-child{background:#fff;color:#090909}
+.mobileMenuActions a:last-child{border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.05)}
+@media(max-width:980px){.headerActions{margin-left:auto;gap:10px}.mobileMenuButton{display:flex}}
+@media(max-width:640px){.headerCta{display:none}.mobileMenuOverlay{padding-inline:16px}.statsGrid article{min-height:210px}.offerTable{min-height:420px}.offerCard{min-height:420px}.infoMedia{min-height:380px}.quickMedia{min-height:360px}}
