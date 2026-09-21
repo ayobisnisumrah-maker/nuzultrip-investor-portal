@@ -1236,152 +1236,23 @@ function VisualEditor({
 
 
   if (kind === 'documents') {
-    const items = Array.isArray(content.items) ? content.items.filter(isRecord) : []
-
     return (
       <div className="space-y-5">
-        <Field
-          label="Eyebrow"
-          value={asString(content.eyebrow)}
-          onChange={(eyebrow) => update({ eyebrow })}
-          placeholder="Contoh: Dokumen Investor"
-        />
-
-        <Field
-          label="Judul"
-          value={asString(content.title)}
-          onChange={(title) => update({ title })}
-        />
-
-        <Field
-          label="Deskripsi"
-          value={asString(content.description)}
-          onChange={(description) => update({ description })}
-          multiline
-        />
-
-        <div className="border-border space-y-4 rounded-xl border p-4">
-          {renderArrayHeader(
-            'Dokumen Publik',
-            'Kelola dokumen yang dapat dilihat oleh pengunjung Portal.',
-            'items',
-          )}
-
-          {renderObjectArrayEditor('items', items, [
-            {
-              key: 'title',
-              label: 'Nama Dokumen',
-            },
-            {
-              key: 'description',
-              label: 'Deskripsi',
-              multiline: true,
-            },
-            {
-              key: 'href',
-              label: 'Tautan Dokumen',
-              placeholder: 'https://...',
-            },
-          ])}
+        <div className="border-primary/20 bg-primary/5 rounded-lg border p-4">
+          <p className="text-fg text-sm font-semibold">Konten Section Dokumen</p>
+          <p className="text-fg-muted mt-1 text-xs leading-5">
+            Judul, deskripsi, dan gambar section diatur di sini. Daftar file yang tampil di portal
+            otomatis mengikuti Dokumen Portal yang berstatus Terbit dan Publik.
+          </p>
         </div>
-      </div>
-    )
-  }
-
-  if (kind === 'logo_wall') {
-    const logos = Array.isArray(content.logos) ? content.logos.filter(isRecord) : []
-
-    return (
-      <div className="space-y-5">
-        <Field
-          label="Eyebrow"
-          value={asString(content.eyebrow)}
-          onChange={(eyebrow) => update({ eyebrow })}
-          placeholder="Contoh: Mitra & Jaringan"
-        />
-
-        <Field
-          label="Judul"
-          value={asString(content.title)}
-          onChange={(title) => update({ title })}
-        />
+        <Field label="Eyebrow" value={asString(content.eyebrow)} onChange={(eyebrow) => update({ eyebrow })} placeholder="INFORMASI INVESTOR" />
+        <Field label="Judul" value={asString(content.title)} onChange={(title) => update({ title })} placeholder="Informasi penting dalam satu tempat" />
         <Field label="Deskripsi" value={asString(content.description)} onChange={(description) => update({ description })} multiline />
-        <div className="grid gap-4 md:grid-cols-2">
-          <Field label="Label CTA" value={asString(content.cta_label)} onChange={(cta_label) => update({ cta_label })} />
-          <Field label="Tautan CTA" value={asString(content.cta_href)} onChange={(cta_href) => update({ cta_href })} />
-        </div>
-        <ImageField label="Gambar Jaringan" value={asString(content.image_url)} onChange={(image_url) => update({ image_url })} />
-        <Field label="Judul pada Gambar" value={asString(content.image_caption)} onChange={(image_caption) => update({ image_caption })} />
-
-        <div className="border-border space-y-4 rounded-xl border p-4">
-          {renderArrayHeader(
-            'Logo & Jaringan',
-            'Kelola logo mitra, klien, atau pihak terkait.',
-            'logos',
-          )}
-
-          {renderObjectArrayEditor('logos', logos, [
-            {
-              key: 'name',
-              label: 'Nama',
-            },
-            {
-              key: 'image_url',
-              label: 'URL Gambar Logo',
-              placeholder: 'https://...',
-            },
-            {
-              key: 'href',
-              label: 'Tautan',
-              placeholder: 'https://...',
-            },
-          ])}
-        </div>
+        <ImageField label="Gambar Section" value={asString(content.image_url)} onChange={(image_url) => update({ image_url })} />
+        <Field label="Teks Alternatif Gambar" value={asString(content.image_alt)} onChange={(image_alt) => update({ image_alt })} />
       </div>
     )
   }
-
-  if (kind === 'faq') {
-    const items = Array.isArray(content.items) ? content.items.filter(isRecord) : []
-
-    return (
-      <div className="space-y-5">
-        <Field
-          label="Eyebrow"
-          value={asString(content.eyebrow)}
-          onChange={(eyebrow) => update({ eyebrow })}
-          placeholder="Contoh: Pertanyaan Umum"
-        />
-
-        <Field
-          label="Judul"
-          value={asString(content.title)}
-          onChange={(title) => update({ title })}
-        />
-
-        <div className="border-border space-y-4 rounded-xl border p-4">
-          {renderArrayHeader(
-            'Pertanyaan Umum',
-            'Kelola pertanyaan dan jawaban yang ditampilkan kepada pengunjung.',
-            'items',
-          )}
-
-          {renderObjectArrayEditor('items', items, [
-            {
-              key: 'question',
-              label: 'Pertanyaan',
-            },
-            {
-              key: 'answer',
-              label: 'Jawaban',
-              multiline: true,
-            },
-          ])}
-        </div>
-      </div>
-    )
-  }
-
   if (kind === 'contact_cta') {
     return (
       <div className="space-y-5">
