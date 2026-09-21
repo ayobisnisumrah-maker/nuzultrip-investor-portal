@@ -20,7 +20,6 @@ export function V2InvestorInfo({ cards, fallbackImage, interestHref = '/hubungi'
   const [active, setActive] = useState(0)
   const [detailIndex, setDetailIndex] = useState<number | null>(null)
   const safeCards = cards.slice(0, 6)
-  const activeImage = safeCards[active]?.image || fallbackImage
   const detailCard = detailIndex === null ? null : safeCards[detailIndex]
 
   useEffect(() => {
