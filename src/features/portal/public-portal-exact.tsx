@@ -90,7 +90,7 @@ function Header({ navigation, logoSrc, heroSection }: { navigation: NavItem[]; l
   return (
     <V2HeaderShell>
       <div className={styles.shell}>
-        <Link href="/" className={styles.logoLink} aria-label="Nuzultrip"><span className={styles.headerWordmark}>Nuzultrip</span><span className={styles.headerBadge}>Equity</span></Link>
+        <Link href="/" className={styles.logoLink} aria-label="Nuzultrip">{/* eslint-disable-next-line @next/next/no-img-element */}<img src={logoSrc} alt="Nuzultrip" className={styles.headerLogoImage} /><span className={styles.headerBadge}>Equity</span></Link>
         <nav className={styles.nav} aria-label="Navigasi utama">
           {header.slice(0, 7).map((item) => (
             <Link key={item.id} href={item.href}>{item.label}</Link>
