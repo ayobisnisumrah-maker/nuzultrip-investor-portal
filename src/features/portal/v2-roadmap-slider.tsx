@@ -22,7 +22,7 @@ function statusClass(status: string) {
 }
 
 export function V2RoadmapSlider({ items }: { items: RoadmapItem[] }) {
-  const initial = Math.min(Math.max(items.findIndex((item) => item.status.toLocaleLowerCase('id-ID').includes('aktif')), 0), Math.max(items.length - 1, 0))
+  const initial = Math.min(3, Math.max(items.length - 1, 0))
   const [active, setActive] = useState(initial)
   const trackRef = useRef<HTMLDivElement>(null)
   const safeItems = useMemo(() => items.slice(0, 6), [items])
@@ -37,34 +37,22 @@ export function V2RoadmapSlider({ items }: { items: RoadmapItem[] }) {
     return () => window.clearTimeout(timer)
   }, [initial, safeItems.length])
 
-  useEffect(() => {
+  function handleScroll() {
     const track = trackRef.current
-    if (!track || safeItems.length < 2) return
-    let frame = 0
-    const syncActiveCard = () => {
-      window.cancelAnimationFrame(frame)
-      frame = window.requestAnimationFrame(() => {
-        const center = track.getBoundingClientRect().left + track.clientWidth / 2
-        const cards = Array.from(track.querySelectorAll<HTMLElement>('[data-roadmap-index]'))
-        let closest = active
-        let distance = Number.POSITIVE_INFINITY
-        for (const card of cards) {
-          const rect = card.getBoundingClientRect()
-          const candidate = Math.abs(rect.left + rect.width / 2 - center)
-          if (candidate < distance) {
-            distance = candidate
-            closest = Number(card.dataset.roadmapIndex ?? active)
-          }
-        }
-        setActive((current) => current === closest ? current : closest)
-      })
-    }
-    track.addEventListener('scroll', syncActiveCard, { passive: true })
-    return () => {
-      window.cancelAnimationFrame(frame)
-      track.removeEventListener('scroll', syncActiveCard)
-    }
-  }, [active, safeItems.length])
+    if (!track) return
+    const scrollCenter = track.scrollLeft + track.clientWidth / 2
+    let closest = 0
+    let distance = Number.POSITIVE_INFINITY
+    Array.from(track.children).forEach((child, index) => {
+      const card = child as HTMLElement
+      const candidate = Math.abs(card.offsetLeft + card.clientWidth / 2 - scrollCenter)
+      if (candidate < distance) {
+        distance = candidate
+        closest = index
+      }
+    })
+    if (closest !== active) setActive(closest)
+  }
 
   function go(index: number) {
     if (!safeItems.length) return
@@ -92,7 +80,7 @@ export function V2RoadmapSlider({ items }: { items: RoadmapItem[] }) {
         ))}
       </div>
 
-      <div className={styles.roadmapTrackExact} ref={trackRef}>
+      <div className={styles.roadmapTrackExact} ref={trackRef} onScroll={handleScroll}>
         {safeItems.map((item, index) => (
           <article
             key={index}
