@@ -126,33 +126,22 @@ function Hero({ section }: { section?: Section }) {
   />
 }
 
-function AboutAndStats({ intro, stats, business }: { intro?: Section; stats?: Section; business?: Section }) {
+function AboutAndStats({ intro, stats }: { intro?: Section; stats?: Section; business?: Section }) {
   if (!intro && !stats) return null
   const c = intro?.content ?? {}
-  const metrics = records(stats?.content.metrics)
-  const businessHref = usableHref(c.cta_href) || (business ? `#${business.anchor_id ?? 'bisnis'}` : null)
+  const metrics = records(stats?.content.metrics).slice(0, 5)
   return (
-    <section className={styles.section} id={intro?.anchor_id ?? 'tentang-nuzultrip'}>
+    <section className={styles.aboutV2} id={intro?.anchor_id ?? 'tentang-nuzultrip'}>
       <div className={styles.shell}>
-        <div className={styles.aboutGrid}>
+        <div className={styles.aboutV2Header}>
           <div className={styles.eyebrowDark}>{text(c.eyebrow) || 'TENTANG KAMI'}</div>
-          <h2>{text(c.title) || 'Nuzultrip'}</h2>
-          <div className={styles.aboutText}>
-            {text(c.description) ? <p>{text(c.description)}</p> : null}
-            {businessHref ? <Link href={businessHref} className={styles.inlineLink}>{text(c.cta_label) || 'Lebih tentang kami'} <Arrow /></Link> : null}
-          </div>
+          <h2>{text(c.title) || <>Menghadirkan Inovasi Teknologi<br />dengan Integrasi Berkelanjutan</>}</h2>
         </div>
-        {metrics.length ? (
-          <div className={styles.statsGrid}>
-            {metrics.slice(0, 5).map((metric, index) => (
-              <article key={`${text(metric.label)}-${index}`}>
-                <strong>{text(metric.value)}</strong>
-                <span>{text(metric.label)}</span>
-                {text(metric.description) ? <small>{text(metric.description)}</small> : null}
-              </article>
-            ))}
-          </div>
-        ) : null}
+        {metrics.length ? <div className={styles.aboutV2Metrics}>{metrics.map((metric,index)=><article key={`${text(metric.label)}-${index}`}>
+          <div className={styles.aboutV2Stat}><small>METRIK 0{index+1}</small><strong>{text(metric.value)}</strong></div>
+          <div className={styles.aboutV2Rule}/>
+          <div className={styles.aboutV2Body}><h3>{text(metric.label)}</h3>{text(metric.description)?<p>{text(metric.description)}</p>:null}</div>
+        </article>)}</div>:null}
       </div>
     </section>
   )
