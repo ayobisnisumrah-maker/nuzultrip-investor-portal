@@ -1132,7 +1132,9 @@ function VisualEditor({
           {renderObjectArrayEditor('items', items, [
             { key: 'title', label: 'Judul' },
             { key: 'description', label: 'Deskripsi', multiline: true },
+            { key: 'details', label: 'Detail / Poin Informasi', multiline: true, placeholder: 'Satu poin per baris' },
             { key: 'image_url', label: 'Gambar Kartu' },
+            { key: 'image_alt', label: 'Teks Alternatif Gambar' },
             { key: 'href', label: 'Tautan Detail' },
           ])}
         </div>
