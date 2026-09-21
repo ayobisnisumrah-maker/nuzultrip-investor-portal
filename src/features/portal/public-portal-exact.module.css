@@ -280,3 +280,57 @@
 .mobileMenuActions a:last-child{border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.05)}
 @media(max-width:980px){.headerActions{margin-left:auto;gap:10px}.mobileMenuButton{display:flex}}
 @media(max-width:640px){.headerCta{display:none}.mobileMenuOverlay{padding-inline:16px}.statsGrid article{min-height:210px}.offerTable{min-height:420px}.offerCard{min-height:420px}.infoMedia{min-height:380px}.quickMedia{min-height:360px}}
+
+/* Responsive audit: 1024 / 768 / 430 / 390 */
+@media(min-width:981px) and (max-width:1100px){
+  .shell{width:min(calc(100% - 40px),var(--shell))}
+  .nav{gap:16px;font-size:.7rem}
+  .logoLink{min-width:140px}
+  .logo{width:132px}
+  .headerCta{padding-inline:16px}
+  .offerLayout,.companyGrid,.networkLayout,.quickLayout{gap:24px}
+  .infoLayout{gap:28px}
+}
+@media(min-width:641px) and (max-width:980px){
+  .shell{width:min(calc(100% - 40px),var(--shell))}
+  .heroCopy{padding-top:110px}
+  .statsGrid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .statsGrid article:last-child{grid-column:1/-1}
+  .serviceCards,.articleCards{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .companyMetrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .infoGrid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .quickCards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:430px){
+  .shell{width:calc(100% - 32px)}
+  .heroCopy h1{font-size:clamp(2.15rem,10.5vw,2.8rem);line-height:1.07}
+  .heroCopy>p{font-size:.94rem}
+  .section,.partnerSection,.infoSection{padding:64px 0}
+  .offerIntro h2,.companyIntro h2,.networkIntro h2,.articleIntro h2{overflow-wrap:anywhere}
+  .offerRow{gap:12px}
+  .offerRow strong{font-size:1.5rem}
+  .offerRow span{max-width:46%;font-size:.78rem}
+  .companyMedia,.companyMedia img{min-height:360px}
+  .companyMetrics{display:flex}
+  .serviceCards{display:grid;grid-template-columns:1fr}
+  .processSteps{grid-template-columns:1fr}
+  .roadmapTrackExact{scroll-padding-inline:16px}
+  .infoGrid{grid-template-columns:1fr}
+  .articleCards{grid-template-columns:1fr}
+  .footerColumns{grid-template-columns:1fr}
+}
+@media(max-width:390px){
+  .shell{width:calc(100% - 28px)}
+  .header .shell{min-height:62px}
+  .logo{width:116px}
+  .mobileMenuButton{width:40px;height:40px}
+  .heroCopy{padding-top:86px}
+  .heroCopy h1{font-size:2.08rem}
+  .heroButtons{gap:10px}
+  .lightButton,.textButton{min-height:48px;padding-inline:18px}
+  .statsGrid article{padding-inline:20px}
+  .offerCard{padding:22px}
+  .processLayout{padding-inline:0}
+  .quickMedia>div{padding:22px}
+  .articleBody{padding:22px}
+}
