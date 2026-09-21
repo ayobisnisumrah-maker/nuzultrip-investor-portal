@@ -260,14 +260,12 @@ function Roadmap({ section }: { section?: Section }) {
 
 function Partners({ section }: { section?: Section }) {
   if (!section) return null
-  const c = section.content
-  const items = records(c.items).length ? records(c.items) : records(c.logos)
-  const image = text(c.image_url)
-  if (!items.length && !text(c.title)) return null
-  return <section className={styles.partnerSection} id={section.anchor_id ?? 'jaringan'}><div className={styles.shell}><div className={styles.networkLayout}>
-    <div className={styles.networkIntro}><div><div className={styles.eyebrowDark}>{text(c.eyebrow)||'JARINGAN & MITRA'}</div><h2>{text(c.title)||'Terhubung untuk Bertumbuh Bersama'}</h2>{text(c.description)?<p>{text(c.description)}</p>:null}</div>{usableHref(c.cta_href)?<Link className={styles.inlineLink} href={text(c.cta_href)}>{text(c.cta_label)||'Pelajari Selengkapnya'} <Arrow /></Link>:null}</div>
-    <div className={styles.networkCards}>{items.slice(0,3).map((item,index)=><article key={index}><span className={styles.networkIcon}><CmsIcon item={item} fallback={['◎','◇','▣'][index]||'•'} /></span><div><h3>{text(item.title)||text(item.name)}</h3>{text(item.description)?<p>{text(item.description)}</p>:null}</div></article>)}</div>
-    <div className={styles.networkMedia}>{image?<CmsImage src={image} alt={text(c.image_alt)||'Jaringan Nuzultrip'}/>:null}<div><h3>{text(c.image_caption)||text(c.highlight_title)||'Satu Ekosistem, Banyak Peluang'}</h3></div></div>
+  const c=section.content,items=(records(c.items).length?records(c.items):records(c.logos)).slice(0,3),image=text(c.image_url)
+  if(!items.length&&!text(c.title)) return null
+  return <section className={styles.networkV2} id={section.anchor_id??'jaringan'}><div className={styles.shell}><div className={styles.networkV2Grid}>
+    <div className={styles.networkV2Intro}><div><div className={styles.eyebrowDark}>{text(c.eyebrow)||'JARINGAN & MITRA'}</div><h2>{text(c.title)||<>Terhubung<br/>untuk<br/>Bertumbuh<br/>Bersama</>}</h2><p>{text(c.description)||'Menjadi bagian dari perjalanan bersama Nuzultrip melalui kepemilikan equity dan sinergi ekosistem.'}</p></div><div className={styles.networkV2IntroCta}><Link className={styles.inlineLink} href={usableHref(c.cta_href)||'/informasi'}>{text(c.cta_label)||'Pelajari Selengkapnya'} <Arrow/></Link></div></div>
+    <div className={styles.networkV2Cards}>{items.map((item,index)=><article key={index}><span className={styles.networkV2Icon}><CmsIcon item={item} fallback={['◎','◇','▣'][index]||'◎'}/></span><div><h3>{text(item.title)||text(item.name)}</h3><p>“{text(item.description)}”</p></div></article>)}</div>
+    <div className={styles.networkV2Media}>{image?<CmsImage src={image} alt={text(c.image_alt)||'Mitra dan Ekosistem Profesional Nuzultrip'}/>:null}<span className={styles.networkV2Shade}/><h3>{text(c.image_caption)||text(c.highlight_title)||<>Satu<br/>Ekosistem,<br/>Banyak<br/>Peluang</>}</h3></div>
   </div></div></section>
 }
 
