@@ -638,9 +638,9 @@ function VisualEditor({
                       <Field
                         label={field.label}
                         value={
-                          field.key === 'bullets' && Array.isArray(item[field.key])
-                            ? item[field.key]
-                                .filter((value): value is string => typeof value === 'string')
+                          field.key === 'bullets'
+                            ? (Array.isArray(item[field.key]) ? item[field.key] as unknown[] : [])
+                                .filter((value: unknown): value is string => typeof value === 'string')
                                 .join('\n')
                             : asString(item[field.key])
                         }
@@ -1033,12 +1033,10 @@ function VisualEditor({
           onChange={(image_alt) => update({ image_alt })}
         />
 
-        {kind === 'logo_wall' ? null : (
-          <div className="grid gap-4 md:grid-cols-2">
-            <Field label="Label CTA" value={asString(content.cta_label)} onChange={(cta_label) => update({ cta_label })} />
-            <Field label="Tautan CTA" value={asString(content.cta_href)} onChange={(cta_href) => update({ cta_href })} placeholder="/halaman atau https://..." />
-          </div>
-        )}
+        <div className="grid gap-4 md:grid-cols-2">
+          <Field label="Label CTA" value={asString(content.cta_label)} onChange={(cta_label) => update({ cta_label })} />
+          <Field label="Tautan CTA" value={asString(content.cta_href)} onChange={(cta_href) => update({ cta_href })} placeholder="/halaman atau https://..." />
+        </div>
 
         <div className="border-border space-y-4 rounded-xl border p-4">
           {renderArrayHeader(
@@ -1236,57 +1234,6 @@ function VisualEditor({
     )
   }
 
-  if (kind === 'financial_highlights' || kind === 'stat_grid') {
-    const metrics = Array.isArray(content.metrics) ? content.metrics.filter(isRecord) : []
-
-    return (
-      <div className="space-y-5">
-        <Field
-          label="Eyebrow"
-          value={asString(content.eyebrow)}
-          onChange={(eyebrow) => update({ eyebrow })}
-          placeholder="Contoh: Sorotan Keuangan"
-        />
-
-        <Field
-          label="Judul"
-          value={asString(content.title)}
-          onChange={(title) => update({ title })}
-        />
-
-        <Field
-          label="Deskripsi"
-          value={asString(content.description)}
-          onChange={(description) => update({ description })}
-          multiline
-        />
-
-        <div className="border-border space-y-4 rounded-xl border p-4">
-          {renderArrayHeader(
-            'Metrik',
-            'Kelola angka, KPI, atau indikator utama yang ditampilkan di Portal.',
-            'metrics',
-          )}
-
-          {renderObjectArrayEditor('metrics', metrics, [
-            {
-              key: 'label',
-              label: 'Label',
-            },
-            {
-              key: 'value',
-              label: 'Nilai',
-            },
-            {
-              key: 'description',
-              label: 'Keterangan',
-              multiline: true,
-            },
-          ])}
-        </div>
-      </div>
-    )
-  }
 
   if (kind === 'documents') {
     const items = Array.isArray(content.items) ? content.items.filter(isRecord) : []
