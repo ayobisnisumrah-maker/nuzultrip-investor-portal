@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 import styles from './public-portal-exact.module.css'
 
@@ -26,6 +26,42 @@ export function V2RoadmapSlider({ items }: { items: RoadmapItem[] }) {
   const [active, setActive] = useState(initial)
   const trackRef = useRef<HTMLDivElement>(null)
   const safeItems = useMemo(() => items.slice(0, 6), [items])
+
+  useEffect(() => {
+    const track = trackRef.current
+    if (!track || !safeItems.length) return
+    const activeCard = track.querySelector<HTMLElement>(`[data-roadmap-index="${initial}"]`)
+    activeCard?.scrollIntoView({ block: 'nearest', inline: 'center' })
+  }, [initial, safeItems.length])
+
+  useEffect(() => {
+    const track = trackRef.current
+    if (!track || safeItems.length < 2) return
+    let frame = 0
+    const syncActiveCard = () => {
+      window.cancelAnimationFrame(frame)
+      frame = window.requestAnimationFrame(() => {
+        const center = track.getBoundingClientRect().left + track.clientWidth / 2
+        const cards = Array.from(track.querySelectorAll<HTMLElement>('[data-roadmap-index]'))
+        let closest = active
+        let distance = Number.POSITIVE_INFINITY
+        for (const card of cards) {
+          const rect = card.getBoundingClientRect()
+          const candidate = Math.abs(rect.left + rect.width / 2 - center)
+          if (candidate < distance) {
+            distance = candidate
+            closest = Number(card.dataset.roadmapIndex ?? active)
+          }
+        }
+        setActive((current) => current === closest ? current : closest)
+      })
+    }
+    track.addEventListener('scroll', syncActiveCard, { passive: true })
+    return () => {
+      window.cancelAnimationFrame(frame)
+      track.removeEventListener('scroll', syncActiveCard)
+    }
+  }, [active, safeItems.length])
 
   function go(index: number) {
     if (!safeItems.length) return
