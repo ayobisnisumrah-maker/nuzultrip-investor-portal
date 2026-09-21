@@ -1005,7 +1005,7 @@ function VisualEditor({
     )
   }
 
-  if (kind === 'ecosystem' || kind === 'investor_updates') {
+  if (kind === 'ecosystem') {
     const items = Array.isArray(content.items) ? content.items.filter(isRecord) : []
 
     return (
@@ -1082,6 +1082,25 @@ function VisualEditor({
               label: 'Tautan',
               placeholder: '/halaman atau https://...',
             },
+          ])}
+        </div>
+      </div>
+    )
+  }
+
+  if (kind === 'investor_updates') {
+    const items = Array.isArray(content.items) ? content.items.filter(isRecord) : []
+    return (
+      <div className="space-y-5">
+        <Field label="Eyebrow" value={asString(content.eyebrow)} onChange={(eyebrow) => update({ eyebrow })} placeholder="TATA KELOLA" />
+        <Field label="Judul" value={asString(content.title)} onChange={(title) => update({ title })} />
+        <Field label="Deskripsi" value={asString(content.description)} onChange={(description) => update({ description })} multiline />
+        <ImageField label="Gambar Informasi" value={asString(content.image_url)} onChange={(image_url) => update({ image_url })} />
+        <div className="border-border space-y-4 rounded-xl border p-4">
+          {renderArrayHeader('Kartu Informasi', 'Konten pendukung tata kelola/informasi investor.', 'items')}
+          {renderObjectArrayEditor('items', items, [
+            { key: 'title', label: 'Judul' },
+            { key: 'description', label: 'Deskripsi', multiline: true },
           ])}
         </div>
       </div>
