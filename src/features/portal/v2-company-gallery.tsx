@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 import styles from './public-portal-exact.module.css'
 
@@ -21,10 +21,17 @@ export function V2CompanyGallery({
   images: GalleryImage[]
   metrics: GalleryMetric[]
 }) {
-  const safeImages = images.filter((image) => Boolean(image.src)).slice(0, 5)
+  const safeImages = useMemo(() => images.filter((image) => Boolean(image.src)).slice(0, 5), [images])
   const safeMetrics = metrics.slice(0, 5)
   const [activeIndex, setActiveIndex] = useState(0)
   const mediaRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    for (const image of safeImages) {
+      const preload = new Image()
+      preload.src = image.src
+    }
+  }, [safeImages])
 
   useEffect(() => {
     if (safeImages.length < 2 || !window.matchMedia('(hover: none)').matches) return
@@ -38,8 +45,8 @@ export function V2CompanyGallery({
     const media = mediaRef.current
     if (!media || safeImages.length < 2) return
     const rect = media.getBoundingClientRect()
-    const ratio = Math.max(0, Math.min(0.9999, (clientX - rect.left) / rect.width))
-    setActiveIndex(Math.floor(ratio * safeImages.length))
+    const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width))
+    setActiveIndex(Math.min(Math.floor(ratio * 5), 4))
   }
 
   return (
@@ -50,15 +57,16 @@ export function V2CompanyGallery({
         onMouseMove={(event) => selectFromPointer(event.clientX)}
       >
         {safeImages.map((image, index) => (
-          // Published CMS media can be hosted by an approved HTTPS origin.
-          // eslint-disable-next-line @next/next/no-img-element
+          <div key={image.src + index} className={index === activeIndex ? styles.companyGalleryFrameActive : styles.companyGalleryFrame}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            key={image.src + index}
             src={image.src}
             alt={image.alt}
             className={index === activeIndex ? styles.companyGalleryImageActive : styles.companyGalleryImage}
-            loading={index === 0 ? 'eager' : 'lazy'}
+            loading="lazy"
           />
+          <span className={styles.companyGalleryShade} aria-hidden="true" />
+          </div>
         ))}
         {safeImages.length > 1 ? (
           <div className={styles.mediaIndicators} aria-hidden="true">

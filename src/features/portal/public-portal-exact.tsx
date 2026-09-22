@@ -1,5 +1,6 @@
 import type { ComponentProps } from 'react'
 import Link from 'next/link'
+import { Building2, Compass, Globe2, Luggage } from 'lucide-react'
 
 import type { PublicPortalModel } from '@/features/portal/public-portal-model'
 import type { PublicPortalDocument } from '@/server/portal/public-queries'
@@ -9,6 +10,9 @@ import { V2CompanyGallery } from './v2-company-gallery'
 import { V2RoadmapSlider } from './v2-roadmap-slider'
 import { V2InvestorInfo } from './v2-investor-info'
 import { V2MobileHeader } from './v2-mobile-header'
+import { V2HeaderShell } from './v2-header-shell'
+import { V2Hero } from './v2-hero'
+import { V2Process } from './v2-process'
 
 type BaseProps = ComponentProps<typeof PublicPortalModel>
 type Section = BaseProps['sections'][number]
@@ -72,103 +76,72 @@ function Arrow() {
   return <span aria-hidden="true">→</span>
 }
 
-function Header({ navigation, logoSrc }: { navigation: NavItem[]; logoSrc: string }) {
+function Header({ navigation, logoSrc, heroSection }: { navigation: NavItem[]; logoSrc: string; heroSection?: Section }) {
   const header = navigation
     .filter((item) => item.location === 'header' && !item.parent_id && usableHref(item.href))
     .sort((a, b) => a.position - b.position)
 
+  const heroContent = heroSection?.content ?? {}
+  const primaryAction = {
+    label: text(heroContent.primary_cta_label) || 'Ajukan Minat Equity',
+    href: usableHref(heroContent.primary_cta_href) || '/hubungi',
+  }
+
   return (
-    <header className={styles.header}>
+    <V2HeaderShell>
       <div className={styles.shell}>
-        <Link href="/" className={styles.logoLink} aria-label="Nuzultrip">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={logoSrc} alt="Nuzultrip" className={styles.logo} />
-        </Link>
+        <Link href="/" className={styles.logoLink} aria-label="Nuzultrip">{/* eslint-disable-next-line @next/next/no-img-element */}<img src={logoSrc} alt="Nuzultrip" className={styles.headerLogoImage} /><span className={styles.headerBadge}>Equity</span></Link>
         <nav className={styles.nav} aria-label="Navigasi utama">
           {header.slice(0, 7).map((item) => (
             <Link key={item.id} href={item.href}>{item.label}</Link>
           ))}
         </nav>
         <div className={styles.headerActions}>
-          <Link href="/masuk" className={styles.headerCta}>Masuk</Link>
-          <V2MobileHeader items={header.slice(0, 7).map(({ id, label, href }) => ({ id, label, href }))} logoSrc={logoSrc} />
+          <Link href="/masuk" className={styles.headerCta}>Masuk <Arrow /></Link>
+          <V2MobileHeader
+            items={header.slice(0, 7).map(({ id, label, href }) => ({ id, label, href }))}
+            logoSrc={logoSrc}
+            primaryAction={primaryAction}
+            loginAction={{ label: 'Masuk Portal Investor', href: '/masuk' }}
+          />
         </div>
       </div>
-    </header>
+    </V2HeaderShell>
   )
 }
 
 function Hero({ section }: { section?: Section }) {
   if (!section) return null
   const c = section.content
-  const titleLines = text(c.title).split('|').map((item) => item.trim()).filter(Boolean).slice(0, 3)
-  const tags = strings(c.tags)
-  const image = text(c.image_url)
-  const imageAlt = text(c.image_alt) || 'Nuzultrip Equity'
-  const primaryLabel = text(c.primary_cta_label) || 'Ajukan Minat Equity'
-  const primaryHref = usableHref(c.primary_cta_href) || '/hubungi'
-  const secondaryLabel = text(c.secondary_cta_label) || 'Pelajari Lebih Lanjut'
-  const secondaryHref = usableHref(c.secondary_cta_href) || '#tentang-nuzultrip'
-
-  return (
-    <section className={styles.hero} id={section.anchor_id ?? 'beranda'}>
-      <div className={styles.heroInner}>
-        <div className={styles.heroCopy}>
-          <div className={styles.eyebrow}>{text(c.eyebrow) || 'NUZULTRIP EQUITY'}</div>
-          <h1>
-            {titleLines.length
-              ? titleLines.map((line) => <span key={line}>{line}</span>)
-              : <><span>Membangun Nilai</span><span>dan Kepemilikan Bersama</span><span>Nuzultrip</span></>}
-          </h1>
-          {text(c.description) ? <p>{text(c.description)}</p> : null}
-          <div className={styles.heroButtons}>
-            <Link href={primaryHref} className={styles.lightButton}>{primaryLabel} <Arrow /></Link>
-            <Link href={secondaryHref} className={styles.textButton}>{secondaryLabel} <Arrow /></Link>
-          </div>
-          {tags.length ? (
-            <div className={styles.heroTags}>
-              {tags.slice(0, 8).map((tag) => <span key={tag}>{tag}</span>)}
-            </div>
-          ) : null}
-        </div>
-        {image ? (
-          <div className={styles.heroMedia}>
-            <CmsImage src={image} alt={imageAlt} className={styles.heroImage} />
-            {text(c.image_caption) ? <div className={styles.heroMediaCaption}>{text(c.image_caption)}</div> : null}
-          </div>
-        ) : null}
-      </div>
-    </section>
-  )
+  const rawTitleLines = text(c.title).split('|').map((item) => item.trim()).filter(Boolean)
+  const titleLines = rawTitleLines.length > 2 ? [rawTitleLines.slice(0, -1).join(' '), rawTitleLines.at(-1) ?? ''] : rawTitleLines
+  return <V2Hero
+    id={section.anchor_id ?? 'beranda'}
+    eyebrow={text(c.eyebrow) || 'NUZULTRIP EQUITY • EKOSISTEM PERJALANAN MUSLIM'}
+    titleLines={titleLines.length ? titleLines : ['Berkembang Dalam Ekosistem Muslim', 'Yang Terintegrasi']}
+    description={text(c.description) || 'Nuzultrip membangun ekosistem perjalanan Muslim melalui integrasi layanan, jaringan, dan teknologi untuk pertumbuhan investasi jangka panjang.'}
+    primary={{ label: text(c.primary_cta_label) || 'Ajukan Minat Equity', href: usableHref(c.primary_cta_href) || '/hubungi' }}
+    secondary={{ label: text(c.secondary_cta_label) || 'Unduh Pitchdeck 2025', href: usableHref(c.secondary_cta_href) || '#tentang-nuzultrip' }}
+    tags={strings(c.tags)}
+  />
 }
 
-function AboutAndStats({ intro, stats, business }: { intro?: Section; stats?: Section; business?: Section }) {
+function AboutAndStats({ intro, stats }: { intro?: Section; stats?: Section; business?: Section }) {
   if (!intro && !stats) return null
   const c = intro?.content ?? {}
-  const metrics = records(stats?.content.metrics)
-  const businessHref = usableHref(c.cta_href) || (business ? `#${business.anchor_id ?? 'bisnis'}` : null)
+  const metrics = records(stats?.content.metrics).slice(0, 5)
   return (
-    <section className={styles.section} id={intro?.anchor_id ?? 'tentang-nuzultrip'}>
+    <section className={styles.aboutV2} id={intro?.anchor_id ?? 'tentang-nuzultrip'}>
       <div className={styles.shell}>
-        <div className={styles.aboutGrid}>
+        <div className={styles.aboutV2Header}>
           <div className={styles.eyebrowDark}>{text(c.eyebrow) || 'TENTANG KAMI'}</div>
-          <h2>{text(c.title) || 'Nuzultrip'}</h2>
-          <div className={styles.aboutText}>
-            {text(c.description) ? <p>{text(c.description)}</p> : null}
-            {businessHref ? <Link href={businessHref} className={styles.inlineLink}>{text(c.cta_label) || 'Lebih tentang kami'} <Arrow /></Link> : null}
-          </div>
+          <h2>{text(c.title) || <>Menghadirkan Inovasi Teknologi<br />dengan Integrasi Berkelanjutan</>}</h2>
         </div>
-        {metrics.length ? (
-          <div className={styles.statsGrid}>
-            {metrics.slice(0, 5).map((metric, index) => (
-              <article key={`${text(metric.label)}-${index}`}>
-                <strong>{text(metric.value)}</strong>
-                <span>{text(metric.label)}</span>
-                {text(metric.description) ? <small>{text(metric.description)}</small> : null}
-              </article>
-            ))}
-          </div>
-        ) : null}
+        {metrics.length ? <div className={styles.aboutV2Metrics}>{metrics.map((metric,index)=><article key={`${text(metric.label)}-${index}`}>
+          <div className={styles.aboutV2Stat}><small>METRIK 0{index+1}</small><strong>{text(metric.value)}</strong></div>
+          <div className={styles.aboutV2Rule}/>
+          <div className={styles.aboutV2Body}><h3>{text(metric.label)}</h3>{text(metric.description)?<p>{text(metric.description)}</p>:null}</div>
+        </article>)}</div>:null}
       </div>
     </section>
   )
@@ -177,32 +150,27 @@ function AboutAndStats({ intro, stats, business }: { intro?: Section; stats?: Se
 function Offering({ section }: { section?: Section }) {
   if (!section) return null
   const c = section.content
-  const rows = records(c.terms)
+  const rows = records(c.terms).slice(0, 6)
   return (
-    <section className={styles.section} id={section.anchor_id ?? 'ringkasan'}>
+    <section className={styles.equityV2} id={section.anchor_id ?? 'peluang'}>
       <div className={styles.shell}>
-        <div className={styles.offerLayout}>
-          <div className={styles.offerIntro}>
-            <div className={styles.eyebrowDark}>{text(c.eyebrow) || 'PELUANG EQUITY'}</div>
-            <h2>{text(c.title) || 'Kesempatan Bertumbuh Bersama'}</h2>
-            {text(c.description) ? <p>{text(c.description)}</p> : null}
-            <Link href={usableHref(c.cta_href) || '/hubungi'} className={styles.inlineLink}>{text(c.cta_label) || 'Lihat Detail Penawaran'} <Arrow /></Link>
-          </div>
-          {rows.length ? (
-            <div className={styles.offerTable}>
-              {rows.slice(0, 7).map((row, index) => (
-                <div className={styles.offerRow} key={`${text(row.label)}-${index}`}>
-                  <span>{text(row.label)}</span><strong>{text(row.value)}</strong>
-                </div>
-              ))}
+        <div className={styles.equityV2Grid}>
+          <div className={styles.equityV2Intro}>
+            <div>
+              <div className={styles.eyebrowDark}>{text(c.eyebrow) || 'PELUANG EQUITY'}</div>
+              <h2>{text(c.title) || <>Kesempatan<br />Bertumbuh<br />Bersama</>}</h2>
+              <p>{text(c.description) || 'Jadilah bagian dari perjalanan besar Nuzultrip dengan kepemilikan yang jelas, transparan, dan terstruktur.'}</p>
             </div>
-          ) : null}
-          <aside className={styles.offerCard}>
-            {text(c.card_image_url) ? <CmsImage src={text(c.card_image_url)} alt={text(c.card_image_alt) || 'Peluang Equity Nuzultrip'} className={styles.offerCardImage} /> : null}
+            <div className={styles.equityV2IntroCta}><Link href={usableHref(c.cta_href) || '/hubungi'} className={styles.inlineLink}>{text(c.cta_label) || 'Lebih Detail Penawaran'} <Arrow /></Link></div>
+          </div>
+          <div className={styles.equityV2Metrics}>
+            {rows.map((row,index)=><div className={styles.equityV2Metric} key={`${text(row.label)}-${index}`}><strong>{text(row.value)}</strong><p>{text(row.label)}</p></div>)}
+          </div>
+          <aside className={styles.equityV2Card}>
+            {text(c.card_image_url) ? <CmsImage src={text(c.card_image_url)} alt={text(c.card_image_alt) || 'Masjid Nabawi di waktu senja'} className={styles.equityV2CardImage} /> : null}
+            <div className={styles.equityV2CardShade}/>
             <h3>{text(c.card_title) || <>Investasi Hari Ini,<br />Untuk Masa Depan<br />yang Lebih Baik.</>}</h3>
-            <div className={styles.offerRule} />
-            <Link href={usableHref(c.card_cta_href) || '/hubungi'}>{text(c.card_cta_label) || 'Ajukan Minat Equity'} <Arrow /></Link>
-            <div className={styles.offerPattern} aria-hidden="true">◢◢◢◢</div>
+            <Link href={usableHref(c.card_cta_href) || '/hubungi'} className={styles.equityV2CardCta}>{text(c.card_cta_label) || 'Ajukan Minat Equity'} <Arrow /></Link>
           </aside>
         </div>
       </div>
@@ -241,55 +209,20 @@ function CompanyStory({ section }: { section?: Section }) {
 function Services({ section }: { section?: Section }) {
   if (!section) return null
   const c = section.content
-  const items = records(c.items)
+  const items = records(c.items).slice(0, 4)
   if (!items.length && !text(c.title)) return null
-
-  return (
-    <section className={styles.section} id={section.anchor_id ?? 'ekosistem'}>
-      <div className={styles.shell}>
-        <div className={styles.serviceLayout}>
-          <div>
-            <div className={styles.eyebrowDark}>{text(c.eyebrow) || 'LAYANAN UTAMA'}</div>
-            <h2>{text(c.title) || 'Ekosistem Layanan'}</h2>
-            {text(c.description) ? <p>{text(c.description)}</p> : null}
-            {usableHref(c.cta_href) ? <Link href={usableHref(c.cta_href)!} className={styles.inlineLink}>{text(c.cta_label) || 'Lihat Layanan Lainnya'} <Arrow /></Link> : null}
-          </div>
-          {items.length ? (
-            <div className={styles.serviceCards}>
-              {items.slice(0, 4).map((item, index) => {
-                const href = usableHref(item.href)
-                const fallbackIcon = ['✈', '◇', '▢', '⌘'][index] || '•'
-                return (
-                  <article key={`${text(item.title)}-${index}`}>
-                    <span className={styles.serviceIcon}>
-                      <CmsIcon item={item} fallback={fallbackIcon} />
-                    </span>
-                    {text(item.code) ? <small>{text(item.code)}</small> : null}
-                    <h3>{text(item.title)}</h3>
-                    {text(item.tagline) ? <strong>{text(item.tagline)}</strong> : null}
-                    {text(item.description) ? <p>{text(item.description)}</p> : null}
-                    {href ? <Link href={href} className={styles.cardArrow} aria-label={`Buka ${text(item.title)}`}>→</Link> : null}
-                  </article>
-                )
-              })}
-            </div>
-          ) : null}
-        </div>
-      </div>
-    </section>
-  )
+  return <section className={styles.servicesV2} id={section.anchor_id ?? 'layanan'}><div className={styles.shell}><div className={styles.servicesV2Grid}>
+    <div className={styles.servicesV2Intro}><div><div className={styles.eyebrowDark}>{text(c.eyebrow)||'LAYANAN UTAMA'}</div><h2>{text(c.title)||<>Ekosistem<br/>Perjalanan Muslim<br/>Nuzultrip</>}</h2><p>{text(c.description)||'Menghubungkan mitra, vendor layanan, dan jaringan distribusi dalam satu kesatuan sistem yang transparan dan terstandar.'}</p></div><div className={styles.servicesV2IntroCta}><Link href={usableHref(c.cta_href)||'/layanan'} className={styles.inlineLink}>{text(c.cta_label)||'Layanan Lainnya'} <Arrow/></Link></div></div>
+    <div className={styles.servicesV2Cards}>{items.map((item,index)=>{const href=usableHref(item.href)||'/layanan';const ServiceIcon=[Building2,Luggage,Compass,Globe2][index]??Building2;return <Link href={href} className={styles.servicesV2Card} key={`${text(item.title)}-${index}`}><div className={styles.servicesV2CardTop}><span className={styles.servicesV2Icon}>{text(item.icon_url)?<CmsIcon item={item} fallback=""/>:<ServiceIcon size={22}/>}</span><small>{text(item.code)}</small></div><div><h3>{text(item.title)}</h3><p>“{text(item.tagline)||text(item.description)}”</p></div><div className={styles.servicesV2Learn}><span>Pelajari selengkapnya</span><Arrow/></div></Link>})}</div>
+  </div></div></section>
 }
 
 function Process({ offering }: { offering?: Section }) {
   if (!offering) return null
   const c = offering.content
-  const steps = records(c.process_steps)
+  const steps = records(c.process_steps).slice(0,4).map((step,index)=>({number:`0${index+1}`,title:text(step.title),description:text(step.description),duration:text(step.duration),output:text(step.output)}))
   if (!steps.length) return null
-  return <section className={styles.processSection} id="proses"><div className={styles.shell}>
-    <div className={styles.processHeader}><div className={styles.eyebrowLight}>{text(c.process_eyebrow)||'ALUR & TAHAPAN INVESTASI'}</div><h2>{text(c.process_title)||'Langkah Mudah Menjadi Bagian dari Kami'}</h2>{text(c.process_description)?<p>{text(c.process_description)}</p>:null}</div>
-    <div className={styles.processSteps}>{steps.slice(0,4).map((step,index)=><article key={index}><div className={styles.processTop}><span className={styles.stepNumber}>0{index+1}</span><i /></div><h3>{text(step.title)}</h3>{text(step.description)?<p>{text(step.description)}</p>:null}<div className={styles.processMeta}>{text(step.duration)?<span>{text(step.duration)}</span>:null}{text(step.output)?<b>{text(step.output)}</b>:null}</div></article>)}</div>
-    {usableHref(c.process_cta_href)?<div className={styles.processCta}><Link href={text(c.process_cta_href)}>{text(c.process_cta_label)||'Pelajari Selengkapnya'} <Arrow /></Link></div>:null}
-  </div></section>
+  return <V2Process eyebrow={text(c.process_eyebrow)||'ALUR & TAHAPAN INVESTASI'} title={text(c.process_title)||'Langkah Mudah|Menjadi Bagian dari Kami'} description={text(c.process_description)||'Empat tahapan transparan dan berkepastian hukum untuk menjadi pemegang unit equity resmi ekosistem Nuzultrip.'} steps={steps} primary={{label:text(c.process_primary_cta_label)||'Ajukan Minat Unit Equity',href:usableHref(c.process_primary_cta_href)||'/hubungi'}} secondary={{label:text(c.process_cta_label)||'Pelajari Prosedur Lengkap',href:usableHref(c.process_cta_href)||'/informasi'}} />
 }
 
 function Roadmap({ section }: { section?: Section }) {
@@ -326,14 +259,12 @@ function Roadmap({ section }: { section?: Section }) {
 
 function Partners({ section }: { section?: Section }) {
   if (!section) return null
-  const c = section.content
-  const items = records(c.items).length ? records(c.items) : records(c.logos)
-  const image = text(c.image_url)
-  if (!items.length && !text(c.title)) return null
-  return <section className={styles.partnerSection} id={section.anchor_id ?? 'jaringan'}><div className={styles.shell}><div className={styles.networkLayout}>
-    <div className={styles.networkIntro}><div><div className={styles.eyebrowDark}>{text(c.eyebrow)||'JARINGAN & MITRA'}</div><h2>{text(c.title)||'Terhubung untuk Bertumbuh Bersama'}</h2>{text(c.description)?<p>{text(c.description)}</p>:null}</div>{usableHref(c.cta_href)?<Link className={styles.inlineLink} href={text(c.cta_href)}>{text(c.cta_label)||'Pelajari Selengkapnya'} <Arrow /></Link>:null}</div>
-    <div className={styles.networkCards}>{items.slice(0,3).map((item,index)=><article key={index}><span className={styles.networkIcon}><CmsIcon item={item} fallback={['◎','◇','▣'][index]||'•'} /></span><div><h3>{text(item.title)||text(item.name)}</h3>{text(item.description)?<p>{text(item.description)}</p>:null}</div></article>)}</div>
-    <div className={styles.networkMedia}>{image?<CmsImage src={image} alt={text(c.image_alt)||'Jaringan Nuzultrip'}/>:null}<div><h3>{text(c.image_caption)||text(c.highlight_title)||'Satu Ekosistem, Banyak Peluang'}</h3></div></div>
+  const c=section.content,items=(records(c.items).length?records(c.items):records(c.logos)).slice(0,3),image=text(c.image_url)
+  if(!items.length&&!text(c.title)) return null
+  return <section className={styles.networkV2} id={section.anchor_id??'jaringan'}><div className={styles.shell}><div className={styles.networkV2Grid}>
+    <div className={styles.networkV2Intro}><div><div className={styles.eyebrowDark}>{text(c.eyebrow)||'JARINGAN & MITRA'}</div><h2>{text(c.title)||<>Terhubung<br/>untuk<br/>Bertumbuh<br/>Bersama</>}</h2><p>{text(c.description)||'Menjadi bagian dari perjalanan bersama Nuzultrip melalui kepemilikan equity dan sinergi ekosistem.'}</p></div><div className={styles.networkV2IntroCta}><Link className={styles.inlineLink} href={usableHref(c.cta_href)||'/informasi'}>{text(c.cta_label)||'Pelajari Selengkapnya'} <Arrow/></Link></div></div>
+    <div className={styles.networkV2Cards}>{items.map((item,index)=><article key={index}><span className={styles.networkV2Icon}><CmsIcon item={item} fallback={['◎','◇','▣'][index]||'◎'}/></span><div><h3>{text(item.title)||text(item.name)}</h3><p>“{text(item.description)}”</p></div></article>)}</div>
+    <div className={styles.networkV2Media}>{image?<CmsImage src={image} alt={text(c.image_alt)||'Mitra dan Ekosistem Profesional Nuzultrip'}/>:null}<span className={styles.networkV2Shade}/><h3>{text(c.image_caption)||text(c.highlight_title)||<>Satu<br/>Ekosistem,<br/>Banyak<br/>Peluang</>}</h3></div>
   </div></div></section>
 }
 
@@ -398,6 +329,7 @@ function InvestorInfo({ growth, funds, governance, risks, documents, publicDocum
           href: document.href,
         })),
       ]}
+      interestHref="/hubungi"
     />
   </div></section>
 }
@@ -410,7 +342,7 @@ function Articles({ section }: { section?: Section }) {
   const ctaHref = usableHref(c.cta_href)
   return <section className={styles.articleSection} id={section.anchor_id ?? 'artikel'}><div className={styles.shell}><div className={styles.articleLayout}>
     <div className={styles.articleIntro}><div><div className={styles.eyebrowDark}>{text(c.eyebrow)||'ARTIKEL & BERITA'}</div><h2>{text(c.title)||'Wawasan untuk Keputusan yang Lebih Baik'}</h2>{text(c.description)?<p>{text(c.description)}</p>:null}</div>{ctaHref?<Link href={ctaHref}>{text(c.cta_label)||'Lebih Artikel Lainnya'} <Arrow /></Link>:null}</div>
-    <div className={styles.articleCards}>{items.slice(0,2).map((item,index)=>{const href=usableHref(item.href);const body=<><div className={styles.articleImage}><CmsImage src={text(item.image_url)} alt={text(item.title)}/><span>{text(item.type)||'Artikel'}</span></div><div className={styles.articleBody}><small>{[text(item.date), text(item.read_time)].filter(Boolean).join(' · ')}</small><h3>{text(item.title)}</h3>{text(item.description)?<p>{text(item.description)}</p>:null}<b>Baca Selengkapnya <Arrow /></b></div></>;return <article key={index}>{href?<Link href={href}>{body}</Link>:body}</article>})}</div>
+    <div className={styles.articleCards}>{items.slice(0,2).map((item,index)=>{const href=usableHref(item.href);const body=<><div className={styles.articleImage}><CmsImage src={text(item.image_url)} alt={text(item.title)}/><span>{text(item.type)||'Artikel'}</span></div><div className={styles.articleBody}><small>{[text(item.date), text(item.read_time)].filter(Boolean).join(' • ')}</small><h3>{text(item.title)}</h3>{text(item.description)?<p>{text(item.description)}</p>:null}<b>Baca Selengkapnya <Arrow /></b></div></>;return <article key={index}>{href?<Link href={href}>{body}</Link>:body}</article>})}</div>
   </div></div></section>
 }
 
@@ -426,7 +358,7 @@ function ContactCta({ section, documents }: { section?: Section; documents: Publ
   </div></div></section>
 }
 
-function Footer({ navigation, logoSrc, pageTitle, content }: { navigation: NavItem[]; logoSrc: string; pageTitle: string; content?: Record<string, unknown> }) {
+function Footer({ navigation, pageTitle, content }: { navigation: NavItem[]; pageTitle: string; content?: Record<string, unknown> }) {
   const footer = navigation
     .filter((item) => item.location === 'footer' && !item.parent_id)
     .sort((a, b) => a.position - b.position)
@@ -459,8 +391,7 @@ function Footer({ navigation, logoSrc, pageTitle, content }: { navigation: NavIt
       <div className={styles.shell}>
         <div className={styles.footerGrid}>
           <div className={styles.footerBrand}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={logoSrc} alt="Nuzultrip" />
+            <div className={styles.footerWordmark}><strong>{text(content?.footer_brand_name) || 'Nuzultrip'}</strong><span>{text(content?.footer_brand_badge) || 'Equity'}</span></div>
             <p>{text(content?.footer_tagline) || 'Melayani perjalanan Muslim Indonesia dengan hati, profesionalisme, dan teknologi.'}</p>
             {social.length ? (
               <div>{social.slice(0, 5).map((item) => <Link key={item.id} href={item.href} target={item.target}>{item.label}</Link>)}</div>
@@ -506,7 +437,7 @@ export function PublicPortalExact({ page, sections, navigation, publicDocuments,
 
   return (
     <div className={styles.page}>
-      <Header navigation={navigation} logoSrc={logoSrc} />
+      <Header navigation={navigation} logoSrc={logoSrc} heroSection={hero} />
       <main id="main">
         <Hero section={hero} />
         <AboutAndStats intro={intro} stats={stats} business={business} />
@@ -520,7 +451,7 @@ export function PublicPortalExact({ page, sections, navigation, publicDocuments,
         <ContactCta section={contactCta} documents={publicDocuments} />
         <Articles section={articles} />
       </main>
-      <Footer navigation={navigation} logoSrc={logoSrc} pageTitle={page.title} content={contactCta?.content} />
+      <Footer navigation={navigation} pageTitle={page.title} content={contactCta?.content} />
     </div>
   )
 }

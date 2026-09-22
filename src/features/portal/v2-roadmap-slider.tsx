@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 import styles from './public-portal-exact.module.css'
 
@@ -22,10 +22,37 @@ function statusClass(status: string) {
 }
 
 export function V2RoadmapSlider({ items }: { items: RoadmapItem[] }) {
-  const initial = Math.min(Math.max(items.findIndex((item) => item.status.toLocaleLowerCase('id-ID').includes('aktif')), 0), Math.max(items.length - 1, 0))
+  const initial = Math.min(3, Math.max(items.length - 1, 0))
   const [active, setActive] = useState(initial)
   const trackRef = useRef<HTMLDivElement>(null)
-  const safeItems = useMemo(() => items.slice(0, 6), [items])
+  const safeItems = useMemo(() => items.slice(0, 5), [items])
+
+  useEffect(() => {
+    const track = trackRef.current
+    if (!track || !safeItems.length) return
+    const activeCard = track.querySelector<HTMLElement>(`[data-roadmap-index="${initial}"]`)
+    const timer = window.setTimeout(() => {
+      activeCard?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
+    }, 250)
+    return () => window.clearTimeout(timer)
+  }, [initial, safeItems.length])
+
+  function handleScroll() {
+    const track = trackRef.current
+    if (!track) return
+    const scrollCenter = track.scrollLeft + track.clientWidth / 2
+    let closest = 0
+    let distance = Number.POSITIVE_INFINITY
+    Array.from(track.children).forEach((child, index) => {
+      const card = child as HTMLElement
+      const candidate = Math.abs(card.offsetLeft + card.clientWidth / 2 - scrollCenter)
+      if (candidate < distance) {
+        distance = candidate
+        closest = index
+      }
+    })
+    if (closest !== active) setActive(closest)
+  }
 
   function go(index: number) {
     if (!safeItems.length) return
@@ -53,7 +80,7 @@ export function V2RoadmapSlider({ items }: { items: RoadmapItem[] }) {
         ))}
       </div>
 
-      <div className={styles.roadmapTrackExact} ref={trackRef}>
+      <div className={styles.roadmapTrackExact} ref={trackRef} onScroll={handleScroll}>
         {safeItems.map((item, index) => (
           <article
             key={index}

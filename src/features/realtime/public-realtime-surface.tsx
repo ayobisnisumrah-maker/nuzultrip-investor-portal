@@ -47,6 +47,18 @@ function LiveContent({ initialSnapshot }: { initialSnapshot: PublicPortalSnapsho
     }
   }, [resumeToken, reconcile])
 
+  // Realtime publish events are primary. Visibility/fallback reconciliation makes
+  // published changes self-healing for clients that temporarily miss a socket event.
+  useEffect(() => {
+    const onVisibility = () => { if (document.visibilityState === 'visible') void reconcile() }
+    const interval = window.setInterval(() => void reconcile(), 60_000)
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => {
+      window.clearInterval(interval)
+      document.removeEventListener('visibilitychange', onVisibility)
+    }
+  }, [reconcile])
+
   if (!snapshot.portal) {
     return <main id="main" className="mx-auto flex min-h-dvh max-w-3xl flex-col justify-center px-6 py-16"><p className="text-primary text-xs font-semibold tracking-[0.16em] uppercase">Nuzultrip Equity Relations</p><h1 className="font-display text-fg mt-3 text-4xl font-semibold">Portal belum diterbitkan</h1><p className="text-fg-muted mt-4 max-w-2xl text-lg leading-8">Halaman publik belum tersedia. Konten akan ditampilkan setelah diterbitkan melalui dasbor admin.</p></main>
   }
