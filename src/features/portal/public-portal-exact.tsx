@@ -76,11 +76,10 @@ function Arrow() {
   return <span aria-hidden="true">→</span>
 }
 
-function Header({ navigation, logoSrc, heroSection }: { navigation: NavItem[]; logoSrc: string; heroSection?: Section }) {
+function Header({ navigation, heroSection }: { navigation: NavItem[]; logoSrc: string; heroSection?: Section }) {
   const header = navigation
     .filter((item) => item.location === 'header' && !item.parent_id && usableHref(item.href))
     .sort((a, b) => a.position - b.position)
-
   const heroContent = heroSection?.content ?? {}
   const primaryAction = {
     label: text(heroContent.primary_cta_label) || 'Ajukan Minat Equity',
@@ -89,18 +88,27 @@ function Header({ navigation, logoSrc, heroSection }: { navigation: NavItem[]; l
 
   return (
     <V2HeaderShell>
-      <div className={styles.shell}>
-        <Link href="/" className={styles.logoLink} aria-label="Nuzultrip">{/* eslint-disable-next-line @next/next/no-img-element */}<img src={logoSrc} alt="Nuzultrip" className={styles.headerLogoImage} /><span className={styles.headerBadge}>Equity</span></Link>
-        <nav className={styles.nav} aria-label="Navigasi utama">
-          {header.slice(0, 7).map((item) => (
-            <Link key={item.id} href={item.href}>{item.label}</Link>
-          ))}
-        </nav>
-        <div className={styles.headerActions}>
-          <Link href="/masuk" className={styles.headerCta}>Masuk <Arrow /></Link>
+      <div className="w-full mx-auto px-5 sm:px-8 md:px-12 lg:px-16 max-w-[1320px]">
+        <div className="flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-2 group focus-visible:outline-none" aria-label="Nuzultrip Equity Beranda">
+            <div className="flex items-center">
+              <span className="text-[22px] sm:text-[24px] font-extrabold tracking-tight text-white transition-opacity group-hover:opacity-80">Nuzultrip</span>
+              <span className="ml-1.5 inline-block text-[10px] font-bold uppercase tracking-[0.18em] px-1.5 py-0.5 rounded bg-white/10 text-[#d1d5db] border border-white/15">Equity</span>
+            </div>
+          </Link>
+          <nav className="hidden lg:flex items-center gap-7 xl:gap-9" aria-label="Navigasi Utama">
+            {header.slice(0, 7).map((item) => (
+              <Link key={item.id} href={item.href} className="text-[14px] xl:text-[15px] font-medium text-[#9ca3af] hover:text-white transition-colors relative py-1 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white">{item.label}</Link>
+            ))}
+          </nav>
+          <div className="hidden lg:flex items-center gap-3">
+            <Link href="/masuk" className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-white/10 hover:bg-white/15 border border-white/15 text-white text-[14px] font-semibold transition-all duration-200 active:scale-98 shadow-sm group backdrop-blur-sm">
+              <span>Masuk</span><Arrow />
+            </Link>
+          </div>
           <V2MobileHeader
             items={header.slice(0, 7).map(({ id, label, href }) => ({ id, label, href }))}
-            logoSrc={logoSrc}
+            logoSrc="/brand/nuzultrip-logo-portal.svg"
             primaryAction={primaryAction}
             loginAction={{ label: 'Masuk Portal Investor', href: '/masuk' }}
           />
@@ -109,7 +117,6 @@ function Header({ navigation, logoSrc, heroSection }: { navigation: NavItem[]; l
     </V2HeaderShell>
   )
 }
-
 function Hero({ section }: { section?: Section }) {
   if (!section) return null
   const c = section.content
