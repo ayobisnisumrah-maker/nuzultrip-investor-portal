@@ -169,43 +169,25 @@ function Offering({ section }: { section?: Section }) {
 }
 function CompanyStory({ section }: { section?: Section }) {
   if (!section) return null
-  const c = section.content
-  const images = records(c.images)
-  const metrics = records(c.metrics)
-  const primaryImage = text(c.image_url)
-  const galleryImages = [
-    ...(primaryImage ? [{ src: primaryImage, alt: text(c.image_alt) || 'Nuzultrip' }] : []),
-    ...images.map((image, index) => ({
-      src: text(image.image_url) || text(image.url),
-      alt: text(image.alt) || text(image.title) || `Galeri perjalanan Nuzultrip #${index + 1}`,
-    })),
-  ].filter((image, index, all) => image.src && all.findIndex((candidate) => candidate.src === image.src) === index)
-  const galleryMetrics = metrics.map((metric) => ({
-    value: text(metric.value),
-    label: text(metric.label),
-  })).filter((metric) => metric.value || metric.label)
-
-  return (
-    <section className={styles.section} id={section.anchor_id ?? 'bisnis'}>
-      <div className={styles.shell}><div className={styles.companyGrid}>
-        <div className={styles.companyIntro}><div><div className={styles.eyebrowDark}>{text(c.eyebrow) || 'PERUSAHAAN'}</div><h2>{text(c.title) || 'Nuzultrip'}</h2>{text(c.description) ? <p>{text(c.description)}</p> : null}</div><Link href={usableHref(c.cta_href) || '#informasi-investor'} className={styles.inlineLink}>{text(c.cta_label) || 'Lebih Detail Penawaran'} <Arrow /></Link></div>
-        <V2CompanyGallery images={galleryImages} metrics={galleryMetrics} />
-      </div></div>
-    </section>
-  )
+  const content=section.content, images=records(content.images), metrics=records(content.metrics)
+  const primaryImage=text(content.image_url)
+  const galleryImages=[...(primaryImage?[{src:primaryImage,alt:text(content.image_alt)||'Nuzultrip'}]:[]),...images.map((image,index)=>({src:text(image.image_url)||text(image.url),alt:text(image.alt)||text(image.title)||`Galeri perjalanan Nuzultrip #${index+1}`}))].filter((image,index,all)=>image.src&&all.findIndex((candidate)=>candidate.src===image.src)===index)
+  const galleryMetrics=metrics.map((metric)=>({value:text(metric.value),label:text(metric.label)})).filter((metric)=>metric.value||metric.label)
+  return <section id={section.anchor_id??'perusahaan'} className="py-16 sm:py-24 lg:py-32 border-t border-black/[0.06]"><div className="w-full mx-auto px-5 sm:px-8 md:px-12 lg:px-16 max-w-[1320px]"><div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-8 items-stretch">
+    <div className="lg:col-span-4 flex flex-col justify-between h-full"><div><div className="text-[12px] sm:text-[13px] font-bold uppercase tracking-[0.16em] mb-4 sm:mb-5 select-none text-[#111111]">{text(content.eyebrow)||'PERUSAHAAN'}</div><h2 className="font-h2 font-bold text-[#111111] leading-[1.05] tracking-tight mb-5 sm:mb-6">{text(content.title)||<>Perjalanan<br/>Muslim yang<br/>Bertumbuh</>}</h2><p className="text-[16px] sm:text-[17px] text-[#555555] leading-[1.65] max-w-[360px]">{text(content.description)||'Menghadirkan layanan perjalanan ibadah yang bermakna melalui layanan, jaringan, dan teknologi.'}</p></div><div className="pt-8 sm:pt-10 mt-auto"><Link href={usableHref(content.cta_href)||'#informasi-investor'} className="group inline-flex items-center justify-center font-medium transition-all duration-200 select-none cursor-pointer bg-transparent text-[#111111] hover:text-black p-0 border-b border-transparent hover:border-black/30 font-semibold text-[15px] py-1"><span className="truncate">{text(content.cta_label)||'Lebih Detail Penawaran'}</span><ArrowRight size={17} className="ml-2 shrink-0 transition-transform duration-200 group-hover:translate-x-1.5"/></Link></div></div>
+    <V2CompanyGallery images={galleryImages} metrics={galleryMetrics}/>
+  </div></div></section>
 }
 
 function Services({ section }: { section?: Section }) {
   if (!section) return null
-  const c = section.content
-  const items = records(c.items).slice(0, 4)
-  if (!items.length && !text(c.title)) return null
-  return <section className={styles.servicesV2} id={section.anchor_id ?? 'layanan'}><div className={styles.shell}><div className={styles.servicesV2Grid}>
-    <div className={styles.servicesV2Intro}><div><div className={styles.eyebrowDark}>{text(c.eyebrow)||'LAYANAN UTAMA'}</div><h2>{text(c.title)||<>Ekosistem<br/>Perjalanan Muslim<br/>Nuzultrip</>}</h2><p>{text(c.description)||'Menghubungkan mitra, vendor layanan, dan jaringan distribusi dalam satu kesatuan sistem yang transparan dan terstandar.'}</p></div><div className={styles.servicesV2IntroCta}><Link href={usableHref(c.cta_href)||'/layanan'} className={styles.inlineLink}>{text(c.cta_label)||'Layanan Lainnya'} <Arrow/></Link></div></div>
-    <div className={styles.servicesV2Cards}>{items.map((item,index)=>{const href=usableHref(item.href)||'/layanan';const ServiceIcon=[Building2,Luggage,Compass,Globe2][index]??Building2;return <Link href={href} className={styles.servicesV2Card} key={`${text(item.title)}-${index}`}><div className={styles.servicesV2CardTop}><span className={styles.servicesV2Icon}>{text(item.icon_url)?<CmsIcon item={item} fallback=""/>:<ServiceIcon size={22}/>}</span><small>{text(item.code)}</small></div><div><h3>{text(item.title)}</h3><p>“{text(item.tagline)||text(item.description)}”</p></div><div className={styles.servicesV2Learn}><span>Pelajari selengkapnya</span><Arrow/></div></Link>})}</div>
+  const content=section.content,items=records(content.items).slice(0,4)
+  if(!items.length&&!text(content.title))return null
+  return <section id={section.anchor_id??'layanan'} className="py-16 sm:py-24 lg:py-32 border-t border-black/[0.06]"><div className="w-full mx-auto px-5 sm:px-8 md:px-12 lg:px-16 max-w-[1320px]"><div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-stretch">
+    <div className="lg:col-span-4 flex flex-col justify-between h-full"><div><div className="text-[12px] sm:text-[13px] font-bold uppercase tracking-[0.16em] mb-4 sm:mb-5 select-none text-[#111111]">{text(content.eyebrow)||'LAYANAN UTAMA'}</div><h2 className="font-h2 font-bold text-[#111111] leading-[1.05] tracking-tight mb-5 sm:mb-6">{text(content.title)||<>Ekosistem<br/>Perjalanan Muslim<br/>Nuzultrip</>}</h2><p className="text-[16px] sm:text-[17px] text-[#555555] leading-[1.65] max-w-[360px]">{text(content.description)||'Menghubungkan mitra, vendor layanan, dan jaringan distribusi dalam satu kesatuan sistem yang transparan dan terstandar.'}</p></div><div className="pt-8 sm:pt-10 mt-auto"><Link href={usableHref(content.cta_href)||'/layanan'} className="group inline-flex items-center justify-center font-medium transition-all duration-200 select-none cursor-pointer bg-transparent text-[#111111] hover:text-black p-0 border-b border-transparent hover:border-black/30 font-semibold text-[15px] py-1"><span className="truncate">{text(content.cta_label)||'Layanan Lainnya'}</span><ArrowRight size={17} className="ml-2 shrink-0 transition-transform duration-200 group-hover:translate-x-1.5"/></Link></div></div>
+    <div className="lg:col-span-8 flex flex-col justify-between"><div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">{items.map((item,index)=>{const Icon=[Building2,Luggage,Compass,Globe2][index]??Building2;const href=usableHref(item.href)||'/layanan';return <Link href={href} key={`${text(item.title)}-${index}`} className="bg-white rounded-2xl p-6 sm:p-7 border border-black/[0.08] shadow-[0_2px_8px_rgba(0,0,0,0.02)] flex flex-col justify-between min-h-[180px] sm:min-h-[200px] hover:-translate-y-1 hover:border-black/25 hover:shadow-md transition-all duration-300 cursor-pointer group"><div className="flex items-start justify-between mb-4"><div className="w-12 h-12 rounded-xl bg-[#F5F5F3] flex items-center justify-center border border-black/[0.06] group-hover:scale-105 group-hover:bg-[#10b981] group-hover:border-[#10b981] group-hover:shadow-[0_4px_16px_rgba(16,185,129,0.3)] transition-all duration-300">{text(item.icon_url)?<CmsIcon item={item} fallback=""/>:<Icon size={24} className="transition-colors duration-200 text-[#111111] group-hover:text-white"/>}</div><span className="text-[11px] font-bold tracking-[0.14em] uppercase text-[#888888] group-hover:text-black transition-colors">{text(item.code)}</span></div><div><h3 className="text-[18px] sm:text-[19px] font-bold text-[#111111] mb-2 tracking-tight group-hover:text-black">{text(item.title)}</h3><p className="text-[14px] sm:text-[14.5px] text-[#666666] leading-relaxed">“{text(item.tagline)||text(item.description)}”</p></div><div className="mt-4 pt-3 border-t border-black/[0.04] flex items-center justify-between text-[13px] font-semibold text-[#111111] opacity-0 group-hover:opacity-100 transition-opacity"><span>Pelajari selengkapnya</span><ArrowRight size={14} className="group-hover:translate-x-1 transition-transform"/></div></Link>})}</div></div>
   </div></div></section>
 }
-
 function Process({ offering }: { offering?: Section }) {
   if (!offering) return null
   const c = offering.content
