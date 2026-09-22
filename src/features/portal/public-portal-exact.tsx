@@ -1,6 +1,6 @@
 import type { ComponentProps } from 'react'
 import Link from 'next/link'
-import { Building2, Compass, Globe2, Luggage } from 'lucide-react'
+import { ArrowRight, Building2, Compass, Globe2, Luggage } from 'lucide-react'
 
 import type { PublicPortalModel } from '@/features/portal/public-portal-model'
 import type { PublicPortalDocument } from '@/server/portal/public-queries'
@@ -135,20 +135,22 @@ function Hero({ section }: { section?: Section }) {
 
 function AboutAndStats({ intro, stats }: { intro?: Section; stats?: Section; business?: Section }) {
   if (!intro && !stats) return null
-  const c = intro?.content ?? {}
+  const content = intro?.content ?? {}
   const metrics = records(stats?.content.metrics).slice(0, 5)
   return (
-    <section className={styles.aboutV2} id={intro?.anchor_id ?? 'tentang-nuzultrip'}>
-      <div className={styles.shell}>
-        <div className={styles.aboutV2Header}>
-          <div className={styles.eyebrowDark}>{text(c.eyebrow) || 'TENTANG KAMI'}</div>
-          <h2>{text(c.title) || <>Menghadirkan Inovasi Teknologi<br />dengan Integrasi Berkelanjutan</>}</h2>
+    <section id={intro?.anchor_id ?? 'tentang'} className="py-16 sm:py-24 lg:py-28 border-t border-black/[0.08] bg-[#F5F5F3]">
+      <div className="w-full mx-auto px-5 sm:px-8 md:px-12 lg:px-16 max-w-[1320px]">
+        <div className="text-center max-w-[860px] mx-auto mb-12 sm:mb-16 flex flex-col items-center">
+          <div className="text-[12px] sm:text-[13px] font-bold uppercase tracking-[0.16em] mb-4 sm:mb-5 select-none text-[#111111]">{text(content.eyebrow) || 'TENTANG KAMI'}</div>
+          <h2 className="font-h2 font-bold text-[#111111] leading-[1.18] tracking-tight max-w-[820px] text-center">{text(content.title) || <>Menghadirkan Inovasi Teknologi<br className="hidden sm:inline" />dengan Integrasi Berkelanjutan</>}</h2>
         </div>
-        {metrics.length ? <div className={styles.aboutV2Metrics}>{metrics.map((metric,index)=><article key={`${text(metric.label)}-${index}`}>
-          <div className={styles.aboutV2Stat}><small>METRIK 0{index+1}</small><strong>{text(metric.value)}</strong></div>
-          <div className={styles.aboutV2Rule}/>
-          <div className={styles.aboutV2Body}><h3>{text(metric.label)}</h3>{text(metric.description)?<p>{text(metric.description)}</p>:null}</div>
-        </article>)}</div>:null}
+        {metrics.length ? <div className="border border-black/[0.14] rounded-2xl overflow-hidden bg-white/50 backdrop-blur-xs shadow-xs"><div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 divide-y sm:divide-y-0 lg:divide-x divide-black/[0.12]">
+          {metrics.map((item,index)=><div key={`${text(item.label)}-${index}`} className={`p-6 sm:p-7 flex flex-col justify-between items-center text-center transition-colors duration-200 hover:bg-black/[0.03] group ${index%2===1?'sm:border-l sm:border-black/[0.12] lg:border-l-0':''} ${index>=2?'sm:border-t sm:border-black/[0.12] lg:border-t-0':''}`}>
+            <div className="w-full flex flex-col items-center justify-end h-[96px] sm:h-[105px] pb-3"><div className="text-[10px] font-bold text-[#8A8A8A] uppercase tracking-[0.16em] mb-2 text-center">Metrik 0{index+1}</div><div className="font-stat-large text-[#111111] font-extrabold tracking-tight text-center group-hover:scale-105 transition-transform duration-200">{text(item.value)}</div></div>
+            <div className="w-full border-t border-black/[0.1] my-0" />
+            <div className="w-full pt-4 flex flex-col items-center text-center flex-1 justify-start"><p className="text-[13.5px] sm:text-[14px] font-bold text-[#222222] leading-snug text-center">{text(item.label)}</p>{text(item.description)?<p className="text-[11.5px] sm:text-[12px] text-[#666666] leading-relaxed mt-1.5 text-center line-clamp-3">{text(item.description)}</p>:null}</div>
+          </div>)}
+        </div></div>:null}
       </div>
     </section>
   )
@@ -156,35 +158,15 @@ function AboutAndStats({ intro, stats }: { intro?: Section; stats?: Section; bus
 
 function Offering({ section }: { section?: Section }) {
   if (!section) return null
-  const c = section.content
-  const rows = records(c.terms).slice(0, 6)
-  return (
-    <section className={styles.equityV2} id={section.anchor_id ?? 'peluang'}>
-      <div className={styles.shell}>
-        <div className={styles.equityV2Grid}>
-          <div className={styles.equityV2Intro}>
-            <div>
-              <div className={styles.eyebrowDark}>{text(c.eyebrow) || 'PELUANG EQUITY'}</div>
-              <h2>{text(c.title) || <>Kesempatan<br />Bertumbuh<br />Bersama</>}</h2>
-              <p>{text(c.description) || 'Jadilah bagian dari perjalanan besar Nuzultrip dengan kepemilikan yang jelas, transparan, dan terstruktur.'}</p>
-            </div>
-            <div className={styles.equityV2IntroCta}><Link href={usableHref(c.cta_href) || '/hubungi'} className={styles.inlineLink}>{text(c.cta_label) || 'Lebih Detail Penawaran'} <Arrow /></Link></div>
-          </div>
-          <div className={styles.equityV2Metrics}>
-            {rows.map((row,index)=><div className={styles.equityV2Metric} key={`${text(row.label)}-${index}`}><strong>{text(row.value)}</strong><p>{text(row.label)}</p></div>)}
-          </div>
-          <aside className={styles.equityV2Card}>
-            {text(c.card_image_url) ? <CmsImage src={text(c.card_image_url)} alt={text(c.card_image_alt) || 'Masjid Nabawi di waktu senja'} className={styles.equityV2CardImage} /> : null}
-            <div className={styles.equityV2CardShade}/>
-            <h3>{text(c.card_title) || <>Investasi Hari Ini,<br />Untuk Masa Depan<br />yang Lebih Baik.</>}</h3>
-            <Link href={usableHref(c.card_cta_href) || '/hubungi'} className={styles.equityV2CardCta}>{text(c.card_cta_label) || 'Ajukan Minat Equity'} <Arrow /></Link>
-          </aside>
-        </div>
-      </div>
-    </section>
-  )
+  const content=section.content, rows=records(content.terms).slice(0,6)
+  return <section id={section.anchor_id ?? 'peluang'} className="py-16 sm:py-24 lg:py-32 border-t border-black/[0.06]"><div className="w-full mx-auto px-5 sm:px-8 md:px-12 lg:px-16 max-w-[1320px]"><div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-8 items-stretch">
+    <div className="lg:col-span-4 flex flex-col justify-between h-full"><div><div className="text-[12px] sm:text-[13px] font-bold uppercase tracking-[0.16em] mb-4 sm:mb-5 select-none text-[#111111]">{text(content.eyebrow)||'PELUANG EQUITY'}</div><h2 className="font-h2 font-bold text-[#111111] leading-[1.05] tracking-tight mb-5 sm:mb-6">{text(content.title)||<>Kesempatan<br/>Bertumbuh<br/>Bersama</>}</h2><p className="text-[16px] sm:text-[17px] text-[#555555] leading-[1.65] max-w-[360px]">{text(content.description)||'Jadilah bagian dari perjalanan besar Nuzultrip dengan kepemilikan yang jelas, transparan, dan terstruktur.'}</p></div>
+      <div className="pt-8 sm:pt-10 mt-auto"><Link href={usableHref(content.cta_href)||'/hubungi'} className="group inline-flex items-center justify-center font-medium transition-all duration-200 select-none cursor-pointer bg-transparent text-[#111111] hover:text-black p-0 border-b border-transparent hover:border-black/30 font-semibold text-[15px] py-1"><span className="truncate">{text(content.cta_label)||'Lebih Detail Penawaran'}</span><ArrowRight size={17} className="ml-2 shrink-0 transition-transform duration-200 group-hover:translate-x-1.5"/></Link></div>
+    </div>
+    <div className="lg:col-span-4 flex flex-col justify-between h-full py-1 min-h-[420px] sm:min-h-[480px]">{rows.map((item,index)=><div key={`${text(item.label)}-${index}`} className={`flex items-baseline justify-between gap-4 pb-3 sm:pb-3.5 ${index<rows.length-1?'border-b border-black/[0.1]':''} group`}><div className="text-[26px] sm:text-[30px] lg:text-[32px] font-extrabold text-[#111111] tracking-tight leading-none shrink-0 group-hover:translate-x-0.5 transition-transform duration-200">{text(item.value)}</div><p className="text-[13px] sm:text-[14px] text-[#666666] font-medium text-right leading-snug max-w-[200px]">{text(item.label)}</p></div>)}</div>
+    <div className="lg:col-span-4 flex flex-col h-full"><div className="relative w-full h-full min-h-[420px] sm:min-h-[480px] rounded-2xl overflow-hidden shadow-lg border border-black/10 flex flex-col justify-between p-6 sm:p-7 text-white group">{text(content.card_image_url)?<CmsImage src={text(content.card_image_url)} alt={text(content.card_image_alt)||'Masjid Nabawi di waktu senja'} className="absolute inset-0 w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"/>:null}<div className="absolute inset-0 bg-gradient-to-b from-black/75 via-black/40 to-black/85"/><div className="relative z-10"><h3 className="text-[22px] sm:text-[25px] font-bold leading-[1.2] tracking-tight">{text(content.card_title)||<>Investasi Hari Ini,<br/>Untuk Masa Depan<br/>yang Lebih Baik.</>}</h3></div><div className="relative z-10 pt-6"><Link href={usableHref(content.card_cta_href)||'/hubungi'} className="w-full py-3.5 px-4 rounded-xl bg-white text-[#090909] font-bold text-[14px] flex items-center justify-center gap-2 hover:bg-[#EDEDEB] active:scale-98 transition-all duration-200 shadow-sm group/btn cursor-pointer"><span>{text(content.card_cta_label)||'Ajukan Minat Equity'}</span><span className="transition-transform duration-200 group-hover/btn:translate-x-1">→</span></Link></div></div></div>
+  </div></div></section>
 }
-
 function CompanyStory({ section }: { section?: Section }) {
   if (!section) return null
   const c = section.content
