@@ -198,36 +198,14 @@ function Process({ offering }: { offering?: Section }) {
 
 function Roadmap({ section }: { section?: Section }) {
   if (!section) return null
-  const c = section.content
-  const source = records(c.milestones).length ? records(c.milestones) : records(c.items)
-  if (!source.length && !text(c.title)) return null
-
-  const items = source.map((item) => ({
-    period: text(item.period) || text(item.date) || text(item.year),
-    title: text(item.title) || text(item.label),
-    description: text(item.description) || text(item.summary),
-    status: text(item.status_label) || text(item.status),
-    bullets: strings(item.bullets).length ? strings(item.bullets) : strings(item.highlights),
-    metricLabel: text(item.metric_label) || text(item.kpi_label),
-    metricValue: text(item.metric_value) || text(item.kpi_value),
-  }))
-
-  return (
-    <section className={styles.roadmapSection} id={section.anchor_id ?? 'roadmap'}>
-      <div className={styles.shell}>
-        <div className={styles.roadmapHeaderExact}>
-          <div>
-            <div className={styles.eyebrowDark}>{text(c.eyebrow) || 'ROADMAP PERUSAHAAN'}</div>
-            <h2>{text(c.title) || 'Peta Jalan Pertumbuhan Nuzultrip'}</h2>
-            {text(c.description) ? <p>{text(c.description)}</p> : null}
-          </div>
-        </div>
-        {items.length ? <V2RoadmapSlider items={items} /> : null}
-      </div>
-    </section>
-  )
+  const c=section.content,source=records(c.milestones).length?records(c.milestones):records(c.items)
+  if(!source.length&&!text(c.title))return null
+  const items=source.map((item)=>({period:text(item.period)||text(item.date)||text(item.year),title:text(item.title)||text(item.label),description:text(item.description)||text(item.summary),status:text(item.status_label)||text(item.status),bullets:strings(item.bullets).length?strings(item.bullets):strings(item.highlights),metricLabel:text(item.metric_label)||text(item.kpi_label),metricValue:text(item.metric_value)||text(item.kpi_value)}))
+  return <section id={section.anchor_id??'roadmap'} className="py-14 sm:py-18 lg:py-20 border-t border-black/[0.08] bg-[#FAFAF8] overflow-hidden"><div className="w-full mx-auto px-5 sm:px-8 md:px-12 lg:px-16 max-w-[1320px]"><div className="relative">
+    <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8 sm:mb-10"><div><div className="text-[12px] sm:text-[13px] font-bold uppercase tracking-[0.16em] mb-4 sm:mb-5 select-none text-[#111111]">{text(c.eyebrow)||'ROADMAP PERUSAHAAN'}</div><h2 className="font-h2 font-bold text-[#111111] leading-[1.12] tracking-tight">{text(c.title)||'Peta Jalan Pertumbuhan Nuzultrip'}</h2><p className="text-[14.5px] sm:text-[15.5px] text-[#666666] mt-2 max-w-xl">{text(c.description)||'Tahapan strategis pengembangan bisnis, platform teknologi, dan tata kelola investasi jangka panjang.'}</p></div></div>
+    <V2RoadmapSlider items={items}/>
+  </div></div></section>
 }
-
 function Partners({ section }: { section?: Section }) {
   if (!section) return null
   const c=section.content,items=(records(c.items).length?records(c.items):records(c.logos)).slice(0,3),image=text(c.image_url)
