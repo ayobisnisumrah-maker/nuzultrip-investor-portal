@@ -1495,6 +1495,7 @@ function VisualEditor({
             { key: 'read_time', label: 'Waktu Baca', placeholder: 'Contoh: 4 min baca' },
             { key: 'title', label: 'Judul' },
             { key: 'description', label: 'Ringkasan', multiline: true },
+            { key: 'body', label: 'Isi Artikel', multiline: true, placeholder: 'Konten lengkap untuk halaman detail artikel / berita' },
             { key: 'image_url', label: 'Gambar' },
             { key: 'image_alt', label: 'Teks Alternatif Gambar' },
             { key: 'href', label: 'Tautan Artikel' },
