@@ -94,8 +94,12 @@ function hasMeaningfulContent(sectionKind: string, content: Record<string, unkno
     )
   }
 
-  if (sectionKind === 'legal_notice' || sectionKind === 'rich_content') {
-    return isNonEmptyString(content.title) || isNonEmptyString(content.content)
+  if (sectionKind === 'legal_notice') {
+    return isNonEmptyString(content.title) || isNonEmptyString(content.content) || isNonEmptyArray(content.items)
+  }
+
+  if (sectionKind === 'rich_content') {
+    return isNonEmptyString(content.title) || isNonEmptyString(content.content) || isNonEmptyArray(content.items)
   }
 
   if (sectionKind === 'investment_info') {
