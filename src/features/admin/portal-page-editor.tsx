@@ -1305,6 +1305,11 @@ function VisualEditor({
               placeholder: 'Terlaksana / Fase Aktif / Rencana Mendatang',
             },
             {
+              key: 'status_label',
+              label: 'Label Status Publik',
+              placeholder: 'Opsional. Jika kosong, gunakan Status',
+            },
+            {
               key: 'title',
               label: 'Judul Fase',
             },
@@ -1328,6 +1333,16 @@ function VisualEditor({
               key: 'metric_value',
               label: 'Nilai KPI',
               placeholder: 'Contoh: Rp5 Miliar',
+            },
+            {
+              key: 'kpi_label',
+              label: 'Label KPI Alternatif',
+              placeholder: 'Opsional untuk kompatibilitas data lama',
+            },
+            {
+              key: 'kpi_value',
+              label: 'Nilai KPI Alternatif',
+              placeholder: 'Opsional untuk kompatibilitas data lama',
             },
           ])}
         </div>
