@@ -489,3 +489,14 @@
   :global(.hero-spacer){flex:.45 1 0;min-height:4px}
   :global(.hero-partners){margin-top:20px!important;padding:4px 0 8px}
 }
+
+
+/* Approved hero composition: reduce header-to-eyebrow gap without compressing lower content. */
+@media(min-width:769px){
+  :global(.hero-content){padding-top:12px}
+  :global(.hero-spacer){flex:.24 1 0;min-height:0}
+}
+@media(min-width:769px) and (max-height:900px){
+  :global(.hero-content){padding-top:10px}
+  :global(.hero-spacer){flex:.18 1 0;min-height:0}
+}
