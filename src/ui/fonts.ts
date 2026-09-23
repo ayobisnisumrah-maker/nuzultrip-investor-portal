@@ -1,4 +1,4 @@
-import { Figtree } from 'next/font/google'
+import { Figtree, Plus_Jakarta_Sans } from 'next/font/google'
 
 /**
  * Figtree is the single type family for the whole product surface: public
@@ -19,7 +19,7 @@ export const fontDisplay = Figtree({
   preload: true,
 })
 
-export const fontSans = Figtree({
+export const fontSans = Plus_Jakarta_Sans({
   subsets: ['latin'],
   variable: '--font-jakarta',
   display: 'swap',

@@ -28,9 +28,9 @@ const SECTION_KINDS = [
   'strategic_direction',
   'financial_highlights',
   'investor_updates',
-  'legal_notice',
   'documents',
   'contact_cta',
+  'legal_notice',
   'rich_content',
   'stat_grid',
   'logo_wall',
@@ -38,29 +38,6 @@ const SECTION_KINDS = [
 ] as const
 
 type SectionKind = (typeof SECTION_KINDS)[number]
-
-const PORTAL_SECTION_ORDER: readonly SectionKind[] = [
-  'hero_3d',
-  'intro',
-  'stat_grid',
-  'investment_info',
-  'business_overview',
-  'ecosystem',
-  'growth_story',
-  'logo_wall',
-  'documents',
-  'contact_cta',
-  'rich_content',
-  'vision_mission',
-  'financial_highlights',
-  'faq',
-  'milestones',
-]
-
-function portalSectionRank(kind: string) {
-  const index = PORTAL_SECTION_ORDER.indexOf(kind as SectionKind)
-  return index === -1 ? PORTAL_SECTION_ORDER.length : index
-}
 
 type Section = {
   id: string
@@ -86,23 +63,23 @@ type ContentRecord = Record<string, unknown>
 
 const SECTION_LABELS: Record<SectionKind, string> = {
   hero_3d: 'Hero 3D',
-  intro: 'Tentang Kami',
+  intro: 'Pengenalan',
   vision_mission: 'Visi & Misi',
-  business_overview: 'Perjalanan Muslim',
-  growth_story: 'Peta Jalan Pertumbuhan',
-  ecosystem: 'Layanan Utama',
-  investment_info: 'Peluang Equity',
-  milestones: 'Roadmap Lama (Kompatibilitas)',
-  strategic_direction: 'Strategi Pertumbuhan',
+  business_overview: 'Tentang Nuzultrip',
+  growth_story: 'Perjalanan Pengembangan',
+  ecosystem: 'Ekosistem Bisnis',
+  investment_info: 'Kebutuhan Modal',
+  milestones: 'Perkembangan & Pencapaian',
+  strategic_direction: 'Fokus Pengembangan',
   financial_highlights: 'Sorotan Keuangan',
-  investor_updates: 'Informasi Investor',
-  documents: 'Informasi & Dokumen',
-  contact_cta: 'Quick Action & Kontak',
+  investor_updates: 'Pembaruan Perusahaan',
+  documents: 'Dokumen Publik',
+  contact_cta: 'Kontak & Ajakan',
   legal_notice: 'Pemberitahuan Hukum',
-  rich_content: 'Artikel & Berita',
-  stat_grid: 'Statistik',
-  logo_wall: 'Mitra & Jaringan',
-  faq: 'FAQ',
+  rich_content: 'Konten Fleksibel',
+  stat_grid: 'Statistik Utama',
+  logo_wall: 'Logo & Jaringan',
+  faq: 'Pertanyaan Umum',
 }
 
 const SECTION_DESCRIPTIONS: Record<SectionKind, string> = {
@@ -112,18 +89,18 @@ const SECTION_DESCRIPTIONS: Record<SectionKind, string> = {
   business_overview:
     'Penjelasan mengenai bisnis Nuzultrip, sistem yang telah dibangun, dan fondasi operasional yang sudah berjalan.',
   growth_story:
-    'Roadmap perusahaan dalam format slider fase. Kelola periode, status, judul, poin fase, dan KPI dari sini.',
+    'Perjalanan pembangunan, pengembangan sistem, dan perkembangan Nuzultrip dari waktu ke waktu.',
   ecosystem: 'Komponen bisnis dan ekosistem Nuzultrip.',
   investment_info:
     'Penjelasan kebutuhan modal dan fokus penggunaan modal untuk pengembangan digital serta penguatan operasional.',
-  milestones: 'Format roadmap lama. Dipertahankan hanya untuk kompatibilitas konten yang pernah diterbitkan.',
+  milestones: 'Perkembangan penting, pencapaian, dan tahapan yang telah dicapai Nuzultrip.',
   strategic_direction:
     'Prioritas pengembangan kapabilitas digital dan penguatan kapasitas operasional Nuzultrip.',
   financial_highlights:
     'Indikator dan informasi keuangan utama yang telah disetujui untuk dipublikasikan.',
   investor_updates:
     'Pembaruan perusahaan dan perkembangan penting yang relevan bagi pemangku kepentingan.',
-  documents: 'Atur teks area informasi. File publik tetap bersumber dari Dokumen Portal.',
+  documents: 'Materi dan dokumen yang tersedia secara publik.',
   contact_cta: 'Kanal komunikasi untuk pertanyaan dan kebutuhan informasi lebih lanjut.',
   legal_notice: 'Catatan hukum dan penafian.',
   rich_content: 'Konten fleksibel untuk kebutuhan khusus.',
@@ -164,7 +141,6 @@ function createDefaultContent(kind: SectionKind): ContentRecord {
         image_url: '',
         image_alt: '',
         image_caption: '',
-        tags: [],
       }
 
     case 'intro':
@@ -189,15 +165,10 @@ function createDefaultContent(kind: SectionKind): ContentRecord {
     case 'business_overview':
       return {
         kind,
-        eyebrow: 'PERUSAHAAN',
+        eyebrow: 'Model Bisnis',
         title: '',
         description: '',
-        cta_label: 'Lebih Detail Penawaran',
-        cta_href: '#informasi-investor',
-        image_url: '',
-        image_alt: '',
-        images: [],
-        metrics: [],
+        items: [],
       }
 
     case 'growth_story':
@@ -212,36 +183,18 @@ function createDefaultContent(kind: SectionKind): ContentRecord {
     case 'ecosystem':
       return {
         kind,
-        eyebrow: 'LAYANAN UTAMA',
+        eyebrow: 'Ekosistem Bisnis',
         title: '',
         description: '',
-        cta_label: 'Lihat Layanan Lainnya',
-        cta_href: '',
         items: [],
       }
 
     case 'investment_info':
       return {
         kind,
-        eyebrow: 'PELUANG EQUITY',
+        eyebrow: 'Penawaran Equity',
         title: '',
         description: '',
-        cta_label: 'Lebih Detail Penawaran',
-        cta_href: '/hubungi',
-        card_title: '',
-        card_cta_label: 'Ajukan Minat Equity',
-        card_cta_href: '/hubungi',
-        card_image_url: '',
-        card_image_alt: '',
-        terms: [],
-        process_eyebrow: 'ALUR & TAHAPAN INVESTASI',
-        process_title: '',
-        process_description: '',
-        process_steps: [],
-        process_primary_cta_label: 'Ajukan Minat Unit Equity',
-        process_primary_cta_href: '/hubungi',
-        process_cta_label: 'Pelajari Prosedur Lengkap',
-        process_cta_href: '/informasi',
         funding_label: 'Kebutuhan Modal',
         funding_target: '',
         funding_currency: 'IDR',
@@ -307,53 +260,29 @@ function createDefaultContent(kind: SectionKind): ContentRecord {
     case 'investor_updates':
       return {
         kind,
-        eyebrow: 'INFORMASI INVESTOR',
-        title: 'Informasi penting dalam satu tempat',
+        eyebrow: 'Pembaruan Investor',
+        title: '',
         description: '',
-        image_url: '',
         items: [],
       }
 
     case 'documents':
       return {
         kind,
-        eyebrow: 'INFORMASI INVESTOR',
-        title: 'Informasi penting dalam satu tempat',
+        eyebrow: 'Dokumen Investor',
+        title: '',
         description: '',
-        image_url: '',
-        image_alt: '',
+        items: [],
       }
 
     case 'contact_cta':
       return {
         kind,
-        eyebrow: 'QUICK ACTION',
-        title: 'Kenali. Pelajari. Tentukan Langkah Anda.',
+        eyebrow: 'Hubungan Investor',
+        title: '',
         description: '',
-        contact_value: '',
-        primary_cta_eyebrow: 'Investor Relations',
-        primary_cta_label: 'Hubungi Tim',
-        primary_cta_href: '/hubungi',
-        primary_cta_description: '',
-        secondary_cta_eyebrow: 'Dokumen Resmi',
-        secondary_cta_label: 'Unduh Pitchdeck',
-        secondary_cta_href: '',
-        secondary_cta_description: '',
-        image_url: '',
-        image_alt: '',
-        image_eyebrow: 'LANGKAH AWAL KEMITRAAN',
-        image_title: 'Siap Mengenal Nuzultrip Lebih Jauh?',
-        image_description: '',
-        image_cta_label: 'Ajukan Minat Equity',
-        image_cta_href: '/hubungi',
-        footer_brand_name: 'Nuzultrip',
-        footer_brand_badge: 'Equity',
-        footer_tagline: 'Melayani perjalanan Muslim Indonesia dengan hati, profesionalisme, dan teknologi.',
-        footer_contact_title: 'BUTUH INFORMASI TERBARU?',
-        footer_contact_description: '',
-        footer_contact_label: 'Hubungi Kami',
-        footer_contact_href: '/hubungi',
-        footer_bottom_text: 'Platform Penawaran Equity Ekosistem Perjalanan Muslim Indonesia.',
+        primary_cta_label: '',
+        primary_cta_href: '',
       }
 
     case 'legal_notice':
@@ -376,15 +305,9 @@ function createDefaultContent(kind: SectionKind): ContentRecord {
     case 'logo_wall':
       return {
         kind,
-        eyebrow: 'JARINGAN & MITRA',
+        eyebrow: 'Mitra & Jaringan',
         title: '',
-        description: '',
-        cta_label: 'Pelajari Selengkapnya',
-        cta_href: '',
-        image_url: '',
-        image_alt: '',
-        image_caption: 'Satu Ekosistem, Banyak Peluang',
-        items: [],
+        logos: [],
       }
 
     case 'faq':
@@ -398,12 +321,9 @@ function createDefaultContent(kind: SectionKind): ContentRecord {
     case 'rich_content':
       return {
         kind,
-        eyebrow: 'ARTIKEL & BERITA',
+        eyebrow: '',
         title: '',
-        description: '',
-        cta_label: 'Lebih Artikel Lainnya',
-        cta_href: '',
-        items: [],
+        content: '',
       }
 
     default:
@@ -691,23 +611,9 @@ function VisualEditor({
                     ) : (
                       <Field
                         label={field.label}
-                        value={
-                          field.key === 'bullets'
-                            ? (Array.isArray(item[field.key]) ? item[field.key] as unknown[] : [])
-                                .filter((value: unknown): value is string => typeof value === 'string')
-                                .join('\n')
-                            : asString(item[field.key])
-                        }
+                        value={asString(item[field.key])}
                         onChange={(fieldValue) =>
-                          updateArray(arrayKey, index, {
-                            [field.key]:
-                              field.key === 'bullets'
-                                ? fieldValue
-                                    .split('\n')
-                                    .map((value) => value.trim())
-                                    .filter(Boolean)
-                                : fieldValue,
-                          })
+                          updateArray(arrayKey, index, { [field.key]: fieldValue })
                         }
                         multiline={field.multiline}
                         placeholder={field.placeholder}
@@ -788,18 +694,7 @@ function VisualEditor({
           value={asString(content.image_caption)}
           onChange={(image_caption) => update({ image_caption })}
         />
-
-        <div className="md:col-span-2 border-border space-y-4 rounded-xl border p-4">
-          <p className="text-fg text-sm font-semibold">Tag Hero</p>
-          <p className="text-fg-muted text-xs leading-5">Satu tag per baris. Maksimal 6 tag ditampilkan pada portal.</p>
-          <Field
-            label="Daftar Tag"
-            value={Array.isArray(content.tags) ? content.tags.filter((value): value is string => typeof value === 'string').join('\n') : ''}
-            onChange={(value) => update({ tags: value.split('\n').map((item) => item.trim()).filter(Boolean) })}
-            multiline
-            placeholder={"Umrah\nHalal Tour\nLand Arrangement"}
-          />
-        </div>
+        <div className="md:col-span-2"><Field label="Sorotan Ekosistem / Chip Hero" value={(Array.isArray(content.tags) ? content.tags.filter((item): item is string => typeof item === 'string') : []).join('\n')} onChange={(value) => update({ tags: value.split('\n').map((item) => item.trim()).filter(Boolean) })} multiline placeholder="Satu sorotan per baris" /></div>
       </div>
     )
   }
@@ -807,13 +702,25 @@ function VisualEditor({
   if (kind === 'intro') {
     return (
       <div className="space-y-4">
-        <Field label="Eyebrow" value={asString(content.eyebrow)} onChange={(eyebrow) => update({ eyebrow })} placeholder="TENTANG KAMI" />
-        <Field label="Judul" value={asString(content.title)} onChange={(title) => update({ title })} />
-        <Field label="Deskripsi" value={asString(content.description)} onChange={(description) => update({ description })} multiline />
-        <div className="grid gap-4 md:grid-cols-2">
-          <Field label="Label CTA" value={asString(content.cta_label)} onChange={(cta_label) => update({ cta_label })} placeholder="Lebih tentang kami" />
-          <Field label="Tautan CTA" value={asString(content.cta_href)} onChange={(cta_href) => update({ cta_href })} placeholder="Kosongkan untuk menuju section Perusahaan" />
-        </div>
+        <Field
+          label="Eyebrow"
+          value={asString(content.eyebrow)}
+          onChange={(eyebrow) => update({ eyebrow })}
+          placeholder="Contoh: Tentang Nuzultrip"
+        />
+
+        <Field
+          label="Judul"
+          value={asString(content.title)}
+          onChange={(title) => update({ title })}
+        />
+
+        <Field
+          label="Deskripsi"
+          value={asString(content.description)}
+          onChange={(description) => update({ description })}
+          multiline
+        />
       </div>
     )
   }
@@ -875,25 +782,6 @@ function VisualEditor({
     )
   }
 
-  if (kind === 'stat_grid' || kind === 'financial_highlights') {
-    const metrics = Array.isArray(content.metrics) ? content.metrics.filter(isRecord) : []
-    return (
-      <div className="space-y-5">
-        <Field label="Eyebrow" value={asString(content.eyebrow)} onChange={(eyebrow) => update({ eyebrow })} />
-        <Field label="Judul" value={asString(content.title)} onChange={(title) => update({ title })} />
-        <Field label="Deskripsi" value={asString(content.description)} onChange={(description) => update({ description })} multiline />
-        <div className="border-border space-y-4 rounded-xl border p-4">
-          {renderArrayHeader('Angka Penting', 'Maksimal 5 angka utama pada area Tentang Kami. Nilai akan tetap disimpan sebagai teks agar format seperti 70JT+, +17,1%, dan 40% terjaga.', 'metrics')}
-          {renderObjectArrayEditor('metrics', metrics, [
-            { key: 'value', label: 'Nilai', placeholder: 'Contoh: 70JT+' },
-            { key: 'label', label: 'Label' },
-            { key: 'description', label: 'Keterangan', multiline: true },
-          ])}
-        </div>
-      </div>
-    )
-  }
-
   if (kind === 'investment_info') {
     const useOfFunds = Array.isArray(content.use_of_funds)
       ? content.use_of_funds.filter(isRecord)
@@ -949,50 +837,13 @@ function VisualEditor({
           onChange={(description) => update({ description })}
           multiline
         />
-
         <div className="grid gap-4 md:grid-cols-2">
-          <Field label="Label CTA Peluang Equity" value={asString(content.cta_label)} onChange={(cta_label) => update({ cta_label })} placeholder="Lihat Detail Penawaran" />
-          <Field label="Tautan CTA Peluang Equity" value={asString(content.cta_href)} onChange={(cta_href) => update({ cta_href })} placeholder="/hubungi" />
-          <Field label="Headline Card Equity" value={asString(content.card_title)} onChange={(card_title) => update({ card_title })} placeholder="Investasi Hari Ini, Untuk Masa Depan..." />
-          <Field label="Label CTA Card Equity" value={asString(content.card_cta_label)} onChange={(card_cta_label) => update({ card_cta_label })} placeholder="Ajukan Minat Equity" />
-          <Field label="Tautan CTA Card Equity" value={asString(content.card_cta_href)} onChange={(card_cta_href) => update({ card_cta_href })} placeholder="/hubungi" />
-        </div>
-        <ImageField label="Gambar Card Equity" value={asString(content.card_image_url)} onChange={(card_image_url) => update({ card_image_url })} />
-        <Field label="Teks Alternatif Gambar Card Equity" value={asString(content.card_image_alt)} onChange={(card_image_alt) => update({ card_image_alt })} />
-
-        <div className="border-border space-y-4 rounded-xl border p-4">
-          {renderArrayHeader('Ringkasan Penawaran', 'Kelola angka dan ketentuan utama yang tampil pada tabel Peluang Equity.', 'terms')}
-          {renderObjectArrayEditor(
-            'terms',
-            Array.isArray(content.terms) ? content.terms.filter(isRecord) : [],
-            [
-              { key: 'label', label: 'Label' },
-              { key: 'value', label: 'Nilai' },
-            ],
-          )}
-        </div>
-
-        <div className="border-border space-y-4 rounded-xl border p-4">
-          <Field label="Eyebrow Proses" value={asString(content.process_eyebrow)} onChange={(process_eyebrow) => update({ process_eyebrow })} />
-          <Field label="Judul Proses" value={asString(content.process_title)} onChange={(process_title) => update({ process_title })} />
-          <Field label="Deskripsi Proses" value={asString(content.process_description)} onChange={(process_description) => update({ process_description })} multiline />
-          {renderArrayHeader('Tahapan Investasi', 'Kelola empat langkah pada section proses.', 'process_steps')}
-          {renderObjectArrayEditor(
-            'process_steps',
-            Array.isArray(content.process_steps) ? content.process_steps.filter(isRecord) : [],
-            [
-              { key: 'title', label: 'Judul Langkah' },
-              { key: 'description', label: 'Deskripsi', multiline: true },
-              { key: 'duration', label: 'Durasi' },
-              { key: 'output', label: 'Output' },
-            ],
-          )}
-          <div className="grid gap-4 md:grid-cols-2">
-            <Field label="Label CTA Utama Proses" value={asString(content.process_primary_cta_label)} onChange={(process_primary_cta_label) => update({ process_primary_cta_label })} />
-            <Field label="Tautan CTA Utama Proses" value={asString(content.process_primary_cta_href)} onChange={(process_primary_cta_href) => update({ process_primary_cta_href })} />
-            <Field label="Label CTA Proses" value={asString(content.process_cta_label)} onChange={(process_cta_label) => update({ process_cta_label })} />
-            <Field label="Tautan CTA Proses" value={asString(content.process_cta_href)} onChange={(process_cta_href) => update({ process_cta_href })} />
-          </div>
+          <Field label="CTA Detail Penawaran" value={asString(content.detail_cta_label)} onChange={(detail_cta_label) => update({ detail_cta_label })} />
+          <Field label="Tautan CTA Detail" value={asString(content.detail_cta_href)} onChange={(detail_cta_href) => update({ detail_cta_href })} />
+          <Field label="Headline Kartu Equity" value={asString(content.card_title)} onChange={(card_title) => update({ card_title })} multiline />
+          <ImageField label="Gambar Kartu Equity" value={asString(content.card_image_url)} onChange={(card_image_url) => update({ card_image_url })} />
+          <Field label="CTA Kartu Equity" value={asString(content.card_cta_label)} onChange={(card_cta_label) => update({ card_cta_label })} />
+          <Field label="Tautan CTA Kartu" value={asString(content.card_cta_href)} onChange={(card_cta_href) => update({ card_cta_href })} />
         </div>
 
         <div className="border-border space-y-4 rounded-xl border p-4">
@@ -1004,17 +855,8 @@ function VisualEditor({
 
           {renderObjectArrayEditor('use_of_funds', useOfFunds, [
             {
-              key: 'code',
-              label: 'Kode Layanan',
-              placeholder: 'Contoh: UMROH',
-            },
-            {
               key: 'title',
               label: 'Judul',
-            },
-            {
-              key: 'tagline',
-              label: 'Tagline',
             },
             {
               key: 'description',
@@ -1075,7 +917,7 @@ function VisualEditor({
     )
   }
 
-  if (kind === 'ecosystem') {
+  if (kind === 'business_overview' || kind === 'ecosystem' || kind === 'investor_updates') {
     const items = Array.isArray(content.items) ? content.items.filter(isRecord) : []
 
     return (
@@ -1112,10 +954,27 @@ function VisualEditor({
           onChange={(image_alt) => update({ image_alt })}
         />
 
-        <div className="grid gap-4 md:grid-cols-2">
-          <Field label="Label CTA" value={asString(content.cta_label)} onChange={(cta_label) => update({ cta_label })} />
-          <Field label="Tautan CTA" value={asString(content.cta_href)} onChange={(cta_href) => update({ cta_href })} placeholder="/halaman atau https://..." />
-        </div>
+        {kind === 'business_overview' ? <>
+          <div className="grid gap-4 md:grid-cols-2">
+            <Field label="CTA Perusahaan" value={asString(content.cta_label)} onChange={(cta_label) => update({ cta_label })} />
+            <Field label="Tautan CTA Perusahaan" value={asString(content.cta_href)} onChange={(cta_href) => update({ cta_href })} />
+          </div>
+          <div className="border-border space-y-4 rounded-xl border p-4">
+            {renderArrayHeader('Galeri Perusahaan', 'Maksimal lima gambar interaktif seperti layout V2.', 'images')}
+            {renderObjectArrayEditor('images', Array.isArray(content.images) ? content.images.filter(isRecord) : [], [
+              { key: 'title', label: 'Judul / Alt' },
+              { key: 'image_url', label: 'Gambar' },
+            ])}
+          </div>
+          <div className="border-border space-y-4 rounded-xl border p-4">
+            {renderArrayHeader('Metrik Perusahaan', 'Lima poin kredensial di kolom kanan layout V2.', 'metrics')}
+            {renderObjectArrayEditor('metrics', Array.isArray(content.metrics) ? content.metrics.filter(isRecord) : [], [
+              { key: 'value', label: 'Nilai' },
+              { key: 'label', label: 'Label' },
+              { key: 'description', label: 'Keterangan', multiline: true },
+            ])}
+          </div>
+        </> : null}
 
         <div className="border-border space-y-4 rounded-xl border p-4">
           {renderArrayHeader(
@@ -1134,16 +993,7 @@ function VisualEditor({
               label: 'Deskripsi',
               multiline: true,
             },
-            {
-              key: 'tagline',
-              label: 'Tagline',
-              placeholder: 'Teks singkat yang tampil pada kartu layanan',
-            },
-            {
-              key: 'code',
-              label: 'Kode Layanan',
-              placeholder: 'Contoh: UMRAH',
-            },
+            ...(kind === 'investor_updates' ? [{ key: 'details', label: 'Detail Lengkap', multiline: true }] : []),
             {
               key: 'icon',
               label: 'Ikon (emoji atau simbol)',
@@ -1162,99 +1012,6 @@ function VisualEditor({
               label: 'Tautan',
               placeholder: '/halaman atau https://...',
             },
-          ])}
-        </div>
-      </div>
-    )
-  }
-
-  if (kind === 'investor_updates') {
-    const items = Array.isArray(content.items) ? content.items.filter(isRecord) : []
-    return (
-      <div className="space-y-5">
-        <Field label="Eyebrow" value={asString(content.eyebrow)} onChange={(eyebrow) => update({ eyebrow })} placeholder="TATA KELOLA" />
-        <Field label="Judul" value={asString(content.title)} onChange={(title) => update({ title })} />
-        <Field label="Deskripsi" value={asString(content.description)} onChange={(description) => update({ description })} multiline />
-        <ImageField label="Gambar Informasi" value={asString(content.image_url)} onChange={(image_url) => update({ image_url })} />
-        <div className="border-border space-y-4 rounded-xl border p-4">
-          {renderArrayHeader('Kartu Informasi', 'Konten pendukung tata kelola/informasi investor.', 'items')}
-          {renderObjectArrayEditor('items', items, [
-            { key: 'title', label: 'Judul' },
-            { key: 'description', label: 'Deskripsi', multiline: true },
-            { key: 'details', label: 'Detail / Poin Informasi', multiline: true, placeholder: 'Satu poin per baris' },
-            { key: 'image_url', label: 'Gambar Kartu' },
-            { key: 'image_alt', label: 'Teks Alternatif Gambar' },
-            { key: 'href', label: 'Tautan Detail' },
-          ])}
-        </div>
-      </div>
-    )
-  }
-
-  if (kind === 'logo_wall') {
-    const items = Array.isArray(content.items)
-      ? content.items.filter(isRecord)
-      : Array.isArray(content.logos)
-        ? content.logos.filter(isRecord)
-        : []
-
-    return (
-      <div className="space-y-5">
-        <Field label="Eyebrow" value={asString(content.eyebrow)} onChange={(eyebrow) => update({ eyebrow })} placeholder="JARINGAN & MITRA" />
-        <Field label="Judul" value={asString(content.title)} onChange={(title) => update({ title })} />
-        <Field label="Deskripsi" value={asString(content.description)} onChange={(description) => update({ description })} multiline />
-        <div className="grid gap-4 md:grid-cols-2">
-          <Field label="Label CTA" value={asString(content.cta_label)} onChange={(cta_label) => update({ cta_label })} placeholder="Pelajari Selengkapnya" />
-          <Field label="Tautan CTA" value={asString(content.cta_href)} onChange={(cta_href) => update({ cta_href })} />
-        </div>
-        <ImageField label="Gambar Jaringan & Mitra" value={asString(content.image_url)} onChange={(image_url) => update({ image_url })} />
-        <Field label="Teks Alternatif Gambar" value={asString(content.image_alt)} onChange={(image_alt) => update({ image_alt })} />
-        <Field label="Headline pada Gambar" value={asString(content.image_caption)} onChange={(image_caption) => update({ image_caption })} placeholder="Satu Ekosistem, Banyak Peluang" />
-        <Field label="Judul Highlight" value={asString(content.highlight_title)} onChange={(highlight_title) => update({ highlight_title })} placeholder="Satu Ekosistem, Banyak Peluang" />
-
-        <div className="border-border space-y-4 rounded-xl border p-4">
-          {renderArrayHeader('Kartu Jaringan & Mitra', 'Tiga kartu pertama ditampilkan pada portal.', 'items')}
-          {renderObjectArrayEditor('items', items, [
-            { key: 'title', label: 'Nama / Judul' },
-            { key: 'description', label: 'Deskripsi', multiline: true },
-            { key: 'icon', label: 'Ikon (emoji atau simbol)' },
-            { key: 'icon_url', label: 'File Ikon' },
-          ])}
-        </div>
-      </div>
-    )
-  }
-
-  if (kind === 'business_overview') {
-    const images = Array.isArray(content.images) ? content.images.filter(isRecord) : []
-    const metrics = Array.isArray(content.metrics) ? content.metrics.filter(isRecord) : []
-
-    return (
-      <div className="space-y-5">
-        <Field label="Eyebrow" value={asString(content.eyebrow)} onChange={(eyebrow) => update({ eyebrow })} placeholder="PERUSAHAAN" />
-        <Field label="Judul" value={asString(content.title)} onChange={(title) => update({ title })} />
-        <Field label="Deskripsi" value={asString(content.description)} onChange={(description) => update({ description })} multiline />
-        <div className="grid gap-4 md:grid-cols-2">
-          <Field label="Label CTA" value={asString(content.cta_label)} onChange={(cta_label) => update({ cta_label })} />
-          <Field label="Tautan CTA" value={asString(content.cta_href)} onChange={(cta_href) => update({ cta_href })} />
-        </div>
-        <ImageField label="Gambar Utama Perusahaan" value={asString(content.image_url)} onChange={(image_url) => update({ image_url })} />
-        <Field label="Teks Alternatif Gambar Utama" value={asString(content.image_alt)} onChange={(image_alt) => update({ image_alt })} />
-
-        <div className="border-border space-y-4 rounded-xl border p-4">
-          {renderArrayHeader('Galeri Perusahaan', 'Tambahkan hingga 5 gambar. Portal akan mengganti gambar saat interaksi hover.', 'images')}
-          {renderObjectArrayEditor('images', images, [
-            { key: 'image_url', label: 'Gambar' },
-            { key: 'alt', label: 'Teks Alternatif' },
-            { key: 'title', label: 'Judul Gambar' },
-          ])}
-        </div>
-
-        <div className="border-border space-y-4 rounded-xl border p-4">
-          {renderArrayHeader('Metrik Perusahaan', 'Angka penting yang tampil pada galeri perusahaan.', 'metrics')}
-          {renderObjectArrayEditor('metrics', metrics, [
-            { key: 'value', label: 'Nilai', placeholder: 'Contoh: 4.500+' },
-            { key: 'label', label: 'Label', placeholder: 'Contoh: Jamaah' },
           ])}
         </div>
       </div>
@@ -1295,54 +1052,18 @@ function VisualEditor({
 
           {renderObjectArrayEditor('milestones', milestones, [
             {
-              key: 'period',
-              label: 'Periode',
-              placeholder: 'Contoh: Jan – Des 2026',
-            },
-            {
-              key: 'status',
-              label: 'Status',
-              placeholder: 'Terlaksana / Fase Aktif / Rencana Mendatang',
-            },
-            {
-              key: 'status_label',
-              label: 'Label Status Publik',
-              placeholder: 'Opsional. Jika kosong, gunakan Status',
+              key: 'year',
+              label: 'Tahun / Periode',
+              placeholder: 'Contoh: 2026',
             },
             {
               key: 'title',
-              label: 'Judul Fase',
+              label: 'Judul',
             },
             {
               key: 'description',
               label: 'Deskripsi',
               multiline: true,
-            },
-            {
-              key: 'bullets',
-              label: 'Poin Fase',
-              placeholder: 'Satu poin per baris',
-              multiline: true,
-            },
-            {
-              key: 'metric_label',
-              label: 'Label KPI',
-              placeholder: 'Contoh: Target Equity',
-            },
-            {
-              key: 'metric_value',
-              label: 'Nilai KPI',
-              placeholder: 'Contoh: Rp5 Miliar',
-            },
-            {
-              key: 'kpi_label',
-              label: 'Label KPI Alternatif',
-              placeholder: 'Opsional untuk kompatibilitas data lama',
-            },
-            {
-              key: 'kpi_value',
-              label: 'Nilai KPI Alternatif',
-              placeholder: 'Opsional untuk kompatibilitas data lama',
             },
           ])}
         </div>
@@ -1395,124 +1116,265 @@ function VisualEditor({
     )
   }
 
+  if (kind === 'financial_highlights' || kind === 'stat_grid') {
+    const metrics = Array.isArray(content.metrics) ? content.metrics.filter(isRecord) : []
 
-  if (kind === 'documents') {
     return (
       <div className="space-y-5">
-        <div className="border-primary/20 bg-primary/5 rounded-lg border p-4">
-          <p className="text-fg text-sm font-semibold">Konten Section Dokumen</p>
-          <p className="text-fg-muted mt-1 text-xs leading-5">
-            Judul, deskripsi, dan gambar section diatur di sini. Daftar file yang tampil di portal
-            otomatis mengikuti Dokumen Portal yang berstatus Terbit dan Publik.
-          </p>
-        </div>
-        <Field label="Eyebrow" value={asString(content.eyebrow)} onChange={(eyebrow) => update({ eyebrow })} placeholder="INFORMASI INVESTOR" />
-        <Field label="Judul" value={asString(content.title)} onChange={(title) => update({ title })} placeholder="Informasi penting dalam satu tempat" />
-        <Field label="Deskripsi" value={asString(content.description)} onChange={(description) => update({ description })} multiline />
-        <ImageField label="Gambar Section" value={asString(content.image_url)} onChange={(image_url) => update({ image_url })} />
-        <Field label="Teks Alternatif Gambar" value={asString(content.image_alt)} onChange={(image_alt) => update({ image_alt })} />
-      </div>
-    )
-  }
-  if (kind === 'contact_cta') {
-    return (
-      <div className="space-y-5">
-        <Field label="Eyebrow" value={asString(content.eyebrow)} onChange={(eyebrow) => update({ eyebrow })} placeholder="Contoh: QUICK ACTION" />
-        <Field label="Judul" value={asString(content.title)} onChange={(title) => update({ title })} />
-        <Field label="Deskripsi" value={asString(content.description)} onChange={(description) => update({ description })} multiline />
-        <Field label="Kontak / Nilai Tambahan" value={asString(content.contact_value)} onChange={(contact_value) => update({ contact_value })} placeholder="Contoh: investor@nuzultrip.com" />
+        <Field
+          label="Eyebrow"
+          value={asString(content.eyebrow)}
+          onChange={(eyebrow) => update({ eyebrow })}
+          placeholder="Contoh: Sorotan Keuangan"
+        />
+
+        <Field
+          label="Judul"
+          value={asString(content.title)}
+          onChange={(title) => update({ title })}
+        />
+
+        <Field
+          label="Deskripsi"
+          value={asString(content.description)}
+          onChange={(description) => update({ description })}
+          multiline
+        />
 
         <div className="border-border space-y-4 rounded-xl border p-4">
-          <p className="text-fg text-sm font-semibold">CTA Investor Relations</p>
-          <Field label="Eyebrow Card Utama" value={asString(content.primary_cta_eyebrow)} onChange={(primary_cta_eyebrow) => update({ primary_cta_eyebrow })} placeholder="Investor Relations" />
-          <div className="grid gap-4 md:grid-cols-2">
-            <Field label="Label CTA Utama" value={asString(content.primary_cta_label)} onChange={(primary_cta_label) => update({ primary_cta_label })} />
-            <Field label="Tautan CTA Utama" value={asString(content.primary_cta_href)} onChange={(primary_cta_href) => update({ primary_cta_href })} />
-          </div>
-          <Field label="Deskripsi CTA Utama" value={asString(content.primary_cta_description)} onChange={(primary_cta_description) => update({ primary_cta_description })} multiline />
-        </div>
+          {renderArrayHeader(
+            'Metrik',
+            'Kelola angka, KPI, atau indikator utama yang ditampilkan di Portal.',
+            'metrics',
+          )}
 
-        <div className="border-border space-y-4 rounded-xl border p-4">
-          <p className="text-fg text-sm font-semibold">CTA Dokumen Resmi</p>
-          <Field label="Eyebrow Card Sekunder" value={asString(content.secondary_cta_eyebrow)} onChange={(secondary_cta_eyebrow) => update({ secondary_cta_eyebrow })} placeholder="Dokumen Resmi" />
-          <div className="grid gap-4 md:grid-cols-2">
-            <Field label="Label CTA Sekunder" value={asString(content.secondary_cta_label)} onChange={(secondary_cta_label) => update({ secondary_cta_label })} />
-            <Field label="Tautan CTA Sekunder (opsional)" value={asString(content.secondary_cta_href)} onChange={(secondary_cta_href) => update({ secondary_cta_href })} placeholder="Kosongkan untuk memakai dokumen publik pertama" />
-          </div>
-          <Field label="Deskripsi CTA Sekunder" value={asString(content.secondary_cta_description)} onChange={(secondary_cta_description) => update({ secondary_cta_description })} multiline />
-        </div>
-
-        <div className="border-border space-y-4 rounded-xl border p-4">
-          <p className="text-fg text-sm font-semibold">Gambar Quick Action</p>
-          <ImageField label="Gambar" value={asString(content.image_url)} onChange={(image_url) => update({ image_url })} />
-          <div className="grid gap-4 md:grid-cols-2">
-            <Field label="Eyebrow Gambar" value={asString(content.image_eyebrow)} onChange={(image_eyebrow) => update({ image_eyebrow })} />
-            <Field label="Judul Gambar" value={asString(content.image_title)} onChange={(image_title) => update({ image_title })} />
-          </div>
-          <Field label="Deskripsi Gambar" value={asString(content.image_description)} onChange={(image_description) => update({ image_description })} multiline />
-          <div className="grid gap-4 md:grid-cols-2">
-            <Field label="Label CTA Gambar" value={asString(content.image_cta_label)} onChange={(image_cta_label) => update({ image_cta_label })} placeholder="Ajukan Minat Equity" />
-            <Field label="Tautan CTA Gambar" value={asString(content.image_cta_href)} onChange={(image_cta_href) => update({ image_cta_href })} />
-          </div>
-          <Field label="Teks Alternatif Gambar" value={asString(content.image_alt)} onChange={(image_alt) => update({ image_alt })} />
-        </div>
-
-        <div className="border-border space-y-4 rounded-xl border p-4">
-          <p className="text-fg text-sm font-semibold">Footer Portal</p>
-          <div className="grid gap-4 md:grid-cols-2">
-            <Field label="Nama Brand Footer" value={asString(content.footer_brand_name)} onChange={(footer_brand_name) => update({ footer_brand_name })} placeholder="Nuzultrip" />
-            <Field label="Badge Brand Footer" value={asString(content.footer_brand_badge)} onChange={(footer_brand_badge) => update({ footer_brand_badge })} placeholder="Equity" />
-          </div>
-          <Field label="Tagline Footer" value={asString(content.footer_tagline)} onChange={(footer_tagline) => update({ footer_tagline })} />
-          <Field label="Judul Kontak Footer" value={asString(content.footer_contact_title)} onChange={(footer_contact_title) => update({ footer_contact_title })} />
-          <Field label="Deskripsi Kontak Footer" value={asString(content.footer_contact_description)} onChange={(footer_contact_description) => update({ footer_contact_description })} multiline />
-          <div className="grid gap-4 md:grid-cols-2">
-            <Field label="Label CTA Footer" value={asString(content.footer_contact_label)} onChange={(footer_contact_label) => update({ footer_contact_label })} />
-            <Field label="Tautan CTA Footer" value={asString(content.footer_contact_href)} onChange={(footer_contact_href) => update({ footer_contact_href })} />
-          </div>
-          <Field label="Teks Bawah Footer" value={asString(content.footer_bottom_text)} onChange={(footer_bottom_text) => update({ footer_bottom_text })} />
-        </div>
-      </div>
-    )
-  }
-
-  if (kind === 'rich_content') {
-    const items = Array.isArray(content.items) ? content.items.filter(isRecord) : []
-    return (
-      <div className="space-y-5">
-        <Field label="Eyebrow" value={asString(content.eyebrow)} onChange={(eyebrow) => update({ eyebrow })} placeholder="ARTIKEL & BERITA" />
-        <Field label="Judul" value={asString(content.title)} onChange={(title) => update({ title })} />
-        <Field label="Deskripsi" value={asString(content.description)} onChange={(description) => update({ description })} multiline />
-        <div className="grid gap-4 md:grid-cols-2">
-          <Field label="Label CTA" value={asString(content.cta_label)} onChange={(cta_label) => update({ cta_label })} placeholder="Lebih Artikel Lainnya" />
-          <Field label="Tautan CTA" value={asString(content.cta_href)} onChange={(cta_href) => update({ cta_href })} />
-        </div>
-        <div className="border-border space-y-4 rounded-xl border p-4">
-          {renderArrayHeader('Artikel & Berita', 'Kelola kartu artikel yang tampil pada portal.', 'items')}
-          {renderObjectArrayEditor('items', items, [
-            { key: 'type', label: 'Jenis', placeholder: 'Artikel / Berita' },
-            { key: 'date', label: 'Tanggal', placeholder: 'Contoh: 21 Sep 2026' },
-            { key: 'read_time', label: 'Waktu Baca', placeholder: 'Contoh: 4 min baca' },
-            { key: 'title', label: 'Judul' },
-            { key: 'description', label: 'Ringkasan', multiline: true },
-            { key: 'body', label: 'Isi Artikel', multiline: true, placeholder: 'Konten lengkap untuk halaman detail artikel / berita' },
-            { key: 'image_url', label: 'Gambar' },
-            { key: 'image_alt', label: 'Teks Alternatif Gambar' },
-            { key: 'href', label: 'Tautan Artikel' },
+          {renderObjectArrayEditor('metrics', metrics, [
+            {
+              key: 'label',
+              label: 'Label',
+            },
+            {
+              key: 'value',
+              label: 'Nilai',
+            },
+            {
+              key: 'description',
+              label: 'Keterangan',
+              multiline: true,
+            },
           ])}
         </div>
       </div>
     )
   }
 
-  if (kind === 'legal_notice') {
+  if (kind === 'documents') {
+    const items = Array.isArray(content.items) ? content.items.filter(isRecord) : []
+
+    return (
+      <div className="space-y-5">
+        <Field
+          label="Eyebrow"
+          value={asString(content.eyebrow)}
+          onChange={(eyebrow) => update({ eyebrow })}
+          placeholder="Contoh: Dokumen Investor"
+        />
+
+        <Field
+          label="Judul"
+          value={asString(content.title)}
+          onChange={(title) => update({ title })}
+        />
+
+        <Field
+          label="Deskripsi"
+          value={asString(content.description)}
+          onChange={(description) => update({ description })}
+          multiline
+        />
+
+        <div className="border-border space-y-4 rounded-xl border p-4">
+          {renderArrayHeader(
+            'Dokumen Publik',
+            'Kelola dokumen yang dapat dilihat oleh pengunjung Portal.',
+            'items',
+          )}
+
+          {renderObjectArrayEditor('items', items, [
+            {
+              key: 'title',
+              label: 'Nama Dokumen',
+            },
+            {
+              key: 'description',
+              label: 'Deskripsi',
+              multiline: true,
+            },
+            {
+              key: 'href',
+              label: 'Tautan Dokumen',
+              placeholder: 'https://...',
+            },
+          ])}
+        </div>
+      </div>
+    )
+  }
+
+  if (kind === 'logo_wall') {
+    const logos = Array.isArray(content.logos) ? content.logos.filter(isRecord) : []
+
+    return (
+      <div className="space-y-5">
+        <Field
+          label="Eyebrow"
+          value={asString(content.eyebrow)}
+          onChange={(eyebrow) => update({ eyebrow })}
+          placeholder="Contoh: Mitra & Jaringan"
+        />
+
+        <Field
+          label="Judul"
+          value={asString(content.title)}
+          onChange={(title) => update({ title })}
+        />
+        <Field label="Deskripsi" value={asString(content.description)} onChange={(description) => update({ description })} multiline />
+        <ImageField label="Gambar Utama Jaringan" value={asString(content.image_url)} onChange={(image_url) => update({ image_url })} />
+        <Field label="Headline pada Gambar" value={asString(content.highlight)} onChange={(highlight) => update({ highlight })} />
+        <div className="grid gap-4 md:grid-cols-2"><Field label="CTA Jaringan" value={asString(content.cta_label)} onChange={(cta_label) => update({ cta_label })} /><Field label="Tautan CTA Jaringan" value={asString(content.cta_href)} onChange={(cta_href) => update({ cta_href })} /></div>
+
+        <div className="border-border space-y-4 rounded-xl border p-4">
+          {renderArrayHeader(
+            'Kartu Jaringan & Mitra',
+            'Kelola logo mitra, klien, atau pihak terkait.',
+            'logos',
+          )}
+
+          {renderObjectArrayEditor('logos', logos, [
+            {
+              key: 'name',
+              label: 'Nama',
+            },
+            {
+              key: 'description',
+              label: 'Deskripsi',
+              multiline: true,
+            },
+            {
+              key: 'icon',
+              label: 'Ikon / simbol',
+            },
+            {
+              key: 'image_url',
+              label: 'Gambar / Logo',
+              placeholder: 'https://...',
+            },
+            {
+              key: 'href',
+              label: 'Tautan',
+              placeholder: 'https://...',
+            },
+          ])}
+        </div>
+      </div>
+    )
+  }
+
+  if (kind === 'faq') {
+    const items = Array.isArray(content.items) ? content.items.filter(isRecord) : []
+
+    return (
+      <div className="space-y-5">
+        <Field
+          label="Eyebrow"
+          value={asString(content.eyebrow)}
+          onChange={(eyebrow) => update({ eyebrow })}
+          placeholder="Contoh: Pertanyaan Umum"
+        />
+
+        <Field
+          label="Judul"
+          value={asString(content.title)}
+          onChange={(title) => update({ title })}
+        />
+
+        <div className="border-border space-y-4 rounded-xl border p-4">
+          {renderArrayHeader(
+            'Pertanyaan Umum',
+            'Kelola pertanyaan dan jawaban yang ditampilkan kepada pengunjung.',
+            'items',
+          )}
+
+          {renderObjectArrayEditor('items', items, [
+            {
+              key: 'question',
+              label: 'Pertanyaan',
+            },
+            {
+              key: 'answer',
+              label: 'Jawaban',
+              multiline: true,
+            },
+          ])}
+        </div>
+      </div>
+    )
+  }
+
+  if (kind === 'contact_cta') {
     return (
       <div className="space-y-4">
         <Field label="Eyebrow" value={asString(content.eyebrow)} onChange={(eyebrow) => update({ eyebrow })} />
-        <Field label="Judul" value={asString(content.title)} onChange={(title) => update({ title })} />
-        <Field label="Deskripsi" value={asString(content.description)} onChange={(description) => update({ description })} multiline />
-        <Field label="Konten" value={asString(content.content)} onChange={(body) => update({ content: body })} multiline />
-        <ImageField label="Gambar Informasi" value={asString(content.image_url)} onChange={(image_url) => update({ image_url })} />
+        <Field
+          label="Judul"
+          value={asString(content.title)}
+          onChange={(title) => update({ title })}
+        />
+
+        <Field
+          label="Deskripsi"
+          value={asString(content.description)}
+          onChange={(description) => update({ description })}
+          multiline
+        />
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <Field
+            label="Label CTA"
+            value={asString(content.primary_cta_label)}
+            onChange={(primary_cta_label) => update({ primary_cta_label })}
+          />
+
+          <Field
+            label="Tautan CTA"
+            value={asString(content.primary_cta_href)}
+            onChange={(primary_cta_href) => update({ primary_cta_href })}
+          />
+          <Field label="CTA Sekunder" value={asString(content.secondary_cta_label)} onChange={(secondary_cta_label) => update({ secondary_cta_label })} />
+          <Field label="Tautan CTA Sekunder" value={asString(content.secondary_cta_href)} onChange={(secondary_cta_href) => update({ secondary_cta_href })} />
+        </div>
+        <ImageField label="Gambar Quick Action" value={asString(content.image_url)} onChange={(image_url) => update({ image_url })} />
+        <Field label="Headline Kartu Visual" value={asString(content.image_title)} onChange={(image_title) => update({ image_title })} />
+        <Field label="Deskripsi Kartu Visual" value={asString(content.image_description)} onChange={(image_description) => update({ image_description })} multiline />
+      </div>
+    )
+  }
+
+  if (kind === 'legal_notice' || kind === 'rich_content') {
+    return (
+      <div className="space-y-4">
+        <Field
+          label="Judul"
+          value={asString(content.title)}
+          onChange={(title) => update({ title })}
+        />
+
+        <Field
+          label="Konten"
+          value={asString(content.content)}
+          onChange={(body) => update({ content: body })}
+          multiline
+        />
       </div>
     )
   }
@@ -1556,11 +1418,7 @@ export function PortalPageEditor({
   const [pending, startTransition] = useTransition()
 
   const [selectedKind, setSelectedKind] = useState<SectionKind>('intro')
-  const firstPortalSection = [...sections].sort((a, b) => {
-    const rank = portalSectionRank(a.section_kind) - portalSectionRank(b.section_kind)
-    return rank || a.position - b.position
-  })[0]
-  const [openId, setOpenId] = useState<string | null>(firstPortalSection?.id ?? null)
+  const [openId, setOpenId] = useState<string | null>(sections[0]?.id ?? null)
   const [advanced, setAdvanced] = useState<Record<string, boolean>>({})
 
   const [drafts, setDrafts] = useState<Record<string, string>>(() =>
@@ -1580,10 +1438,6 @@ export function PortalPageEditor({
   const [error, setError] = useState<string | null>(null)
 
   const status = pageStatus as PageStatus
-  const orderedSections = [...sections].sort((a, b) => {
-    const rank = portalSectionRank(a.section_kind) - portalSectionRank(b.section_kind)
-    return rank || a.position - b.position
-  })
 
   function runTransition(action: () => Promise<{ ok: boolean; error?: { message: string } }>) {
     setError(null)
@@ -1917,7 +1771,7 @@ export function PortalPageEditor({
         </div>
       ) : null}
 
-      {canUpdate && status !== 'published' && status !== 'archived' && sections.length === 0 ? (
+      {canUpdate && status !== 'published' && status !== 'archived' ? (
         <div className="border-border bg-surface rounded-xl border p-4">
           <div className="mb-4">
             <p className="text-fg text-sm font-semibold">Pembangun Bagian</p>
@@ -1964,7 +1818,7 @@ export function PortalPageEditor({
           Belum ada bagian. Tambahkan bagian pertama dari Pembangun Bagian.
         </div>
       ) : (
-        orderedSections.map((section, visualIndex) => {
+        sections.map((section) => {
           const open = openId === section.id
           const kind = section.section_kind as SectionKind
           const hasVisualEditor = SECTION_KINDS.includes(kind)
@@ -1982,7 +1836,7 @@ export function PortalPageEditor({
               >
                 <span className="min-w-0">
                   <strong className="text-fg block text-sm">
-                    {visualIndex + 1}. {SECTION_LABELS[kind] ?? section.section_kind}
+                    {section.position + 1}. {SECTION_LABELS[kind] ?? section.section_kind}
                   </strong>
 
                   <span className="text-fg-subtle mt-1 block text-xs">
@@ -1994,9 +1848,7 @@ export function PortalPageEditor({
                   </span>
                 </span>
 
-                <span className="border-border text-fg-muted inline-flex h-8 min-w-20 items-center justify-center rounded-lg border px-2 text-xs font-semibold">
-                  {open ? 'Tutup' : 'Edit'}
-                </span>
+                <span className="text-fg-muted text-lg">{open ? '−' : '+'}</span>
               </button>
 
               {open ? (
@@ -2036,9 +1888,12 @@ export function PortalPageEditor({
                       className="hover:bg-muted flex w-full items-center justify-between px-4 py-3 text-left"
                     >
                       <span>
-                        <span className="text-fg block text-sm font-semibold">Pengaturan Lanjutan</span>
+                        <span className="text-fg block text-sm font-semibold">
+                          Editor JSON Lanjutan
+                        </span>
+
                         <span className="text-fg-subtle mt-0.5 block text-xs">
-                          Opsional. Gunakan hanya jika perlu mengubah struktur data lanjutan.
+                          Gunakan untuk field dan struktur konten lanjutan.
                         </span>
                       </span>
 
