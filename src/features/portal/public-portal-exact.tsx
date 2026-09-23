@@ -1,6 +1,6 @@
 import type { ComponentProps } from 'react'
 import Link from 'next/link'
-import { ArrowRight, Building, Building2, Compass, Disc as TikTokIcon, Facebook, FileDown, Globe2, Handshake, Instagram, Luggage, Phone, Users } from 'lucide-react'
+import { ArrowRight, Building, Building2, Compass, Facebook, FileDown, Globe2, Handshake, Instagram, Luggage, Music2, Phone, Users } from 'lucide-react'
 
 import type { PublicPortalModel } from '@/features/portal/public-portal-model'
 import type { PublicPortalDocument } from '@/server/portal/public-queries'
