@@ -500,3 +500,13 @@
   :global(.hero-content){padding-top:10px}
   :global(.hero-spacer){flex:.18 1 0;min-height:0}
 }
+
+
+/* Canonical V2 header vertical geometry. The current JSX uses the literal V2
+   container instead of the legacy .shell, so padding belongs on the header. */
+.headerTop{padding:24px 0}
+.headerScrolled{padding:14px 0}
+@media(max-width:639px){
+  .headerTop{padding:20px 0}
+  .headerScrolled{padding:14px 0}
+}
