@@ -541,3 +541,45 @@
   :global(.hero-partners){transform:translateY(12px)}
   :global(.hero-partners) + div{transform:translateY(22px)}
 }
+
+
+/* Responsive safety pass: mobile navigation and investor detail must remain usable
+   on 390/430px screens and short landscape viewports without changing V2 geometry. */
+@media(max-width:640px){
+  .mobileMenuOverlay{
+    padding-top:max(14px,env(safe-area-inset-top));
+    padding-bottom:max(18px,env(safe-area-inset-bottom));
+    overscroll-behavior:contain;
+  }
+  .mobileMenuOverlay nav{margin-top:clamp(20px,5vh,40px)}
+  .mobileMenuOverlay nav a{
+    padding:clamp(11px,2.4vh,16px) 0;
+    font-size:clamp(1.2rem,5.6vw,1.7rem);
+    overflow-wrap:anywhere;
+  }
+  .mobileMenuActions{padding-top:20px}
+  .mobileMenuActions a{min-width:0;overflow-wrap:anywhere}
+
+  .infoModalBackdrop{
+    align-items:flex-end;
+    padding:max(10px,env(safe-area-inset-top)) 10px max(10px,env(safe-area-inset-bottom));
+    overflow:hidden;
+  }
+  .infoModal{
+    width:100%;
+    max-height:min(90dvh,760px);
+    padding:22px 18px max(20px,env(safe-area-inset-bottom));
+    border-radius:20px;
+    overscroll-behavior:contain;
+  }
+  .infoModalHeading{padding-right:38px}
+  .infoModalDetails{padding:16px}
+  .infoModalActions{gap:10px;flex-wrap:wrap}
+  .infoModalActions button,.infoModalActions a{flex:1 1 140px}
+}
+@media(max-height:700px) and (max-width:980px){
+  .mobileMenuOverlay nav{margin-top:16px}
+  .mobileMenuOverlay nav a{padding:10px 0;font-size:1.18rem}
+  .mobileMenuActions{padding-top:14px}
+  .mobileMenuActions a{min-height:44px;padding-block:10px}
+}
