@@ -33,9 +33,17 @@ function records(value: unknown): Array<Record<string, unknown>> {
 }
 
 function strings(value: unknown): string[] {
-  return Array.isArray(value)
-    ? value.filter((item): item is string => typeof item === 'string' && Boolean(item.trim()))
-    : []
+  if (Array.isArray(value)) {
+    return value.filter((item): item is string => typeof item === 'string' && Boolean(item.trim()))
+  }
+
+  // Visual CMS multiline fields are stored as strings. Accept that shape too so
+  // responsive V2 components receive the same list data without requiring JSON mode.
+  if (typeof value === 'string') {
+    return value.split(/\\r?\\n/).map((item) => item.trim()).filter(Boolean)
+  }
+
+  return []
 }
 
 function sectionByKind(sections: Section[], kind: string) {
