@@ -534,3 +534,10 @@
   :global(.hero-partners){transform:translateY(14px)}
   :global(.hero-partners) + div{transform:translateY(14px)}
 }
+
+
+/* Locked hero baseline: final optical correction approved from production screenshot. */
+@media(min-width:769px){
+  :global(.hero-partners){transform:translateY(12px)}
+  :global(.hero-partners) + div{transform:translateY(22px)}
+}
