@@ -330,6 +330,8 @@ function createDefaultContent(kind: SectionKind): ContentRecord {
         image_description: '',
         image_cta_label: 'Ajukan Minat Equity',
         image_cta_href: '/hubungi',
+        footer_brand_name: 'Nuzultrip',
+        footer_brand_badge: 'Equity',
         footer_tagline: 'Melayani perjalanan Muslim Indonesia dengan hati, profesionalisme, dan teknologi.',
         footer_contact_title: 'BUTUH INFORMASI TERBARU?',
         footer_contact_description: '',
@@ -1416,6 +1418,10 @@ function VisualEditor({
 
         <div className="border-border space-y-4 rounded-xl border p-4">
           <p className="text-fg text-sm font-semibold">Footer Portal</p>
+          <div className="grid gap-4 md:grid-cols-2">
+            <Field label="Nama Brand Footer" value={asString(content.footer_brand_name)} onChange={(footer_brand_name) => update({ footer_brand_name })} placeholder="Nuzultrip" />
+            <Field label="Badge Brand Footer" value={asString(content.footer_brand_badge)} onChange={(footer_brand_badge) => update({ footer_brand_badge })} placeholder="Equity" />
+          </div>
           <Field label="Tagline Footer" value={asString(content.footer_tagline)} onChange={(footer_tagline) => update({ footer_tagline })} />
           <Field label="Judul Kontak Footer" value={asString(content.footer_contact_title)} onChange={(footer_contact_title) => update({ footer_contact_title })} />
           <Field label="Deskripsi Kontak Footer" value={asString(content.footer_contact_description)} onChange={(footer_contact_description) => update({ footer_contact_description })} multiline />
