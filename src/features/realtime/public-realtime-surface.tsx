@@ -24,6 +24,13 @@ function LiveContent({ initialSnapshot }: { initialSnapshot: PublicPortalSnapsho
   const { resumeToken } = useRealtime()
   const topic = topics.portal()
 
+  useEffect(() => {
+    // A fresh visit/reload always starts at Beranda. Preserve in-page anchors only
+    // when they are triggered after the page is already running.
+    if (window.scrollY !== 0) window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+    if (window.location.hash) window.history.replaceState(null, '', window.location.pathname + window.location.search)
+  }, [])
+
   const reconcile = useCallback(async () => {
     const id = ++requestId.current
     try {
