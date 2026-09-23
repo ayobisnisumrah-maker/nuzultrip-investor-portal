@@ -107,18 +107,15 @@ function Header({ navigation, logoSrc, heroSection }: { navigation: NavItem[]; l
       <div className="w-full mx-auto px-5 sm:px-8 md:px-12 lg:px-16 max-w-[1320px]">
         <div className="flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 group focus-visible:outline-none" aria-label="Nuzultrip Equity Beranda">
-            {logoSrc ? <CmsImage src={logoSrc} alt="Nuzultrip Equity" className="h-7 sm:h-8 w-auto max-w-[180px] object-contain object-left" /> : <div className="flex items-center">
-              <span className="text-[22px] sm:text-[24px] font-extrabold tracking-tight text-white transition-opacity group-hover:opacity-80">Nuzultrip</span>
-              <span className="ml-1.5 inline-block text-[10px] font-bold uppercase tracking-[0.18em] px-1.5 py-0.5 rounded bg-white/10 text-[#d1d5db] border border-white/15">Equity</span>
-            </div>}
+            {logoSrc ? <div className="flex items-center"><CmsImage src={logoSrc} alt="Nuzultrip" className="h-7 sm:h-8 w-auto max-w-[180px] object-contain object-left" /><span className="ml-1.5 text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.2em] text-emerald-600">Equity</span></div> : <div className="flex items-baseline"><span className="text-[20px] sm:text-[23px] font-extrabold tracking-tight text-[#0f172a] transition-opacity group-hover:opacity-85">Nuzultrip</span><span className="ml-1.5 text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.2em] text-emerald-600">Equity</span></div>}
           </Link>
-          <nav className="hidden lg:flex items-center gap-7 xl:gap-9" aria-label="Navigasi Utama">
+          <nav className="hidden lg:flex items-center gap-6 xl:gap-8" aria-label="Navigasi Utama">
             {header.slice(0, 7).map((item) => (
-              <Link key={item.id} href={item.href} className="text-[14px] xl:text-[15px] font-medium text-[#9ca3af] hover:text-white transition-colors relative py-1 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white">{item.label}</Link>
+              <Link key={item.id} href={item.href} className="text-[13.5px] xl:text-[14.5px] font-medium text-[#475569] hover:text-[#0f172a] transition-colors relative py-1 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500">{item.label}</Link>
             ))}
           </nav>
           <div className="hidden lg:flex items-center gap-3">
-            <Link href="/masuk" className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-white/10 hover:bg-white/15 border border-white/15 text-white text-[14px] font-semibold transition-all duration-200 active:scale-98 shadow-sm group backdrop-blur-sm">
+            <Link href="/masuk" className="inline-flex items-center gap-2 px-4 py-1.5 sm:py-2 rounded-full bg-[#0f172a] hover:bg-slate-800 text-white text-[13px] sm:text-[13.5px] font-semibold transition-all duration-200 active:scale-98 shadow-xs group">
               <span>Masuk</span><Arrow />
             </Link>
           </div>
