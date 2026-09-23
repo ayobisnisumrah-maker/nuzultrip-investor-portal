@@ -323,7 +323,7 @@ function ContactCta({ section, documents }: { section?: Section; documents: Publ
     <div className="lg:col-span-4 flex flex-col"><div className="relative w-full h-full min-h-[320px] rounded-2xl overflow-hidden border border-white/15 flex flex-col justify-between p-7 text-white group">{text(c.image_url)?<CmsImage src={text(c.image_url)} alt={text(c.image_alt)||'Ekosistem Nuzultrip'} className="absolute inset-0 w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"/>:null}<div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-black/70"/><div className="relative z-10"><span className="text-[11px] font-bold uppercase tracking-[0.16em] text-white/70">{text(c.image_eyebrow)||'Langkah Awal Kemitraan'}</span><h3 className="text-[22px] sm:text-[24px] font-bold text-white mt-2 leading-[1.2]">{text(c.image_title)||'Siap Mengenal Nuzultrip Lebih Jauh?'}</h3><p className="text-[14px] text-white/75 mt-2 leading-relaxed">{text(c.image_description)||'Dapatkan konsultasi eksklusif mengenai struktur kepemilikan dan skema bagi hasil.'}</p></div><div className="relative z-10 pt-6"><Link href={usableHref(c.image_cta_href)||primaryHref} className="w-full py-3 px-5 rounded-xl bg-white text-[#090909] font-bold text-[14px] flex items-center justify-center gap-2 hover:bg-[#EDEDEB] transition-all shadow-md group/btn"><span>{text(c.image_cta_label)||'Ajukan Minat Equity'}</span><ArrowRight size={15} className="group-hover/btn:translate-x-1 transition-transform"/></Link></div></div></div>
   </div></div></section>
 }
-function Footer({ navigation, pageTitle, logoSrc, content }: { navigation: NavItem[]; pageTitle: string; logoSrc: string; content?: Record<string, unknown> }) {
+function Footer({ navigation, logoSrc, content }: { navigation: NavItem[]; logoSrc: string; content?: Record<string, unknown> }) {
   const roots=navigation.filter((item)=>item.location==='footer'&&!item.parent_id).sort((a,b)=>a.position-b.position)
   const children=navigation.filter((item)=>item.location==='footer'&&Boolean(item.parent_id)).sort((a,b)=>a.position-b.position)
   const social=navigation.filter((item)=>item.location==='social'&&!item.parent_id&&usableHref(item.href)).sort((a,b)=>a.position-b.position)
@@ -378,7 +378,7 @@ export function PublicPortalExact({ page, sections, navigation, publicDocuments,
         <ContactCta section={contactCta} documents={publicDocuments} />
         <Articles section={articles} />
       </main>
-      <Footer navigation={navigation} pageTitle={page.title} logoSrc={logoSrc} content={contactCta?.content} />
+      <Footer navigation={navigation} logoSrc={logoSrc} content={contactCta?.content} />
     </div>
   )
 }
