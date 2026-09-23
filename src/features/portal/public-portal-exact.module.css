@@ -523,3 +523,14 @@
 .infoCardActive{border-color:rgba(0,0,0,.5)!important;box-shadow:0 4px 12px rgba(0,0,0,.08)!important;outline:1px solid rgba(0,0,0,.08)!important}
 @media(max-width:1023px){.infoLayout{grid-template-columns:1fr}.infoMedia{min-height:500px}.infoGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:639px){.infoMedia{min-height:380px}.infoGrid{grid-template-columns:1fr}.infoGrid article{padding:20px}}
+
+
+/* Approved lower hero composition: move ecosystem chips slightly down. */
+@media(min-width:769px){
+  :global(.hero-partners){transform:translateY(22px)}
+  :global(.hero-partners) + div{transform:translateY(22px)}
+}
+@media(max-width:768px){
+  :global(.hero-partners){transform:translateY(14px)}
+  :global(.hero-partners) + div{transform:translateY(14px)}
+}
