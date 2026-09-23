@@ -146,7 +146,6 @@ export function V2Hero({ id, eyebrow, titleLines, description, primary, secondar
           </Link>
         </div>
         {visibleTags.length ? <div className={`${entrance} stagger-5 hero-partners will-change-transform`} style={partners}>
-          <div className="hero-partners-label-row"><span className="hero-partners-label-line" aria-hidden="true" /><span className="hero-partners-label text-emerald-400">SOROTAN EKOSISTEM NUZULTRIP</span><span className="hero-partners-label-line" aria-hidden="true" /></div>
           <div className="hero-partners-track"><div className="animate-marquee-slow flex items-center gap-2">{[...visibleTags, ...visibleTags].map((tag, index) => <div key={`${tag}-${index}`} className="hero-chip"><span className="hero-chip-dot" style={{ background: '#10b981', boxShadow: '0 0 5px rgba(16, 185, 129, 0.8), 0 0 10px rgba(16, 185, 129, 0.35)' }} /><span>{tag}</span></div>)}</div></div>
         </div> : null}
         <div className="flex flex-col items-center gap-1.5 pt-4 transition-opacity duration-300 pointer-events-none select-none" style={{ opacity: Math.max(0, 1 - scrollY / 90) }} aria-hidden="true"><span className="text-[10px] tracking-[0.2em] uppercase font-bold text-white/40">Scroll Eksplorasi</span><ChevronDown size={14} className="text-emerald-400/80 animate-bounce" /></div>
