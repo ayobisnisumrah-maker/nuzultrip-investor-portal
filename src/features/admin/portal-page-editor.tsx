@@ -1135,6 +1135,16 @@ function VisualEditor({
               multiline: true,
             },
             {
+              key: 'tagline',
+              label: 'Tagline',
+              placeholder: 'Teks singkat yang tampil pada kartu layanan',
+            },
+            {
+              key: 'code',
+              label: 'Kode Layanan',
+              placeholder: 'Contoh: UMRAH',
+            },
+            {
               key: 'icon',
               label: 'Ikon (emoji atau simbol)',
               placeholder: 'Contoh: ✈',
@@ -1471,6 +1481,7 @@ function VisualEditor({
             { key: 'title', label: 'Judul' },
             { key: 'description', label: 'Ringkasan', multiline: true },
             { key: 'image_url', label: 'Gambar' },
+            { key: 'image_alt', label: 'Teks Alternatif Gambar' },
             { key: 'href', label: 'Tautan Artikel' },
           ])}
         </div>
