@@ -262,8 +262,8 @@ function InvestorInfo({ growth, funds, governance, risks, documents, publicDocum
   const availableDocumentSlots = Math.max(0, 6 - sectionCards.length)
   if (!sectionCards.length && !publicDocuments.length && !documents) return null
 
-  return <section className={styles.infoSection} id="informasi-investor"><div className={styles.shell}>
-    <div className={styles.infoHeader}><div className={styles.eyebrowDark}>{eyebrow}</div><h2>{title}</h2>{text(documentPresentation.description)?<p>{text(documentPresentation.description)}</p>:null}</div>
+  return <section id="informasi" className="py-16 sm:py-24 lg:py-32 border-t border-black/[0.06]"><div className="w-full mx-auto px-5 sm:px-8 md:px-12 lg:px-16 max-w-[1320px]">
+    <div className="max-w-[720px] mb-12 sm:mb-16"><div className="text-[12px] sm:text-[13px] font-bold uppercase tracking-[0.16em] mb-4 sm:mb-5 select-none text-[#111111]">{eyebrow}</div><h2 className="font-h2 font-bold text-[#111111] leading-[1.08] tracking-tight">{title}</h2>{text(documentPresentation.description)?<p className="text-[15px] sm:text-[16px] text-[#666666] leading-relaxed mt-3">{text(documentPresentation.description)}</p>:null}</div>
     <V2InvestorInfo
       fallbackImage={heroImage}
       cards={[
