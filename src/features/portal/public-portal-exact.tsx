@@ -308,60 +308,20 @@ function ContactCta({ section, documents }: { section?: Section; documents: Publ
   </div></div></section>
 }
 function Footer({ navigation, pageTitle, content }: { navigation: NavItem[]; pageTitle: string; content?: Record<string, unknown> }) {
-  const footer = navigation
-    .filter((item) => item.location === 'footer' && !item.parent_id)
-    .sort((a, b) => a.position - b.position)
-  const footerChildren = navigation
-    .filter((item) => item.location === 'footer' && Boolean(item.parent_id))
-    .sort((a, b) => a.position - b.position)
-
-  const footerHref = (item: NavItem) => {
-    const href = usableHref(item.href)
-    if (href) return href
-    const normalized = item.label.trim().toLocaleLowerCase('id-ID')
-    const anchors: Record<string, string> = {
-      'tentang nuzultrip': '#tentang',
-      'model bisnis': '#model-bisnis',
-      'ekosistem bisnis': '#ekosistem',
-      'perkembangan': '#perkembangan',
-      'ringkasan penawaran': '#penawaran',
-      'penggunaan dana': '#penggunaan-dana',
-      'tata kelola': '#tata-kelola',
-      'faktor risiko': '#faktor-risiko',
-    }
-    return anchors[normalized] ?? null
-  }
-  const social = navigation
-    .filter((item) => item.location === 'social' && !item.parent_id && usableHref(item.href))
-    .sort((a, b) => a.position - b.position)
-
-  return (
-    <footer className={styles.footer} id="kontak">
-      <div className={styles.shell}>
-        <div className={styles.footerGrid}>
-          <div className={styles.footerBrand}>
-            <div className={styles.footerWordmark}><strong>{text(content?.footer_brand_name) || 'Nuzultrip'}</strong><span>{text(content?.footer_brand_badge) || 'Equity'}</span></div>
-            <p>{text(content?.footer_tagline) || 'Melayani perjalanan Muslim Indonesia dengan hati, profesionalisme, dan teknologi.'}</p>
-            {social.length ? (
-              <div>{social.slice(0, 5).map((item) => <Link key={item.id} href={item.href} target={item.target}>{item.label}</Link>)}</div>
-            ) : null}
-          </div>
-          {footer.length ? <div className={styles.footerColumns}>{footer.slice(0,2).map((group)=><nav key={group.id}><h4>{group.label}</h4>{(footerChildren.filter((item)=>item.parent_id===group.id).length ? footerChildren.filter((item)=>item.parent_id===group.id) : [group]).slice(0,8).map((item)=>{const href=footerHref(item);return href?<Link key={item.id} href={href}>{item.label}</Link>:<span key={item.id}>{item.label}</span>})}</nav>)}</div> : null}
-          <div className={styles.newsletter}>
-            <h4>{text(content?.footer_contact_title) || 'Butuh informasi terbaru?'}</h4>
-            <p>{text(content?.footer_contact_description) || 'Hubungi tim Investor Relations untuk informasi, dokumen, atau pembaruan resmi Nuzultrip Equity.'}</p>
-            <Link href={usableHref(content?.footer_contact_href) || '/hubungi'}>{text(content?.footer_contact_label) || 'Hubungi Kami'} <Arrow /></Link>
-          </div>
-        </div>
-        <div className={styles.footerBottom}>
-          <span>© {new Date().getFullYear()} {pageTitle}. All Rights Reserved.</span>
-          <span>{text(content?.footer_bottom_text) || 'Platform Penawaran Equity Ekosistem Perjalanan Muslim Indonesia.'}</span>
-        </div>
-      </div>
-    </footer>
-  )
+  const roots=navigation.filter((item)=>item.location==='footer'&&!item.parent_id).sort((a,b)=>a.position-b.position)
+  const children=navigation.filter((item)=>item.location==='footer'&&Boolean(item.parent_id)).sort((a,b)=>a.position-b.position)
+  const social=navigation.filter((item)=>item.location==='social'&&!item.parent_id&&usableHref(item.href)).sort((a,b)=>a.position-b.position)
+  const footerHref=(item:NavItem)=>usableHref(item.href)
+  return <footer id="site-footer" className="bg-[#080808] text-white pt-16 sm:pt-20 pb-12 border-t border-white/10"><div className="w-full mx-auto px-5 sm:px-8 md:px-12 lg:px-16 max-w-[1320px]">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 lg:gap-8 pb-16 border-b border-white/15">
+      <div className="lg:col-span-4 flex flex-col justify-between"><div><div className="flex items-center mb-4"><span className="text-[24px] sm:text-[26px] font-extrabold tracking-tight text-white">{text(content?.footer_brand_name)||'Nuzultrip'}</span><span className="ml-2 text-[10px] font-bold uppercase tracking-[0.16em] px-1.5 py-0.5 rounded bg-white/10 text-white/80 border border-white/15">{text(content?.footer_brand_badge)||'Equity'}</span></div><p className="text-[14px] sm:text-[15px] text-white/70 leading-relaxed max-w-[320px]">{text(content?.footer_tagline)||'Melayani perjalanan Muslim Indonesia dengan hati, profesionalisme, dan teknologi.'}</p></div>{social.length?<div className="mt-8 flex items-center gap-3">{social.slice(0,5).map((item)=><Link key={item.id} href={item.href} target={item.target} aria-label={item.label} className="min-w-9 h-9 px-3 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors text-[12px] font-semibold">{item.label}</Link>)}</div>:null}</div>
+      {roots.slice(0,2).map((group,index)=><div key={group.id} className={index===0?'lg:col-span-3':'lg:col-span-2'}><h4 className="text-[12px] font-bold uppercase tracking-[0.16em] text-white/50 mb-5">{group.label}</h4><ul className="space-y-2.5">{(children.filter((item)=>item.parent_id===group.id).length?children.filter((item)=>item.parent_id===group.id):[group]).slice(0,8).map((item)=>{const href=footerHref(item);return <li key={item.id}>{href?<Link href={href} target={item.target} className="text-[14px] text-white/75 hover:text-white transition-colors">{item.label}</Link>:<span className="text-[14px] text-white/75">{item.label}</span>}</li>})}</ul></div>)}
+      {roots.length<2?<><div className="lg:col-span-3"/><div className="lg:col-span-2"/></>:null}
+      <div className="lg:col-span-3"><div className="bg-white/[0.04] rounded-2xl p-6 border border-white/15"><h4 className="text-[12px] font-bold uppercase tracking-[0.16em] text-white/60 mb-2">{text(content?.footer_contact_title)||'BUTUH INFORMASI TERBARU?'}</h4><p className="text-[13.5px] text-white/70 leading-relaxed mb-5">{text(content?.footer_contact_description)||'Hubungi tim Investor Relations untuk informasi, dokumen, atau pembaruan resmi Nuzultrip Equity.'}</p><Link href={usableHref(content?.footer_contact_href)||'/hubungi'} className="w-full py-2.5 px-4 rounded-xl bg-white text-[#090909] font-bold text-[13.5px] flex items-center justify-center gap-2 hover:bg-[#EDEDEB] transition-all group"><span>{text(content?.footer_contact_label)||'Hubungi Kami'}</span><ArrowRight size={14} className="group-hover:translate-x-1 transition-transform"/></Link></div></div>
+    </div>
+    <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-[13px] text-white/50"><p>© {new Date().getFullYear()} {pageTitle}. All Rights Reserved.</p><p className="text-center sm:text-right">{text(content?.footer_bottom_text)||'Platform Penawaran Equity Ekosistem Perjalanan Muslim Indonesia.'}</p></div>
+  </div></footer>
 }
-
 export function PublicPortalExact({ page, sections, navigation, publicDocuments, brandLogoUrl }: PublicPortalExactProps) {
   const resolved = sections
 
